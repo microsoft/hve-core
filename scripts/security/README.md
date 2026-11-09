@@ -2,7 +2,7 @@
 title: Security Scripts
 description: PowerShell scripts for dependency pinning validation, SHA staleness monitoring, supply chain security, and centralized PS module installation
 author: HVE Core Team
-ms.date: 2026-11-05
+ms.date: 2026-11-06
 ms.topic: reference
 keywords:
   - powershell
@@ -276,7 +276,7 @@ reach production.
 ./scripts/security/Invoke-PipAudit.ps1 -FailOnVulnerability
 
 # Scan a specific skill directory
-./scripts/security/Invoke-PipAudit.ps1 -Path ".github/skills/experimental/powerpoint"
+./scripts/security/Invoke-PipAudit.ps1 -Path ".github/skills/experimental/tts-voiceover"
 ```
 
 ### `Test-PublicDependencyFeeds.ps1`

@@ -3,7 +3,7 @@ title: VS Code Extension Installation
 description: Install HVE Core as a VS Code extension from the Marketplace and learn which components reach Copilot sessions
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-06
 ms.topic: how-to
 keywords:
   - extension
@@ -20,7 +20,7 @@ The HVE Core extension, `ise-hve-essentials.hve-core`, installs HVE Core from th
 ✅ **Use this when:**
 
 * You manage editor tools through the VS Code Marketplace
-* You want Stable or PreRelease release channels with published-release assurance
+* You want Stable or PreRelease Marketplace channels
 * You mostly use HVE Core agents and skills
 * You don't need to customize HVE Core components
 
@@ -81,13 +81,7 @@ These optional configurations improve your HVE Core experience but are not requi
 
 ### Update Your .gitignore
 
-HVE Core agents write working files to a `.copilot-tracking/` folder in your project. Add this line to your project's `.gitignore`:
-
-```text
-.copilot-tracking/
-```
-
-This applies to the extension too. Agents create the folder in your project directory when you use workflows such as `rpi-research` or `code-review`. The [installation guide](../install.md#post-installation-update-your-gitignore) describes what the folder stores.
+Add `.copilot-tracking/` to your project's `.gitignore`. Agents write working files there for every install route, including the extension. The [installation guide](../install.md#post-installation-update-your-gitignore) describes what the folder stores.
 
 ## What's Included
 
@@ -97,7 +91,7 @@ The extension provides all HVE Core components:
 |---------------------|-------------------------------------------------------------------------|--------------------------|
 | Chat agents         | RPI Agent, Code Review, ADR Creator                                     | Yes                      |
 | User-invoked skills | `/git-commit`, `/pull-request` for GitHub or Azure DevOps, `/git-merge` | Yes                      |
-| Skills              | rpi-research, pr-reference, video-to-gif                                | Yes                      |
+| Skills              | rpi-research, pr-reference, demo-video                                  | Yes                      |
 | Instructions        | markdown, python-script, writing-style                                  | May not                  |
 
 HVE Core no longer ships prompt files. [Retired Prompt Commands](../package-migration.md#retired-prompt-commands) maps each former prompt command to its replacement.
@@ -108,16 +102,13 @@ VS Code updates the extension through its extension system:
 
 * Extensions update automatically when new versions are released (default)
 * Open Extensions view → find "HVE Core" → click **Update** for manual updates
-* Right-click the extension → "Switch to Pre-Release Version" to select the PreRelease channel
+* Right-click the extension → "Switch to Pre-Release Version" to select the PreRelease channel. How VS Code handles a channel switch has not been confirmed, so check that agents and skills still appear afterward.
 
-Source moves through reviewed promotions from `main` to `release/prerelease`
-to `release/stable`. PreRelease is packaged from `release/prerelease`; Stable
-is packaged from `release/stable` and may lag newer `main` content. Both
-channels include active components labeled `stable`, `preview`, and
-`experimental`.
-
-The plugin has one registration, `microsoft/hve-core`, which tracks `main`;
-there are no PreRelease or Stable plugin channels.
+Stable and PreRelease carry the same components, including active components
+labeled `stable`, `preview`, and `experimental`, and differ in version and
+cadence. [VS Code Extension Channels](../packages#vs-code-extension-channels)
+explains how channel releases are produced and the current state of the release
+branches.
 
 ## Comparison with Other Methods
 
@@ -126,7 +117,7 @@ there are no PreRelease or Stable plugin channels.
 | Advantage             | Detail                                                 |
 |-----------------------|--------------------------------------------------------|
 | Marketplace managed   | Install, update, and pick a channel in Extensions view |
-| Release channels      | Stable and PreRelease builds with release assurance    |
+| Release channels      | Stable and PreRelease builds on the Marketplace        |
 | Automatic updates     | VS Code updates the extension for you                  |
 | No repository changes | Nothing is added to your project                       |
 | Works everywhere      | Local, devcontainers, Codespaces, any environment      |
@@ -194,54 +185,16 @@ To offer HVE Core to everyone who opens a particular repository instead, commit 
 
 ## Troubleshooting
 
-### Extension Not Appearing
+[Troubleshooting](../troubleshooting) covers every install route. For the extension:
 
-#### Check extension is installed
-
-1. Open Extensions view (`Ctrl+Shift+X`)
-2. Search "HVE Core"
-3. Verify "Installed" badge appears
-
-#### Reload VS Code
-
-1. Command Palette (`Ctrl+Shift+P`)
-2. "Developer: Reload Window"
-
-### Agents Not Showing in Copilot Chat
-
-#### Verify GitHub Copilot is active
-
-1. Check Copilot icon in status bar
-2. Sign in if needed
-
-#### Check extension status
-
-1. Extensions view → "HVE Core"
-2. Verify no errors shown
-3. Click "Show Extension Output" if issues
-
-### Instructions Not Applied in Copilot Sessions
-
-The extension's instructions may not reach Copilot sessions. If you rely on path-specific instructions, uninstall the extension, install the [Copilot Plugin](cli-plugins), and reload the window.
-
-### Conflicting Installation Methods
-
-If you have the extension and another route, such as the plugin or a clone, each agent appears more than once. Copilot does not remove copies that arrive by different routes, so keep one:
-
-* To keep the extension, uninstall the plugin, remove the clone, and delete any HVE Core entries from `chat.*Locations` settings or `.github/copilot/settings.json`
-* To keep the other route, uninstall the extension
+* If agents or skills are missing, confirm that the Extensions view shows HVE Core as installed and that you're signed in to GitHub Copilot, then follow [Extension Not Loading After Install](../troubleshooting#extension-not-loading-after-install). The extension runs no code, so it has no output to check.
+* If you rely on path-specific instructions, uninstall the extension, install the [Copilot Plugin](cli-plugins), and reload the window. The extension's instructions may not reach Copilot sessions.
+* If agents appear more than once, keep one install route. See [Duplicate Agents from More Than One Install Route](../troubleshooting#duplicate-agents-from-more-than-one-install-route).
 
 ### Update Not Appearing
 
-#### Force check for updates
-
-1. Extensions view → ⋯ (More Actions)
-2. "Check for Extension Updates"
-
-#### Manually update
-
-1. Extensions view → Find "HVE Core"
-2. Click "Update" button
+1. In the Extensions view, open **More Actions** (⋯) and select **Check for Extension Updates**.
+2. Find "HVE Core" and select **Update**.
 
 ## Need MCP Configuration or a Repository Copy?
 

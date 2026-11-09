@@ -4,7 +4,7 @@
 
 Provides an in-process Azure Speech SDK stand-in, a fake Entra credential, an
 autouse network-deny guard, credential environment isolation, and builders
-for synthetic WAV files, slide content trees, and PPTX decks. Nothing here
+for synthetic WAV files and slide content trees. Nothing here
 contacts Azure or reads real speaker notes.
 """
 
@@ -19,9 +19,6 @@ import wave
 from pathlib import Path
 
 import pytest
-from lxml import etree
-from pptx import Presentation
-from pptx.oxml.ns import qn
 
 PLACEHOLDER_KEY = "placeholder-speech-key"
 PLACEHOLDER_RESOURCE_ID = (
@@ -222,29 +219,3 @@ def make_content_tree(root: Path, notes: list[str | None]) -> Path:
             data["speaker_notes"] = note
         (slide_dir / "content.yaml").write_text(yaml.safe_dump(data), encoding="utf-8")
     return root
-
-
-_EXISTING_TIMING = (
-    '<p:timing xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">'
-    '<p:tnLst><p:par><p:cTn id="1" dur="indefinite" nodeType="tmRoot">'
-    '<p:childTnLst><p:seq concurrent="1" nextAc="seek">'
-    '<p:cTn id="2" dur="indefinite" nodeType="mainSeq"/>'
-    "</p:seq></p:childTnLst></p:cTn></p:par></p:tnLst></p:timing>"
-)
-
-
-def make_deck(
-    path: Path, slide_count: int = 2, *, existing_timing_on: tuple[int, ...] = ()
-) -> Path:
-    """Write a blank-layout deck; optionally add timing and a transition."""
-    presentation = Presentation()
-    blank_layout = presentation.slide_layouts[6]
-    for index in range(1, slide_count + 1):
-        slide = presentation.slides.add_slide(blank_layout)
-        if index in existing_timing_on:
-            slide._element.append(slide._element.makeelement(qn("p:transition"), {}))
-            parser = etree.XMLParser(resolve_entities=False, no_network=True)
-            slide._element.append(etree.fromstring(_EXISTING_TIMING, parser))
-    path.parent.mkdir(parents=True, exist_ok=True)
-    presentation.save(str(path))
-    return path

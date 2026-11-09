@@ -3,7 +3,7 @@ title: Migrate to the HVE Core Identity
 description: Move retired package installations to the single HVE Core plugin or extension and find replacements for retired slash commands
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-06
 ms.topic: how-to
 keywords:
   - migration
@@ -17,9 +17,9 @@ keywords:
 estimated_reading_time: 10
 ---
 
-HVE Core now publishes one `hve-core` plugin and one `ise-hve-essentials.hve-core` extension. Root `plugin.json` owns the complete distributable membership, and `.github/plugin/marketplace.json` contains one relative locator to the repository root.
+HVE Core now publishes one `hve-core` plugin and one `ise-hve-essentials.hve-core` extension, both carrying every component. [HVE Core Identity and Channels](packages) explains how they relate.
 
-Choose the migration path for your host. Neither GitHub Copilot nor VS Code provides a universal automatic migration between different published identities.
+Neither GitHub Copilot nor VS Code migrates automatically between different published identities, so follow the steps for your host below.
 
 HVE Core also retired its prompt files. If a slash command you relied on no longer resolves, [Retired Prompt Commands](#retired-prompt-commands) names its replacement.
 
@@ -45,27 +45,11 @@ copilot plugin marketplace add microsoft/hve-core
 copilot plugin install hve-core@hve-core
 ```
 
-The `--force` option also uninstalls plugins installed from that marketplace.
-
-Refresh the marketplace before requesting an installed-plugin update:
-
-```bash
-copilot plugin marketplace update hve-core
-copilot plugin update hve-core@hve-core
-```
+The `--force` option also uninstalls plugins installed from that marketplace. To update the plugin later, see [Update the Plugin](install#update-the-plugin).
 
 ## VS Code Extension Selection
 
-The sole extension identity is `ise-hve-essentials.hve-core`. Stable and PreRelease have the same complete component set but differ in source ownership, cadence, and version.
-
-PreRelease packages from the reviewed `release/prerelease` path and its
-`prerelease-v<version>` tag. Stable packages from the reviewed
-`release/stable` path and its `v<version>` tag. Stable can lag PreRelease
-because each promotion and release is independently reviewed.
-
-Select the channel offered by the HVE Core extension page in VS Code. A
-published channel release carries the associated release assurance; client
-channel-switch behavior must be confirmed in the installed host.
+The sole extension identity is `ise-hve-essentials.hve-core`. Stable and PreRelease carry the same components and differ in version and cadence. Select the channel on the HVE Core extension page in VS Code. [VS Code Extension Channels](packages#vs-code-extension-channels) explains how channel releases are produced and the current state of the release branches.
 
 ## Repository Adoption
 
@@ -76,9 +60,9 @@ Copy HVE Core into your repository when the repository should own and review its
 3. Review the components and collisions before allowing writes.
 4. Review the resulting `.hve-tracking.json` manifest before committing adopted files.
 
-The installer preserves repository-relative paths for every copied component. Each skill includes its complete distributable directory, excluding local tests, environments, and caches. Hooks are plugin runtime configuration and are not copied into the target repository.
+The installer preserves repository-relative paths for every copied component. Each skill includes its complete distributable directory, excluding local tests, environments, and caches. The installer does not copy hooks, and HVE Core currently ships none.
 
-Schema version 2 stores `selection.profile` and `selection.components`. File records identify component ownership without package identity, and hooks are not copied. Existing schema version 1 tracking files are not upgraded in place: remove `.hve-tracking.json` and run a clean installation. Because the one-plugin manifest no longer declares per-component maturity, new schema version 2 file records use the schema-default `stable` value.
+Schema version 2 stores `selection.profile` and `selection.components`, and its file records identify component ownership without package identity. Existing schema version 1 tracking files are not upgraded in place: remove `.hve-tracking.json` and run a clean installation. New schema version 2 file records use the schema-default `stable` maturity, because the single plugin manifest no longer declares per-component maturity.
 
 ## Retired Package Identities
 
@@ -186,10 +170,11 @@ These commands became skills with the same name, so the slash command still work
 * `/git-setup`
 * `/incident-response`
 * `/risk-register`
+* `/rpi`
 * `/synth-data-generate`
 
 > [!NOTE]
-> Every skill in this list except `/dt-figma-export` sets `disable-model-invocation: true`, so agents do not start it for you; type its slash command to run it. For Copilot CLI support, see [Skills vs Agent Mode](methods/cli-plugins#skills-vs-agent-mode).
+> Every skill in this list except `/dt-figma-export` and `/rpi` sets `disable-model-invocation: true`, so agents do not start it for you; type its slash command to run it. For Copilot CLI support, see [Skills vs Agent Mode](methods/cli-plugins#skills-vs-agent-mode).
 
 ### Security and supply chain
 
@@ -231,7 +216,7 @@ These commands became skills with the same name, so the slash command still work
 | `/dt-method-06-planning`           | The `DT Coach` agent; ask to plan a Method 6 (Low-Fidelity Prototypes) prototype                                                                                           |
 | `/dt-method-06-building`           | The `DT Coach` agent; ask to build the Method 6 prototype                                                                                                                  |
 | `/dt-method-06-testing`            | The `DT Coach` agent; ask to test the Method 6 prototype                                                                                                                   |
-| `/dt-canonical-deck`               | The `DT Coach` agent; ask to create or refresh the canonical deck or to build the customer-card PowerPoint, or use its Canonical Deck or Build Customer Cards PPTX handoff |
+| `/dt-canonical-deck`               | The `DT Coach` agent; ask to create or refresh the canonical deck or to generate customer-card slide content, or use its Canonical Deck or Generate Customer Cards handoff |
 | `/dt-handoff-problem-space`        | The `DT Coach` agent; ask to hand off the Problem Space to RPI                                                                                                             |
 | `/dt-handoff-solution-space`       | The `DT Coach` agent; ask to hand off the Solution Space to RPI                                                                                                            |
 | `/dt-handoff-implementation-space` | The `DT Coach` agent; ask to hand off the Implementation Space to RPI                                                                                                      |
@@ -240,7 +225,6 @@ These commands became skills with the same name, so the slash command still work
 
 | Retired command            | Replacement                                                                                                                                         |
 |----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| `/rpi`                     | The `RPI Agent`; describe the task                                                                                                                  |
 | `/pr-review`               | The `Code Review` agent, which reviews the pull request you name or the open one for your branch, and otherwise a branch diff or your local changes |
 | `/git-commit-message`      | `/git-commit mode=message-only`, which writes a message for your staged changes without committing                                                  |
 | `/vally-test-write`        | `/vally-tests mode=from-artifact`, with `files=<path>`                                                                                              |

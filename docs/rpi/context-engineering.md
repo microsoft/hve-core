@@ -3,7 +3,7 @@ title: "Context Engineering: Why AI Context Management Matters"
 description: Understand how long RPI lifecycles accumulate context and how durable artifacts support deliberate resumption
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: concept
 keywords:
   - context engineering
@@ -66,7 +66,7 @@ Starting a new chat achieves the same result through a different mechanism. Both
 `/clear` removes chat history, but a task can resume from its durable artifacts. Those artifacts live in `.copilot-tracking/` (gitignored), not in chat history, so they survive the clear. Bring the relevant task evidence back into the agent's view by naming it in your message:
 
 * Reference the artifact's file path so the agent knows where to look.
-* With `RPI Agent`, you can name the task slug instead. The agent matches it against the session state under `.copilot-tracking/rpi-sessions/` and continues from the recorded phase and artifact pointers.
+* With `/rpi` or `RPI Agent`, you can name the task slug instead. The session matches it against the session state under `.copilot-tracking/rpi-sessions/` and continues from the recorded phase and artifact pointers.
 
 ### What to Open at Each Transition
 

@@ -146,6 +146,42 @@ jobs:
             Write-Output "Found Python projects: $dirs"
           }
 
+  discover-python-audit-projects:
+    name: Discover Python Audit Projects
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      directories: ${{ steps.find.outputs.directories }}
+      has-projects: ${{ steps.find.outputs.has-projects }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Find Python audit projects
+        id: find
+        shell: pwsh
+        run: |
+          $projectList = @(Get-ChildItem -Recurse -Force -Filter pyproject.toml |
+            Where-Object { $_.FullName.Replace([IO.Path]::DirectorySeparatorChar, [char]'/') -notmatch '/(node_modules|\.venv|\.copilot-tracking)/' } |
+            ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
+            ForEach-Object { ($_ -replace '^\.[\\/]', '').Replace([IO.Path]::DirectorySeparatorChar, [char]'/') } |
+            Sort-Object)
+          . ./scripts/security/Assert-WorkflowProjectDirectory.ps1
+          $projectList = @(Assert-WorkflowProjectDirectory -Path $projectList)
+          $jsonItems = $projectList | ForEach-Object { $_ | ConvertTo-Json -Compress }
+          $dirs = '[' + (($jsonItems) -join ',') + ']'
+          "directories=$dirs" >> $env:GITHUB_OUTPUT
+          if ($projectList.Count -eq 0) {
+            "has-projects=false" >> $env:GITHUB_OUTPUT
+            Write-Output 'No Python audit projects found'
+          } else {
+            "has-projects=true" >> $env:GITHUB_OUTPUT
+            Write-Output "Found Python audit projects: $dirs"
+          }
+
   discover-node-projects:
     name: Discover Node Projects
     runs-on: ubuntu-24.04
@@ -309,14 +345,14 @@ jobs:
       soft-fail: false
       changed-files-only: true
       # Deck tests also read HTML, CSS and JSON sources, so each slide deck and
-      # the hve-slides skill that carries the starter deck run on any change in
-      # their directory. Extension and canvas tests also read UI assets and the
+      # combined authoring/rendering skill run on any change in their source
+      # or shared skill. Extension and canvas tests also read UI assets and the
       # repository project entries beside them, so every extension runs on any
       # change under .github/extensions/. The session-log-canvas-update skill
       # tests its schema baseline against the canvas indexer, so it runs on
       # changes in its directory or under .github/extensions/. Other projects
       # receive '' and keep node-tests.yml's JS-family default.
-      changed-paths-pattern: ${{ (startsWith(matrix.directory, 'slides/') || matrix.directory == '.github/skills/hve-slides') && format('^{0}/', matrix.directory) || startsWith(matrix.directory, '.github/extensions/') && '^\.github/extensions/' || matrix.directory == '.github/skills/session-log-canvas-update' && '^\.github/(skills/session-log-canvas-update|extensions)/' || '' }}
+      changed-paths-pattern: ${{ (startsWith(matrix.directory, 'slides/') || matrix.directory == '.github/skills/experimental/hve-slides') && format('^{0}/|^\.github/skills/experimental/hve-slides/', matrix.directory) || startsWith(matrix.directory, '.github/extensions/') && '^\.github/extensions/' || matrix.directory == '.github/skills/session-log-canvas-update' && '^\.github/(skills/session-log-canvas-update|extensions)/' || '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -383,12 +419,12 @@ jobs:
 
   pip-audit:
     name: "pip-audit (${{ matrix.directory }})"
-    needs: [change-range, discover-python-projects]
-    if: needs.discover-python-projects.outputs.has-projects == 'true'
+    needs: [change-range, discover-python-audit-projects]
+    if: needs.discover-python-audit-projects.outputs.has-projects == 'true'
     strategy:
       fail-fast: false
       matrix:
-        directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
+        directory: ${{ fromJson(needs.discover-python-audit-projects.outputs.directories) }}
     uses: $/.github/workflows/pip-audit.yml
     permissions:
       contents: read
@@ -903,6 +939,7 @@ jobs:
       - typescript-check
       - psscriptanalyzer
       - discover-python-projects
+      - discover-python-audit-projects
       - python-lint
       - copyright-headers
       - workflow-validation-scan

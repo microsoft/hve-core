@@ -144,7 +144,7 @@ If the server log contains `Ignoring option 'server-data-dir': Value must not be
 
 ### Step 4: Resize Viewport
 
-Resize the viewport to match the target placement ratio: `mcp_microsoft_pla_browser_resize` to a resolution whose aspect ratio matches the PPTX placeholder where the screenshot will be inserted.
+Resize the viewport to match the target placement ratio: `mcp_microsoft_pla_browser_resize` to a resolution whose aspect ratio matches the slide or document region where the screenshot will be inserted.
 
 Calculate dimensions using `width_px = 1200` and `height_px = int(1200 / (target_width_inches / target_height_inches))`. For example, a 5.5" x 4.2" placeholder produces a 1200 x 916 viewport.
 

@@ -3,7 +3,7 @@ title: Documentation Maintenance
 description: How the automated ms.date freshness system detects and flags stale documentation for review
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-03
 ms.topic: reference
 keywords:
   - documentation
@@ -35,6 +35,13 @@ The `Invoke-MsDateFreshnessCheck.ps1` script reads each file's frontmatter, extr
 * `logs/msdate-summary.md`: human-readable Markdown summary uploaded to the Actions job summary
 
 The PR check uses `changed-files-only: true` so contributors only see annotations for the files they actually touched. The weekly scan runs without this filter to find all outdated content across the repository.
+
+The full scan skips these paths:
+
+* Directories named `node_modules`, `.git`, `logs`, `.copilot-tracking`, and `plugins`
+* Files named `CHANGELOG.md`
+
+Passing a single explicit file path to the script bypasses these exclusions.
 
 ## Fixing Stale Documentation
 
@@ -84,11 +91,11 @@ Issues are not automatically closed. After updating the documentation and mergin
 
 ### Frontmatter missing or malformed
 
-The script skips files with no frontmatter block. Stale detection requires a valid `---` delimited YAML block with a parseable `ms.date` field. Files without `ms.date` are logged but not counted as stale.
+The script skips files with no frontmatter block. Stale detection requires a valid `---` delimited YAML block with a parseable `ms.date` field. Files without `ms.date` are not counted as stale, and the skip is only reported in verbose output. Run the script with `-Verbose` to see which files were skipped.
 
 ### Date format errors
 
-Dates must use `YYYY-MM-DD` format. Values like `January 15, 2025` or `2025/01/15` will not parse and the file will be skipped with a warning.
+Dates must use `YYYY-MM-DD` format. Values like `January 15, 2025` or `2025/01/15` will not parse, and the file is skipped without a warning, so a malformed date can hide a stale file. Run the script with `-Verbose` to see `Invalid ms.date format` messages, and run `npm run lint:frontmatter` to catch malformed dates under `docs/`.
 
 ### PR check annotations not appearing
 
