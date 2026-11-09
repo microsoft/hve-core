@@ -56,7 +56,7 @@
       "scenario_id": "EV06-A087-HYDRATION-ROUTING",
       "families": ["NORMAL", "ROUTING"],
       "surfaces": ["hierarchy", "tags", "spatial", "lineage", "authorship"],
-      "destinations": ["backlog-item", "instructions-file", "adr", "living-document", "powerpoint-deck", "next-workshop-seed", "unactioned"],
+      "destinations": ["backlog-item", "instructions-file", "adr", "living-document", "next-workshop-seed", "unactioned"],
       "assertions": ["destination-fields", "source-text-unchanged", "partial-explicit"],
       "baseline": "CONTRADICTED"
     },

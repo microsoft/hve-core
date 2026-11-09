@@ -9,7 +9,7 @@ import {
   createStandaloneHtml,
   neutralizeRevealSinks,
   readRevealVersion
-} from '../../.github/skills/hve-slides/templates/deck/bundle.mjs';
+} from '../../.github/skills/experimental/hve-slides/templates/deck/bundle.mjs';
 
 export { createStandaloneHtml, neutralizeRevealSinks, readRevealVersion };
 

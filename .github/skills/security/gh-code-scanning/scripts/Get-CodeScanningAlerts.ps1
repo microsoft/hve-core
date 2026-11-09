@@ -5,12 +5,13 @@
 
 <#
 .SYNOPSIS
-    Retrieves open code scanning alerts from a GitHub repository, grouped by rule.
+    Retrieves open code scanning alerts from a GitHub repository, grouped by tool and rule.
 
 .DESCRIPTION
     Uses the gh CLI to fetch open code scanning alerts for a repository and branch,
-    suppressing the pager for non-interactive output. Results are grouped by rule
-    description and sorted by occurrence count descending.
+    suppressing the pager for non-interactive output. Results are grouped by tool
+    name and rule ID and sorted by occurrence count descending. Group titles use
+    the rule description, then the rule name, then the rule ID.
 
     Requires gh CLI authenticated with security_events scope (or public_repo for public repos).
 
@@ -88,9 +89,12 @@ function Get-AlertPage {
 function ConvertTo-AlertGroup {
     param([Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Alerts)
 
+    # Some tools, such as zizmor, publish no rule description, so grouping by
+    # description would merge different rules.
     $Alerts |
-        Group-Object { $_.rule.description } |
+        Group-Object { '{0}|{1}' -f $_.tool.name, $_.rule.id } |
         ForEach-Object {
+            $rule = $_.Group[0].rule
             $paths = @(
                 $_.Group |
                 ForEach-Object { $_.most_recent_instance.location.path } |
@@ -98,8 +102,8 @@ function ConvertTo-AlertGroup {
                 Sort-Object -Unique
             )
             [PSCustomObject]@{
-                RuleDescription    = $_.Name
-                RuleId             = $_.Group[0].rule.id
+                RuleDescription    = @($rule.description, $rule.name, $rule.id) | Where-Object { $_ } | Select-Object -First 1
+                RuleId             = $rule.id
                 Tool               = $_.Group[0].tool.name
                 SecuritySeverity   = $_.Group[0].rule.security_severity_level
                 Severity           = $_.Group[0].rule.severity
@@ -138,7 +142,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         $Dismissed = Get-AlertPage -Url $DismissedUrl
         $StillDetected = @($Dismissed | Where-Object { $_.most_recent_instance.state -ne 'fixed' })
         foreach ($group in @(ConvertTo-AlertGroup -Alerts $StillDetected)) {
-            $first = $StillDetected | Where-Object { $_.rule.id -eq $group.RuleId } | Select-Object -First 1
+            $first = $StillDetected | Where-Object { $_.rule.id -eq $group.RuleId -and $_.tool.name -eq $group.Tool } | Select-Object -First 1
             $group | Add-Member -NotePropertyName Kind -NotePropertyValue 'dismissed-still-detected'
             $group | Add-Member -NotePropertyName DismissedReason -NotePropertyValue $first.dismissed_reason
             $Grouped += $group

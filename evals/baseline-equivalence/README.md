@@ -2,7 +2,7 @@
 title: Baseline Equivalence Suite
 description: 'Pairs identical probes across baseline and customized environments to measure nominal behavior preservation'
 author: HVE Core Team
-ms.date: 2026-11-05
+ms.date: 2026-11-06
 ---
 
 ## Purpose
@@ -146,8 +146,10 @@ Onboarding a new agent (for example `security-planner`) requires a subject-aware
 
 1. The driver materializes the target agent's surface into an isolated workspace automatically, and the customized spec launches the subject before sending the user question.
    [scripts/evals/lib/EquivalenceEnvironment.psm1](../../scripts/evals/lib/EquivalenceEnvironment.psm1) copies the agent file, its declared
-   instructions, its subagents, `copilot-instructions.md`, and only the skills that agent actually references. Two different agents therefore
-   produce different customized environments. Materialization alone is not invocation: the launch turn is the evidence-bearing treatment. The baseline runs against the same shared seed project but no agent and is cached and reused across agents, keyed on model, Vally version, and a content hash covering the baseline spec plus the seed.
+   instructions, its subagents, `copilot-instructions.md`, and only the skills that agent actually references. A skill the agent preloads
+   through `skills` frontmatter counts as part of the agent, so the instructions, skills, and subagents it names are copied too; from a skill
+   body, only agents marked `user-invocable: false` count as subagents. Two different agents therefore produce different customized
+   environments. Materialization alone is not invocation: the launch turn is the evidence-bearing treatment. The baseline runs against the same shared seed project but no agent and is cached and reused across agents, keyed on model, Vally version, and a content hash covering the baseline spec plus the seed.
 2. Persona-bleed guards are declared inline on equivalent-policy stimuli. `Resolve-AgentScopePattern` remains available in [scripts/evals/lib/EquivalenceEnvironment.psm1](../../scripts/evals/lib/EquivalenceEnvironment.psm1) for deferred per-subject guard work.
 3. Add subject-aware guards only when evidence shows they measure nominal non-degradation rather than lifecycle phase behavior.
 

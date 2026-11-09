@@ -12,3 +12,4 @@ dependencies = [
 
 [tool.uv]
 package = false
+constraint-dependencies = ["pip>=26.2.2"]

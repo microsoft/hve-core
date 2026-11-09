@@ -2,7 +2,7 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
-"""Generate PowerPoint skill content YAML from canonical DT markdown artifacts."""
+"""Generate slide content YAML from canonical DT markdown artifacts."""
 
 from __future__ import annotations
 

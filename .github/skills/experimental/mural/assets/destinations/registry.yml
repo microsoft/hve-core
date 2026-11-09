@@ -36,12 +36,6 @@ destinations:
     loop_closure: 'Last-updated within the configured freshness window for the document type.'
     v1_retro: false
 
-  - id: powerpoint-deck
-    intent: synthesize
-    target: '**/.copilot-tracking/ppt/**'
-    loop_closure: 'Export confirmation; downstream stakeholder-distribution telemetry deferred.'
-    v1_retro: false
-
   - id: next-workshop-seed
     intent: capture
     target: '**/.copilot-tracking/mural/seeds/**'

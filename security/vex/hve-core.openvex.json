@@ -1,11 +1,11 @@
 {
   "@context": "https://openvex.dev/ns/v0.2.0",
-  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-10-10-v10",
+  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-11-06-v11",
   "author": "Microsoft HVE Core Maintainers",
-  "timestamp": "2026-10-10T05:50:27.418Z",
-  "last_updated": "2026-10-10T05:50:27.418Z",
-  "version": 10,
-  "tooling": "Drafted with an AI assistant using Copilot SDK in VS Code; maintained with human review and merge, and published and Sigstore-attested by the microsoft/hve-core/.github/workflows/vex-attest.yml reusable workflow.",
+  "timestamp": "2026-11-06T20:48:11.689Z",
+  "last_updated": "2026-11-06T20:48:11.689Z",
+  "version": 11,
+  "tooling": "Drafted by an AI assistant using Copilot SDK in VS Code. Qualified maintainer review and merge are required; release publication and Sigstore attestation are owned by microsoft/hve-core/.github/workflows/vex-attest.yml and have not been performed for this draft.",
   "statements": [
     {
       "vulnerability": {
@@ -695,9 +695,7 @@
       "vulnerability": {
         "name": "GHSA-p98j-92pf-mc4p",
         "@id": "https://osv.dev/GHSA-p98j-92pf-mc4p",
-        "aliases": [
-          null
-        ]
+        "aliases": []
       },
       "products": [
         {
@@ -1127,6 +1125,2758 @@
       "impact_statement": "The committed moderation environment resolves fsspec 2026.9.0, which is newer than the 2026.6.0 release where this issue was fixed. fsspec enters the environment through torch and huggingface-hub, and the moderation manifest now enforces the fixed version floor for reproducible installs.",
       "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-27vj-qcqg-25rc. Resolution evidence: scripts/evals/moderation/pyproject.toml requires fsspec >=2026.6.0; scripts/evals/moderation/uv.lock resolves fsspec 2026.9.0. Targeted moderation tests pass, and an OSV package query reports no vulnerability for fsspec 2026.9.0.",
       "timestamp": "2026-10-10T05:50:27.418Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4326",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4326",
+        "aliases": [
+          "BIT-pillow-2026-112392",
+          "CVE-2026-112392",
+          "GHSA-27h8-gf7j-v5hc"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4327",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4327",
+        "aliases": [
+          "BIT-pillow-2026-112394",
+          "CVE-2026-112394",
+          "GHSA-4558-3h8r-v8xp"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4328",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4328",
+        "aliases": [
+          "BIT-pillow-2026-112396",
+          "CVE-2026-112396",
+          "GHSA-4rr5-89j8-mwwm"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4329",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4329",
+        "aliases": [
+          "BIT-pillow-2026-112397",
+          "CVE-2026-112397",
+          "GHSA-58r4-6rv3-gfh8"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4330",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4330",
+        "aliases": [
+          "BIT-pillow-2026-112398",
+          "CVE-2026-112398",
+          "GHSA-5x8w-8jj5-q52h"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4331",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4331",
+        "aliases": [
+          "BIT-pillow-2026-112402",
+          "CVE-2026-112402",
+          "GHSA-7mwm-ghpf-9vrm"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4332",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4332",
+        "aliases": [
+          "BIT-pillow-2026-112403",
+          "CVE-2026-112403",
+          "GHSA-8g5g-8vmr-9782"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4333",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4333",
+        "aliases": [
+          "BIT-pillow-2026-112405",
+          "CVE-2026-112405",
+          "GHSA-cp9v-662q-vvx9"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4334",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4334",
+        "aliases": [
+          "BIT-pillow-2026-112896",
+          "CVE-2026-112896",
+          "GHSA-pchr-8j38-3x4p"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4335",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4335",
+        "aliases": [
+          "BIT-pillow-2026-112901",
+          "CVE-2026-112901",
+          "GHSA-xgh8-jp6q-p5x8"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4336",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4336",
+        "aliases": [
+          "BIT-pillow-2026-114501",
+          "CVE-2026-114501",
+          "GHSA-654x-cwwv-5j9c"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4337",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4337",
+        "aliases": [
+          "BIT-pillow-2026-96636",
+          "CVE-2026-96636",
+          "GHSA-p8hx-v2p6-rp84"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4338",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4338",
+        "aliases": [
+          "BIT-pillow-2026-96637",
+          "CVE-2026-96637",
+          "GHSA-g842-9rc4-69pw"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4339",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4339",
+        "aliases": [
+          "BIT-pillow-2026-96639",
+          "CVE-2026-96639",
+          "GHSA-v9pv-5gc8-w2m6"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4340",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4340",
+        "aliases": [
+          "BIT-pillow-2026-96641",
+          "CVE-2026-96641",
+          "GHSA-4rm8-3hmm-39fg"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4341",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4341",
+        "aliases": [
+          "BIT-pillow-2026-96642",
+          "CVE-2026-96642",
+          "GHSA-3j72-p6qg-6xp7"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4342",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4342",
+        "aliases": [
+          "BIT-pillow-2026-96643",
+          "CVE-2026-96643",
+          "GHSA-g4qv-2jxx-769h"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4343",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4343",
+        "aliases": [
+          "BIT-pillow-2026-96644",
+          "CVE-2026-96644",
+          "GHSA-9v9v-9qvf-h2hj"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-22hg-r758-rrw9",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-22hg-r758-rrw9",
+        "aliases": [
+          "BIT-pillow-2026-112390",
+          "CVE-2026-112390"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-24rc-8hj2-v98c",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-24rc-8hj2-v98c",
+        "aliases": [
+          "BIT-pillow-2026-96638",
+          "CVE-2026-96638"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-254f-3936-288h",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-254f-3936-288h",
+        "aliases": [
+          "BIT-pillow-2026-112391",
+          "CVE-2026-112391"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-332p-7hrc-92wf",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-332p-7hrc-92wf",
+        "aliases": [
+          "BIT-pillow-2026-112393",
+          "CVE-2026-112393"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-462x-pgg6-55fp",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-462x-pgg6-55fp",
+        "aliases": [
+          "BIT-pillow-2026-112395",
+          "CVE-2026-112395"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-5xm2-6676-qcp9",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-5xm2-6676-qcp9",
+        "aliases": [
+          "BIT-pillow-2026-112399",
+          "CVE-2026-112399"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-65qm-jvmh-6pqg",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-65qm-jvmh-6pqg",
+        "aliases": [
+          "BIT-pillow-2026-112400",
+          "CVE-2026-112400"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-74r2-7ff9-mjj2",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-74r2-7ff9-mjj2",
+        "aliases": [
+          "BIT-pillow-2026-112401",
+          "CVE-2026-112401"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-78g4-xqwv-q3g8",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-78g4-xqwv-q3g8"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-c6hw-5grf-ff96",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-c6hw-5grf-ff96",
+        "aliases": [
+          "BIT-pillow-2026-112404",
+          "CVE-2026-112404"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-f2g6-542v-9j58",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-f2g6-542v-9j58",
+        "aliases": [
+          "BIT-pillow-2026-112406",
+          "CVE-2026-112406"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-fc9g-5qg7-mf45",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-fc9g-5qg7-mf45",
+        "aliases": [
+          "BIT-pillow-2026-112891",
+          "CVE-2026-112891"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-g7cr-3p24-7wf7",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-g7cr-3p24-7wf7",
+        "aliases": [
+          "BIT-pillow-2026-96778",
+          "CVE-2026-96778"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-gg2r-wvfm-q9rx",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-gg2r-wvfm-q9rx",
+        "aliases": [
+          "BIT-pillow-2026-112892",
+          "CVE-2026-112892"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-j4m9-6w36-pw47",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-j4m9-6w36-pw47",
+        "aliases": [
+          "BIT-pillow-2026-112893",
+          "CVE-2026-112893"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-jg86-v3jv-hrpm",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-jg86-v3jv-hrpm",
+        "aliases": [
+          "BIT-pillow-2026-112894",
+          "CVE-2026-112894"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-mrfp-p49p-3hf2",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-mrfp-p49p-3hf2",
+        "aliases": [
+          "BIT-pillow-2026-96640",
+          "CVE-2026-96640"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-p4wg-p73j-c528",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-p4wg-p73j-c528",
+        "aliases": [
+          "BIT-pillow-2026-112895",
+          "CVE-2026-112895"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-q45j-58j2-45rg",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-q45j-58j2-45rg",
+        "aliases": [
+          "BIT-pillow-2026-112897",
+          "CVE-2026-112897"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-rfgq-q3w2-pmv2",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-rfgq-q3w2-pmv2",
+        "aliases": [
+          "BIT-pillow-2026-112898",
+          "CVE-2026-112898"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-vx6w-vv9f-6gvg",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-vx6w-vv9f-6gvg",
+        "aliases": [
+          "CVE-2026-112899"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-w889-685w-c8fh",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-w889-685w-c8fh",
+        "aliases": [
+          "BIT-pillow-2026-112900",
+          "CVE-2026-112900"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-xvh5-g6gv-559v",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-xvh5-g6gv-559v",
+        "aliases": [
+          "CVE-2026-112902"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/powerpoint"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/project-planning/security-planning"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pillow@12.3.0",
+              "identifiers": {
+                "purl": "pkg:pypi/pillow@12.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/powerpoint/uv.lock (12.3.0); .github/skills/experimental/tts-voiceover/uv.lock (12.3.0); .github/skills/project-planning/security-planning/uv.lock (12.3.0). The current main baseline already resolves Pillow 13.0.0 in security-planning. Upstream https://github.com/microsoft/hve-core/pull/3296 removed the PowerPoint project and TTS's Pillow dependency; this revision does not restore either. Earlier image/capture compatibility evidence applies to the original assessed source, not a restored current component. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2026-4320",
+        "@id": "https://api.osv.dev/v1/vulns/PYSEC-2026-4320",
+        "aliases": [
+          "GHSA-6q48-6c7w-9gw2"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#.github/skills/experimental/tts-voiceover"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/certifi@2026.2.25",
+              "identifiers": {
+                "purl": "pkg:pypi/certifi@2026.2.25"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/certifi@2026.5.20",
+              "identifiers": {
+                "purl": "pkg:pypi/certifi@2026.5.20"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: .github/skills/experimental/tts-voiceover/uv.lock (2026.2.25); scripts/evals/moderation/uv.lock (2026.5.20). Upstream https://github.com/microsoft/hve-core/pull/3296 already resolves certifi 2026.10.19 (https://pypi.org/pypi/certifi/2026.10.19/json); exact-lock audits and relevant compatibility checks passed. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Medium. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-gcqx-w48m-w2h4",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-gcqx-w48m-w2h4",
+        "aliases": [
+          "CVE-2026-93753"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#docs/docusaurus",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#docs/docusaurus"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/deepmerge@4.3.1",
+              "identifiers": {
+                "purl": "pkg:npm/deepmerge@4.3.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "CVE-2026-93753 is REJECTED in the assigning-authority record (https://cveawg.mitre.org/api/cve/CVE-2026-93753); the older OSV/GitHub metadata still reports this identifier. deepmerge 4.3.1 remains in the assessed documentation source. No software patch or non-exploitability assertion is made. Confidence band: Vendor-disputed. Human review questions: Confirm the assigning-authority rejection and choose the final VEX disposition. Confirm the assessed documentation-source boundary and downstream applicability.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-567q-5qvw-pf92",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-567q-5qvw-pf92",
+        "aliases": [
+          "CVE-2026-112907"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/filelock@3.29.4",
+              "identifiers": {
+                "purl": "pkg:pypi/filelock@3.29.4"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: scripts/evals/moderation/uv.lock (3.29.4). Upstream https://github.com/microsoft/hve-core/pull/3296 already resolves filelock 4.2.1 (https://pypi.org/pypi/filelock/4.2.1/json); exact-lock audits and relevant compatibility checks passed. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-69hj-f68j-2879",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-69hj-f68j-2879",
+        "aliases": [
+          "CVE-2026-112909"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/filelock@3.29.4",
+              "identifiers": {
+                "purl": "pkg:pypi/filelock@3.29.4"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: scripts/evals/moderation/uv.lock (3.29.4). Upstream https://github.com/microsoft/hve-core/pull/3296 already resolves filelock 4.2.1 (https://pypi.org/pypi/filelock/4.2.1/json); exact-lock audits and relevant compatibility checks passed. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-8mx5-7m5m-r77g",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-8mx5-7m5m-r77g",
+        "aliases": [
+          "CVE-2026-112910"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/filelock@3.29.4",
+              "identifiers": {
+                "purl": "pkg:pypi/filelock@3.29.4"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: scripts/evals/moderation/uv.lock (3.29.4). Upstream https://github.com/microsoft/hve-core/pull/3296 already resolves filelock 4.2.1 (https://pypi.org/pypi/filelock/4.2.1/json); exact-lock audits and relevant compatibility checks passed. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-9vhv-jxww-xfm5",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-9vhv-jxww-xfm5",
+        "aliases": [
+          "CVE-2026-112913"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/filelock@3.29.4",
+              "identifiers": {
+                "purl": "pkg:pypi/filelock@3.29.4"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: scripts/evals/moderation/uv.lock (3.29.4). Upstream https://github.com/microsoft/hve-core/pull/3296 already resolves filelock 4.2.1 (https://pypi.org/pypi/filelock/4.2.1/json); exact-lock audits and relevant compatibility checks passed. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-cwqr-hh33-gh44",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-cwqr-hh33-gh44",
+        "aliases": [
+          "CVE-2026-112915"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/filelock@3.29.4",
+              "identifiers": {
+                "purl": "pkg:pypi/filelock@3.29.4"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: scripts/evals/moderation/uv.lock (3.29.4). Upstream https://github.com/microsoft/hve-core/pull/3296 already resolves filelock 4.2.1 (https://pypi.org/pypi/filelock/4.2.1/json); exact-lock audits and relevant compatibility checks passed. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-fq56-3cx3-fjxp",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-fq56-3cx3-fjxp",
+        "aliases": [
+          "CVE-2026-112935"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/filelock@3.29.4",
+              "identifiers": {
+                "purl": "pkg:pypi/filelock@3.29.4"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: scripts/evals/moderation/uv.lock (3.29.4). Upstream https://github.com/microsoft/hve-core/pull/3296 already resolves filelock 4.2.1 (https://pypi.org/pypi/filelock/4.2.1/json); exact-lock audits and relevant compatibility checks passed. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-j8f7-rjxc-mr56",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-j8f7-rjxc-mr56",
+        "aliases": [
+          "CVE-2026-112936"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/filelock@3.29.4",
+              "identifiers": {
+                "purl": "pkg:pypi/filelock@3.29.4"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: scripts/evals/moderation/uv.lock (3.29.4). Upstream https://github.com/microsoft/hve-core/pull/3296 already resolves filelock 4.2.1 (https://pypi.org/pypi/filelock/4.2.1/json); exact-lock audits and relevant compatibility checks passed. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-rfpc-qcw5-3pc4",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-rfpc-qcw5-3pc4",
+        "aliases": [
+          "CVE-2026-112939"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/filelock@3.29.4",
+              "identifiers": {
+                "purl": "pkg:pypi/filelock@3.29.4"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: scripts/evals/moderation/uv.lock (3.29.4). Upstream https://github.com/microsoft/hve-core/pull/3296 already resolves filelock 4.2.1 (https://pypi.org/pypi/filelock/4.2.1/json); exact-lock audits and relevant compatibility checks passed. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-v4x8-3wr5-3wq8",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-v4x8-3wr5-3wq8",
+        "aliases": [
+          "CVE-2026-112940"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/filelock@3.29.4",
+              "identifiers": {
+                "purl": "pkg:pypi/filelock@3.29.4"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: scripts/evals/moderation/uv.lock (3.29.4). Upstream https://github.com/microsoft/hve-core/pull/3296 already resolves filelock 4.2.1 (https://pypi.org/pypi/filelock/4.2.1/json); exact-lock audits and relevant compatibility checks passed. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-xmj3-9gf7-h52w",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-xmj3-9gf7-h52w"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/evals/moderation"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/setuptools@83.0.0",
+              "identifiers": {
+                "purl": "pkg:pypi/setuptools@83.0.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: scripts/evals/moderation/uv.lock (83.0.0). Upstream https://github.com/microsoft/hve-core/pull/3296 already resolves setuptools 84.1.0 (https://pypi.org/pypi/setuptools/84.1.0/json); exact-lock audits and relevant compatibility checks passed. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Low. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-g3hv-75wg-m249",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-g3hv-75wg-m249",
+        "aliases": [
+          "CVE-2026-118764"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/extension/marketplace-publisher",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/extension/marketplace-publisher"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/minimatch@10.2.6",
+              "identifiers": {
+                "purl": "pkg:npm/minimatch@10.2.6"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: scripts/extension/marketplace-publisher/package-lock.json (10.2.6). Local remediation resolves the scoped minimatch 11.0.3 override (https://registry.npmjs.org/minimatch/11.0.3); exact-lock audits and relevant compatibility checks passed. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Medium. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-6pq8-jhm2-2vcw",
+        "@id": "https://api.osv.dev/v1/vulns/GHSA-6pq8-jhm2-2vcw",
+        "aliases": [
+          "CVE-2026-110816"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/extension/marketplace-publisher",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@87db8c56fddf89a554f8a5ffde676ab718b4f37e#scripts/extension/marketplace-publisher"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/qs@6.16.0",
+              "identifiers": {
+                "purl": "pkg:npm/qs@6.16.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The assessed product is the repository source at commit 87db8c56fddf89a554f8a5ffde676ab718b4f37e, scoped by each product PURL subpath, not a released VSIX. Baseline locked instances: scripts/extension/marketplace-publisher/package-lock.json (6.16.0). Local remediation resolves qs 6.16.1 (https://registry.npmjs.org/qs/6.16.1); exact-lock audits and relevant compatibility checks passed. A released HVE Core product containing that change has not been established, and advisory-specific exploitability remains undetermined. No fixed or not_affected release claim is made. Confidence band: Medium. Human review questions: Which released HVE Core product and configuration contains these dependency updates? Can attacker-controlled input reach the advisory-specific vulnerable operation in that product? Confirm component distribution and final status before merging this draft.",
+      "timestamp": "2026-11-06T20:48:11.689Z"
     }
   ]
 }

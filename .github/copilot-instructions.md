@@ -57,7 +57,7 @@ The project is organized into these main areas:
 * Extension (`extension/`) - VS Code extension source and packaging.
 * GitHub Configuration (`.github/`) - Workflows, instructions, agents, skills, composite actions, and issue templates, typically organized into `{package-id}` subdirectories.
 * Plugin manifest (`plugin.json`) - Deterministic membership and metadata for the sole `hve-core` plugin.
-* Plugin locator (`.github/plugin/marketplace.json`) - One relative marketplace entry that points to `.github`.
+* Plugin locator (`.github/plugin/marketplace.json`) - One relative marketplace entry that points to the repository root (`.`).
 * Logs (`logs/`) - Output from validation and analysis scripts.
 
 ### Scripts Organization

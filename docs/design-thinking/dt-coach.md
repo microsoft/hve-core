@@ -3,7 +3,7 @@ title: Using the DT Coach
 description: Guide to using the dt-coach agent for AI-assisted Design Thinking sessions
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-06
 ms.topic: tutorial
 keywords:
   - dt-coach
@@ -74,7 +74,7 @@ This directory also contains:
 During a session, ask the coach for the next step in plain language, or run the matching skill:
 
 * Ask which method comes next. The coach checks your coaching state, quotes the sequencing rule that supports a move, and recommends the next method.
-* Request a new or refreshed canonical deck snapshot at any time. The coach also offers one at the Method 3 and Method 5 exits once the work is ready, and after each snapshot it asks whether to build the customer-card PowerPoint.
+* Request a new or refreshed canonical deck snapshot at any time. The coach also offers one at the Method 3 and Method 5 exits once the work is ready, and after each snapshot it asks whether to generate customer-card slide content (`content.yaml`) from the snapshot.
 * At a natural exit point, ask the coach to prepare the RPI handoff. It writes an RPI entry document. Run `/rpi-research` with that document to begin the Research phase, or select **RPI Agent** in the agent picker and give it the document when you want one agent to coordinate every RPI phase.
 * Run `/dt-figma-export`, accept the coach's board-export offer, or ask for a Mural board export to put existing DT artifacts on a collaborative board for review.
 
