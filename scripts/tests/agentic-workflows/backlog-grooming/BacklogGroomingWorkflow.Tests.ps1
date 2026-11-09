@@ -364,7 +364,8 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         $script:Source | Should -Match '(?ms)^permissions:\s+contents: read\s+issues: read\s+pull-requests: read$'
         $script:Lock | Should -Match '"GITHUB_TOOLSETS": "context,repos,issues,pull_requests"'
         $script:Lock | Should -Match '"min-integrity": "unapproved"'
-        $script:Source | Should -Not -Match '(?ms)^  noop:\s+max:'
+        # gh-aw v1.0 raised the compiler's noop default to 2, so the source pins the single unreported noop.
+        $script:Source | Should -Match '(?m)^  noop:\r?\n    max: 1\r?\n    report-as-issue: false$'
         $script:Source | Should -Match '(?m)^    publish-backlog-grooming-result:$'
         $script:Source | Should -Match '(?ms)^    publish-backlog-grooming-result:.*?max: 5'
         $script:Source | Should -Match '(?ms)^    publish-backlog-grooming-result:.*?permissions:\s+contents: read'
@@ -415,8 +416,8 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         $script:Source | Should -Not -Match '(?m)^\s+target: "\*"$'
         $script:Source | Should -Match '(?m)^  report-failure-as-issue: false$'
         $script:Source | Should -Match '(?m)^  report-incomplete: false$'
-        $script:Source | Should -Match '(?m)^  missing-tool: false$'
-        $script:Source | Should -Match '(?m)^  missing-data: false$'
+        $script:Source | Should -Match '(?m)^  report-missing-tool: false$'
+        $script:Source | Should -Match '(?m)^  report-missing-data: false$'
     }
 
     It 'contains no prohibited mutation or code-scanning output' {
@@ -1917,7 +1918,8 @@ Describe 'Backlog grooming sweep snapshot and checkpoint contracts' -Tag 'Unit' 
         }
         $script:Orchestrator | Should -Not -Match 'retention-days: 7'
         $script:Source | Should -Match '(?ms)Upload immutable shard result.*?retention-days: 30'
-        $script:Lock | Should -Match '(?ms)Upload immutable shard result.*?retention-days: 30'
+        # gh-aw lets a GH_AW_DEFAULT_ARTIFACT_RETENTION_DAYS variable override compiled retention; the source value stays the fallback.
+        $script:Lock | Should -Match "(?ms)Upload immutable shard result.*?retention-days: \$\{\{ vars\.GH_AW_DEFAULT_ARTIFACT_RETENTION_DAYS \|\| '30' \}\}"
     }
 
     It 'S06 accepts only a contiguous digest-bound checkpoint chain' {
