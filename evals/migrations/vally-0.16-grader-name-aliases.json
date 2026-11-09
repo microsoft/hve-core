@@ -6,10 +6,10 @@
   "targetRevision": "0b8762fe0003396557820bd6093d88a932047033",
   "sourceSpecSha256": "4de094694d106aac4e5c1fe52adaf0b8a994b965a5927d421fe154ca9f41c93b",
   "targetSpecSha256": "aa96de88a9f31d9bd964f3915061d273421fd3117217618a7d635348123d88f3",
-  "mapSha256": "439c4c6445f64d714df83bd78543bca9ba50c9823b2cf9c65e34f5b67fce6084",
+  "mapSha256": "0731bbba6ff23f15737058f02294670a61d35bf6d44b8cb0287c88d123920217",
   "counts": {
     "sourceToTargetPairs": 1240,
-    "authoredAliases": 414,
+    "authoredAliases": 411,
     "generatedCopies": 171,
     "semanticChanges": 0
   },
@@ -3653,36 +3653,6 @@
       "oldName": "phase-marker-present",
       "newName": "security-planner-class-recipe-phase-marker-present",
       "behaviorSha256": "8057658029ca26a9f97c46098d5ded9067e64af590d4b2af95a333d01a504b2f"
-    },
-    {
-      "evalName": "agent-behavior",
-      "source": "evals/agent-behavior/stimuli/pptx.yml",
-      "stimulus": "pptx-class-recipe",
-      "graderType": "output-matches",
-      "resultKind": "code",
-      "oldName": "no-source-edit",
-      "newName": "pptx-class-recipe-no-source-edit",
-      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
-    },
-    {
-      "evalName": "agent-behavior",
-      "source": "evals/agent-behavior/stimuli/pptx.yml",
-      "stimulus": "pptx-class-recipe",
-      "graderType": "output-matches",
-      "resultKind": "code",
-      "oldName": "phase-marker-present",
-      "newName": "pptx-class-recipe-phase-marker-present",
-      "behaviorSha256": "8057658029ca26a9f97c46098d5ded9067e64af590d4b2af95a333d01a504b2f"
-    },
-    {
-      "evalName": "agent-behavior",
-      "source": "evals/agent-behavior/stimuli/pptx.yml",
-      "stimulus": "pptx-class-recipe",
-      "graderType": "output-matches",
-      "resultKind": "code",
-      "oldName": "tracking-file-write",
-      "newName": "pptx-class-recipe-tracking-file-write",
-      "behaviorSha256": "79dba347bb58f4084c3d9c9f52f33218fd09bd3e754c271123e96928a023cd2b"
     },
     {
       "evalName": "agent-behavior",

@@ -1981,7 +1981,8 @@ function renderPage() {
 
 // Panels and drawers
 
-const navDocks = () => window.matchMedia('(min-width: 1024px)').matches;
+const NAV_DOCK_QUERY = '(min-width: 720px)';
+const navDocks = () => window.matchMedia(NAV_DOCK_QUERY).matches;
 const steerDocks = () => window.matchMedia('(min-width: 1360px)').matches;
 
 function applyPanels() {
@@ -2378,9 +2379,13 @@ function wire() {
             setLive('paused');
         }
     });
-    window.matchMedia('(min-width: 1024px)').addEventListener('change', () => {
+    window.matchMedia(NAV_DOCK_QUERY).addEventListener('change', () => {
+        // Keep focus off the navigator once applyPanels makes it inert.
+        const focusInNav = $('navigator').contains(document.activeElement);
+        if (focusInNav && navDocks()) state.ui.navOpen = true;
         state.ui.drawer = null;
         applyPanels();
+        if (focusInNav && $('navigator').inert) $('navToggle').focus();
     });
     window.matchMedia('(min-width: 1360px)').addEventListener('change', () => {
         state.ui.drawer = null;

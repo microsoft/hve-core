@@ -18,6 +18,12 @@
     Subagents come from paths in the body and from agent display names in the
     body, because the Copilot subagent tool selects agents by name.
 
+    A skill the agent preloads loads with the agent, so the references in that
+    skill's body count as the agent's own, with relative paths resolved against
+    the skill's directory. From a skill body, an agent counts only when its
+    frontmatter sets `user-invocable: false`, because a shared skill can name
+    user-facing agents as audiences rather than as subagents it dispatches.
+
     The JSON shape:
     {
       "<slug>": {
@@ -243,6 +249,115 @@ function Get-AgentNameIndex {
     return $index
 }
 
+function Get-SubagentPathSet {
+    <#
+    .SYNOPSIS
+        Returns the workspace-relative paths of agents whose frontmatter marks them as subagents.
+    .DESCRIPTION
+        An agent is a subagent when its frontmatter `user-invocable` value, trimmed of
+        quotes and compared case-insensitively, is `false`. AffectedAgents.psm1 uses the
+        same rule to tell parent agents from subagents.
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Collections.Generic.HashSet[string]])]
+    param(
+        [Parameter(Mandatory)] [string]$RepoRoot,
+        [Parameter(Mandatory)] [System.IO.FileInfo[]]$AgentFiles
+    )
+
+    $set = New-Object System.Collections.Generic.HashSet[string]
+    foreach ($agentFile in $AgentFiles) {
+        $parsed = Read-AgentFile -Path $agentFile.FullName
+        foreach ($line in ($parsed.Frontmatter -split '\r?\n')) {
+            if ($line -match '^\s*user-invocable\s*:\s*(?<val>.+?)\s*$') {
+                if ($matches['val'].Trim().Trim("'", '"').ToLowerInvariant() -eq 'false') {
+                    [void]$set.Add((ConvertTo-RelativePath -RepoRoot $RepoRoot -Path $agentFile.FullName))
+                }
+                break
+            }
+        }
+    }
+    return , $set
+}
+
+function Get-BodyDependency {
+    <#
+    .SYNOPSIS
+        Collects the instructions, skills, and subagents one Markdown body references.
+    .DESCRIPTION
+        Matches agent display names anywhere in the body, backticked skill names followed
+        by "skill", and path references, resolving relative paths against SourceDir. A
+        reference to OwnPath never counts. When SubagentPaths is supplied, an agent
+        reference counts only when that agent is in the set.
+    .OUTPUTS
+        [hashtable] Keys Instructions, Skills, Subagents, and Unresolved, each a string array.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)] [string]$RepoRoot,
+        [Parameter(Mandatory)] [AllowEmptyString()] [string]$Body,
+        [Parameter(Mandatory)] [string]$SourceDir,
+        [Parameter(Mandatory)] [string]$OwnPath,
+        [Parameter(Mandatory)] [hashtable]$AgentNameIndex,
+        [Parameter(Mandatory)] [hashtable]$SkillIndex,
+        [System.Collections.Generic.HashSet[string]]$SubagentPaths
+    )
+
+    $instructions = New-Object System.Collections.Generic.List[string]
+    $skills       = New-Object System.Collections.Generic.List[string]
+    $subagents    = New-Object System.Collections.Generic.List[string]
+    $unresolved   = New-Object System.Collections.Generic.List[string]
+
+    $countsAsSubagent = {
+        param([string]$Path)
+        return ($Path -ne $OwnPath -and ($null -eq $SubagentPaths -or $SubagentPaths.Contains($Path)))
+    }
+
+    if ($Body) {
+        # Longer names match first and are blanked, so 'Report Generator' does not match inside 'Engagement Report Generator'.
+        $scan = $Body
+        foreach ($name in @($AgentNameIndex.Keys | Sort-Object { $_.Length } -Descending)) {
+            $pattern = '(?<![\w-])' + [regex]::Escape($name) + '(?![\w-])'
+            if (-not [regex]::IsMatch($scan, $pattern)) { continue }
+            if (& $countsAsSubagent $AgentNameIndex[$name]) { $subagents.Add($AgentNameIndex[$name]) }
+            $scan = [regex]::Replace($scan, $pattern, ' ')
+        }
+        foreach ($m in [regex]::Matches($Body, '`([a-z][a-z0-9-]+)`\s+(?:shared\s+)?skill')) {
+            $name = $m.Groups[1].Value
+            if ($SkillIndex.ContainsKey($name)) { $skills.Add($SkillIndex[$name]) }
+        }
+
+        foreach ($ref in (Find-ReferenceMatches -Body $Body)) {
+            $resolved = Resolve-RefToFiles -RepoRoot $RepoRoot -Ref $ref -SourceDir $SourceDir
+            if ($resolved.Count -eq 0) {
+                $unresolved.Add($ref)
+                continue
+            }
+            foreach ($r in $resolved) {
+                if ($r -like '*.agent.md') {
+                    if (& $countsAsSubagent $r) { $subagents.Add($r) }
+                } elseif ($r -like '*.instructions.md') {
+                    $instructions.Add($r)
+                } elseif ($r -like '*/.github/skills/*' -or $r -like '.github/skills/*') {
+                    $skills.Add($r)
+                } elseif ($r -like '*/instructions/*' -or $r -like '*instructions*') {
+                    $instructions.Add($r)
+                } elseif ($r -like '*/skills/*') {
+                    $skills.Add($r)
+                }
+            }
+        }
+    }
+
+    return @{
+        Instructions = $instructions.ToArray()
+        Skills       = $skills.ToArray()
+        Subagents    = $subagents.ToArray()
+        Unresolved   = $unresolved.ToArray()
+    }
+}
+
 function Get-AgentSlug {
     [CmdletBinding()]
     [OutputType([string])]
@@ -302,7 +417,17 @@ if (-not (Test-Path -LiteralPath $agentsRoot)) {
 $agentFiles = @(Get-ChildItem -Path $agentsRoot -Recurse -Filter '*.agent.md' -File)
 $skillIndex = Get-SkillNameIndex -RepoRoot $resolvedRoot
 $agentNameIndex = Get-AgentNameIndex -RepoRoot $resolvedRoot -AgentFiles $agentFiles
+$subagentPaths = Get-SubagentPathSet -RepoRoot $resolvedRoot -AgentFiles $agentFiles
 $map = @{}
+
+# Merges one body's references into the current agent's record.
+$addBodyDependency = {
+    param([hashtable]$Found, [string]$Source)
+    foreach ($r in $Found.Instructions) { [void]$instructions.Add($r) }
+    foreach ($r in $Found.Skills) { [void]$skills.Add($r) }
+    foreach ($r in $Found.Subagents) { [void]$subagents.Add($r) }
+    foreach ($r in $Found.Unresolved) { $warnings.Add("$Source ref not resolved: $r") }
+}
 
 foreach ($file in $agentFiles) {
     $slug = Get-AgentSlug -AgentPath $file.Name
@@ -337,47 +462,24 @@ foreach ($file in $agentFiles) {
         foreach ($r in $resolved) { [void]$skills.Add($r) }
     }
 
-    # Named references: agent display names anywhere in the body and `<name>` skill mentions.
+    # Agent display names, `<name>` skill mentions, and path references in the body.
     $ownPath = ConvertTo-RelativePath -RepoRoot $resolvedRoot -Path $file.FullName
-    # Longer names match first and are blanked, so 'Report Generator' does not match inside 'Engagement Report Generator'.
-    $scan = $parsed.Body
-    foreach ($name in @($agentNameIndex.Keys | Sort-Object { $_.Length } -Descending)) {
-        $pattern = '(?<![\w-])' + [regex]::Escape($name) + '(?![\w-])'
-        if (-not [regex]::IsMatch($scan, $pattern)) { continue }
-        if ($agentNameIndex[$name] -ne $ownPath) { [void]$subagents.Add($agentNameIndex[$name]) }
-        $scan = [regex]::Replace($scan, $pattern, ' ')
-    }
-    foreach ($m in [regex]::Matches($parsed.Body, '`([a-z][a-z0-9-]+)`\s+(?:shared\s+)?skill')) {
-        $name = $m.Groups[1].Value
-        if ($skillIndex.ContainsKey($name)) { [void]$skills.Add($skillIndex[$name]) }
-    }
+    $bodyDependency = Get-BodyDependency -RepoRoot $resolvedRoot -Body $parsed.Body -SourceDir $sourceDir -OwnPath $ownPath `
+        -AgentNameIndex $agentNameIndex -SkillIndex $skillIndex
+    & $addBodyDependency $bodyDependency 'body'
 
-    # Body references
-    foreach ($ref in (Find-ReferenceMatches -Body $parsed.Body)) {
-        $resolved = Resolve-RefToFiles -RepoRoot $resolvedRoot -Ref $ref -SourceDir $sourceDir
-        if ($resolved.Count -eq 0) {
-            $warnings.Add("body ref not resolved: $ref")
-            continue
-        }
-        foreach ($r in $resolved) {
-            if ($r -like '*.agent.md') {
-                if ((ConvertTo-RelativePath -RepoRoot $resolvedRoot -Path $file.FullName) -ne $r) {
-                    [void]$subagents.Add($r)
-                }
-            } elseif ($r -like '*.instructions.md') {
-                [void]$instructions.Add($r)
-            } elseif ($r -like '*/.github/skills/*' -or $r -like '.github/skills/*') {
-                [void]$skills.Add($r)
-            } elseif ($r -like '*/instructions/*' -or $r -like '*instructions*') {
-                [void]$instructions.Add($r)
-            } elseif ($r -like '*/skills/*') {
-                [void]$skills.Add($r)
-            }
-        }
+    # A preloaded skill's body counts as the agent's own; only subagents count from it.
+    foreach ($ref in $declaredSkills) {
+        if (-not $skillIndex.ContainsKey($ref)) { continue }
+        $skillFile = Join-Path $resolvedRoot $skillIndex[$ref]
+        $skillDependency = Get-BodyDependency -RepoRoot $resolvedRoot -Body (Read-AgentFile -Path $skillFile).Body `
+            -SourceDir (Split-Path -Parent $skillFile) -OwnPath $ownPath -AgentNameIndex $agentNameIndex `
+            -SkillIndex $skillIndex -SubagentPaths $subagentPaths
+        & $addBodyDependency $skillDependency "preloaded skill $($skillIndex[$ref])"
     }
 
     $map[$slug] = @{
-        agent        = ConvertTo-RelativePath -RepoRoot $resolvedRoot -Path $file.FullName
+        agent        = $ownPath
         instructions = @($instructions)
         skills       = @($skills)
         subagents    = @($subagents)

@@ -947,6 +947,126 @@ Describe 'Eval credential boundary' -Tag 'Unit' {
     }
 }
 
+Describe 'Locked dependency audit routing' -Tag 'Unit' {
+    It 'Discovers moderation and scanner roots for audits without broadening lint or test matrices' {
+        $fixture = Join-Path $TestDrive 'python-audit-discovery'
+        foreach ($directory in @(
+                '.github/skills/example'
+                'scripts/evals/moderation'
+                'scripts/tools/pip-audit'
+                'node_modules/ignored'
+                '.venv/ignored'
+                '.copilot-tracking/ignored'
+            )) {
+            $root = Join-Path $fixture $directory
+            New-Item -ItemType Directory -Path $root -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $root 'pyproject.toml') -Value ''
+        }
+        $security = Join-Path $fixture 'scripts/security'
+        New-Item -ItemType Directory -Path $security -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot '../../security/Assert-WorkflowProjectDirectory.ps1') -Destination $security
+        $output = Join-Path $fixture 'github-output.txt'
+        $previousOutput = $env:GITHUB_OUTPUT
+        Push-Location $fixture
+        try {
+            $env:GITHUB_OUTPUT = $output
+            $discovery = $script:AggregateWorkflow['jobs']['discover-python-audit-projects']
+            $find = @($discovery['steps'] | Where-Object { $_['id'] -eq 'find' })[0]
+            & ([scriptblock]::Create([string]$find['run'])) | Out-Null
+        } finally {
+            Pop-Location
+            $env:GITHUB_OUTPUT = $previousOutput
+        }
+        $lines = Get-Content -LiteralPath $output
+        $directories = @((($lines | Where-Object { $_ -like 'directories=*' }) -replace '^directories=', '') | ConvertFrom-Json)
+        $directories | Should -Be @('.github/skills/example', 'scripts/evals/moderation', 'scripts/tools/pip-audit')
+        $lines | Should -Contain 'has-projects=true'
+        $audit = $script:AggregateWorkflow['jobs']['pip-audit']
+        @($audit['needs']) | Should -Be @('change-range', 'discover-python-audit-projects')
+        $audit['if'] | Should -Match 'needs\.discover-python-audit-projects\.outputs\.has-projects'
+        $audit['strategy']['matrix']['directory'] | Should -Match 'needs\.discover-python-audit-projects\.outputs\.directories'
+        foreach ($job in @('python-lint', 'pytest')) {
+            @($script:AggregateWorkflow['jobs'][$job]['needs']) | Should -Contain 'discover-python-projects'
+            @($script:AggregateWorkflow['jobs'][$job]['needs']) | Should -Not -Contain 'discover-python-audit-projects'
+        }
+        @($script:AggregateWorkflow['jobs']['pr-validation-success']['needs']) | Should -Contain 'discover-python-audit-projects'
+        @($script:AggregateWorkflow['jobs']['pr-validation-success']['needs']) | Should -Contain 'gate-completeness-check'
+    }
+
+    It 'Preserves project identity with <Platform> separators' -ForEach @(
+        @{ Platform = 'Windows'; NativeSeparator = [char]'\'; UnsafePaths = @() }
+        @{ Platform = 'POSIX'; NativeSeparator = [char]'/'; UnsafePaths = @('scripts/example\project', 'scripts/example\.venv\project') }
+    ) {
+        $fixture = Join-Path $TestDrive "audit-path-$Platform"
+        $security = Join-Path $fixture 'scripts/security'
+        New-Item -ItemType Directory -Path $security -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot '../../security/Assert-WorkflowProjectDirectory.ps1') -Destination $security
+        $output = Join-Path $fixture 'github-output.txt'
+        $discovery = $script:AggregateWorkflow['jobs']['discover-python-audit-projects']
+        $find = @($discovery['steps'] | Where-Object { $_['id'] -eq 'find' })[0]
+        # Stub only the host separator so both filesystem naming rules run on any host.
+        $run = ([string]$find['run']).Replace('[IO.Path]::DirectorySeparatorChar', '$NativeSeparator')
+        $script:AuditDiscoveryPaths = @('scripts/example/project')
+        Mock Get-ChildItem {
+            foreach ($path in $script:AuditDiscoveryPaths) {
+                [pscustomobject]@{ FullName = "/repo/$path/pyproject.toml"; DirectoryName = $path }
+            }
+        } -ParameterFilter { $Filter -eq 'pyproject.toml' }
+        Mock Resolve-Path {
+            $relative = $Path -replace '/', [string]$NativeSeparator
+            ".$NativeSeparator$relative"
+        } -ParameterFilter { $Relative }
+        $previousOutput = $env:GITHUB_OUTPUT
+        Push-Location $fixture
+        try {
+            $env:GITHUB_OUTPUT = $output
+            & ([scriptblock]::Create($run)) | Out-Null
+            $lines = Get-Content -LiteralPath $output
+            $lines | Should -Contain 'directories=["scripts/example/project"]'
+            $lines | Should -Contain 'has-projects=true'
+            Remove-Item -LiteralPath $output
+            foreach ($unsafe in $UnsafePaths) {
+                $script:AuditDiscoveryPaths = @('scripts/example/project', $unsafe)
+
+                { & ([scriptblock]::Create($run)) } | Should -Throw '*backslash*'
+
+                Test-Path -LiteralPath $output | Should -BeFalse
+            }
+        } finally {
+            Pop-Location
+            $env:GITHUB_OUTPUT = $previousOutput
+        }
+    }
+
+    It 'Rejects failed or empty reusable-workflow lock exports and removes partial requirements' {
+        # The workflow export is mocked; this test lane does not require uv.
+        function uv { }
+        $workflow = Get-Content -Raw -LiteralPath (Join-Path $script:WorkflowRoot 'pip-audit.yml') | ConvertFrom-Yaml
+        $export = @($workflow['jobs']['pip-audit']['steps'] | Where-Object { $_['name'] -eq 'Export locked dependencies' })[0]
+        [string]$export['run'] | Should -Match 'uv export --locked'
+        [string]$export['run'] | Should -Not -Match '--no-dev|--no-default-groups'
+        $previousTemp = $env:RUNNER_TEMP
+        $env:RUNNER_TEMP = $TestDrive
+        try {
+            foreach ($code in @(1, 0)) {
+                Mock uv { '# incomplete export'; $global:LASTEXITCODE = $code }
+                { & ([scriptblock]::Create([string]$export['run'])) } | Should -Throw 'Locked dependency export*'
+                Test-Path -LiteralPath (Join-Path $TestDrive 'requirements.txt') | Should -BeFalse
+            }
+        } finally {
+            $env:RUNNER_TEMP = $previousTemp
+        }
+        $audit = @($workflow['jobs']['pip-audit']['steps'] | Where-Object { $_['name'] -eq 'Run pip-audit' })[0]
+        [string]$audit['run'] | Should -Match '(?s)finally\s*\{.*Remove-Item'
+    }
+
+    It 'Includes the independently locked publisher in the existing npm policy aggregate' {
+        $package = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot '../../../package.json') | ConvertFrom-Json
+        $package.scripts.'audit:npm' | Should -Match 'npm run audit:npm:publisher'
+        $package.scripts.'audit:npm:publisher' | Should -Be 'audit-ci --config audit-ci.json --directory scripts/extension/marketplace-publisher'
+    }
+}
+
 Describe 'Aggregate merge-group ownership' -Tag 'Unit' {
     It 'Subscribes to checks requested for merge groups targeting main' {
         $MergeGroupTrigger = $script:AggregateWorkflow['on']['merge_group']

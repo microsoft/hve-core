@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-06
 ms.topic: how-to
 keywords:
   - evals
@@ -87,7 +87,9 @@ parallelism of two. The plan requires it when the changed-artifact manifest list
 `rpi-agent` in `affectedAgents`. A change reaches that list through the agent
 dependency map, or by touching any file inside a skill directory that the
 equivalence harness materializes for `rpi-agent`, including the skills it names in
-backticks such as `rpi-research`.
+backticks such as `rpi-research`. Both sources also follow the skills an agent
+preloads, so an edit to a subagent or skill that the preloaded `rpi` skill names,
+such as `rpi-researcher.agent.md` or `rpi-plan-critique`, reaches the list too.
 
 At default shard counts the matrix holds more rows than the cap allows to start at
 once, so some rows wait for a free slot. To keep the longest producers from waiting

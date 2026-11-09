@@ -10,7 +10,7 @@ const GAP = 6;
 const MARGIN = 8;
 const supportsPopover = () => typeof HTMLElement !== 'undefined' && Object.prototype.hasOwnProperty.call(HTMLElement.prototype, 'popover');
 
-/** The ring that fills while a hovered preview arms, before it locks. */
+/** The ring that fills around the pin while a hovered ID preview arms, before it pins. */
 function lockRing() {
     const svg = document.createElementNS(SVG_NS, 'svg');
     svg.setAttribute('class', 'preview-ring');
@@ -29,9 +29,10 @@ function lockRing() {
 
 /**
  * Wires ID previews into the page. Hovering or focusing any element with `data-preview`
- * shows the item, and the preview model decides when previews lock, nest, and close. An
- * element that also has `data-preview-select`, such as a change-map part, locks its preview
- * when clicked or when Enter or Space is pressed on it. A preview whose trigger sits in the
+ * shows the item, and the preview model decides when previews pin, nest, and close. An
+ * element that also has `data-preview-select`, such as a change-map part, pins its preview
+ * only when clicked, when Enter or Space is pressed on it, or with the preview's pin; hovering
+ * never pins it. A preview whose trigger sits in the
  * document or its outline, or in a preview opened from there, reads the context of the shown
  * document, which may be an earlier one.
  *
@@ -59,8 +60,10 @@ export function installPreviews(deps) {
     };
     const contextFor = (trigger) => deps.context(inDocument(trigger));
     const known = (trigger) => Boolean(trigger.dataset.preview && contextFor(trigger).find(trigger.dataset.preview));
-    /** A trigger such as a change-map part, whose click, Enter, or Space selects it by locking its preview. */
+    /** A trigger such as a change-map part, whose click, Enter, or Space selects it by pinning its preview. */
     const selects = (trigger) => Boolean(trigger?.hasAttribute('data-preview-select'));
+    /** What the model needs to know about a trigger; a selectable one pins only on purpose. */
+    const detailsOf = (trigger, via) => ({ id: trigger.dataset.preview, parent: parentOf(trigger), via, hoverPins: !selects(trigger) });
 
     function setInteractive(element, interactive) {
         for (const control of element.querySelectorAll('button, a[href], input, select, textarea')) {
@@ -76,14 +79,17 @@ export function installPreviews(deps) {
         const element = h('div', { class: 'preview', id, dataset: { previewId: entry.id } });
         if (supportsPopover()) element.setAttribute('popover', 'manual');
         element.style.setProperty('--rw-lock-ms', `${TIMING.lock}ms`);
-        const state = h('span', { class: 'preview-state' }, lockRing(), icon('pin', { className: 'preview-pin' }), sr('Locked'));
+        // Its name stays fixed; only aria-pressed reports whether the preview is pinned.
+        const pin = h('button', { type: 'button', class: 'preview-state', title: 'Pin preview', 'aria-pressed': 'false', onclick: () => togglePin(element, entry.trigger) },
+            lockRing(), icon('pin', { className: 'preview-pin' }), sr('Pin preview'));
+        const hint = h('p', { class: 'meta preview-hint', text: 'Pin to preview the IDs here.', hidden: true });
         const close = button('Close preview', { iconName: 'x', hideLabel: true, attrs: { class: 'icon-btn preview-close' }, onClick: () => {
             model.close(indexOfPreview(element));
             restoreFocus(entry.trigger, true);
         } });
         if (content) {
-            content.head.append(state, close);
-            element.append(content.head, ...content.body);
+            content.head.append(pin, close);
+            element.append(content.head, hint, ...content.body);
         } else {
             element.append(h('p', { class: 'meta', id: titleId, text: `${entry.id} is not in this task.` }));
         }
@@ -138,6 +144,16 @@ export function installPreviews(deps) {
             const fresh = !element.classList.contains('is-placed');
             element.classList.toggle('is-locked', entry.locked);
             element.classList.toggle('is-arming', entry.arming);
+            element.classList.toggle('is-hover-pin', entry.hoverPins && !entry.unpinned);
+            const pin = element.querySelector('.preview-state');
+            if (pin) {
+                pin.setAttribute('aria-pressed', String(entry.locked));
+                // A tooltip holds no controls, so an unpinned preview's pin is a pointer-only shortcut.
+                if (entry.locked) pin.removeAttribute('aria-hidden');
+                else pin.setAttribute('aria-hidden', 'true');
+            }
+            const hint = element.querySelector('.preview-hint');
+            if (hint) hint.hidden = entry.locked || entry.hoverPins;
             if (entry.locked) {
                 element.setAttribute('role', 'dialog');
                 element.setAttribute('aria-modal', 'false');
@@ -164,8 +180,23 @@ export function installPreviews(deps) {
         else document.getElementById('document')?.focus({ preventScroll: true });
     }
 
+    /**
+     * The pin pins an unpinned preview and unpins a pinned one. Unpinning keeps the preview open
+     * until the next leave, first moving focus to its ID when focus was inside it.
+     */
+    function togglePin(element, trigger) {
+        const index = indexOfPreview(element);
+        if (index === -1) return;
+        if (!model.stack[index]?.locked) {
+            model.lock(trigger, detailsOf(trigger));
+            return;
+        }
+        restoreFocus(trigger, element.contains(document.activeElement));
+        model.unlock(index);
+    }
+
     function lockFromKeyboard(trigger) {
-        const index = model.lock(trigger, { id: trigger.dataset.preview, parent: parentOf(trigger) });
+        const index = model.lock(trigger, detailsOf(trigger));
         if (index === -1) return false;
         const element = shown[index]?.element;
         (element?.querySelector('[data-preview-focus]') ?? element?.querySelector('.preview-go, button, a[href]'))?.focus({ preventScroll: true });
@@ -175,7 +206,7 @@ export function installPreviews(deps) {
     document.addEventListener('pointerover', (event) => {
         if (event.pointerType === 'touch') return;
         const trigger = triggerOf(event.target);
-        if (trigger && known(trigger)) model.enter(trigger, { id: trigger.dataset.preview, parent: parentOf(trigger), via: 'pointer' });
+        if (trigger && known(trigger)) model.enter(trigger, detailsOf(trigger, 'pointer'));
     });
 
     document.addEventListener('pointerout', (event) => {
@@ -186,7 +217,7 @@ export function installPreviews(deps) {
     document.addEventListener('focusin', (event) => {
         const trigger = triggerOf(event.target);
         if (trigger && trigger === event.target && known(trigger) && trigger.matches(':focus-visible')) {
-            model.enter(trigger, { id: trigger.dataset.preview, parent: parentOf(trigger), via: 'focus' });
+            model.enter(trigger, detailsOf(trigger, 'focus'));
         }
     });
 
@@ -198,13 +229,13 @@ export function installPreviews(deps) {
         model.leave(trigger);
     });
 
-    // A middle click locks at once; preventing the default stops autoscroll.
+    // A middle click pins at once; preventing the default stops autoscroll.
     document.addEventListener('mousedown', (event) => {
         if (event.button !== 1) return;
         const trigger = triggerOf(event.target);
         if (!trigger || !known(trigger)) return;
         event.preventDefault();
-        model.lock(trigger, { id: trigger.dataset.preview, parent: parentOf(trigger) });
+        model.lock(trigger, detailsOf(trigger));
     });
 
     document.addEventListener('keydown', (event) => {
@@ -228,11 +259,11 @@ export function installPreviews(deps) {
         }
     }, true);
 
-    // A click on a selectable trigger locks its preview in place of any other; a click outside every preview closes them all.
+    // A click on a selectable trigger pins its preview in place of any other; a click outside every preview closes them all.
     document.addEventListener('click', (event) => {
         const trigger = triggerOf(event.target);
         if (selects(trigger) && known(trigger)) {
-            model.lock(trigger, { id: trigger.dataset.preview, parent: parentOf(trigger) });
+            model.lock(trigger, detailsOf(trigger));
             return;
         }
         if (!model.stack.length || previewOf(event.target)) return;
@@ -274,8 +305,9 @@ export function installPreviews(deps) {
                 if (!content) return;
                 const keep = entry.element.querySelector('.preview-state');
                 const close = entry.element.querySelector('.preview-close');
+                const hint = entry.element.querySelector('.preview-hint');
                 content.head.append(keep, close);
-                entry.element.replaceChildren(content.head, ...content.body);
+                entry.element.replaceChildren(content.head, ...(hint ? [hint] : []), ...content.body);
                 setInteractive(entry.element, Boolean(model.stack[index]?.locked));
                 entry.revision = revision;
             });

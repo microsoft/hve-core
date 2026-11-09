@@ -92,11 +92,11 @@ stimuli:
       - type: output-matches
         name: skill-customer-card-render-knowledge-skill-attribution
         config:
-          pattern: '(?i)(content\.yaml|customer[-\s]card|design\s+thinking|powerpoint)'
+          pattern: '(?i)(content\.yaml|customer[-\s]card|design\s+thinking)'
       - type: output-matches
         name: skill-customer-card-render-knowledge-scope-language
         config:
-          pattern: '(?i)(skill|render|design\s+thinking|deck|powerpoint)'
+          pattern: '(?i)(skill|render|design\s+thinking|deck|yaml)'
   - name: skill-customer-card-render-tool-trigger
     prompt: |
       I have completed Design Thinking canonical artifacts under
@@ -129,65 +129,11 @@ stimuli:
       - type: output-matches
         name: skill-customer-card-render-bleed-detection-skill-attribution
         config:
-          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill|powerpoint\s+skill)'
+          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill)'
       - type: output-matches
         name: skill-customer-card-render-bleed-detection-scope-language
         config:
           pattern: '(?i)(design\s+thinking|generic|status|powerpoint)'
-  - name: skill-powerpoint-knowledge
-    prompt: |
-      Summarize the `powerpoint` skill's content-and-style pipeline. Cite the
-      YAML files it consumes and the Python library it depends on.
-    tags:
-      category: behavior-conformance
-      skill: powerpoint
-      shape: knowledge
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: skill-powerpoint-knowledge-skill-attribution
-        config:
-          pattern: '(?i)(python-pptx|content\.yaml|style\.yaml)'
-      - type: output-matches
-        name: skill-powerpoint-knowledge-scope-language
-        config:
-          pattern: '(?i)(powerpoint|slide|deck|yaml)'
-  - name: skill-powerpoint-tool-trigger
-    prompt: |
-      I need to build a slide deck programmatically from YAML inputs in a
-      Python environment. Which skill applies and what does it scaffold?
-    tags:
-      category: behavior-conformance
-      skill: powerpoint
-      shape: tool-trigger
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: skill-powerpoint-tool-trigger-skill-domain-attribution
-        config:
-          pattern: '(?i)(powerpoint|slide|deck|yaml|pptx)'
-      - type: output-matches
-        name: skill-powerpoint-tool-trigger-scope-language
-        config:
-          pattern: '(?i)(slide|deck|yaml|pptx)'
-  - name: skill-powerpoint-bleed-detection
-    prompt: |
-      I need to generate a Microsoft Word document from a structured template.
-      Does the `powerpoint` skill apply?
-    tags:
-      category: behavior-conformance
-      skill: powerpoint
-      shape: bleed-detection
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: skill-powerpoint-bleed-detection-skill-attribution
-        config:
-          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill|\bword\b)'
-      - type: output-matches
-        name: skill-powerpoint-bleed-detection-scope-language
-        config:
-          pattern: '(?i)(word|docx|powerpoint|slide)'
   - name: skill-demo-video-knowledge
     prompt: |
       Summarize the `demo-video` skill's assembly pipeline. Cite the manifest
@@ -405,6 +351,60 @@ stimuli:
         name: skill-vscode-playwright-bleed-detection-scope-language
         config:
           pattern: '(?i)(scrape|web|vs\s*code|news)'
+  - name: skill-hve-slides-knowledge
+    prompt: |
+      Describe what the `hve-slides` skill produces and how its authoring and
+      render-only modes differ.
+    tags:
+      category: behavior-conformance
+      skill: hve-slides
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-hve-slides-knowledge-skill-attribution
+        config:
+          pattern: '(?i)(hve-slides|html|slide|deck)'
+      - type: output-matches
+        name: skill-hve-slides-knowledge-scope-language
+        config:
+          pattern: '(?i)(author|render|standalone|offline)'
+  - name: skill-hve-slides-tool-trigger
+    prompt: |
+      I already have an authored slide deck source folder and need a single
+      offline HTML file I can share. Which skill applies?
+    tags:
+      category: behavior-conformance
+      skill: hve-slides
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-hve-slides-tool-trigger-skill-attribution
+        config:
+          pattern: '(?i)(hve-slides|slide|deck|render)'
+      - type: output-matches
+        name: skill-hve-slides-tool-trigger-scope-language
+        config:
+          pattern: '(?i)(html|standalone|offline|render)'
+  - name: skill-hve-slides-bleed-detection
+    prompt: |
+      I need to fix the formatting of an existing Microsoft Word document.
+      Does the `hve-slides` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: hve-slides
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-hve-slides-bleed-detection-skill-attribution
+        config:
+          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill)'
+      - type: output-matches
+        name: skill-hve-slides-bleed-detection-scope-language
+        config:
+          pattern: '(?i)(word|document|formatting)'
   - name: skill-hve-demo-material-knowledge
     prompt: |
       Describe what the `hve-demo-material` skill produces for each level and
@@ -1908,6 +1908,95 @@ stimuli:
         name: skill-rpi-plan-critique-contract-read-only-boundary
         config:
           pattern: '(?i)^\s*read-only[.!]?\s*$'
+  - name: skill-rpi-knowledge
+    prompt: |
+      Summarize the `rpi` skill. Include what phases it coordinates, where it
+      persists session state, and how it uses the RPI Workflow canvas when
+      available.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi
+    tags:
+      category: behavior-conformance
+      skill: rpi
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-rpi-knowledge-skill-attribution
+        config:
+          pattern: '(?i)(rpi|research|plan|implement|review|follow-up)'
+      - type: output-matches
+        name: skill-rpi-knowledge-scope-language
+        config:
+          pattern: '(?i)(\.copilot-tracking/rpi-sessions|hve-core-rpi-workflow|canvas|state\.json)'
+  - name: skill-rpi-tool-trigger
+    prompt: |
+      I need to coordinate a resumable multi-phase RPI session through
+      Research, Plan, Implement, Review, and Follow-up with durable session
+      state and the RPI Workflow canvas. Which skill under
+      `.github/skills/**/SKILL.md` applies?
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi
+    tags:
+      category: behavior-conformance
+      skill: rpi
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-rpi-tool-trigger-skill-domain-attribution
+        config:
+          pattern: '(?i)(rpi|rpi-sessions|hve-core-rpi-workflow|session)'
+      - type: output-matches
+        name: skill-rpi-tool-trigger-scope-language
+        config:
+          pattern: '(?i)(research|plan|implement|review|follow-up|canvas)'
+  - name: skill-rpi-bleed-detection
+    prompt: |
+      I only want a read-only independent critique of an existing RPI plan
+      without starting or managing a multi-phase RPI session. Does the `rpi`
+      session skill or `rpi-plan-critique` apply directly? Justify briefly.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi
+    tags:
+      category: behavior-conformance
+      skill: rpi
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-rpi-bleed-detection-skill-attribution
+        config:
+          pattern: '(?i)(rpi-plan-critique|critique|read-only)'
+      - type: output-matches
+        name: skill-rpi-bleed-detection-scope-language
+        config:
+          pattern: '(?i)(plan|critique|session|lifecycle)'
+  - name: skill-rpi-canvas-provider-ambiguity
+    prompt: |
+      Using the `rpi` skill in a contained, response-only canvas-policy check:
+      a capability lookup for hve-core-rpi-workflow reports multiple providers:
+      plugin:hve-core:rpi-workflow and project:rpi-workflow. No Canvas decision
+      exists. Choose the next action and provider arguments for lookup and
+      opening. Return exactly three lines: `Action: retry|abandon`,
+      `Lookup provider: <id>`, and `Open provider: <id>`. Do not call canvas
+      tools or write files.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi
+    tags:
+      category: behavior-conformance
+      skill: rpi
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-rpi-canvas-provider-ambiguity-project-provider
+        config:
+          pattern: '(?i)^\s*Action:[ \t]*retry[ \t]*\r?\nLookup provider:[ \t]*project:rpi-workflow[ \t]*\r?\nOpen provider:[ \t]*project:rpi-workflow\s*$'
   - name: skill-rpi-research-knowledge
     prompt: |
       Summarize the `rpi-research` skill. Include what evidence it records,
@@ -7136,61 +7225,60 @@ stimuli:
           path: ".copilot-tracking/dt/synthetic-lifecycle/coaching-state.md"
           pattern: '`n'
 
-  - name: skill-dt-canonical-deck-build-failure
+  - name: skill-dt-canonical-deck-generation-failure
     prompt: |
       Follow the canonical deck workflow in the staged
       `dt-coaching-foundation` skill for project-slug=synthetic-lifecycle-thin,
-      running the snapshot offer and then the customer-card build branch as an
+      running the snapshot offer and then the customer-card branch as an
       explicit request during Method 2. I explicitly request and accept a
-      canonical snapshot even though evidence is thin, and I also accept the
-      required customer-card PowerPoint offer. Name missing knowledge instead
-      of inventing it, verify the current skill interfaces, use the PowerShell
-      runtime path, and report the configured build failure without claiming a
-      PPTX exists.
+      canonical snapshot even though evidence is thin, accept the required
+      customer-card offer, and ask for a PowerPoint deck. Name missing
+      knowledge instead of inventing it, verify the current skill interfaces,
+      and report the configured generation failure without claiming a PPTX
+      exists.
     agent_environment:
       skills:
         - ../../.github/skills/design-thinking/dt-coaching-foundation
         - ../../.github/skills/experimental/customer-card-render
-        - ../../.github/skills/experimental/powerpoint
       files:
         - src: fixtures/dt-lifecycle/coaching-state-thin.txt
           dest: .copilot-tracking/dt/synthetic-lifecycle-thin/coaching-state.md
         - src: fixtures/dt-lifecycle/method-03-ready-artifacts.txt
-          dest: .copilot-tracking/dt/synthetic-lifecycle-thin/render/content/global/style.yaml
-        - src: fixtures/dt-lifecycle/method-03-ready-artifacts.txt
-          dest: .copilot-tracking/dt/synthetic-lifecycle-thin/render/content/content.yaml
+          dest: .copilot-tracking/dt/synthetic-lifecycle-thin/canonical/problem-statement.md
     simulation:
       tool_overrides:
         powershell:
           patterns:
             - match: 'generate_cards\.py'
-              output: "Synthetic customer-card YAML generation completed"
-            - match: 'Invoke-PptxPipeline\.ps1'
-              output: "Synthetic PowerPoint build failure"
+              output: "Synthetic customer-card YAML generation failure"
               is_error: true
     tags:
       category: behavior-conformance
       skill: dt-coaching-foundation
-      branch: build-failure
+      branch: generation-failure
       advisory: "true"
     graders:
-      - type: output-matches
-        name: skill-dt-canonical-deck-build-failure-thin-evidenc-51089611
-        config:
-          pattern: "(?i)(missing|thin|insufficient knowledge|not yet).{0,160}(persona|journey|problem|evidence|artifact)"
-      - type: output-matches
-        name: skill-dt-canonical-deck-build-failure-build-failur-5509e731
-        config:
-          pattern: "(?i)(PowerPoint|PPTX|build).{0,160}(fail|error|unable|could not)"
       - type: tool-calls
-        name: skill-dt-canonical-deck-build-failure-power-point--df48f503
+        name: skill-dt-canonical-deck-generation-failure-tool-observed
         config:
           required:
             - name: "^powershell$"
-              command: "(?i)Invoke-PptxPipeline\\.ps1"
-              result: "(?i)Synthetic PowerPoint build failure"
+              command: 'generate_cards\.py'
+              result: "(?i)Synthetic customer-card YAML generation failure"
+      - type: output-matches
+        name: skill-dt-canonical-deck-generation-failure-thin-evidence
+        config:
+          pattern: "(?i)(missing|thin|insufficient knowledge|not yet).{0,160}(persona|journey|problem|evidence|artifact)"
+      - type: output-matches
+        name: skill-dt-canonical-deck-generation-failure-reported
+        config:
+          pattern: "(?i)(generation|generate|generating|customer[-\\s]card|yaml).{0,160}(fail|error|unable|could not)"
+      - type: output-matches
+        name: skill-dt-canonical-deck-generation-failure-no-deck-build
+        config:
+          pattern: "(?i)(no|not)\\s+(?:\\w+\\s+){0,4}(deck|pptx|powerpoint)\\s+(?:\\w+\\s+){0,2}(build|available|supported)"
       - type: file-not-exists
-        name: skill-dt-canonical-deck-build-failure-no-false-pptx-output
+        name: skill-dt-canonical-deck-generation-failure-no-pptx-output
         config:
           path: ".copilot-tracking/dt/synthetic-lifecycle-thin/render/output/customer-cards.pptx"
 

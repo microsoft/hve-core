@@ -1557,8 +1557,12 @@ Pipfile
 manylinux
 pipx
 pypa
+certifi
+filelock
+setuptools
 zizmor
 zizmorcore
+deepmerge
 
 # Video & Image Processing
 drawtext

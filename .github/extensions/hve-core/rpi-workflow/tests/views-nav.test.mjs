@@ -101,6 +101,28 @@ describe('legend', () => {
         for (const entry of LINK_ICONS) assert.ok(iconsOf(root).includes(`#i-${entry.icon}`), entry.icon);
         assert.ok(elements(root).some((node) => node.getAttribute('id') === 'legendTitle'));
     });
+
+    it('teaches the change map\'s corner marks with the map\'s own glyphs, and the contrast-theme hatch', async () => {
+        const { legendContent } = await import('../ui/legend.mjs');
+        const root = document.createElement('div');
+        for (const node of legendContent()) root.appendChild(node);
+        const map = elements(root).find((node) => node.getAttribute('aria-labelledby') === 'legend-map');
+        assert.match(map.textContent.replace(/\s+/g, ' '), /In Implement, a check marks a part whose change is done, a dot one in progress, and a hollow circle one still needed\. In a contrast theme, done parts are also hatched\./);
+        const marks = elements(map).filter((node) => node.localName === 'svg' && node.getAttribute('class') === 'legend-mark');
+        assert.deepEqual(marks.map((node) => node.firstChild.getAttribute('class')), ['diagram-mark is-done', 'diagram-mark is-active', 'diagram-mark is-needed']);
+        assert.ok(marks.every((node) => node.getAttribute('aria-hidden') === 'true'), 'the words name each state, so the glyphs are decorative');
+    });
+
+    it('explains pinning previews, and that a change-map part pins only on purpose, saying pin rather than lock', async () => {
+        const { legendContent } = await import('../ui/legend.mjs');
+        const root = document.createElement('div');
+        for (const node of legendContent()) root.appendChild(node);
+        const section = (id) => elements(root).find((node) => node.getAttribute('aria-labelledby') === id).textContent;
+        assert.match(section('legend-previews'), /To pin the preview, keep the pointer on the ID until the ring around the pin fills, press the pin, or middle-click the ID\. From the keyboard, press Down Arrow\. Press the pin again to unpin it\./);
+        assert.match(section('legend-previews'), /In a pinned preview, hover or focus an ID to preview it too\./);
+        assert.match(section('legend-map'), /it goes away when you move off\. Click the part, press Enter on it, or press the pin to pin it, then go to a task\./);
+        assert.doesNotMatch(root.textContent, /\block(s|ed)?\b/i);
+    });
 });
 
 describe('preview content', () => {

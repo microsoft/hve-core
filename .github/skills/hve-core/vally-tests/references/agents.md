@@ -73,7 +73,7 @@ Every check asks an agent to report what a specific `.agent.md` artifact declare
 * Testable behavior: omit `agents:` when a parent may invoke any available subagent. Use an explicit array when the parent has a fixed allowlist, including `agents: []` when it may invoke none. Fixed entries MUST use each subagent's human-readable `name:` rather than a filename or path. A wildcard string is non-conforming.
 * Suggested stimulus: stage the parent artifact and ask whether it has unrestricted, fixed, or empty subagent access and, for a fixed set, which human-readable names it declares.
 * Grader recommendation: `prompt` with rubric "Does the response distinguish omitted `agents:` as unrestricted access from explicit fixed arrays, accept `[]` as an empty fixed set, reject wildcard strings, and use human-readable names for fixed entries?" A single mandatory-list pattern cannot represent all valid modes.
-* Evidence: `.github/agents/hve-core/documentation.agent.md` omits `agents:`; `.github/agents/experimental/pptx.agent.md` declares a fixed `PowerPoint Subagent` array; `.github/agents/security/subagents/cve-analyzer.agent.md` declares `agents: []`.
+* Evidence: `.github/agents/hve-core/documentation.agent.md` omits `agents:`; `.github/agents/project-planning/brd-builder.agent.md` declares a fixed `BRD Quality Reviewer` array; `.github/agents/security/subagents/cve-analyzer.agent.md` declares `agents: []`.
 
 ### Check 4: Subagent user-invocable Flag
 
@@ -117,10 +117,10 @@ Every check asks an agent to report what a specific `.agent.md` artifact declare
 ### Check 8: Subagent Invocation by Human-Readable Name
 
 * Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
-* Testable behavior: parent-agent invocation text MUST reference a subagent by the human-readable `name:` from the subagent's frontmatter (for example "Run `PowerPoint Subagent`"). Invocation by filename or by file path is non-conforming.
+* Testable behavior: parent-agent invocation text MUST reference a subagent by the human-readable `name:` from the subagent's frontmatter (for example "Dispatch the `BRD Quality Reviewer` subagent"). Invocation by filename or by file path is non-conforming.
 * Suggested stimulus: stage the parent artifact and ask how it invokes one of its declared subagents.
-* Grader recommendation: `output-matches` asserting the subagent's human-readable name, for example `(?i)\bPowerPoint Subagent\b`. Add a separate negated `output-matches` rejecting invocation by filename, guarded against truthful denial including contractions, for example `(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:\w+\s+){0,3})\b(?:runs?|invokes?|invoked|calls?)\s+\S*\.agent\.md\b`.
-* Evidence: `.github/agents/experimental/pptx.agent.md` invokes `PowerPoint Subagent` by its human-readable name.
+* Grader recommendation: `output-matches` asserting the subagent's human-readable name, for example `(?i)\bBRD Quality Reviewer\b`. Add a separate negated `output-matches` rejecting invocation by filename, guarded against truthful denial including contractions, for example `(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:\w+\s+){0,3})\b(?:runs?|invokes?|invoked|calls?)\s+\S*\.agent\.md\b`.
+* Evidence: `.github/agents/project-planning/brd-builder.agent.md` dispatches `BRD Quality Reviewer` by its human-readable name.
 
 ### Check 9: Phase and Step Heading Consistency
 

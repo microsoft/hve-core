@@ -2,7 +2,7 @@
 title: RPI Workflow Canvas
 description: Canvas extension for following and steering RPI sessions through research, planning, implementation, review, and follow-up
 author: Microsoft
-ms.date: 2026-10-30
+ms.date: 2026-11-02
 ms.topic: reference
 keywords:
   - canvas
@@ -77,7 +77,7 @@ For a real session, following is saved with the canvas, so a canvas you stopped 
 
 ### Layout
 
-Below 1400px the phase rail takes its own row under the title. Below 1360px the steering panel opens as a drawer, and below 1024px the navigator does too. Content reflows down to 320px.
+Below 1400px the phase rail takes its own row under the title. Below 1360px the steering panel opens as a drawer, and below 720px the navigator does too. Content reflows down to 320px.
 
 ### Decisions and Feedback
 
@@ -172,8 +172,9 @@ An ID's icon says what a click does:
 * The code file opens a file in VS Code at the cited line.
 
 Hover over an ID, or move focus to it, to preview the whole item: its kind, title, status, text, and related IDs. The preview stays while you move the pointer onto it.
-To lock it, keep the pointer on the ID or the preview until the ring fills, about a second, or middle-click the ID. From the keyboard, Down Arrow locks the preview and moves focus into it.
-A locked preview is a small dialog with a close button, and the IDs in it open previews of their own, up to five deep. Escape closes the newest preview and returns focus to its ID. Clicking outside closes every preview, and clicking an ID goes to it.
+To pin it, keep the pointer on the ID or the preview until the ring around the pin fills, about a second, press the pin, or middle-click the ID. From the keyboard, Down Arrow pins the preview and moves focus into it.
+A change-map part's preview pins only when you click the part, press Enter or Space on it, or press the pin, so it goes away when you move off; until then it says to pin it to preview the IDs inside.
+A pinned preview is a small dialog with a close button and the pin, a toggle button, and the IDs in it open previews of their own, up to five deep. Press the pin again to unpin the preview: it stays until you move away and doesn't pin itself again until it closes. Escape closes the newest preview and returns focus to its ID. Clicking outside closes every preview, and clicking an ID goes to it.
 
 Back and Forward, beside the phase title, retrace the places you moved to: IDs you followed, phases you switched to, and loops you showed, across the whole session. Alt+Left and Alt+Right do the same. A new move after going back clears Forward. Going back or forward stops following the agent.
 
@@ -316,8 +317,8 @@ Feedback text, notes, and section Markdown come from the user, so agents treat t
 | `l`                              | Show what the IDs and icons mean                                                 |
 | `?`                              | Show the shortcut list                                                           |
 | `Alt+Left` and `Alt+Right`       | Go back and forward through the places you moved to                              |
-| `Down Arrow` on an ID            | Lock its preview and move focus into it                                          |
-| `Enter` or `Space` on a map part | Lock the part's preview and move focus to its first task                         |
+| `Down Arrow` on an ID            | Pin its preview and move focus into it                                           |
+| `Enter` or `Space` on a map part | Pin the part's preview and move focus to its first task                          |
 | `Shift+F10` or `Menu`            | Open the canvas menu for the focused item                                        |
 | `Escape`                         | Close the newest preview, a menu, drawer, or dialog, or leave the section editor |
 | Arrow keys, `Home`, `End`        | Move within the phase rail and radio groups                                      |
@@ -328,7 +329,7 @@ Feedback text, notes, and section Markdown come from the user, so agents treat t
 
 The appearance menu offers System, Light, and Dark, plus More contrast. System follows the host theme or your operating system; Light and Dark override it for this canvas. The choice is saved with the extension's data, because each canvas open uses a new local address.
 
-The canvas targets WCAG 2.2 AA in every theme and contrast setting and keeps every edge in forced colors. Status always pairs an icon and a word with its color, ID colors only add to the letters that name each kind, nothing requires dragging, and reduced motion removes all animation, the Live pulse included, except the small ring that shows a preview locking.
+The canvas targets WCAG 2.2 AA in every theme and contrast setting and keeps every edge in forced colors. Status always pairs an icon and a word with its color, ID colors only add to the letters that name each kind, nothing requires dragging, and reduced motion removes all animation, the Live pulse included, except the small ring that shows a preview pinning.
 ID colors and source code colors keep at least 4.5:1, and More contrast keeps ID text at full contrast with its color on the border. [STYLE-GUIDE.md](STYLE-GUIDE.md) records the palette, measured contrast, keyboard model, and component states.
 
 ## Storage

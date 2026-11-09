@@ -55,7 +55,7 @@ class TestRuntimeTransitions:
             audio.setsampwidth(2)
             audio.setframerate(48000)
             audio.writeframes(samples.tobytes())
-        output = tmp_path / "trimmed.mp4"
+        output = tmp_path / "trimmed.mkv"
 
         assemble_video._render_segment(
             segment={
@@ -164,6 +164,71 @@ class TestRuntimeTransitions:
         assert float(measured["format"]["duration"]) == pytest.approx(
             expected, abs=0.15
         )
+
+    def test_given_many_crossfaded_scenes_when_encoded_then_audio_does_not_drift(
+        self, tmp_path
+    ):
+        import json
+        import shutil
+        import subprocess
+        import wave
+
+        import yaml
+
+        ffmpeg = shutil.which("ffmpeg")
+        ffprobe = shutil.which("ffprobe")
+        if not ffmpeg or not ffprobe:
+            pytest.skip("Existing FFmpeg and ffprobe required")
+        visual = tmp_path / "frame.ppm"
+        visual.write_bytes(b"P6\n160 90\n255\n" + b"\x40\x90\x40" * (160 * 90))
+        durations = [2.357, 2.071, 2.643, 2.929, 2.214, 2.786, 2.5, 2.143, 2.857]
+        segments = []
+        for index, seconds in enumerate(durations):
+            name = f"voice-{index}.wav"
+            with wave.open(str(tmp_path / name), "wb") as audio:
+                audio.setnchannels(1)
+                audio.setsampwidth(2)
+                audio.setframerate(8000)
+                audio.writeframes(b"\x00\x00" * round(seconds * 8000))
+            segments.append({"visual": "frame.ppm", "narration": name})
+        manifest = tmp_path / "segments.yml"
+        manifest.write_text(
+            yaml.safe_dump(
+                {
+                    "output": "result.mp4",
+                    "resolution": "160x90",
+                    "fps": 24,
+                    "transition": {"duration": 0.5},
+                    "segments": segments,
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        result = assemble_video.assemble_video(
+            manifest_path=manifest, output_path=None, fps=None, resolution=None
+        )
+        streams = json.loads(
+            subprocess.run(
+                [
+                    ffprobe,
+                    "-v",
+                    "error",
+                    "-show_entries",
+                    "stream=codec_type,duration:format=duration",
+                    "-of",
+                    "json",
+                    str(result),
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout
+        )
+        expected = sum(durations) + 0.5 * (len(durations) + 1)
+        assert float(streams["format"]["duration"]) == pytest.approx(expected, abs=0.05)
+        for stream in streams["streams"]:
+            assert float(stream["duration"]) == pytest.approx(expected, abs=0.05)
 
 
 class TestAssembleVideo:
@@ -537,6 +602,49 @@ class TestAssembleVideo:
         assert "acrossfade=d=0.5:c1=tri:c2=tri" in filter_graph
         assert "fade=t=out:st=8:d=0.5" in filter_graph
         assert "afade=t=out:st=8:d=0.5" in filter_graph
+        assert final_command[final_command.index("-ar") + 1] == "48000"
+
+    def test_given_segments_when_assembled_then_intermediates_keep_pcm_audio(
+        self, tmp_path, mocker, mock_ffmpeg_dependencies
+    ):
+        # Arrange
+        for name in ("one.png", "two.png", "one.wav", "two.wav"):
+            (tmp_path / name).write_bytes(b"fixture")
+        manifest_path = tmp_path / "segments.yml"
+        manifest_path.write_text(
+            "output: demo.mp4\n"
+            "segments:\n"
+            "  - visual: one.png\n"
+            "    narration: one.wav\n"
+            "    duration: 3\n"
+            "  - visual: two.png\n"
+            "    narration: two.wav\n"
+            "    duration: 4\n",
+            encoding="utf-8",
+        )
+        commands = []
+
+        def record_command(command, **_kwargs):
+            commands.append(command)
+            Path(command[-1]).write_bytes(b"media")
+
+        mocker.patch.object(assemble_video, "_run_ffmpeg", side_effect=record_command)
+
+        # Act
+        assemble_video.assemble_video(
+            manifest_path=manifest_path,
+            output_path=None,
+            fps=None,
+            resolution=None,
+        )
+
+        # Assert
+        *segment_commands, final_command = commands
+        for command in segment_commands:
+            assert command[-1].endswith(".mkv")
+            assert command[command.index("-c:a") + 1] == "pcm_s16le"
+        assert final_command[final_command.index("-c:a") + 1] == "aac"
+        assert final_command[final_command.index("-ar") + 1] == "48000"
 
     def test_given_missing_encoded_output_when_assembled_then_preserves_previous(
         self, tmp_path, mocker, mock_ffmpeg_dependencies

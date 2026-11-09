@@ -3,7 +3,7 @@ title: Copilot Plugin
 description: Install the complete hve-core plugin in VS Code's Copilot harness or in Copilot CLI
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-07
 ms.topic: how-to
 keywords:
   - copilot plugin
@@ -59,7 +59,7 @@ Register the repository as a plugin marketplace:
 copilot plugin marketplace add microsoft/hve-core
 ```
 
-The registration tracks the `main` branch, which has no release gate or release attestation. Each push to `main` publishes an unattested dependency SBOM, described in [Continuous Main SBOM](../../contributing/release-process.md#continuous-main-sbom). PreRelease and Stable are VS Code extension channels, so the plugin has no channel to select.
+The registration tracks the `main` branch, which has no release gate or release attestation. Each push to `main` publishes an unattested dependency SBOM, described in [Continuous Main SBOM](../../contributing/release-process.md#continuous-main-sbom).
 
 List the plugins in the registered marketplace, or type `/plugin` in a Copilot CLI chat session to browse them:
 
@@ -144,16 +144,18 @@ The plugin offers two ways to work:
 Skills run a specific workflow and produce structured output. Agent mode keeps the conversation with a specialized agent until you switch away.
 
 > [!IMPORTANT]
-> Copilot does not switch to a custom agent on behalf of a skill. Select
-> `RPI Agent` (`hve-core:rpi-agent` in Copilot CLI) when you want lifecycle
-> coordination, or invoke a direct phase skill such as `/rpi-research`:
+> Copilot does not switch to a custom agent on behalf of a skill. For lifecycle
+> coordination, run `/rpi` (`/hve-core:rpi` in VS Code) from the default mode,
+> or select `RPI Agent` (`hve-core:rpi-agent` in Copilot CLI), which preloads
+> the same `rpi` skill:
 >
 > ```text
 > /agent hve-core:rpi-agent
 > Research API authentication patterns before deciding whether planning is ready.
 > ```
 >
-> Skills that do not require an agent context work directly from the default mode.
+> Invoke a direct phase skill such as `/rpi-research` for one phase. Skills that
+> do not require an agent context work directly from the default mode.
 
 Manual-only skills such as `git-commit`, `git-merge`, and `git-setup` set
 `disable-model-invocation: true`, so agents never start them for you. For their
@@ -196,7 +198,7 @@ Run `/help` in a CLI session to see every available command and agent. In VS Cod
 ### When to Use Each Mode
 
 * Use direct skills (`/rpi-research`, `/rpi-plan`, `/rpi-implement`, `/rpi-review`) from the default mode for one bounded responsibility that does not require a custom agent.
-* Use **agent mode** with `RPI Agent` for lifecycle coordination.
+* Use `/rpi` from the default mode, or **agent mode** with `RPI Agent`, for lifecycle coordination.
 * Stay in **agent mode** for exploratory conversations, follow-up questions, or tasks that don't fit a predefined skill.
 
 ---
