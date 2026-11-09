@@ -68,6 +68,14 @@ required. The core owns the depth expectations shared with workers.
    Every captured file belongs to an area, including lockfiles, configuration,
    renames, deletions, and omissions. A file no perspective needs gets a
    reasoned not-applicable result rather than being left out.
+   Record three to seven reasons for the change as your own reading of it.
+   A reason claims whole files, or single hunks when a file serves two reasons;
+   leave a hunk unexplained rather than guess. When the change touches more
+   than two parts or alters how they connect, also record a change map: about
+   ten parts in four boxes, a one-line before and after for each changed part,
+   and links that point from the part that acts, with an active-verb label and
+   an anchor or an uncertainty. Write both with the helper's `context` command;
+   the core contract defines their fields and limits.
 2. Record scope and work assignments in the parent state. Opening an area or
    having no findings does not complete it. Give acceptance-criteria coverage
    one owner: functional for behavior, readiness for deliverable-only criteria.
@@ -131,7 +139,7 @@ An investigation can run alongside unrelated review work. A simple explanation
 uses existing evidence inline.
 
 Use `get_state` to check source warnings and pending feedback, `focus_item` to
-show an area/file/hunk/finding/comment, and `show_review` to reconnect an existing
+show an area/reason/file/hunk/finding/comment, and `show_review` to reconnect an existing
 panel. A missing or failed canvas does not block the report/chat workflow:
 disclose the exact limitation and keep the same evidence and decisions.
 

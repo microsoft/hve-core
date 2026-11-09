@@ -80,6 +80,139 @@ function limitations(value) {
     unique(value, 'limitations');
 }
 
+const REASON_ID = /^R[1-9]$/;
+export const MAP_LIMITS = Object.freeze({ reasons: 9, boxes: 6, parts: 16, links: 32 });
+export const PART_CHANGES = ['new', 'changed', 'removed', 'unchanged'];
+export const LINK_CHANGES = ['new', 'removed', 'unchanged'];
+
+function bounded(value, label, max) {
+    text(value, label);
+    check(value.length <= max, `${label} must be at most ${max} characters.`);
+    return value;
+}
+
+/** Reasons claim whole files or single hunks; a hunk belongs to at most one reason. */
+function reasons(value, snapshot) {
+    array(value, 'reasons');
+    check(value.length >= 1 && value.length <= MAP_LIMITS.reasons, `Record between 1 and ${MAP_LIMITS.reasons} reasons, or null to remove them.`);
+    const hunkFile = new Map(snapshot.files.flatMap((file) => file.hunks.map((hunk) => [hunk.id, file.id])));
+    const whole = new Set();
+    const claimed = new Set();
+    const split = new Set();
+    for (const reason of value) {
+        object(reason, ['id', 'title', 'why', 'fileIds', 'hunkIds'], 'reason');
+        check(typeof reason.id === 'string' && REASON_ID.test(reason.id), 'Reason IDs run from R1 to R9.');
+        bounded(reason.title, 'reason title', 80);
+        check(!/[\n\r\u2028\u2029]/.test(reason.title), 'reason title must be one line.');
+        bounded(reason.why, 'reason why', 400);
+        ids(reason.fileIds, 'reason files', new Set(snapshot.files.map((file) => file.id)));
+        ids(reason.hunkIds, 'reason hunks', new Set(hunkFile.keys()));
+        check(reason.fileIds.length + reason.hunkIds.length > 0, 'A reason must explain at least one file or hunk.');
+        for (const fileId of reason.fileIds) {
+            check(!whole.has(fileId), 'A file belongs whole to at most one reason.');
+            whole.add(fileId);
+        }
+        for (const hunkId of reason.hunkIds) {
+            check(!claimed.has(hunkId), 'A hunk belongs to at most one reason.');
+            claimed.add(hunkId);
+            split.add(hunkFile.get(hunkId));
+        }
+    }
+    check([...split].every((fileId) => !whole.has(fileId)), 'A file a reason claims whole cannot have hunks claimed by a reason.');
+    unique(value, 'reasons');
+}
+
+/** A change map of boxes, parts, and links checked against the snapshot and the recorded reasons. */
+function changeMap(value, snapshot, reasonIds) {
+    object(value, ['title', 'description', 'boxes', 'parts', 'links'], 'change map');
+    bounded(value.title, 'map title', 120);
+    bounded(value.description, 'map description', 300);
+    array(value.boxes, 'map boxes');
+    array(value.parts, 'map parts');
+    array(value.links, 'map links');
+    check(value.parts.length > 0, 'A change map needs at least one part.');
+    check(value.boxes.length <= MAP_LIMITS.boxes && value.parts.length <= MAP_LIMITS.parts && value.links.length <= MAP_LIMITS.links,
+        `A change map holds at most ${MAP_LIMITS.boxes} boxes, ${MAP_LIMITS.parts} parts, and ${MAP_LIMITS.links} links.`);
+    for (const box of value.boxes) {
+        object(box, ['id', 'label', 'parent'], 'map box');
+        bounded(box.label, 'box label', 120);
+    }
+    unique(value.boxes, 'map boxes');
+    const boxes = new Map(value.boxes.map((box) => [box.id, box]));
+    for (const box of value.boxes) {
+        if (box.parent === null) continue;
+        const parent = boxes.get(box.parent);
+        check(parent && parent !== box && parent.parent === null, 'A box sits at the top level or inside one top-level box.');
+    }
+    const files = new Set(snapshot.files.map((file) => file.id));
+    for (const part of value.parts) {
+        object(part, ['id', 'label', 'box', 'change', 'before', 'after', 'fileIds', 'reasonIds'], 'map part');
+        bounded(part.label, 'part label', 120);
+        check(part.box === null || boxes.has(part.box), 'A part sits in a known box or in none.');
+        enumeration(part.change, PART_CHANGES, 'part change');
+        const article = part.change === 'unchanged' ? 'An' : 'A';
+        if (['changed', 'removed'].includes(part.change)) bounded(part.before, 'part before', 160);
+        else check(part.before === null, `${article} ${part.change} part has no before line.`);
+        if (['new', 'changed'].includes(part.change)) bounded(part.after, 'part after', 160);
+        else check(part.after === null, `${article} ${part.change} part has no after line.`);
+        ids(part.fileIds, 'part files', files);
+        ids(part.reasonIds, 'part reasons', reasonIds);
+    }
+    unique(value.parts, 'map parts');
+    check(value.parts.every((part) => !boxes.has(part.id)), 'Box and part IDs must differ.');
+    const parts = new Map(value.parts.map((part) => [part.id, part]));
+    for (const link of value.links) {
+        object(link, ['from', 'to', 'label', 'change', 'kind', 'anchor', 'uncertainty'], 'map link');
+        const from = parts.get(link.from);
+        const to = parts.get(link.to);
+        check(from && to && from !== to, 'A link joins two different known parts.');
+        bounded(link.label, 'link label', 60);
+        enumeration(link.change, LINK_CHANGES, 'link change');
+        enumeration(link.kind, ['uses', 'checks'], 'link kind');
+        if (link.anchor !== null) validateAnchor(link.anchor, snapshot);
+        if (link.uncertainty !== null) bounded(link.uncertainty, 'link uncertainty', 300);
+        check(link.anchor !== null || link.uncertainty !== null, 'A map link needs evidence or an explicit uncertainty.');
+        if (from.change === 'new' || to.change === 'new') check(link.change === 'new', 'A link to a new part is new.');
+        if (from.change === 'removed' || to.change === 'removed') check(link.change === 'removed', 'A link to a removed part is removed.');
+    }
+}
+
+/**
+ * Counts what each reason explains and what no reason explains. A hunk is explained when its file
+ * is claimed whole or the hunk itself is claimed; a file without hunks counts by file.
+ *
+ * @returns {{ reasons: { id: string, files: number, hunks: number }[], unexplained: { files: number, hunks: number } }}
+ */
+export function reasonCoverage(state, snapshot) {
+    const owner = new Map();
+    const wholeFiles = new Set();
+    const counts = (state.reasons ?? []).map((reason) => {
+        const files = new Set(reason.fileIds);
+        let hunks = 0;
+        for (const file of snapshot.files) {
+            if (reason.fileIds.includes(file.id)) {
+                wholeFiles.add(file.id);
+                hunks += file.hunks.length;
+                for (const hunk of file.hunks) owner.set(hunk.id, reason.id);
+            }
+            for (const hunk of file.hunks) {
+                if (!reason.hunkIds.includes(hunk.id)) continue;
+                files.add(file.id);
+                hunks += 1;
+                owner.set(hunk.id, reason.id);
+            }
+        }
+        return { id: reason.id, files: files.size, hunks };
+    });
+    const unexplained = { files: 0, hunks: 0 };
+    for (const file of snapshot.files) {
+        const open = file.hunks.filter((hunk) => !owner.has(hunk.id)).length;
+        unexplained.hunks += open;
+        if (open > 0 || (file.hunks.length === 0 && !wholeFiles.has(file.id))) unexplained.files += 1;
+    }
+    return { reasons: counts, unexplained };
+}
+
 function coverage(value, files, hunks) {
     object(value, ['fileIds', 'hunkIds', 'notApplicable'], 'coverage');
     ids(value.fileIds, 'coverage files', new Set(files));
@@ -280,7 +413,7 @@ export function outcome(state) {
 
 export function validateState(state, snapshot) {
     validateSnapshot(snapshot);
-    object(state, ['schemaVersion', 'reviewId', 'snapshotId', 'revision', 'status', 'snapshotPath', 'areas', 'workItems', 'findings', 'limitations', 'artifacts', 'outcome'], 'state', ['scope', 'context']);
+    object(state, ['schemaVersion', 'reviewId', 'snapshotId', 'revision', 'status', 'snapshotPath', 'areas', 'workItems', 'findings', 'limitations', 'artifacts', 'outcome'], 'state', ['scope', 'context', 'reasons', 'changeMap']);
     version(state);
     check(state.reviewId === snapshot.reviewId && state.snapshotId === snapshot.snapshotId, 'State and snapshot identities differ.');
     integer(state.revision, 'revision');
@@ -331,6 +464,8 @@ export function validateState(state, snapshot) {
         object(state.context, [], 'context', ['acceptanceCriteria', 'businessAlignment', 'securityPlanDrift', 'stakeholderNotes']);
         for (const value of Object.values(state.context)) check(value !== undefined && value !== null, 'Context records must carry explicit evidence.');
     }
+    if (own(state, 'reasons')) reasons(state.reasons, snapshot);
+    if (own(state, 'changeMap')) changeMap(state.changeMap, snapshot, new Set((state.reasons ?? []).map((reason) => reason.id)));
     check(state.status === execution(state), 'State status disagrees with evidence.');
     check(state.outcome === outcome(state), 'Review outcome disagrees with coverage or finding dispositions.');
     return state;

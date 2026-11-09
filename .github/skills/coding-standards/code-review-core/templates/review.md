@@ -8,6 +8,10 @@ description: 'Human-editable Code Review report layout; populated by the core re
 
 {{coverage}}
 
+## Why these changes
+
+{{reasons}}
+
 ## Findings
 
 {{findings}}

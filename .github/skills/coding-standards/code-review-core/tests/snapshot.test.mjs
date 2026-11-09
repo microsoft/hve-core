@@ -8,7 +8,7 @@ import path from 'node:path';
 import { describe, it } from 'node:test';
 import { captureReview, gitCommand } from '../scripts/lib/snapshot.mjs';
 import { exists, loadReview, readJson, readText, updateState } from '../scripts/lib/storage.mjs';
-import { mergeStoredResult, renderReport, schedule, writeResult } from '../scripts/lib/operations.mjs';
+import { mergeStoredResult, renderReport, schedule, updateContext, writeResult } from '../scripts/lib/operations.mjs';
 
 async function repository(t) {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'hve-code-review-'));
@@ -158,6 +158,7 @@ describe('immutable capture and ownership', () => {
         const original = await readText(captured.root, 'review.md');
         assert.match(original, /All code-review findings/);
         assert.match(original, /- \[ \] Reviewed and validated/);
+        assert.match(original, /## Why these changes\n\nThe agent recorded no reasons for these changes\./);
         await fs.appendFile(path.join(captured.root, 'review.md'), '\nHuman draft text.\n');
         await assert.rejects(renderReport(captured, rendered.revision), /human-editable report changed/);
         assert.match(await readText(captured.root, 'review.md'), /Human draft text/);
@@ -167,5 +168,47 @@ describe('immutable capture and ownership', () => {
         assert.equal(newer.state.workItems.length, 0);
         assert.match(await readText(captured.root, 'review.md'), /Human draft text/);
         assert.equal((await loadReview(newer)).state.snapshotId, newer.snapshot.snapshotId);
+    });
+});
+
+describe('reasons and the change map through the helper', () => {
+    it('stores both records, refuses an invalid update without writing, and removes a record set to null', async (t) => {
+        const { root, base } = await repository(t);
+        const head = await changedCommit(root);
+        const captured = await captureReview(root, { kind: 'branch', base, head });
+        const state = await schedule(captured, 0, { perspectives: ['functional'], scope });
+        const file = captured.snapshot.files[0];
+        const reasons = [{ id: 'R1', title: 'Reword the first line', why: 'The agent reads the edit as a wording update.', fileIds: [file.id], hunkIds: [] }];
+        const changeMap = {
+            title: 'After: app.txt opens with after', description: 'One changed text file.', boxes: [],
+            parts: [{ id: 'app', label: 'app.txt', box: null, change: 'changed', before: 'Opened with before', after: 'Opens with after', fileIds: [file.id], reasonIds: ['R1'] }],
+            links: [],
+        };
+        const updated = await updateContext(captured, state.revision, { reasons, changeMap });
+        assert.deepEqual(updated.reasons, reasons);
+        assert.deepEqual(updated.changeMap, changeMap);
+        await assert.rejects(updateContext(captured, updated.revision, { reasons: [{ ...reasons[0], hunkIds: ['missing-hunk'] }] }), /unknown ID/);
+        assert.equal((await loadReview(captured)).state.revision, updated.revision);
+        const cleared = await updateContext(captured, updated.revision, { changeMap: null });
+        assert.equal(Object.hasOwn(cleared, 'changeMap'), false);
+        assert.deepEqual(cleared.reasons, reasons);
+        await assert.rejects(updateContext(captured, cleared.revision, { reasons: null, changeMap }), /unknown ID/);
+    });
+
+    it('lists the reasons in the report as the agent\'s reading, escaped, with what no reason explains', async (t) => {
+        const { root, base } = await repository(t);
+        await fs.writeFile(path.join(root, 'notes.txt'), 'first\n');
+        await gitCommand(root, ['add', '--', 'notes.txt']);
+        const head = await changedCommit(root);
+        const captured = await captureReview(root, { kind: 'branch', base, head });
+        const state = await schedule(captured, 0, { perspectives: ['functional'], scope });
+        const app = captured.snapshot.files.find((file) => file.newPath === 'app.txt');
+        const reasons = [{ id: 'R1', title: 'Reword *the* first line', why: 'The agent reads <this> as a wording update.', fileIds: [app.id], hunkIds: [] }];
+        const updated = await updateContext(captured, state.revision, { reasons });
+        await renderReport(captured, updated.revision);
+        const report = await readText(captured.root, 'review.md');
+        assert.match(report, /## Why these changes\n\nThe agent's reading of why these changes were made\.\n\n\* R1: Reword \\\*the\\\* first line \(1 file, 1 hunk\)\. The agent reads \\<this\\> as a wording update\./);
+        assert.match(report, /Not explained yet: 1 file \(1 hunk\)\./);
+        assert.ok(report.indexOf('## Why these changes') < report.indexOf('## Findings'));
     });
 });
