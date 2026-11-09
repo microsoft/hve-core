@@ -224,7 +224,7 @@ watches:
     kind: issue-closed
     issue: 3137
     action: >-
-      Upgrade Poutine to a release with the fix, then remove the .poutine.yml untrusted_checkout_exec skip for backlog-groom.lock.yml
+      Upgrade Poutine to a release with the fix, then remove the .poutine.yml untrusted_checkout_exec skips for backlog-groom.lock.yml and pr-review.lock.yml
     url: https://github.com/boostsecurityio/poutine/issues/457
   # Scorecard Vulnerabilities reports this advisory although its CVE was
   # rejected; the alert clears once the advisory is withdrawn.
