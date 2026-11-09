@@ -12,7 +12,6 @@ import {
   type ApprovalRequestItem,
 } from "./approval.mts";
 import {
-  AD_HOC_APPROVAL_POLICY,
   approvalPolicy, type EvidenceTrack,
   COMMUNICATION_LIMITS,
   EXPECTED_CONTEXT_TIER,

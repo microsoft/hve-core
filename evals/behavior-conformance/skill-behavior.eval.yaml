@@ -6451,7 +6451,7 @@ stimuli:
       - type: output-matches
         name: skill-root-cause-analysis-classifies-causal-pairs
         config:
-          pattern: '(?i)^\s*A:[ \t]*confirmatory[ \t]*\r?\nB:[ \t]*confirmatory[ \t]*\r?\nC:[ \t]*exclude[ \t]*\r?\nD:[ \t]*exploratory\s*$'
+          pattern: '(?i)^\s*A:[ \t]*confirmatory[ \t]*\r?\nB:[ \t]*confirmatory[ \t]*\r?\nC:[ \t]*confirmatory[ \t]*\r?\nD:[ \t]*exploratory\s*$'
   - name: skill-root-cause-analysis-limits-exploratory-use
     prompt: |
       Use the RCA companion skills. Evidence E-001 generated H-001 and has no
@@ -6472,7 +6472,7 @@ stimuli:
       - type: output-matches
         name: skill-root-cause-analysis-limits-exploratory-use
         config:
-          pattern: '(?i)^\s*class:[ \t]*Exploratory[ \t]*\r?\nuse:[ \t]*Hypothesis refinement only\s*$'
+          pattern: '(?i)^\s*class:[ \t]*Exploratory[ \t]*\r?\nuse:[ \t]*(?:hypothesis refinement[ \t]+(?:and|or)[ \t]+next[ -]test selection|next[ -]test selection[ \t]+(?:and|or)[ \t]+hypothesis refinement)[ \t]+only[.!]?\s*$'
   - name: skill-root-cause-analysis-allows-exploratory-contradiction
     prompt: |
       Use the RCA companion skills. Evidence E-003 generated H-003. Its causal
@@ -6559,7 +6559,7 @@ stimuli:
       prompt_sha256: fc14da171882c9135401c1783d6046c39141306121e8a9e46e26dc6bfbf38a8d
     graders:
       - type: output-matches
-        name: skill-causal-likelihood-isolates-statistical-output
+        name: skill-causal-evidence-likelihood-isolates-statistical-output
         config:
           pattern: '(?is)(?=[\s\S]*(?:set[ \t-]+aside|exclude|do not use|ignore)[\s\S]*(?:p-value|confidence interval|effect size|statistic))(?=[\s\S]*(?:direct observation|mechanism|evidence))'
   - name: skill-root-cause-analysis-preserves-contradiction

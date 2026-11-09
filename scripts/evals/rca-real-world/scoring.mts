@@ -22,7 +22,7 @@ import {
 import type { TrialArtifact } from "./orchestrator.mts";
 import { trialDirectory, type EvaluationCondition } from "./conditions.mts";
 import {
-  COMMUNICATION_LIMITS, CommunicationError, EVIDENCE_OPERATIONS, validateDiagnosticReport,
+  COMMUNICATION_LIMITS, CommunicationError, validateDiagnosticReport,
   type DiagnosticReport,
 } from "./communication.mts";
 import { finalEnvelopeFormat } from "./schema-finalization.mts";

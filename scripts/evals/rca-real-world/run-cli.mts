@@ -127,7 +127,7 @@ if (import.meta.main) {
   });
   const repositoryRoot = resolve(import.meta.dirname, "..", "..", "..");
   const runRoot = join(repositoryRoot, ".copilot-tracking", "evaluations", EVALUATION_RUN_DIRECTORY, options.runId);
-  const preparation = await readJson<{ evidenceTrack?: EvidenceTrack }>(join(runRoot, "inputs", "scorer-only", "preparation-manifest.json"));
+  await readJson<{ evidenceTrack?: EvidenceTrack }>(join(runRoot, "inputs", "scorer-only", "preparation-manifest.json"));
   const summary = await runRound({
     repositoryRoot,
     runRoot,
