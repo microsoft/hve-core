@@ -85,8 +85,10 @@ fi
 
 URL="repos/${OWNER}/${REPO}/code-scanning/alerts?state=open&ref=refs/heads/${BRANCH}&per_page=100${SEVERITY_QUERY}"
 
-GROUP_FILTER='group_by(.rule.description) | map({
-        RuleDescription: .[0].rule.description,
+# Some tools, such as zizmor, publish no rule description, so groups key on the
+# tool and rule ID and the title falls back to the rule name, then its ID.
+GROUP_FILTER='group_by([.tool.name, .rule.id]) | map({
+        RuleDescription: ([.[0].rule.description, .[0].rule.name, .[0].rule.id] | map(select(. != null and . != "")) | first),
         RuleId:          .[0].rule.id,
         Tool:            .[0].tool.name,
         SecuritySeverity: .[0].rule.security_severity_level,
@@ -109,7 +111,7 @@ DISMISSED_GROUPS=$(GH_PAGER='' gh api "$DISMISSED_URL" --paginate --jq '.[]' | \
         | \$alerts | ${GROUP_FILTER}
         | map(. as \$g | . + {
             Kind: \"dismissed-still-detected\",
-            DismissedReason: ([\$alerts[] | select(.rule.id == \$g.RuleId)][0].dismissed_reason)
+            DismissedReason: ([\$alerts[] | select(.rule.id == \$g.RuleId and .tool.name == \$g.Tool)][0].dismissed_reason)
         })")
 
 jq -n --argjson open "$OPEN_GROUPS" --argjson dismissed "$DISMISSED_GROUPS" '$open + $dismissed'
