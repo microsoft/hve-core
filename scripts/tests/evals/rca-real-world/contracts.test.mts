@@ -26,8 +26,8 @@ test("maps exact evaluation profiles to distinct fixed models", () => {
   }
 });
 
-test("preserves the existing evaluation directory name", () => {
-  assert.equal(EVALUATION_RUN_DIRECTORY, "rcaeval-three-case");
+test("uses a count-independent evaluation directory name", () => {
+  assert.equal(EVALUATION_RUN_DIRECTORY, "rcaeval");
 });
 
 function validContract(): EvaluationContract {

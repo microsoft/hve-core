@@ -2,7 +2,7 @@
 title: RCAEval real-world RCA evaluation
 description: Compare skilled and skill-free RCA on separate prepared and raw blinded RCAEval cohorts
 author: HVE Core Team
-ms.date: 2026-11-06
+ms.date: 2026-11-09
 ms.topic: reference
 keywords:
   - root cause analysis
@@ -680,10 +680,15 @@ The host never silently extends a model-requested approval.
 Raw inputs, transcripts, tool traces, approvals, scores, and manifests are written below:
 
 ```text
-.copilot-tracking/evaluations/rcaeval-three-case/<run-id>/
+.copilot-tracking/evaluations/rcaeval/<run-id>/
   sessions/with-skill/<case-id>/trial-<n>/
   sessions/without-skill/<case-id>/trial-<n>/
 ```
+
+The count-independent run root is defined by `EVALUATION_RUN_DIRECTORY` in
+`scripts/evals/rca-real-world/contracts.mts`. Completed run directories can be relocated
+under this root without rewriting their contents. Preserve historical reports and recorded
+fingerprints; relocation does not bypass continuation's unchanged-input checks.
 
 Generate local reports without starting another model session:
 

@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: MIT
 
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdtemp, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { test } from "node:test";
 
 import { generateEvidenceReport, scanArtifacts } from "../../../evals/rca-real-world/report.mts";
 import { parseReportArguments } from "../../../evals/rca-real-world/report-cli.mts";
 import { trialDirectory } from "../../../evals/rca-real-world/conditions.mts";
-import { EVALUATION_PROTOCOL, readJson, writeJson } from "../../../evals/rca-real-world/contracts.mts";
+import { EVALUATION_PROTOCOL, EVALUATION_RUN_DIRECTORY, readJson, writeJson } from "../../../evals/rca-real-world/contracts.mts";
 import type { EvaluationSummary } from "../../../evals/rca-real-world/runner.mts";
 import { scoreTrial } from "../../../evals/rca-real-world/scoring.mts";
 import type { TrialResult } from "../../../evals/rca-real-world/scoring.mts";
@@ -30,6 +30,31 @@ test("report CLI defaults to the current UTC day and preserves explicit date ove
     new Date().toISOString().slice(0, 10),
   );
   assert.throws(() => parseReportArguments([], now), /Usage:/);
+});
+
+test("reporting a relocated run preserves historical reports and recorded evidence", async (context) => {
+  const fixture = await reportFixture();
+  context.after(() => rm(fixture.repositoryRoot, { recursive: true, force: true }));
+  await writeFile(join(fixture.runRoot, "HISTORICAL-EVIDENCE.md"), "# Archived evidence\n\nRecorded at the original location.\n");
+  const preservedPaths = [
+    "HISTORICAL-EVIDENCE.md", "run-manifest.json", "evaluation-summary.json",
+    join("sessions", "with-skill", "case-01", "trial-1", "session-artifact.json"),
+  ];
+  const originals = await Promise.all(preservedPaths.map((path) => readFile(join(fixture.runRoot, path))));
+  const runRoot = join(fixture.repositoryRoot, ".copilot-tracking", "evaluations", EVALUATION_RUN_DIRECTORY, "fixture");
+  await mkdir(dirname(runRoot), { recursive: true });
+  await rename(fixture.runRoot, runRoot);
+
+  const result = await generateEvidenceReport({ repositoryRoot: fixture.repositoryRoot, runRoot, reviewDate: "2026-11-09" });
+
+  for (const path of [result.committedReportPath, result.reviewPath, result.prUpdatePath]) {
+    assert.equal(dirname(path), runRoot);
+    assert.ok((await readFile(path)).length > 0);
+  }
+  for (const [index, path] of preservedPaths.entries()) {
+    assert.deepEqual(await readFile(join(runRoot, path)), originals[index]);
+  }
+  await assert.rejects(readFile(join(fixture.runRoot, "run-manifest.json")), /ENOENT/);
 });
 
 test("raw reports label every output, separate access counts, and reject missing or mixed provenance", async (context) => {

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, readdir, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
@@ -216,6 +216,24 @@ test("both raw conditions receive the same generic unmapped JSONL interface and 
   assert.match(prompt, /both conditions have exactly the same host capabilities/);
   assert.doesNotMatch(prompt, /read-only bounded fixture evidence/);
   assert.ok(!prompt.includes("held-out-service"));
+});
+
+test("raw verification and input fingerprints survive run directory relocation", async (context) => {
+  const source = await fixture();
+  context.after(() => rm(source.repositoryRoot, { recursive: true, force: true }));
+  const result = await prepareRawCases({ ...source, runId: "raw-relocated", indexRows: source.rows });
+  await mkdir(join(source.repositoryRoot, "scripts", "evals", "rca-real-world"), { recursive: true });
+  await mkdir(join(source.repositoryRoot, ".github", "skills", "root-cause-analysis"), { recursive: true });
+  await writeFile(join(source.repositoryRoot, "package-lock.json"), "{}");
+  const previousRoot = join(source.repositoryRoot, "previous-run-location");
+  await rename(result.runRoot, previousRoot);
+  const fingerprint = await createInputFingerprint(source.repositoryRoot, previousRoot, "raw");
+
+  await rename(previousRoot, result.runRoot);
+
+  await verifyRawRun(result.runRoot);
+  assert.equal(await createInputFingerprint(source.repositoryRoot, result.runRoot, "raw"), fingerprint);
+  await assert.rejects(verifyRawRun(previousRoot), /ENOENT/);
 });
 
 test("raw input fingerprints include every converted file, not just metadata", async () => {
