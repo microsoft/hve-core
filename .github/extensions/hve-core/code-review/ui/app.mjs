@@ -3,19 +3,26 @@
 
 import { badge, count, h, icon, idChip, meta, prose, shortSha, svg, time } from './dom.mjs';
 import {
-    anchorLabel, coverageBoard, DISPOSITION, defaultFindingFilter, EXECUTION, FEEDBACK_KIND, feedbackState, fileAnnotations,
-    fileLabel, fileStats, fileStatus, FINDING_FILTERS, filterShowing, findingFilter, hunkAnnotations, impactLayout, isMarked, isRetained, matches, needsYou,
-    OUTCOME, PERSPECTIVE, perspectiveOf, plainText, resolveFocus, SEVERITY, splitPath, STAGE_STATUS, stageFor, stages, targetSummary,
+    anchorLabel, arrivals, boardLanes, bySeverity, DISPOSITION, EXECUTION, FEEDBACK_KIND, feedbackState, fileAnnotations,
+    fileLabel, fileStats, fileStatus, findingGroups, findingsFor, hidingNarrowing, hunkAnnotations, isMarked, isRetained, matches, needsAttention, needsYou, perspectiveProgress,
+    NOT_EXPLAINED, OUTCOME, PERSPECTIVE, perspectiveOf, plainText, reasonCoverage, reasonFiles, resolveFocus, SEVERITY, splitPath, STAGE_STATUS, stageFor, stages, targetSummary,
 } from './views.mjs';
+import { layoutMap, MAP_VIEWS, mapModel, tagWords } from './map.mjs';
+import { closeMapPreview, renderMap } from './diagram.mjs';
 
 const $ = (id) => document.getElementById(id);
 const token = document.querySelector('meta[name="review-token"]').content;
-const STAGE_KEYS = ['capture', 'review', 'verify', 'outcome'];
+const STAGE_KEYS = ['capture', 'review', 'outcome'];
 const ui = {
-    stage: 'review', target: null, focus: null, filter: '', findingFilter: null, follow: true, live: 'connecting',
-    navHidden: false, steerHidden: false, drawer: null, boardOpen: true, shortcuts: true, reportText: null,
+    stage: 'review', target: null, focus: null, filter: '', follow: true, live: 'connecting',
+    navHidden: false, steerHidden: false, drawer: null, boardOpen: true, boardLane: null, shortcuts: true, reportText: null,
     remoteFocus: '', needsIndex: -1, composer: { id: null, target: null, saved: '' }, loaded: false,
+    mapView: 'changes', mapPinned: null, mapText: false, reason: null,
+    expandedFinding: null, groupOpen: new Map(), findingArea: false, shownFindings: new Set(), newlyShown: new Set(), heldIds: new Set(), discussionOpen: false,
 };
+const MAP_VIEW_WORDS = { changes: 'Changes', before: 'Before', after: 'After' };
+let mapCache = { key: null, model: null, layout: null };
+let coverageCache = { key: null, value: null };
 let view = null;
 const evidence = new Map();
 let refreshing = false;
@@ -46,7 +53,8 @@ function reportFailure(message) {
     note(message, 'danger', 'alert');
 }
 
-function note(message, tone, iconName, action = null) {
+/** A dismissible status note; `quiet` leaves the announcement to a caller that combines news. */
+function note(message, tone, iconName, action = null, { quiet = false } = {}) {
     const area = $('statusArea');
     const element = h('div', { class: `notice status-note tone-${tone}` }, icon(iconName), h('p', { class: 'status-note-text' }, message));
     if (action) element.append(h('button', { type: 'button', class: 'btn btn-compact', on: { click: () => { element.remove(); syncStatus(); action.run(); } } }, action.label));
@@ -55,7 +63,7 @@ function note(message, tone, iconName, action = null) {
     area.append(element);
     while (area.children.length > 3) area.firstElementChild.remove();
     syncStatus();
-    announce(message, { urgent: tone === 'danger' });
+    if (!quiet) announce(message, { urgent: tone === 'danger' });
 }
 
 function syncStatus() {
@@ -69,12 +77,18 @@ function run(action) {
 // Selection
 
 const about = (kind, id) => ({ kind, id, snapshotId: view.snapshotId });
+/** Whether the reader has been shown a finding; held arrivals stay out of every finding surface. */
+const isShown = (finding) => ui.shownFindings.has(finding.id);
 
 function select(target, { stage = null, moveFocus = true, flash = false } = {}) {
     ui.target = target;
     ui.focus = resolveFocus(view, target);
+    ui.boardLane = null;
+    if (target.kind === 'reason') ui.reason = target.id;
+    else if (target.kind === 'area') ui.reason = null;
+    if (target.kind === 'finding') revealFinding(target.id);
+    if (target.kind === 'comment') ui.discussionOpen = true;
     if (stage) ui.stage = stage;
-    if (target.kind === 'finding') ui.findingFilter = filterShowing(view, ui.findingFilter ?? defaultFindingFilter(view), target.id);
     render({ keepScroll: false });
     const element = selectionElement();
     if (element) {
@@ -88,14 +102,60 @@ function select(target, { stage = null, moveFocus = true, flash = false } = {}) 
     } else if (moveFocus) $('viewTitle')?.focus({ preventScroll: true });
 }
 
+/**
+ * Selects a reason as a lens over files, findings, and the map, or clears it with null. The file in
+ * view stays when the reason explains it; otherwise the reason's first file opens.
+ */
+function selectReason(reasonId) {
+    ui.reason = reasonId;
+    const files = reasonId ? reasonFiles(view, reasonId, currentCoverage()) : [];
+    if (files.length && !files.includes(ui.focus?.fileId)) {
+        ui.target = reasonId === NOT_EXPLAINED ? about('file', files[0]) : about('reason', reasonId);
+        ui.focus = resolveFocus(view, ui.target);
+    }
+    render();
+    const what = reasonId === NOT_EXPLAINED ? 'Changes no reason explains' : `Reason ${reasonId}`;
+    announce(reasonId ? `${what}: ${files.length} ${files.length === 1 ? 'file' : 'files'}.` : 'All changes.');
+}
+
+/** Reason coverage for the current revision, computed once and shared by every row. */
+function currentCoverage() {
+    const key = `${view.snapshotId}:${view.revision}`;
+    if (coverageCache.key !== key) coverageCache = { key, value: reasonCoverage(view) };
+    return coverageCache.value;
+}
+
+/**
+ * Shows a finding: releases it if held, opens its group, expands it, and drops a reason or area
+ * narrowing that would hide it.
+ */
+function revealFinding(findingId) {
+    const finding = view.findings.find((entry) => entry.id === findingId);
+    if (!finding) return;
+    ui.shownFindings.add(findingId);
+    ui.expandedFinding = findingId;
+    const group = findingGroups([finding])[0];
+    if (group) ui.groupOpen.set(group.id, true);
+    clearHidingNarrowing([findingId]);
+}
+
+/** Clears the reason lens or area scope when either would hide one of the findings; returns which. */
+function clearHidingNarrowing(ids) {
+    const hidden = hidingNarrowing(view, ids, { reasonId: ui.reason, areaId: ui.findingArea ? ui.focus?.areaId ?? null : null });
+    if (hidden.reason) ui.reason = null;
+    if (hidden.area) ui.findingArea = false;
+    return hidden;
+}
+
 function selectionElement() {
     const target = ui.target;
     if (!target) return null;
     const escape = (value) => CSS.escape(value);
-    if (ui.stage === 'verify' && target.kind === 'finding') return document.querySelector(`#finding-${escape(target.id)}`);
-    if (ui.stage === 'verify' && target.kind === 'comment') return document.querySelector(`#comment-${escape(target.id)}`);
     if (ui.stage === 'capture' && ui.focus.metadataField) return document.querySelector(`#meta-${escape(ui.focus.metadataField)}`);
     if (ui.stage !== 'review') return null;
+    if (target.kind === 'reason') return document.querySelector(`[data-key="reason-${escape(target.id)}"]`);
+    if (target.kind === 'finding') return document.querySelector(`#finding-${escape(target.id)}`);
+    if (target.kind === 'comment') return document.querySelector(`#comment-${escape(target.id)}`);
     if (ui.focus.hunkId) return document.querySelector(`#hunk-${escape(ui.focus.hunkId)}`);
     if (target.kind === 'file') return $('row-diff');
     if (target.kind === 'area') return $('row-area');
@@ -118,26 +178,67 @@ function goToAnchor(anchor) {
 
 // Rendering
 
+/**
+ * Rebuilds the page from `view` and `ui`. Focus returns to the element with the same `data-key`, or
+ * else the same `id`, and the document, navigator, and change map keep their scroll positions.
+ */
 function render({ keepScroll = true } = {}) {
     if (!view) return;
     const active = document.activeElement;
     const key = active?.dataset?.key;
+    const id = !key && active && active !== document.body ? active.id : '';
     const inDocument = $('document').contains(active) || $('navBody').contains(active) || $('steer').contains(active);
     const scroll = { doc: $('document').scrollTop, nav: $('navigator').scrollTop };
+    const map = document.querySelector('.change-map .diagram-scroll');
+    const mapScroll = map ? { left: map.scrollLeft, top: map.scrollTop } : null;
     renderHeader();
     renderNav();
     renderContext();
     renderDocument();
     renderSteer();
+    watchOffsets();
     if (keepScroll) {
         $('document').scrollTop = scroll.doc;
         $('navigator').scrollTop = scroll.nav;
     }
-    if (key) {
-        const restore = [...document.querySelectorAll('[data-key]')].find((element) => element.dataset.key === key);
+    const nextMap = mapScroll && document.querySelector('.change-map .diagram-scroll');
+    if (nextMap) {
+        nextMap.scrollLeft = mapScroll.left;
+        nextMap.scrollTop = mapScroll.top;
+    }
+    if (key || id) {
+        const restore = key ? [...document.querySelectorAll('[data-key]')].find((element) => element.dataset.key === key) : document.getElementById(id);
         if (restore && restore !== document.activeElement) restore.focus({ preventScroll: true });
         else if (!restore && inDocument && !document.activeElement?.closest('#steer .compose')) $('viewTitle')?.focus({ preventScroll: true });
     }
+}
+
+const offsets = typeof ResizeObserver === 'function' ? new ResizeObserver(() => syncOffsets()) : null;
+
+/**
+ * Measures the context bar and, while it is pinned, the Coverage board into `--cr-context-h` and
+ * `--cr-dock-h`, which place the sticky diff header and the document's scroll padding.
+ */
+function syncOffsets() {
+    const doc = $('document');
+    const dock = doc.querySelector('.board-dock');
+    const pinned = dock && window.getComputedStyle(dock).position === 'sticky';
+    doc.style.setProperty('--cr-context-h', `${$('contextBar').offsetHeight}px`);
+    doc.style.setProperty('--cr-dock-h', `${pinned ? dock.offsetHeight : 0}px`);
+}
+
+/** Watches the rebuilt board and the context bar, so wrapping, collapsing, or a short panel updates the offsets. */
+function watchOffsets() {
+    if (!offsets) {
+        syncOffsets();
+        return;
+    }
+    offsets.disconnect();
+    offsets.observe($('document'));
+    offsets.observe($('contextBar'));
+    const dock = $('document').querySelector('.board-dock');
+    if (dock) offsets.observe(dock);
+    syncOffsets();
 }
 
 function renderHeader() {
@@ -207,6 +308,7 @@ function setStage(stage, { focusTab = false } = {}) {
     if (!STAGE_KEYS.includes(stage)) return;
     const changed = ui.stage !== stage;
     ui.stage = stage;
+    if (changed) ui.boardLane = null;
     render({ keepScroll: !changed });
     if (changed) $('document').scrollTop = 0;
     if (focusTab) $(`tab-${stage}`)?.focus();
@@ -266,24 +368,27 @@ function renderNav() {
         }
         sections.push(list);
         if (!areas.length) sections.push(h('p', { class: 'empty' }, filter ? 'No areas or files match the filter.' : 'The review has no areas yet.'));
-    } else if (ui.stage === 'verify') {
-        const findings = [...view.findings].sort((a, b) => (SEVERITY[a.severity]?.rank ?? 9) - (SEVERITY[b.severity]?.rank ?? 9))
-            .filter((finding) => matches(filter, finding.claim, finding.id, finding.severity));
-        sections.push(h('h2', { class: 'nav-title' }, 'Findings', count(view.findings.length)));
-        sections.push(h('ul', { class: 'nav-list' }, findings.map((finding) => {
-            const severity = SEVERITY[finding.severity];
-            return navItem({
-                key: `nav-finding-${finding.id}`, iconName: severity.icon, tone: severity.tone, label: plainText(finding.claim), title: `${finding.severity}: ${plainText(finding.claim)}`,
-                current: ui.focus.findingId === finding.id, onClick: () => select(about('finding', finding.id), { stage: 'verify' }),
-            });
-        })));
+        // Held arrivals stay out of the navigator until the reader shows them.
+        const findings = view.findings.filter((finding) => ui.shownFindings.has(finding.id) && matches(filter, finding.claim, finding.id, finding.severity))
+            .sort((left, right) => Number(left.disposition === 'rejected') - Number(right.disposition === 'rejected') || bySeverity(left, right));
+        sections.push(h('h2', { class: 'nav-title' }, 'Findings', count(findings.length)));
+        if (findings.length) {
+            sections.push(h('ul', { class: 'nav-list' }, findings.map((finding) => {
+                const severity = SEVERITY[finding.severity];
+                return navItem({
+                    key: `nav-finding-${finding.id}`, iconName: severity.icon, tone: severity.tone, label: plainText(finding.claim), title: `${finding.severity}: ${plainText(finding.claim)}`,
+                    current: ui.focus.findingId === finding.id, onClick: () => select(about('finding', finding.id), { stage: 'review' }),
+                });
+            })));
+        }
         const threads = view.discussion.items.filter((comment) => !comment.replyTo && matches(filter, comment.author, comment.body));
         sections.push(h('h2', { class: 'nav-title' }, 'Discussion', count(view.discussion.items.length)));
-        sections.push(h('ul', { class: 'nav-list' }, threads.map((comment) => navItem({
-            key: `nav-comment-${comment.id}`, iconName: 'message', tone: 'user', label: `${comment.author}: ${plainText(comment.body)}`, title: plainText(comment.body),
-            current: ui.focus.commentId === comment.id, onClick: () => select(about('comment', comment.id), { stage: 'verify' }),
-        }))));
-        if (!findings.length && !threads.length) sections.push(h('p', { class: 'empty' }, filter ? 'Nothing matches the filter.' : 'No findings or comments yet.'));
+        if (threads.length) {
+            sections.push(h('ul', { class: 'nav-list' }, threads.map((comment) => navItem({
+                key: `nav-comment-${comment.id}`, iconName: 'message', tone: 'user', label: `${comment.author}: ${plainText(comment.body)}`, title: plainText(comment.body),
+                current: ui.focus.commentId === comment.id, onClick: () => select(about('comment', comment.id), { stage: 'review' }),
+            }))));
+        }
     } else {
         const outline = ui.stage === 'capture'
             ? [['row-target', 'Target', 'branch'], ['row-changes', 'Changed files', 'diff', view.files.length], ['row-scope', 'Scope', 'list'],
@@ -320,13 +425,11 @@ function contextSummary() {
         return `${targetSummary(view).kind}, ${view.files.length} ${view.files.length === 1 ? 'file' : 'files'}, ${totals.add} lines added, ${totals.del} removed.`;
     }
     if (ui.stage === 'review') {
-        const board = coverageBoard(view);
-        const size = (id) => board.find((group) => group.id === id).areas.length;
-        return view.areas.length ? `${size('reviewed')} of ${view.areas.length} areas reviewed, ${size('active')} in progress, ${size('attention')} need attention.` : 'The agent has not scheduled review work yet.';
-    }
-    if (ui.stage === 'verify') {
+        const lanes = boardLanes(view);
+        const size = (id) => lanes.find((lane) => lane.id === id).areas.length;
         const proposed = view.findings.filter((finding) => finding.disposition === 'proposed').length;
-        return `${proposed} to verify, ${view.findings.filter((finding) => isRetained(finding) && finding.disposition !== 'proposed').length} retained, ${view.discussion.items.length} discussion ${view.discussion.items.length === 1 ? 'comment' : 'comments'}.`;
+        const checking = proposed ? `, ${proposed} ${proposed === 1 ? 'finding' : 'findings'} being checked` : '';
+        return view.areas.length ? `${size('reviewed')} of ${view.areas.length} areas reviewed, ${size('active')} in progress${checking}.` : 'The agent has not scheduled review work yet.';
     }
     return view.outcome && !view.stale ? `The completed review recommends: ${OUTCOME[view.outcome].label.toLowerCase()}.` : `Execution is ${view.status.replace('_', ' ')}; no outcome is available yet.`;
 }
@@ -341,7 +444,6 @@ function renderDocument() {
     }
     if (ui.stage === 'capture') nodes.push(...captureView());
     else if (ui.stage === 'review') nodes.push(...reviewView());
-    else if (ui.stage === 'verify') nodes.push(...verifyView());
     else nodes.push(...outcomeView());
     body.replaceChildren(...nodes);
     if (ui.stage === 'review') void renderDiff();
@@ -404,7 +506,7 @@ function captureView() {
         ]) : h('p', { class: 'empty' }, 'The agent has not scheduled the review yet.')),
         row('row-details', 'Pull request details', 'info', [badge(statusMeta[metadata.status] ?? statusMeta.unavailable)], metadata.fields.length
             ? h('ul', { class: 'metadata-list' }, metadata.fields.map((field) => {
-                const linked = view.findings.filter((finding) => finding.anchors.some((anchor) => anchor.field === field.name));
+                const linked = view.findings.filter((finding) => isShown(finding) && finding.anchors.some((anchor) => anchor.field === field.name));
                 return h('li', { class: `metadata-item${ui.focus.metadataField === field.name ? ' is-current' : ''}`, id: `meta-${field.name}`, tabIndex: -1 },
                     h('h4', {}, field.name), prose(field.value, 'prose small'), meta(`Source: ${field.source}`),
                     linked.length ? h('div', { class: 'chip-row' }, linked.map((finding) => findingChip(finding))) : null);
@@ -425,28 +527,32 @@ function perspectiveChips(work) {
 }
 
 function areaFindings(area) {
-    return view.findings.filter((finding) => finding.anchors.some((anchor) => area.fileIds.includes(anchor.fileId)));
+    return view.findings.filter((finding) => isShown(finding) && finding.anchors.some((anchor) => area.fileIds.includes(anchor.fileId)));
 }
 
 function reviewView() {
     const nodes = [];
-    const board = coverageBoard(view);
-    const reviewed = board.find((group) => group.id === 'reviewed').areas.length;
+    const agentAreaId = view.focus?.snapshotId === view.snapshotId ? resolveFocus(view, view.focus).areaId : null;
+    const lanes = boardLanes(view, { agentAreaId, selectedAreaId: ui.focus.areaId });
+    const reviewed = lanes.find((lane) => lane.id === 'reviewed').areas.length;
     nodes.push(h('section', { class: 'board-dock', 'aria-labelledby': 'boardTitle' },
         h('div', { class: 'board-dock-head' },
             h('h3', { class: 'board-dock-title', id: 'boardTitle' }, icon('list'), 'Coverage board'),
             h('span', { class: 'board-progress' }, h('progress', { class: 'progress', max: Math.max(view.areas.length, 1), value: reviewed, 'aria-label': 'Areas reviewed' }),
                 `${reviewed} of ${view.areas.length} areas reviewed`),
             h('button', { type: 'button', class: 'btn btn-icon board-dock-toggle', 'aria-expanded': ui.boardOpen, 'aria-controls': 'coverageBoard', title: ui.boardOpen ? 'Collapse the board' : 'Expand the board',
-                dataset: { key: 'board-toggle' }, on: { click: () => { ui.boardOpen = !ui.boardOpen; render(); } } }, icon('chevron'),
+                dataset: { key: 'board-toggle' }, on: { click: () => { ui.boardOpen = !ui.boardOpen; ui.boardLane = null; render(); } } }, icon('chevron'),
             h('span', { class: 'visually-hidden' }, ui.boardOpen ? 'Collapse the coverage board' : 'Expand the coverage board'))),
-        h('div', { class: 'board', id: 'coverageBoard', hidden: !ui.boardOpen }, board.map((group) => h('section', { class: `board-col tone-${group.tone}`, 'aria-labelledby': `lane-${group.id}` },
-            h('h4', { class: 'board-col-title', id: `lane-${group.id}` }, icon(group.icon), group.title, count(group.areas.length)),
-            group.areas.length ? h('ul', { class: 'board-list' }, group.areas.map((area) => h('li', {}, boardCard(area, group)))) : h('p', { class: 'empty' }, 'None')))),
+        h('div', { class: 'board', id: 'coverageBoard', hidden: !ui.boardOpen }, lanes.map((lane) => boardLane(lane, agentAreaId))),
         h('p', { class: 'meta', hidden: !ui.boardOpen }, 'Reviewed means every required perspective finished its assigned files. It is not approval, and zero findings is not a pass.')));
+    nodes.push(reasonsRow());
+    const map = changeMapRow();
+    if (map) nodes.push(map);
+    nodes.push(findingsRow());
     const area = view.areas.find((entry) => entry.id === ui.focus.areaId);
     if (!area) {
-        nodes.push(h('p', { class: 'empty row' }, view.areas.length ? 'Select an area to see its summary, impact, and files.' : 'The agent has not scheduled review work. Captured files are listed under Capture.'));
+        nodes.push(h('p', { class: 'empty row' }, view.areas.length ? 'Select an area to see its summary, before and after, and files.' : 'The agent has not scheduled review work. Captured files are listed under Capture.'));
+        nodes.push(discussionRow());
         return nodes;
     }
     const status = EXECUTION[area.status] ?? EXECUTION.pending;
@@ -462,54 +568,167 @@ function reviewView() {
         h('div', { class: 'compare' },
             h('div', { class: 'compare-card' }, h('h4', {}, icon('clock'), 'Before'), prose(area.before || 'Not described yet.', 'prose small')),
             h('div', { class: 'compare-card' }, h('h4', {}, icon('arrow-right'), 'After'), prose(area.after || 'Not described yet.', 'prose small'))),
-        impactMap(area),
         workSummary(area)));
-    const files = view.files.filter((file) => area.fileIds.includes(file.id));
-    nodes.push(row('row-files', 'Files', 'diff', [count(files.length)], h('ul', { class: 'file-list' }, files.map((file) => h('li', {}, fileRow(file))))));
+    const lens = ui.reason ? reasonFiles(view, ui.reason, currentCoverage()) : null;
+    const files = view.files.filter((file) => (lens ?? area.fileIds).includes(file.id));
+    const lensHead = lens ? [
+        ui.reason === NOT_EXPLAINED ? badge({ label: 'Not explained yet', icon: 'question', tone: 'muted' }) : idChip(ui.reason, { kind: 'reason', title: `Files reason ${ui.reason} explains` }),
+        h('button', { type: 'button', class: 'btn btn-compact', dataset: { key: 'files-show-area' }, on: { click: () => selectReason(null) } }, icon('x'), 'Show area files'),
+    ] : [];
+    nodes.push(row('row-files', 'Files', 'diff', [count(files.length), ...lensHead],
+        files.length ? h('ul', { class: 'file-list' }, files.map((file) => h('li', {}, fileRow(file)))) : h('p', { class: 'empty' }, 'No captured file matches.')));
     nodes.push(h('section', { class: 'row', id: 'row-diff', tabIndex: -1, 'aria-labelledby': 'row-diff-title' }, h('div', { id: 'diffHost' })));
+    nodes.push(discussionRow());
     return nodes;
 }
 
-function boardCard(area, group) {
+/**
+ * One area as a card: its ID with the Agent marker and, when its required work cannot finish, its
+ * status words and a colored edge; its title; and its file and finding counts. A click selects it.
+ *
+ * @param {any} area
+ * @param {string} key the card's `data-key`, distinct for the lane's card and its dropdown copy
+ * @param {string | null} agentAreaId
+ */
+function boardCard(area, key, agentAreaId) {
     const status = EXECUTION[area.status] ?? EXECUTION.pending;
-    const findings = areaFindings(area);
+    const attention = needsAttention(area);
+    const agent = area.id === agentAreaId;
+    const findings = areaFindings(area).filter(isRetained);
     const work = area.work.map((item) => `${PERSPECTIVE[item.perspective] ?? item.perspective} ${(EXECUTION[item.status] ?? EXECUTION.pending).label.toLowerCase()}`).join(', ');
-    const label = `${area.title}, ${status.label.toLowerCase()}. ${work ? `${work}. ` : ''}${area.fileIds.length} ${area.fileIds.length === 1 ? 'file' : 'files'}${findings.length ? `, ${findings.length} ${findings.length === 1 ? 'finding' : 'findings'}` : ''}.`;
+    const label = `${area.title}, ${status.label.toLowerCase()}${agent ? ', the agent is here' : ''}. ${work ? `${work}. ` : ''}${area.fileIds.length} ${area.fileIds.length === 1 ? 'file' : 'files'}${findings.length ? `, ${findings.length} ${findings.length === 1 ? 'finding' : 'findings'}` : ''}.`;
     return h('button', {
-        type: 'button', class: `board-card${group.id === 'attention' ? ' is-attention' : ''}`, 'aria-current': ui.focus.areaId === area.id ? 'true' : null, 'aria-label': label,
-        dataset: { key: `card-${area.id}` }, on: { click: () => select(about('area', area.id), { stage: 'review' }) },
-    }, h('span', { class: 'board-card-head' }, idChip(area.id, { kind: 'area' }), badge(status)),
+        type: 'button', class: `board-card${attention ? ' is-attention' : ''}${agent ? ' is-current' : ''}`, 'aria-current': ui.focus.areaId === area.id ? 'true' : null, 'aria-label': label,
+        dataset: { key }, on: { click: () => select(about('area', area.id), { stage: 'review' }) },
+    }, h('span', { class: 'board-card-head' }, idChip(area.id, { kind: 'area' }),
+        agent ? badge({ label: 'Agent', icon: 'sparkle', tone: 'agent' }, { text: h('span', { class: 'board-flag-text' }, 'Agent') }) : null,
+        attention ? badge(status, { text: h('span', { class: 'board-flag-text' }, status.label) }) : null),
     h('span', { class: 'board-card-title' }, area.title),
-    perspectiveChips(area.work),
     h('span', { class: 'board-card-foot' }, h('span', {}, `${area.fileIds.length} ${area.fileIds.length === 1 ? 'file' : 'files'}`),
         findings.length ? h('span', {}, `${findings.length} ${findings.length === 1 ? 'finding' : 'findings'}`) : null));
 }
 
-function impactMap(area) {
-    const caption = 'How this change connects to other parts. Each link cites captured evidence or says what is uncertain; the list below describes every link.';
-    if (!area.impact.length) {
-        return h('div', {}, h('h4', { class: 'sub-title' }, icon('nodes'), 'Impact'), h('p', { class: 'empty' }, 'No impact links are recorded. Untraced consumers are not shown as connections.'));
+/**
+ * One lane: its header with the count and an alert for hidden cards that need attention, then its
+ * one card. A lane with more cards heads with a disclosure button whose dropdown lists them all
+ * over the page, so opening it never changes the board's height.
+ */
+function boardLane(lane, agentAreaId) {
+    const many = lane.areas.length > 1;
+    const open = many && ui.boardLane === lane.id;
+    const dropId = `lane-drop-${lane.id}`;
+    const flag = lane.hidden ? h('span', { class: 'lane-flag' }, icon('alert'), h('span', { class: 'visually-hidden' }, `, ${lane.hidden} more ${lane.hidden === 1 ? 'needs' : 'need'} attention`)) : null;
+    const label = [icon(lane.icon), h('span', { class: 'lane-label' }, lane.title), count(lane.areas.length), flag];
+    const head = many
+        ? h('button', { type: 'button', class: 'board-lane-toggle', 'aria-expanded': open, 'aria-controls': dropId, dataset: { key: `board-lane-${lane.id}` }, on: { click: () => toggleLane(lane.id) } },
+            ...label, icon('chevron', 'icon chev'))
+        : h('span', { class: 'board-lane-label' }, ...label);
+    return h('section', { class: `board-col tone-${lane.tone}${open ? ' is-open' : ''}`, 'aria-labelledby': `lane-${lane.id}`, dataset: { lane: lane.id } },
+        h('div', { class: 'board-lane-head' },
+            h('h4', { class: 'board-col-title', id: `lane-${lane.id}` }, head),
+            many ? h('div', { class: 'board-drop', id: dropId, hidden: !open },
+                h('ul', { class: 'board-list', 'aria-label': `${lane.title}: ${lane.areas.length} areas` }, lane.areas.map((area) => h('li', {}, boardCard(area, `board-drop-${area.id}`, agentAreaId))))) : null),
+        lane.card ? h('div', { class: 'board-lane-card' }, boardCard(lane.card, `card-${lane.card.id}`, agentAreaId)) : h('p', { class: 'empty' }, 'None'));
+}
+
+/** Opens a lane's dropdown, closing any other, or closes it when it is open. */
+function toggleLane(id) {
+    ui.boardLane = ui.boardLane === id ? null : id;
+    render();
+}
+
+/** Closes the open lane's dropdown, returning focus to its button when asked. */
+function closeLane(returnFocus) {
+    const lane = ui.boardLane;
+    if (!lane) return;
+    ui.boardLane = null;
+    render();
+    if (returnFocus) document.querySelector(`[data-key="board-lane-${CSS.escape(lane)}"]`)?.focus({ preventScroll: true });
+}
+
+const laneSelector = (lane) => `[data-lane="${CSS.escape(lane)}"]`;
+
+/** The recorded change map, or one drawn from the areas, laid out once per review revision. */
+function currentMap() {
+    const key = `${view.snapshotId}:${view.revision}`;
+    if (mapCache.key !== key) {
+        const model = mapModel(view);
+        mapCache = { key, model, layout: model ? layoutMap(model) : null };
     }
-    const layout = impactLayout(area.impact);
-    const drawing = svg('svg', { class: 'impact-svg', viewBox: `0 0 ${layout.width} ${layout.height}`, width: layout.width, height: layout.height, 'aria-hidden': 'true', focusable: 'false' },
-        svg('defs', {}, svg('marker', { id: 'impact-arrow', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' },
-            svg('path', { d: 'M0 0L10 5L0 10z', class: 'impact-arrowhead' }))),
-        layout.links.map((link) => svg('path', { d: link.path, class: `impact-link${link.uncertain ? ' is-uncertain' : ''}`, 'marker-end': 'url(#impact-arrow)' })),
-        layout.nodes.map((node) => svg('g', { class: 'impact-box' },
-            svg('rect', { x: node.x, y: node.y, width: node.width, height: node.height, rx: 6 }),
-            svg('text', { class: 'impact-text', x: node.x + 12, y: node.y + 8 },
-                node.lines.map((line, index) => svg('tspan', { x: node.x + 12, dy: index ? 18 : 14 }, line))))));
-    return h('figure', { class: 'impact-map' }, h('h4', { class: 'sub-title' }, icon('nodes'), 'Impact'), h('figcaption', {}, caption),
-        h('div', { class: 'impact-canvas' }, drawing),
-        h('ol', { class: 'impact-list' }, area.impact.map((edge, index) => h('li', { class: `impact-edge${edge.uncertainty ? ' is-uncertain' : ''}` },
-            h('div', { class: 'impact-flow' }, h('span', { class: 'impact-node' }, icon('code'), edge.from), h('span', { class: 'impact-arrow' }, icon('arrow-right'), h('span', { class: 'visually-hidden' }, 'affects')),
-                h('span', { class: 'impact-node' }, icon('code'), edge.to)),
-            prose(edge.description, 'prose small'),
-            h('div', { class: 'impact-foot' },
-                edge.anchor?.fileId ? h('button', { type: 'button', class: 'id-chip', 'data-kind': 'file', dataset: { key: `impact-${index}` }, title: 'Show the supporting evidence',
-                    on: { click: () => goToAnchor(edge.anchor) } }, anchorLabel(view, edge.anchor), icon('go-to')) : null,
-                edge.uncertainty ? badge({ label: 'Uncertain', icon: 'question', tone: 'attention' }) : null,
-                edge.uncertainty ? h('span', { class: 'meta' }, edge.uncertainty) : null)))));
+    return mapCache;
+}
+
+/**
+ * The parts to fill: the selected reason's, the parts holding changes no reason explains, or the selected
+ * area's, meaning parts that hold its files or its own part on a map drawn from areas.
+ */
+function highlightedParts(model) {
+    if (ui.reason === NOT_EXPLAINED) {
+        const open = new Set(currentCoverage().unexplained.fileIds);
+        return new Set(model.parts.filter((part) => part.fileIds.some((fileId) => open.has(fileId))).map((part) => part.id));
+    }
+    if (ui.reason) return new Set(model.parts.filter((part) => part.reasonIds.includes(ui.reason)).map((part) => part.id));
+    const area = view.areas.find((entry) => entry.id === ui.focus?.areaId);
+    if (!area) return new Set();
+    return new Set(model.parts.filter((part) => part.id === `area:${area.id}` || part.fileIds.some((fileId) => area.fileIds.includes(fileId))).map((part) => part.id));
+}
+
+function changeMapRow() {
+    const { model, layout } = currentMap();
+    if (!model) return null;
+    if (!MAP_VIEWS.includes(ui.mapView)) ui.mapView = 'changes';
+    const views = h('fieldset', { class: 'segmented' }, h('legend', {}, 'View'),
+        MAP_VIEWS.map((value) => h('label', {}, h('input', {
+            type: 'radio', name: 'mapView', value, checked: ui.mapView === value, dataset: { key: `map-view-${value}` },
+            on: { change: () => { ui.mapView = value; ui.mapPinned = null; render(); } },
+        }), h('span', {}, MAP_VIEW_WORDS[value]))));
+    return row('row-map', 'Change map', 'nodes', [model.source === 'areas' ? badge({ label: 'Drawn from areas', icon: 'info', tone: 'muted' }) : null],
+        h('div', { class: 'map-controls' }, views),
+        model.source === 'areas' ? h('p', { class: 'map-note' }, 'The agent has not drawn a change map, so each part here is a review area, joined by the impact links the areas record.') : null,
+        renderMap(model, layout, {
+            view: ui.mapView, idPrefix: 'review-map', highlight: highlightedParts(model), pinned: ui.mapPinned,
+            preview: partPreview, onPin: (partId) => { ui.mapPinned = partId; },
+            textOpen: ui.mapText, onTextToggle: (open) => { ui.mapText = open; },
+            evidence: (link) => h('button', {
+                type: 'button', class: 'id-chip', 'data-kind': link.anchor.field ? 'review' : 'file', title: 'Show the evidence for this link',
+                dataset: { key: `map-evidence-${link.from}-${link.to}` }, on: { click: () => goToAnchor(link.anchor) },
+            }, anchorLabel(view, link.anchor), icon('go-to')),
+        }));
+}
+
+/** A part's preview: its change, before and after lines, line counts, files, reasons, and findings. */
+function partPreview(partId) {
+    const part = currentMap().model.parts.find((entry) => entry.id === partId);
+    if (!part) return [];
+    const files = view.files.filter((file) => part.fileIds.includes(file.id));
+    const totals = files.reduce((sum, file) => { const stats = fileStats(file); return { add: sum.add + stats.additions, del: sum.del + stats.deletions }; }, { add: 0, del: 0 });
+    const findings = view.findings.filter((finding) => isShown(finding) && finding.disposition !== 'rejected' && finding.anchors.some((anchor) => part.fileIds.includes(anchor.fileId)));
+    return [
+        h('h4', {}, part.label),
+        h('p', { class: 'meta' }, part.change === 'unchanged' ? 'Unchanged. It shows because a changed part connects to it.' : tagWords(part)),
+        h('dl', {},
+            part.before ? [h('dt', {}, 'Before'), h('dd', {}, part.before)] : null,
+            part.after ? [h('dt', {}, 'After'), h('dd', {}, part.after)] : null,
+            files.length ? [h('dt', {}, 'Lines'), h('dd', {}, `+${totals.add} \u2212${totals.del} in ${files.length} ${files.length === 1 ? 'file' : 'files'}`)] : null,
+            findings.length ? [h('dt', {}, 'Findings'), h('dd', {}, String(findings.length))] : null),
+        files.length ? h('div', { class: 'chip-row' }, files.map((file) => h('button', {
+            type: 'button', class: 'id-chip', 'data-kind': 'file', title: fileLabel(file),
+            on: { click: () => { ui.mapPinned = null; select(about('file', file.id), { stage: 'review' }); } },
+        }, splitPath(file.newPath ?? file.oldPath).name, icon('go-to')))) : null,
+        part.reasonIds.length ? h('div', { class: 'chip-row' }, part.reasonIds.map((reasonId) => {
+            const reason = (view.reasons ?? []).find((entry) => entry.id === reasonId);
+            return h('button', {
+                type: 'button', class: 'id-chip', 'data-kind': 'reason', 'aria-pressed': ui.reason === reasonId, title: reason ? `${reasonId}: ${reason.title}` : reasonId,
+                on: { click: () => { closePreviewTo(partId); selectReason(ui.reason === reasonId ? null : reasonId); } },
+            }, reasonId);
+        })) : null,
+    ];
+}
+
+/** Unpins the map's preview and returns focus to its part, whose key survives the next render. */
+function closePreviewTo(partId) {
+    ui.mapPinned = null;
+    [...document.querySelectorAll('#row-map [data-part]')].find((element) => element.getAttribute('data-part') === partId)?.focus({ preventScroll: true });
 }
 
 function workSummary(area) {
@@ -521,15 +740,93 @@ function workSummary(area) {
             ...(item.observations ?? []).map((text) => meta(text)))))));
 }
 
+/**
+ * "Why these changes": the agent's reasons as toggle buttons, one selected at a time, with All first
+ * and "Not explained yet" last. Unselected reasons show their why on one line; the selected one shows
+ * it whole with Explain and Comment.
+ */
+function reasonsRow() {
+    const reasons = view.reasons ?? [];
+    const reading = badge({ label: "The agent's reading", icon: 'sparkle', tone: 'muted' });
+    if (!reasons.length) {
+        return row('row-reasons', 'Why these changes', 'bulb', [reading],
+            h('p', { class: 'empty' }, 'The agent has not recorded why these changes were made. Ask it to explain an area or a file.'));
+    }
+    const coverage = currentCoverage();
+    const fileWords = (fileIds) => {
+        const split = fileIds.filter((fileId) => (coverage.byFile[fileId] ?? []).length > 1).length;
+        return `${fileIds.length} ${fileIds.length === 1 ? 'file' : 'files'}${split ? `, ${split} in part` : ''}`;
+    };
+    // A file without hunks counts by file only, so a zero hunk count says nothing and is left out.
+    const hunkWords = (total) => (total ? `${total} ${total === 1 ? 'hunk' : 'hunks'}` : null);
+    const reasonHunks = (reasonId) => coverage.reasons.find((entry) => entry.id === reasonId)?.hunks ?? 0;
+    const findingWords = (reasonId) => {
+        const total = findingsFor(view, { reasonId }).filter((finding) => isShown(finding) && isRetained(finding)).length;
+        return total ? `${total} ${total === 1 ? 'finding' : 'findings'}` : null;
+    };
+    const option = ({ id, chip = null, title, counts, why = null, actions = null }) => {
+        const pressed = ui.reason === id;
+        const key = id ?? 'all';
+        return h('li', { class: `reason-item${pressed ? ' is-selected' : ''}` },
+            h('button', {
+                type: 'button', class: 'reason', 'aria-pressed': pressed, 'aria-describedby': why ? `why-${key}` : null, dataset: { key: `reason-${key}` },
+                on: { click: () => selectReason(pressed ? null : id) },
+            }, chip, h('span', { class: 'reason-title' }, title), h('span', { class: 'reason-counts' }, counts.filter(Boolean).join(' \u00b7 '))),
+            why ? h('p', { class: 'reason-why', id: `why-${key}` }, why) : null,
+            pressed ? actions : null);
+    };
+    const items = [
+        option({
+            id: null, title: 'All changes',
+            counts: [`${view.files.length} ${view.files.length === 1 ? 'file' : 'files'}`, hunkWords(view.files.reduce((total, file) => total + file.hunks.length, 0))],
+        }),
+        ...reasons.map((reason) => option({
+            id: reason.id, chip: idChip(reason.id, { kind: 'reason' }), title: reason.title, why: reason.why,
+            counts: [fileWords(reasonFiles(view, reason.id, coverage)), hunkWords(reasonHunks(reason.id)), findingWords(reason.id)],
+            actions: h('div', { class: 'btn-row' },
+                h('button', { type: 'button', class: 'btn btn-compact', dataset: { key: `reason-explain-${reason.id}` }, on: { click: () => prepare('explain', about('reason', reason.id)) } }, icon('bulb'), 'Explain'),
+                h('button', { type: 'button', class: 'btn btn-compact', dataset: { key: `reason-comment-${reason.id}` }, on: { click: () => prepare('comment', about('reason', reason.id)) } }, icon('message'), 'Comment')),
+        })),
+    ];
+    if (coverage.unexplained.fileIds.length) {
+        items.push(option({
+            id: NOT_EXPLAINED, title: 'Not explained yet', counts: [fileWords(coverage.unexplained.fileIds), hunkWords(coverage.unexplained.hunks), findingWords(NOT_EXPLAINED)],
+            why: 'No reason covers these changes. Review them directly, or ask the agent to explain them.',
+        }));
+    }
+    return row('row-reasons', 'Why these changes', 'bulb', [reading],
+        h('p', { class: 'meta' }, 'The agent grouped the changes by purpose. Each reason is its reading of the change, not the author\'s words. Select one to narrow the files and the map.'),
+        h('ul', { class: 'reason-list', 'aria-label': 'Reasons' }, items));
+}
+
+/** A decorative bar of a file's share per reason; the row's name carries the same words. */
+function reasonBar(segments) {
+    const bar = h('span', { class: 'reason-bar', 'aria-hidden': 'true' });
+    for (const segment of segments) {
+        const part = h('span', { class: `reason-bar-part${segment.reasonId ? '' : ' is-open'}` });
+        part.style.flexGrow = String(Math.max(segment.hunks, 1));
+        bar.append(part);
+    }
+    return bar;
+}
+
 function fileRow(file) {
     const stats = fileStats(file);
     const { dir, name } = splitPath(file.newPath ?? file.oldPath);
-    const notes = fileAnnotations(view, file);
-    const label = `${fileLabel(file)}, ${fileStatus(file).label.toLowerCase()}, ${stats.additions} lines added, ${stats.deletions} removed${notes.findings.length ? `, ${notes.findings.length} ${notes.findings.length === 1 ? 'finding' : 'findings'}` : ''}${notes.comments.length ? `, ${notes.comments.length} ${notes.comments.length === 1 ? 'comment' : 'comments'}` : ''}`;
+    const notes = fileAnnotations(view, file, ui.shownFindings);
+    const segments = (view.reasons ?? []).length ? currentCoverage().byFile[file.id] ?? [] : [];
+    const order = (view.reasons ?? []).map((reason) => reason.id);
+    const reasonIds = segments.map((segment) => segment.reasonId).filter(Boolean).sort((left, right) => order.indexOf(left) - order.indexOf(right));
+    const open = segments.some((segment) => !segment.reasonId);
+    const why = !segments.length ? '' : reasonIds.length ? `, explained by ${reasonIds.join(' and ')}${open ? ', part not explained yet' : ''}` : ', not explained yet';
+    const label = `${fileLabel(file)}, ${fileStatus(file).label.toLowerCase()}, ${stats.additions} lines added, ${stats.deletions} removed${why}${notes.findings.length ? `, ${notes.findings.length} ${notes.findings.length === 1 ? 'finding' : 'findings'}` : ''}${notes.comments.length ? `, ${notes.comments.length} ${notes.comments.length === 1 ? 'comment' : 'comments'}` : ''}`;
     return h('button', {
         type: 'button', class: 'file-row', 'aria-current': ui.focus.fileId === file.id ? 'true' : null, title: fileLabel(file), 'aria-label': label,
         dataset: { key: `file-${file.id}` }, on: { click: () => select(about('file', file.id), { stage: 'review' }) },
     }, fileLetter(file), h('span', { class: 'file-path' }, file.status === 'R' ? h('span', { class: 'dir' }, `${file.oldPath} → `) : null, h('span', { class: 'dir' }, dir), h('span', { class: 'name' }, name)),
+    segments.length ? h('span', { class: 'file-reasons' }, reasonIds.map((reasonId) => idChip(reasonId, { kind: 'reason' })),
+        open ? h('span', { class: 'file-reason-open' }, reasonIds.length ? '+ not explained' : 'Not explained yet') : null,
+        segments.length > 1 ? reasonBar(segments) : null) : null,
     h('span', { class: 'file-row-stats' },
         notes.findings.length ? badge({ label: String(notes.findings.length), icon: 'alert', tone: 'danger' }) : null,
         notes.comments.length ? badge({ label: String(notes.comments.length), icon: 'message', tone: 'user' }) : null,
@@ -588,7 +885,7 @@ function hunkBlocks(file, data) {
         byHunk.get(line.hunkId).push(line);
     }
     return file.hunks.filter((hunk) => byHunk.has(hunk.id)).map((hunk) => {
-        const notes = hunkAnnotations(view, file, hunk);
+        const notes = hunkAnnotations(view, file, hunk, ui.shownFindings);
         const anchored = new Set();
         for (const finding of notes.findings) {
             for (const anchor of finding.anchors.filter((entry) => entry.hunkId === hunk.id && entry.startLine !== null)) {
@@ -605,24 +902,36 @@ function hunkBlocks(file, data) {
             h('tbody', {}, rows));
         const hasNotes = notes.findings.length + notes.comments.length > 0;
         return h('div', { class: `hunk${hasNotes ? ' has-notes' : ''}${ui.focus.hunkId === hunk.id ? ' is-selected' : ''}`, id: `hunk-${hunk.id}`, tabIndex: -1 },
-            h('div', { class: 'hunk-code' }, h('div', { class: 'hunk-head' }, `@@ -${hunk.oldStart},${hunk.oldCount} +${hunk.newStart},${hunk.newCount} @@`), table),
+            h('div', { class: 'hunk-code' }, h('div', { class: 'hunk-head' }, h('span', {}, `@@ -${hunk.oldStart},${hunk.oldCount} +${hunk.newStart},${hunk.newCount} @@`), hunkReason(hunk)), table),
             hasNotes ? h('div', { class: 'hunk-notes', 'aria-label': 'Findings and comments on these lines' },
                 ...notes.findings.map((finding) => h('div', { class: 'note-card' },
                     h('div', { class: 'note-head' }, badge(SEVERITY[finding.severity], { strong: true }), badge(DISPOSITION[finding.disposition] ?? DISPOSITION.proposed)),
                     h('p', { class: 'note-title' }, finding.claim),
                     h('div', {}, h('button', { type: 'button', class: 'id-chip', 'data-kind': 'finding', dataset: { key: `note-finding-${finding.id}` }, title: 'Open this finding',
-                        on: { click: () => select(about('finding', finding.id), { stage: 'verify', flash: true }) } }, finding.id, icon('go-to'))))),
+                        on: { click: () => select(about('finding', finding.id), { stage: 'review', flash: true }) } }, finding.id, icon('go-to'))))),
                 ...notes.comments.map((comment) => h('div', { class: 'note-card is-comment' },
                     h('div', { class: 'note-head' }, h('span', { class: 'comment-author' }, icon('person'), comment.author), resolutionBadge(comment)),
                     prose(comment.body, 'prose small'),
                     h('div', {}, h('button', { type: 'button', class: 'id-chip', 'data-kind': 'comment', dataset: { key: `note-comment-${comment.id}` }, title: 'Open this comment',
-                        on: { click: () => select(about('comment', comment.id), { stage: 'verify', flash: true }) } }, comment.id, icon('go-to')))))) : null);
+                        on: { click: () => select(about('comment', comment.id), { stage: 'review', flash: true }) } }, comment.id, icon('go-to')))))) : null);
     });
+}
+
+/** The reason that explains a hunk, as a chip that selects it, or "Not explained yet". */
+function hunkReason(hunk) {
+    if (!(view.reasons ?? []).length) return null;
+    const reasonId = currentCoverage().byHunk[hunk.id];
+    if (!reasonId) return h('span', { class: 'hunk-reason-open' }, 'Not explained yet');
+    const reason = view.reasons.find((entry) => entry.id === reasonId);
+    return h('button', {
+        type: 'button', class: 'id-chip', 'data-kind': 'reason', title: `Why: ${reason?.title ?? reasonId}`, 'aria-label': `Reason ${reasonId}: ${reason?.title ?? ''}. Show this reason.`,
+        dataset: { key: `hunk-reason-${hunk.id}` }, on: { click: () => selectReason(reasonId) },
+    }, reasonId);
 }
 
 function findingChip(finding) {
     return h('button', { type: 'button', class: 'id-chip', 'data-kind': 'finding', title: finding.claim, dataset: { key: `chip-finding-${finding.id}` },
-        on: { click: () => select(about('finding', finding.id), { stage: 'verify', flash: true }) } }, finding.id, icon('go-to'));
+        on: { click: () => select(about('finding', finding.id), { stage: 'review', flash: true }) } }, finding.id, icon('go-to'));
 }
 
 function resolutionBadge(comment) {
@@ -631,16 +940,116 @@ function resolutionBadge(comment) {
     return badge(meta[comment.resolution] ?? meta.unknown);
 }
 
-function verifyView() {
-    if (!ui.findingFilter || !FINDING_FILTERS.some((entry) => entry.id === ui.findingFilter)) ui.findingFilter = defaultFindingFilter(view);
-    const shown = findingFilter(view, ui.findingFilter);
-    const filters = h('fieldset', { class: 'segmented', 'aria-label': 'Show findings' }, h('legend', { class: 'visually-hidden' }, 'Show findings'),
-        FINDING_FILTERS.map((entry) => h('label', {}, h('input', { type: 'radio', name: 'findingFilter', value: entry.id, checked: ui.findingFilter === entry.id,
-            dataset: { key: `filter-${entry.id}` }, on: { change: () => { ui.findingFilter = entry.id; render(); } } }),
-        h('span', {}, entry.label), count(findingFilter(view, entry.id).length))));
-    const findings = row('row-findings', 'Findings', 'shield-check', [count(view.findings.length)], filters,
-        shown.length ? h('ul', { class: 'finding-list' }, shown.map((finding) => h('li', {}, findingCard(finding))))
-            : h('p', { class: 'empty' }, view.findings.length ? 'No findings in this view.' : 'No findings are recorded. Check coverage and evidence limits before drawing a conclusion.'));
+/** A row whose title is a disclosure that shows or hides its body, as RPI's secondary rows fold. */
+function foldedRow(id, title, iconName, open, onToggle, headExtras, ...content) {
+    const section = row(id, title, iconName, headExtras, ...content);
+    const body = section.querySelector('.row-text');
+    body.id = `${id}-body`;
+    body.hidden = !open;
+    section.classList.toggle('is-folded', !open);
+    section.querySelector('.row-title').replaceChildren(h('button', {
+        type: 'button', class: 'row-toggle', 'aria-expanded': open, 'aria-controls': body.id, dataset: { key: `row-toggle-${id}` }, on: { click: onToggle },
+    }, icon('chevron', 'icon chev'), icon(iconName), h('span', {}, title)));
+    return section;
+}
+
+/** Findings narrowed by the reason lens and, when chosen, the selected area. */
+function scopedFindings() {
+    return findingsFor(view, { reasonId: ui.reason, areaId: ui.findingArea ? ui.focus?.areaId ?? null : null });
+}
+
+/**
+ * Findings: severity counts and a progress line, then severity groups of one-line rows that expand
+ * in place, one at a time. Findings that arrive after the page loaded wait behind "Show N new
+ * findings" so nothing moves until the reader asks.
+ */
+function findingsRow() {
+    const scoped = scopedFindings();
+    const visible = scoped.filter((finding) => ui.shownFindings.has(finding.id));
+    const held = arrivals(view.findings, ui.shownFindings);
+    const retained = visible.filter(isRetained);
+    const checking = visible.filter((finding) => finding.disposition === 'proposed').length;
+    const setAside = visible.length - retained.length;
+    const counts = Object.keys(SEVERITY).map((severity) => [severity, retained.filter((finding) => finding.severity === severity).length]).filter(([, value]) => value);
+    const progress = perspectiveProgress(view);
+    const area = view.areas.find((entry) => entry.id === ui.focus?.areaId) ?? null;
+    if (!area) ui.findingArea = false;
+    const scope = area ? h('fieldset', { class: 'segmented compact' }, h('legend', {}, 'Show'),
+        [['all', 'All areas'], ['area', area.title]].map(([value, label]) => h('label', {}, h('input', {
+            type: 'radio', name: 'findingScope', value, checked: (ui.findingArea ? 'area' : 'all') === value, dataset: { key: `finding-scope-${value}` },
+            on: { change: () => { ui.findingArea = value === 'area'; render(); } },
+        }), h('span', {}, label)))) : null;
+    const lens = ui.reason ? (ui.reason === NOT_EXPLAINED ? badge({ label: 'Not explained yet', icon: 'question', tone: 'muted' }) : idChip(ui.reason, { kind: 'reason', title: `Findings on changes reason ${ui.reason} explains` })) : null;
+    const show = held.count ? h('button', {
+        type: 'button', class: 'btn btn-compact arrivals', dataset: { key: 'show-arrivals' },
+        on: { click: () => showArrivals(held.ids) },
+    }, icon('plus'), `Show ${held.count} new ${held.count === 1 ? 'finding' : 'findings'}${held.summary ? ` (${held.summary})` : ''}`) : null;
+    const groups = findingGroups(visible);
+    const empty = view.findings.length
+        ? (scoped.length ? 'Every finding here is new; show them above.' : 'No findings match this narrowing.')
+        : 'No findings are recorded. Check coverage and evidence limits before drawing a conclusion.';
+    return row('row-findings', 'Findings', 'shield-check', [count(retained.length), lens],
+        h('ul', { class: 'finding-summary', 'aria-label': 'Findings by severity' },
+            counts.map(([severity, value]) => h('li', {}, badge(SEVERITY[severity], { strong: true }), h('span', { class: 'count-text' }, String(value)))),
+            checking ? h('li', {}, badge(DISPOSITION.proposed), h('span', { class: 'count-text' }, String(checking))) : null,
+            setAside ? h('li', { class: 'meta' }, `${setAside} set aside`) : null),
+        progress.length ? h('p', { class: 'finding-progress' }, h('span', {}, 'Areas checked: '), progress.map((entry, index) => [
+            index ? ' \u00b7 ' : null, h('strong', {}, PERSPECTIVE[entry.perspective] ?? entry.perspective), ` ${entry.done} of ${entry.total}`,
+            entry.attention ? `, ${entry.attention} ${entry.attention === 1 ? 'needs' : 'need'} attention` : entry.active ? `, ${entry.active} running` : null,
+        ])) : null,
+        scope || show ? h('div', { class: 'finding-tools' }, scope, show) : null,
+        groups.length ? h('div', { class: 'finding-groups' }, groups.map(findingGroup)) : h('p', { class: 'empty' }, empty));
+}
+
+function findingGroup(group) {
+    const holdsExpanded = group.findings.some((finding) => finding.id === ui.expandedFinding);
+    const open = ui.groupOpen.get(group.id) ?? (group.open || holdsExpanded);
+    const label = group.severity ? badge(SEVERITY[group.severity], { strong: true }) : badge({ label: 'Set aside', icon: 'slash-circle', tone: 'muted' });
+    return h('section', { class: 'finding-group', 'aria-labelledby': `group-${group.id}-title` },
+        h('h4', { class: 'finding-group-title', id: `group-${group.id}-title` }, h('button', {
+            type: 'button', class: 'finding-group-toggle', 'aria-expanded': open, 'aria-controls': `group-${group.id}`, dataset: { key: `group-${group.id}` },
+            on: { click: () => { ui.groupOpen.set(group.id, !open); render(); } },
+        }, icon('chevron', 'icon chev'), label, count(group.findings.length, `${group.findings.length} ${group.findings.length === 1 ? 'finding' : 'findings'}`))),
+        h('ul', { class: 'finding-rows', id: `group-${group.id}`, hidden: !open }, group.findings.map(findingRow)));
+}
+
+/** A finding as one line that expands in place into its full card; opening one closes the other. */
+function findingRow(finding) {
+    const expanded = ui.expandedFinding === finding.id;
+    const disposition = DISPOSITION[finding.disposition] ?? DISPOSITION.proposed;
+    return h('li', { class: `finding-row${expanded ? ' is-expanded' : ''}` },
+        h('button', {
+            type: 'button', class: 'finding-row-head', 'aria-expanded': expanded, 'aria-controls': expanded ? `finding-${finding.id}` : null, dataset: { key: `finding-row-${finding.id}` },
+            on: { click: () => { ui.expandedFinding = expanded ? null : finding.id; render(); } },
+        }, icon('chevron', 'icon chev'), idChip(finding.id, { kind: 'finding' }), h('span', { class: 'finding-row-claim' }, plainText(finding.claim)),
+        ui.newlyShown.has(finding.id) ? badge({ label: 'New', icon: 'sparkle', tone: 'accent' }) : null,
+        finding.disposition === 'accepted' ? null : badge(disposition)),
+        expanded ? findingCard(finding) : null);
+}
+
+/**
+ * Shows held findings in place, opening their groups, and moves focus to the first of them. A reason
+ * lens or area scope that would hide any of them is cleared, and the announcement says so.
+ */
+function showArrivals(ids) {
+    const hidden = clearHidingNarrowing(ids);
+    for (const id of ids) {
+        ui.shownFindings.add(id);
+        ui.newlyShown.add(id);
+        const finding = view.findings.find((entry) => entry.id === id);
+        const group = finding ? findingGroups([finding])[0] : null;
+        if (group) ui.groupOpen.set(group.id, true);
+    }
+    render();
+    const first = ids.map((id) => document.querySelector(`[data-key="finding-row-${CSS.escape(id)}"]`)).find(Boolean);
+    first?.focus({ preventScroll: true });
+    first?.scrollIntoView({ block: 'nearest' });
+    const widened = [hidden.reason ? 'reasons' : null, hidden.area ? 'areas' : null].filter(Boolean).join(' and ');
+    announce(`Showing ${ids.length} new ${ids.length === 1 ? 'finding' : 'findings'}.${widened ? ` The list now covers all ${widened}.` : ''}`);
+}
+
+/** The pull request discussion, folded at the end of Review; inline comments also show in the diff. */
+function discussionRow() {
     const discussion = view.discussion;
     const statusMeta = { complete: { label: 'Imported', icon: 'check-circle', tone: 'success' }, partial: { label: 'Partly imported', icon: 'half', tone: 'attention' },
         unavailable: { label: 'Unavailable', icon: 'slash-circle', tone: 'muted' }, not_applicable: { label: 'Not applicable', icon: 'dash-circle', tone: 'muted' } };
@@ -649,10 +1058,10 @@ function verifyView() {
         const replies = discussion.items.filter((entry) => entry.replyTo === comment.id);
         return replies.length ? h('ul', { class: 'replies' }, replies.map(thread)) : null;
     })());
-    const talk = row('row-discussion', 'Pull request discussion', 'message', [badge(statusMeta[discussion.status] ?? statusMeta.unavailable), count(discussion.items.length)],
+    return foldedRow('row-discussion', 'Pull request discussion', 'message', ui.discussionOpen, () => { ui.discussionOpen = !ui.discussionOpen; render(); },
+        [badge(statusMeta[discussion.status] ?? statusMeta.unavailable), count(discussion.items.length)],
         discussion.limitations.length ? h('div', { class: 'notice tone-attention' }, h('p', { class: 'notice-title' }, icon('info'), 'Import limits'), h('ul', {}, discussion.limitations.map((text) => h('li', {}, text)))) : null,
         roots.length ? h('ul', { class: 'thread-list' }, roots.map(thread)) : h('p', { class: 'empty' }, discussion.status === 'not_applicable' ? 'This target has no provider discussion.' : 'No discussion was imported.'));
-    return [findings, talk];
 }
 
 function findingCard(finding) {
@@ -763,7 +1172,7 @@ function renderSteer() {
         needs.length ? h('ul', { class: 'steer-list' }, needs.map((item) => {
             const severity = SEVERITY[item.severity];
             return h('li', {}, h('button', { type: 'button', class: `steer-link tone-${severity.tone}`, dataset: { key: `needs-${item.id}` },
-                on: { click: () => { select(about('finding', item.id), { stage: 'verify', flash: true }); closeDrawer(false); } } },
+                on: { click: () => { select(about('finding', item.id), { stage: 'review', flash: true }); closeDrawer(false); } } },
             icon(severity.icon), h('span', { class: 'steer-link-text' }, `${severity.label}: ${plainText(item.label)}`)));
         })) : h('p', { class: 'empty' }, 'Nothing needs you. High and Critical findings wait here until you mark them seen.'));
 
@@ -789,12 +1198,13 @@ function targetLabel(target) {
         return file ? `${splitPath(file.newPath ?? file.oldPath).name}${target.kind === 'hunk' ? ' (lines)' : ''}` : target.id;
     }
     if (target.kind === 'area') return view.areas.find((entry) => entry.id === target.id)?.title ?? target.id;
+    if (target.kind === 'reason') return `Reason ${target.id}`;
     return target.id;
 }
 
 function targetChip(target) {
     const older = target.snapshotId !== view.snapshotId;
-    const kind = { finding: 'finding', comment: 'comment', area: 'area', file: 'file', hunk: 'file', review: 'review' }[target.kind];
+    const kind = { finding: 'finding', comment: 'comment', area: 'area', reason: 'reason', file: 'file', hunk: 'file', review: 'review' }[target.kind];
     if (older || target.kind === 'review') return idChip(older ? `${targetLabel(target)} (earlier snapshot)` : targetLabel(target), { kind });
     return h('button', { type: 'button', class: 'id-chip', 'data-kind': kind, title: 'Show this item', on: { click: () => select(target, { stage: stageFor(target) }) } }, targetLabel(target), icon('go-to'));
 }
@@ -1035,7 +1445,7 @@ function detectHostScheme() {
 }
 
 const SHORTCUTS = [
-    ['1 to 4', 'View Capture, Review, Verify, or Outcome'], ['n', 'Go to the next item that needs you'], ['[ and ]', 'Previous and next file in the area'],
+    ['1 to 3', 'View Capture, Review, or Outcome'], ['n', 'Go to the next item that needs you'], ['[ and ]', 'Previous and next file in the area'],
     ['/', 'Filter the navigator'], ['b', 'Show or hide the navigator'], ['s', 'Show or hide the steering panel'], ['?', 'Show this list'],
     ['Escape', 'Close a menu, drawer, or dialog'], ['Arrow keys', 'Move between stages in the rail'],
 ];
@@ -1074,9 +1484,15 @@ function onKey(event) {
         if (dialog) {
             dialog.close();
             event.preventDefault();
+        } else if (closeMapPreview()) {
+            event.preventDefault();
         } else if (!$('appearanceMenu').hidden) {
             toggleAppearance(false);
             $('appearanceBtn').focus();
+            event.preventDefault();
+        } else if (ui.boardLane) {
+            const active = document.activeElement;
+            closeLane(!active || active === document.body || Boolean(active.closest('[data-lane]')));
             event.preventDefault();
         } else if (ui.drawer) {
             closeDrawer();
@@ -1088,7 +1504,7 @@ function onKey(event) {
     const field = event.target.closest?.('input, textarea, select, [contenteditable="true"]');
     if (field || document.querySelector('dialog[open]')) return;
     const key = event.key;
-    if (/^[1-4]$/.test(key)) setStage(STAGE_KEYS[Number(key) - 1]);
+    if (/^[1-3]$/.test(key)) setStage(STAGE_KEYS[Number(key) - 1]);
     else if (key === 'n') nextNeeds();
     else if (key === '/') {
         if (!navDocked()) ui.drawer = 'nav';
@@ -1118,7 +1534,21 @@ async function refresh() {
         if (previous && previous.snapshotId !== view.snapshotId) {
             evidence.clear();
             ui.reportText = null;
+            ui.reason = null;
+            ui.mapPinned = null;
+            ui.expandedFinding = null;
+            ui.groupOpen.clear();
+            ui.newlyShown.clear();
         }
+        // The first load and a new snapshot show every finding; later arrivals wait for the reader.
+        if (!previous || previous.snapshotId !== view.snapshotId) {
+            ui.shownFindings = new Set(view.findings.map((finding) => finding.id));
+            ui.heldIds = new Set();
+        }
+        const reasonIds = (view.reasons ?? []).map((reason) => reason.id);
+        // A lens clears once nothing is left for it: a removed reason, or no unexplained changes.
+        const lensEmpty = ui.reason === NOT_EXPLAINED ? !reasonIds.length || !currentCoverage().unexplained.fileIds.length : !reasonIds.includes(ui.reason);
+        if (ui.reason && lensEmpty) ui.reason = null;
         const remote = view.focus ? `${view.focus.snapshotId}:${view.focusRevision ?? 0}` : '';
         let agentFocus = null;
         if (view.focus && remote !== ui.remoteFocus) {
@@ -1127,19 +1557,32 @@ async function refresh() {
         }
         if (!ui.target || ui.target.snapshotId !== view.snapshotId) ui.target = about('review', view.reviewId);
         ui.focus = resolveFocus(view, ui.target);
+        if (ui.target.kind === 'reason' && !ui.focus.mapped) {
+            ui.target = about('review', view.reviewId);
+            ui.focus = resolveFocus(view, ui.target);
+        }
+        // One refresh makes at most one announcement, so the focus note and other news are combined.
+        const news = [];
         if (agentFocus && agentFocus.snapshotId === view.snapshotId) {
             if (ui.follow || !ui.loaded) select(agentFocus, { stage: stageFor(agentFocus), moveFocus: false, flash: Boolean(previous) });
             else {
                 render();
-                note(`The agent pointed to ${agentFocus.kind} ${agentFocus.id}.`, 'accent', 'sparkle', { label: 'Show', run: () => select(agentFocus, { stage: stageFor(agentFocus), flash: true }) });
+                const pointed = `The agent pointed to ${agentFocus.kind} ${agentFocus.id}.`;
+                note(pointed, 'accent', 'sparkle', { label: 'Show', run: () => select(agentFocus, { stage: stageFor(agentFocus), flash: true }) }, { quiet: true });
+                news.push(pointed);
             }
         } else render();
+        // Held findings are compared by ID after any agent focus reveal, so each arrival is news once.
+        const held = arrivals(view.findings, ui.shownFindings, ui.heldIds);
+        ui.heldIds = new Set(held.ids);
         if (previous) {
-            if (previous.snapshotId !== view.snapshotId) announce('A new snapshot loaded. Your feedback is kept; coverage belongs to the new snapshot.');
-            else if (view.feedback.items.some((item) => item.status === 'interpreted' && previous.feedback.items.find((entry) => entry.id === item.id)?.status !== 'interpreted')) announce('The agent read back your feedback.');
-            else if (!previous.stale && view.stale) announce('The review record could not be read. The last valid evidence stays on screen.');
-            else if (previous.revision !== view.revision) announce(`Review updated to revision ${view.revision}.`);
+            if (previous.snapshotId !== view.snapshotId) news.push('A new snapshot loaded. Your feedback is kept; coverage belongs to the new snapshot.');
+            else if (held.fresh.length) news.push(`${held.count} new ${held.count === 1 ? 'finding is' : 'findings are'} waiting in Findings${held.summary ? `, including ${held.summary}` : ''}.`);
+            else if (view.feedback.items.some((item) => item.status === 'interpreted' && previous.feedback.items.find((entry) => entry.id === item.id)?.status !== 'interpreted')) news.push('The agent read back your feedback.');
+            else if (!previous.stale && view.stale) news.push('The review record could not be read. The last valid evidence stays on screen.');
+            else if (previous.revision !== view.revision && !news.length) news.push(`Review updated to revision ${view.revision}.`);
         }
+        if (news.length) announce(news.join(' '));
         ui.loaded = true;
     } finally {
         refreshing = false;
@@ -1206,6 +1649,18 @@ function wire() {
     $('contrastSwitch').addEventListener('change', (event) => savePreferences({ contrast: event.target.checked ? 'more' : 'standard' }));
     document.addEventListener('click', (event) => {
         if (!$('appearanceMenu').hidden && !event.target.closest('#appearanceMenu, #appearanceBtn')) toggleAppearance(false);
+        if (ui.boardLane && event.target.isConnected && !event.target.closest(laneSelector(ui.boardLane))) closeLane(false);
+    });
+    // Focus leaving the open lane closes it once focus has landed.
+    document.addEventListener('focusout', (event) => {
+        const lane = ui.boardLane;
+        if (!lane || !event.target.closest?.(laneSelector(lane))) return;
+        const next = event.relatedTarget;
+        if (!(next instanceof Element) || next.closest(laneSelector(lane))) return;
+        window.setTimeout(() => {
+            if (ui.boardLane !== lane || document.activeElement?.closest?.(laneSelector(lane))) return;
+            closeLane(false);
+        }, 0);
     });
     $('shortcutsBtn').addEventListener('click', openShortcuts);
     $('shortcutSwitch').addEventListener('change', (event) => {

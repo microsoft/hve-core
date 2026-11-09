@@ -60,6 +60,8 @@
   --cr-hue-blue-bg: light-dark(#d1f0ff, #001a47);
   --cr-hue-gray: light-dark(#5c6570, #92a1b5);
   --cr-hue-gray-bg: light-dark(#e8ecf2, #1c1c1c);
+  --cr-hue-indigo: light-dark(#494edf, #9899ec);
+  --cr-hue-indigo-bg: light-dark(#e5e9ff, #1b183f);
 
   --cr-shadow-float: 0 8px 24px var(--cr-p-shadow), 0 1px 3px var(--cr-p-shadow-near);
   --cr-wash: color-mix(in srgb, var(--cr-accent) 12%, transparent);
@@ -191,6 +193,8 @@
     --cr-hue-blue-bg: #d1f0ff;
     --cr-hue-gray: #5c6570;
     --cr-hue-gray-bg: #e8ecf2;
+    --cr-hue-indigo: #494edf;
+    --cr-hue-indigo-bg: #e5e9ff;
     color-scheme: light;
   }
 }
@@ -508,16 +512,25 @@ time {
 .id-chip[data-kind="comment"] { --id-hue: var(--cr-hue-purple); --id-tint: var(--cr-hue-purple-bg); }
 .id-chip[data-kind="file"] { --id-hue: var(--cr-hue-blue); --id-tint: var(--cr-hue-blue-bg); }
 .id-chip[data-kind="review"] { --id-hue: var(--cr-hue-gray); --id-tint: var(--cr-hue-gray-bg); }
+.id-chip[data-kind="reason"] { --id-hue: var(--cr-hue-indigo); --id-tint: var(--cr-hue-indigo-bg); }
 
 :root[data-contrast="more"] .id-chip[data-kind] {
   --id-border: var(--id-hue);
   color: var(--cr-fg);
 }
 
+:root[data-contrast="more"] button.id-chip[aria-pressed="true"] {
+  color: var(--cr-bg);
+}
+
 @media (prefers-contrast: more) {
   :root .id-chip[data-kind] {
     --id-border: var(--id-hue);
     color: var(--cr-fg);
+  }
+
+  :root button.id-chip[data-kind][aria-pressed="true"] {
+    color: var(--cr-bg);
   }
 }
 
@@ -538,6 +551,12 @@ button.id-chip:hover {
 button.id-chip .icon {
   width: 12px;
   height: 12px;
+}
+
+button.id-chip[aria-pressed="true"] {
+  border-color: var(--id-hue, var(--cr-accent));
+  background: var(--id-hue, var(--cr-accent));
+  color: var(--cr-bg);
 }
 
 /* Defaults with no specificity, so a tone class always wins whatever the rule order. */
@@ -1250,7 +1269,12 @@ details > summary:hover {
   min-height: 0;
   overflow-y: auto;
   container: doc / inline-size;
-  scroll-padding-top: 72px;
+  /*
+   * The context bar and, on Review, the pinned Coverage board, measured by the page. Scroll padding
+   * alone keeps a landed row clear of them, so rows add no scroll margin of their own.
+   */
+  --cr-pinned-h: calc(var(--cr-context-h, 52px) + var(--cr-dock-h, 0px) + 20px);
+  scroll-padding-top: var(--cr-pinned-h);
   scroll-padding-bottom: 24px;
 }
 
@@ -1513,7 +1537,6 @@ details > summary:hover {
   gap: 16px 32px;
   padding: 28px 0;
   border-top: 1px solid var(--cr-border-muted);
-  scroll-margin-top: 72px;
 }
 
 .row:first-child,
@@ -1580,9 +1603,13 @@ details > summary:hover {
   color: var(--cr-fg-muted);
 }
 
-/* Coverage board: progress and four lanes, as on the RPI task board. Lanes can hold many
-   areas, so the board scrolls with the document instead of pinning. */
+/* Review: the Coverage board pinned under the context bar, as on the RPI task board. Three lanes
+   show one card each; a lane with more cards opens a dropdown over the page, so the board keeps its
+   height. */
 .board-dock {
+  position: sticky;
+  top: var(--cr-context-h, 52px);
+  z-index: 9;
   margin: 0 calc(-1 * var(--cr-gutter, 32px));
   padding: 12px var(--cr-gutter, 32px);
   border-bottom: 1px solid var(--cr-border);
@@ -1656,28 +1683,68 @@ details > summary:hover {
 
 .board {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-top: 10px;
 }
 
 .board-col {
   display: grid;
+  grid-template-rows: auto 1fr;
   align-content: start;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
-  padding: 6px;
+  padding: 4px 6px 6px;
   border-radius: var(--cr-radius-lg);
   background: var(--cr-bg-subtle);
 }
 
+/* The dropdown hangs from the lane's header and covers what is below it. */
+.board-lane-head {
+  position: relative;
+}
+
 .board-col-title {
+  margin: 0;
+  font: 600 12.5px/20px var(--cr-font);
+}
+
+.board-lane-toggle,
+.board-lane-label {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+  width: 100%;
   min-height: 28px;
   padding: 2px 6px;
-  font: 600 12.5px/20px var(--cr-font);
+  border-radius: var(--cr-radius);
+  font: inherit;
+  text-align: start;
+}
+
+.board-lane-toggle {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--cr-fg);
+  cursor: pointer;
+  transition: background-color var(--cr-fast) var(--cr-ease), border-color var(--cr-fast) var(--cr-ease);
+}
+
+.board-lane-toggle:hover,
+.board-lane-toggle[aria-expanded="true"] {
+  border-color: var(--cr-border);
+  background: var(--cr-bg);
+}
+
+.board-lane-toggle .icon.chev {
+  margin-inline-start: auto;
+  color: var(--cr-fg-muted);
+  transition: transform var(--cr-fast) var(--cr-ease);
+}
+
+.board-lane-toggle[aria-expanded="true"] .chev {
+  transform: rotate(90deg);
 }
 
 .board-col-title .icon {
@@ -1688,16 +1755,53 @@ details > summary:hover {
   background: var(--cr-bg);
 }
 
+.lane-flag {
+  display: inline-flex;
+  align-items: center;
+  color: var(--cr-danger);
+}
+
+.board-col-title .lane-flag .icon {
+  width: 14px;
+  height: 14px;
+  color: var(--cr-danger);
+}
+
+/* The open lane's list is a floating layer, drawn like menus and dialogs. */
+.board-drop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 3;
+  max-height: min(50vh, 360px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  border: 1px solid var(--cr-border);
+  border-radius: var(--cr-radius-lg);
+  background: var(--cr-bg);
+  box-shadow: var(--cr-shadow-float);
+}
+
+.board-drop[hidden] {
+  display: none;
+}
+
+/* The open lane's own card sits under its dropdown, so it leaves the tab order too. */
+.board-col.is-open .board-lane-card {
+  visibility: hidden;
+}
+
 .board-list {
   display: grid;
   gap: 6px;
-  max-height: 260px;
-  overflow-y: auto;
   list-style: none;
 }
 
+/* An empty lane says None on a line no taller than a one-line card. */
 .board-col > .empty {
-  padding: 4px 8px 6px;
+  padding: 6px 8px;
 }
 
 .board-card {
@@ -1720,6 +1824,10 @@ details > summary:hover {
   background: var(--cr-bg-hover);
 }
 
+.board-card.is-current {
+  border-color: color-mix(in srgb, var(--cr-agent) 55%, var(--cr-border));
+}
+
 .board-card[aria-current="true"] {
   border-color: var(--cr-accent);
   background: var(--cr-bg-selected);
@@ -1728,6 +1836,12 @@ details > summary:hover {
 .board-card.is-attention {
   border-inline-start: 4px solid var(--cr-danger);
   padding-inline-start: 7px;
+}
+
+.board-card-head .badge {
+  height: 18px;
+  padding: 0 6px;
+  font-size: 11.5px;
 }
 
 .board-card-head {
@@ -1804,117 +1918,439 @@ details > summary:hover {
   font: 600 12px/18px var(--cr-font);
 }
 
-/* Impact map: a figure of linked parts with the same relationships listed as text. */
-.impact-map {
+/* Change map: the RPI Workflow canvas's diagram drawing with Code Review's change marks. Every
+   change has a border, a corner glyph, and words, so none depends on color. */
+
+.map-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.map-controls .segmented > legend {
+  float: inline-start;
+  margin-inline-end: 8px;
+  color: var(--cr-fg-muted);
+  font: var(--cr-t-meta);
+}
+
+.map-note {
+  color: var(--cr-fg-muted);
+  font: var(--cr-t-meta);
+}
+
+.diagram {
   display: grid;
   gap: 8px;
   margin: 0;
 }
 
-.impact-map figcaption {
-  color: var(--cr-fg-muted);
-  font: var(--cr-t-meta);
-}
-
-.impact-list {
-  display: grid;
-  gap: 8px;
-  list-style: none;
-}
-
-.impact-canvas {
-  overflow-x: auto;
-  padding: 8px;
-  border: 1px solid var(--cr-border-muted);
+.diagram-scroll {
+  position: relative;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--cr-border);
   border-radius: var(--cr-radius-lg);
-  background: var(--cr-bg-inset);
+  background: var(--cr-bg-subtle);
 }
 
-.impact-svg {
+.diagram-svg {
   display: block;
   max-width: 100%;
   height: auto;
   margin: 0 auto;
 }
 
-.impact-box rect {
-  fill: var(--cr-bg-subtle);
+.diagram-node rect {
+  fill: var(--cr-bg);
   stroke: var(--cr-border-control);
   stroke-width: 1;
 }
 
-.impact-text {
+.diagram-node text {
   fill: var(--cr-fg);
-  font: 600 12.5px var(--cr-font);
+  font: 500 12.5px var(--cr-font);
 }
 
-.impact-link {
-  fill: none;
-  stroke: var(--cr-fg-muted);
+.diagram-node .diagram-clause {
+  font-weight: 400;
+}
+
+/* A tag line, such as "changed · R2", reads quieter than the part's name. */
+.diagram-node .diagram-tag {
+  fill: var(--cr-fg-muted);
+  font-size: 11.5px;
+}
+
+.diagram-node.is-new rect {
+  stroke: var(--cr-accent);
+  stroke-dasharray: 5 3;
   stroke-width: 1.5;
 }
 
-.impact-link.is-uncertain {
-  stroke: var(--cr-attention);
-  stroke-dasharray: 5 4;
+.diagram-node.is-changed rect {
+  stroke: var(--cr-fg);
+  stroke-width: 2.5;
 }
 
-.impact-arrowhead {
+.diagram-node.is-removed rect {
+  stroke: var(--cr-fg-muted);
+  stroke-dasharray: 2 3;
+  stroke-width: 2;
+}
+
+.diagram-node.is-removed .diagram-name {
+  text-decoration: line-through;
+}
+
+/* In the Changes view, unchanged parts step back so the change reads first. */
+.is-changes .diagram-node.is-unchanged rect {
+  fill: var(--cr-bg-subtle);
+  stroke: var(--cr-border);
+}
+
+.is-changes .diagram-node.is-unchanged text {
   fill: var(--cr-fg-muted);
 }
 
-.impact-edge {
+/* The selected reason's or area's parts fill; their change border stays on top. */
+.diagram-node.is-highlight rect,
+.is-changes .diagram-node.is-highlight.is-unchanged rect {
+  fill: color-mix(in srgb, var(--cr-accent) 16%, var(--cr-bg));
+}
+
+.diagram-glyph circle {
+  fill: var(--cr-bg);
+  stroke: var(--cr-fg);
+  stroke-width: 1.25;
+}
+
+.diagram-glyph.is-new circle {
+  stroke: var(--cr-accent);
+}
+
+.diagram-glyph.is-removed circle {
+  stroke: var(--cr-fg-muted);
+}
+
+.diagram-glyph text {
+  fill: var(--cr-fg);
+  font: 700 11px var(--cr-font);
+}
+
+.diagram-box > rect {
+  fill: none;
+  stroke: var(--cr-border-control);
+  stroke-width: 1;
+}
+
+.diagram-box-title {
+  fill: var(--cr-fg-muted);
+  font: 600 11.5px var(--cr-mono);
+  paint-order: stroke;
+  stroke: var(--cr-bg-subtle);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.diagram-run.is-bold {
+  font-weight: 700;
+}
+
+.diagram-run.is-italic {
+  font-style: italic;
+}
+
+.diagram-run.is-code {
+  font-family: var(--cr-mono);
+  font-size: 12px;
+}
+
+.diagram-node {
+  cursor: pointer;
+}
+
+.diagram-node:focus {
+  outline: none;
+}
+
+.diagram-focus {
+  fill: none;
+  stroke: var(--cr-accent);
+  stroke-width: 2;
+  visibility: hidden;
+}
+
+.diagram-node:focus-visible > .diagram-focus,
+.diagram-node.is-pinned > .diagram-focus {
+  visibility: visible;
+}
+
+.diagram-edge {
+  fill: none;
+  stroke: var(--cr-fg-muted);
+  stroke-width: 1.25;
+}
+
+/* Dashed arrows are tests and docs; a new link is heavier and a removed one dotted, each with + or − in its label. */
+.diagram-edge.is-dashed {
+  stroke-dasharray: 6 4;
+}
+
+.diagram-edge.is-new {
+  stroke: var(--cr-accent);
+  stroke-width: 2;
+}
+
+.diagram-edge.is-removed {
+  stroke-dasharray: 2 3;
+  stroke-width: 1.75;
+}
+
+.diagram-arrow {
+  fill: var(--cr-fg-muted);
+}
+
+.diagram-edge-bg {
+  fill: var(--cr-bg-subtle);
+}
+
+.diagram-edge-label {
+  fill: var(--cr-fg-muted);
+  font: 400 11px var(--cr-font);
+}
+
+.diagram-label.is-removed .diagram-edge-label {
+  text-decoration: line-through;
+}
+
+.diagram figcaption {
+  color: var(--cr-fg-muted);
+  font: var(--cr-t-meta);
+}
+
+.diagram-details > summary {
+  margin-inline-start: -4px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.diagram-text {
+  margin-top: 6px;
+  padding-inline-start: 20px;
+  font: var(--cr-t-ui);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--cr-border-control);
+  border-radius: 3px;
+  background: var(--cr-bg);
+  vertical-align: -2px;
+}
+
+.legend-swatch.is-new {
+  border: 1.5px dashed var(--cr-accent);
+}
+
+.legend-swatch.is-changed {
+  border: 2.5px solid var(--cr-fg);
+}
+
+.legend-swatch.is-removed {
+  border: 2px dotted var(--cr-fg-muted);
+}
+
+.legend-swatch.is-unchanged {
+  border-color: var(--cr-border);
+  background: var(--cr-bg-subtle);
+}
+
+.legend-swatch.is-highlight {
+  border: 1.5px solid var(--cr-accent);
+  background: color-mix(in srgb, var(--cr-accent) 16%, var(--cr-bg));
+}
+
+/* A part's preview hangs below the part as a floating layer; pinned, it holds focusable controls. */
+.map-preview {
+  position: absolute;
+  z-index: 5;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
+  width: min(360px, calc(100% - 8px));
+  max-height: 60vh;
+  overflow: auto;
+  overscroll-behavior: contain;
   padding: 10px 12px;
-  border: 1px solid var(--cr-border-muted);
+  border: 1px solid var(--cr-border);
   border-radius: var(--cr-radius-lg);
   background: var(--cr-bg);
+  box-shadow: var(--cr-shadow-float);
+  color: var(--cr-fg);
+  font: var(--cr-t-ui);
 }
 
-.impact-edge.is-uncertain {
-  border-style: dashed;
+.map-preview[hidden] {
+  display: none;
 }
 
-.impact-flow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 8px;
+.map-preview.is-pinned {
+  border-color: var(--cr-accent);
 }
 
-.impact-node {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 24px;
-  padding: 2px 8px;
-  border: 1px solid var(--cr-border-control);
-  border-radius: var(--cr-radius);
-  background: var(--cr-bg-subtle);
-  font-weight: 600;
+.map-preview h4 {
+  margin: 0;
+  font: 600 13px/20px var(--cr-font);
 }
 
-.impact-node .icon {
+.map-preview dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 2px 10px;
+  margin: 0;
+}
+
+.map-preview dt {
   color: var(--cr-fg-muted);
 }
 
-.impact-arrow {
-  color: var(--cr-fg-muted);
-}
-
-.impact-foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 10px;
+.map-preview dd {
+  margin: 0;
 }
 
 /* Files and diffs */
 
+/* Why these changes: the agent's reasons as toggle rows. The selected row fills, gains a bar at its
+   start, and shows its whole why; the others keep their why to one line. */
+/* One shrinkable track, so a long why or path truncates instead of widening the list. */
+.reason-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--cr-border);
+  border-radius: var(--cr-radius-lg);
+  list-style: none;
+}
+
+.reason-item {
+  border-bottom: 1px solid var(--cr-border-muted);
+  background: var(--cr-bg);
+}
+
+.reason-item:last-child {
+  border-bottom: 0;
+}
+
+.reason-item.is-selected {
+  background: var(--cr-bg-selected);
+  box-shadow: inset 3px 0 0 var(--cr-accent);
+}
+
+.reason {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--cr-fg);
+  font: var(--cr-t-ui);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--cr-fast) var(--cr-ease);
+}
+
+.reason:hover {
+  background: var(--cr-bg-hover);
+}
+
+.reason:focus-visible {
+  outline: 2px solid var(--cr-accent);
+  outline-offset: -2px;
+}
+
+.reason-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.reason-counts {
+  flex: none;
+  color: var(--cr-fg-muted);
+  font: var(--cr-t-meta);
+}
+
+.reason-why {
+  margin: -4px 0 0;
+  padding: 0 12px 8px;
+  overflow: hidden;
+  color: var(--cr-fg-muted);
+  font: var(--cr-t-meta);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reason-item.is-selected .reason-why {
+  color: var(--cr-fg);
+  white-space: normal;
+}
+
+.reason-item > .btn-row {
+  padding: 0 12px 10px;
+}
+
+.file-reasons {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+
+.file-reason-open,
+.hunk-reason-open {
+  color: var(--cr-fg-muted);
+  font: var(--cr-t-meta);
+  font-style: italic;
+}
+
+.reason-bar {
+  display: inline-flex;
+  gap: 1px;
+  width: 40px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+}
+
+.reason-bar-part {
+  flex: 1 1 0;
+  min-width: 2px;
+  background: var(--cr-hue-indigo);
+}
+
+.reason-bar-part.is-open {
+  background: repeating-linear-gradient(135deg, var(--cr-fg-muted) 0 1px, transparent 1px 3px);
+  box-shadow: inset 0 0 0 1px var(--cr-border);
+}
+
 .file-list {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1px;
   overflow: hidden;
   border: 1px solid var(--cr-border);
@@ -1979,9 +2415,10 @@ details > summary:hover {
   border-radius: var(--cr-radius-lg);
 }
 
+/* Sticks below the context bar and the pinned board, at the heights the page measures. */
 .diff-file-head {
   position: sticky;
-  top: 52px;
+  top: calc(var(--cr-context-h, 52px) + var(--cr-dock-h, 0px));
   z-index: 5;
   display: flex;
   flex-wrap: wrap;
@@ -2006,7 +2443,8 @@ details > summary:hover {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 12px;
-  scroll-margin-top: 104px;
+  /* Clears its file's sticky header, which sits inside the document's scroll padding. */
+  scroll-margin-top: 48px;
 }
 
 .hunk + .hunk {
@@ -2033,6 +2471,10 @@ details > summary:hover {
 }
 
 .hunk-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   padding: 4px 10px;
   border-bottom: 1px solid var(--cr-border-muted);
   color: var(--cr-fg-muted);
@@ -2140,13 +2582,196 @@ details > summary:hover {
   gap: 8px;
 }
 
-/* Findings */
+/* Findings: severity counts, a progress line, and severity groups of one-line rows that expand in
+   place into the full card. Critical and High start open. */
 
-.finding-list,
 .thread-list {
   display: grid;
   gap: 12px;
   list-style: none;
+}
+
+.finding-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.finding-summary li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.count-text {
+  font: 600 13px/20px var(--cr-font);
+}
+
+.finding-progress {
+  color: var(--cr-fg-muted);
+  font: var(--cr-t-meta);
+}
+
+.finding-progress strong {
+  color: var(--cr-fg);
+  font-weight: 600;
+}
+
+.finding-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.finding-tools .segmented > legend {
+  float: inline-start;
+  margin-inline-end: 8px;
+  color: var(--cr-fg-muted);
+  font: var(--cr-t-meta);
+}
+
+.finding-tools .segmented label span {
+  max-width: 28ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finding-groups {
+  display: grid;
+  gap: 10px;
+}
+
+.finding-group {
+  display: grid;
+  gap: 6px;
+}
+
+.finding-group-title {
+  margin: 0;
+  font: 600 13px/20px var(--cr-font);
+}
+
+.finding-group-toggle,
+.row-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.finding-group-toggle {
+  min-height: 28px;
+  padding: 2px 6px;
+  border-radius: var(--cr-radius);
+}
+
+.finding-group-toggle:hover {
+  background: var(--cr-bg-hover);
+}
+
+.finding-group-toggle > .chev,
+.finding-row-head > .chev,
+.row-toggle > .chev {
+  flex: none;
+  color: var(--cr-fg-muted);
+  transition: transform var(--cr-fast) var(--cr-ease);
+}
+
+.finding-group-toggle[aria-expanded="true"] > .chev,
+.finding-row-head[aria-expanded="true"] > .chev,
+.row-toggle[aria-expanded="true"] > .chev {
+  transform: rotate(90deg);
+}
+
+.finding-rows {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--cr-border);
+  border-radius: var(--cr-radius-lg);
+  list-style: none;
+}
+
+.finding-rows[hidden] {
+  display: none;
+}
+
+.finding-row {
+  border-bottom: 1px solid var(--cr-border-muted);
+  background: var(--cr-bg);
+}
+
+.finding-row:last-child {
+  border-bottom: 0;
+}
+
+.finding-row.is-expanded {
+  background: var(--cr-bg-subtle);
+}
+
+.finding-row-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  padding: 5px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--cr-fg);
+  font: var(--cr-t-ui);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--cr-fast) var(--cr-ease);
+}
+
+.finding-row-head:hover {
+  background: var(--cr-bg-hover);
+}
+
+.finding-row-head:focus-visible {
+  outline: 2px solid var(--cr-accent);
+  outline-offset: -2px;
+}
+
+.finding-row-head .id-chip,
+.finding-row-head .badge {
+  flex: none;
+}
+
+.finding-row-claim {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finding-row > .finding {
+  margin: 0 12px 12px;
+}
+
+/* A folded row is one line: its title toggles the body. */
+.row.is-folded {
+  padding-block: 16px;
+}
+
+.row.is-folded .row-head {
+  margin-bottom: 0;
 }
 
 .finding {
@@ -2156,7 +2781,6 @@ details > summary:hover {
   border: 1px solid var(--cr-border);
   border-radius: var(--cr-radius-lg);
   background: var(--cr-bg);
-  scroll-margin-top: 72px;
 }
 
 .finding[aria-current="true"] {
@@ -2229,7 +2853,6 @@ details > summary:hover {
   border: 1px solid var(--cr-border);
   border-radius: var(--cr-radius-lg);
   background: var(--cr-bg);
-  scroll-margin-top: 72px;
 }
 
 .comment[aria-current="true"] {
@@ -2676,12 +3299,6 @@ details > summary:hover {
   }
 }
 
-@container doc (max-width: 900px) {
-  .board {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @container doc (max-width: 600px) {
   .doc-body {
     --cr-gutter: 16px;
@@ -2691,8 +3308,61 @@ details > summary:hover {
     padding: 8px 16px;
   }
 
+  /* Lanes stack, each header above a one-line card; marker words stay for screen readers. */
   .board {
     grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+  }
+
+  .board-col {
+    gap: 3px;
+    padding: 3px 4px 4px;
+  }
+
+  .board-lane-toggle,
+  .board-lane-label {
+    min-height: 24px;
+    padding: 0 6px;
+  }
+
+  .board-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+  }
+
+  .board-card.is-attention {
+    padding-inline-start: 5px;
+  }
+
+  .board-card-head {
+    flex: none;
+    flex-wrap: nowrap;
+  }
+
+  .board-card-title {
+    flex: 1 1 auto;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    word-break: break-all;
+  }
+
+  .board-card-foot {
+    display: none;
+  }
+
+  .board-card-head .badge {
+    padding: 0 4px;
+  }
+
+  .board-flag-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .compare {
@@ -2711,6 +3381,13 @@ details > summary:hover {
   }
 
   .diff-file-head {
+    position: static;
+  }
+}
+
+/* Short panels keep the board in the page instead of pinning it. */
+@media (max-height: 560px) {
+  .board-dock {
     position: static;
   }
 }
@@ -2735,6 +3412,26 @@ details > summary:hover {
     forced-color-adjust: none;
     background: Canvas;
     color: CanvasText;
+  }
+
+  button.id-chip[aria-pressed="true"] {
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .reason-item.is-selected {
+    border-inline-start: 3px solid Highlight;
+  }
+
+  .reason-bar-part {
+    forced-color-adjust: none;
+    background: CanvasText;
+  }
+
+  .reason-bar-part.is-open {
+    background: Canvas;
+    box-shadow: inset 0 0 0 1px CanvasText;
   }
 
   .badge .icon,
@@ -2789,18 +3486,68 @@ details > summary:hover {
     background: Highlight;
   }
 
-  .impact-box rect {
+
+  .diagram-node rect,
+  .diagram-node.is-new rect,
+  .diagram-node.is-changed rect,
+  .diagram-node.is-removed rect,
+  .is-changes .diagram-node.is-unchanged rect,
+  .diagram-glyph circle,
+  .diagram-edge-bg {
     fill: Canvas;
     stroke: CanvasText;
   }
 
-  .impact-text,
-  .impact-arrowhead {
+  .diagram-node.is-highlight rect,
+  .is-changes .diagram-node.is-highlight.is-unchanged rect {
+    fill: Highlight;
+  }
+
+  .diagram-node.is-highlight text {
+    fill: HighlightText;
+  }
+
+  /* The corner glyph sits on a Canvas circle, so it keeps CanvasText inside a highlighted part. */
+  .diagram-node.is-highlight .diagram-glyph text {
     fill: CanvasText;
   }
 
-  .impact-link,
-  .impact-link.is-uncertain {
+  .diagram-node text,
+  .is-changes .diagram-node.is-unchanged text,
+  .diagram-node .diagram-tag,
+  .diagram-glyph text,
+  .diagram-box-title,
+  .diagram-edge-label,
+  .diagram-arrow {
+    fill: CanvasText;
+  }
+
+  .diagram-box-title {
+    stroke: Canvas;
+  }
+
+  .diagram-box > rect,
+  .diagram-edge,
+  .diagram-edge.is-new {
     stroke: CanvasText;
+  }
+
+  .diagram-focus {
+    stroke: Highlight;
+  }
+
+  .legend-swatch {
+    forced-color-adjust: none;
+    border-color: CanvasText;
+    background: Canvas;
+  }
+
+  .legend-swatch.is-highlight {
+    background: Highlight;
+  }
+
+  .map-preview,
+  .map-preview.is-pinned {
+    border-color: CanvasText;
   }
 }

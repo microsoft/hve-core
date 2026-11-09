@@ -9,7 +9,7 @@ export const OPEN_SCHEMA = schema({ state: { type: 'string', description: 'Works
 export const ACTIONS = [
     { name: 'get_state', description: 'Summarize review identity, actual coverage, source warnings, and feedback awaiting the agent; private drafts are not returned.', inputSchema: schema({}) },
     { name: 'show_review', description: 'Connect this panel to an explicit review state in its workspace; existing review data is preserved.', inputSchema: OPEN_SCHEMA },
-    { name: 'focus_item', description: 'Show an area, captured file/hunk, finding, or provider comment without changing coverage or disposition.', inputSchema: schema({ kind: { type: 'string', enum: TARGET_KINDS }, id: { type: 'string' } }, ['kind', 'id']) },
+    { name: 'focus_item', description: 'Show an area, reason, captured file/hunk, finding, or provider comment without changing coverage or disposition.', inputSchema: schema({ kind: { type: 'string', enum: TARGET_KINDS }, id: { type: 'string' } }, ['kind', 'id']) },
     { name: 'take_feedback', description: 'Collect explicitly queued feedback and return sent items awaiting read-back. Deduplicate by review and item ID. Unsent drafts remain private.', inputSchema: schema({ checkpoint: { type: 'boolean', description: 'True at dispatch, completion, and decision checkpoints.' } }) },
     { name: 'record_interpretation', description: 'Read back a sent item after applying it, or use applied=false while the change is still pending. This never updates review coverage or human sign-off.', inputSchema: schema({ feedbackId: { type: 'string' }, text: { type: 'string' }, effect: { type: 'string' }, applied: { type: 'boolean' } }, ['feedbackId', 'text', 'effect']) },
 ];

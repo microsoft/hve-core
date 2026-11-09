@@ -7,6 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 import { captureReview } from '../../../../skills/coding-standards/code-review-core/scripts/lib/snapshot.mjs';
+import { updateContext } from '../../../../skills/coding-standards/code-review-core/scripts/lib/operations.mjs';
 import { editFeedback, markTarget, openReview, queueFeedback, readFeedback, recordInterpretation, refresh, sendFeedback, takeFeedback } from '../lib/model.mjs';
 
 async function fixture(t) {
@@ -100,5 +101,21 @@ describe('review model and independent feedback', () => {
         await assert.rejects(openReview(repository, { state: statePath }));
         await assert.rejects(refresh(source));
         assert.equal(await fs.readFile(stateFile, 'utf8'), '{"schemaVersion":99}');
+    });
+    it('passes reasons and the change map to the page and accepts a recorded reason as a target', async (t) => {
+        const { captured, source } = await fixture(t);
+        const reasons = [{ id: 'R1', title: 'Call the result helper', why: 'The agent reads the selection as a new call.', fileIds: ['file-1'], hunkIds: [] }];
+        const changeMap = {
+            title: 'After: the example calls result', description: 'One new call.', boxes: [],
+            parts: [{ id: 'example', label: 'example.js', box: null, change: 'new', before: null, after: 'Calls result', fileIds: ['file-1'], reasonIds: ['R1'] }], links: [],
+        };
+        await updateContext(captured, 0, { reasons, changeMap });
+        const page = await refresh(source);
+        assert.deepEqual(page.reasons, reasons);
+        assert.deepEqual(page.changeMap, changeMap);
+        const target = { kind: 'reason', id: 'R1', snapshotId: source.state.snapshotId };
+        const draft = await editFeedback(source, { revision: 0, kind: 'explain', target, text: 'Why is this one reason?' });
+        assert.deepEqual(draft.items[0].target, target);
+        await assert.rejects(editFeedback(source, { revision: draft.revision, kind: 'comment', target: { ...target, id: 'R2' }, text: 'Unknown reason.' }), /not present/);
     });
 });

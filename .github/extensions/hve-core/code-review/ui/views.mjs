@@ -30,7 +30,7 @@ export const SEVERITY = {
 };
 
 export const DISPOSITION = {
-    proposed: { label: 'To verify', icon: 'question', tone: 'attention' },
+    proposed: { label: 'Being checked', icon: 'active', tone: 'accent' },
     accepted: { label: 'Accepted', icon: 'shield-check', tone: 'success' },
     disputed: { label: 'Disputed', icon: 'half', tone: 'attention' },
     deferred: { label: 'Deferred', icon: 'clock', tone: 'muted' },
@@ -95,41 +95,214 @@ export function fileStats(file) {
     return { additions, deletions };
 }
 
-export function coverageBoard(view) {
-    const groups = [
-        { id: 'pending', title: 'Needs review', icon: 'circle', tone: 'muted', areas: [] },
-        { id: 'active', title: 'In progress', icon: 'active', tone: 'accent', areas: [] },
-        { id: 'attention', title: 'Needs attention', icon: 'alert', tone: 'danger', areas: [] },
-        { id: 'reviewed', title: 'Reviewed', icon: 'check-circle', tone: 'success', areas: [] },
-    ];
-    for (const area of view.areas) {
-        const group = area.status === 'pending' ? 'pending' : area.status === 'in_progress' ? 'active' : area.status === 'reviewed' ? 'reviewed' : 'attention';
-        groups.find((entry) => entry.id === group).areas.push(area);
-    }
-    return groups;
-}
-
 /** Derives the stage rail from recorded state only; nothing infers where the agent is. */
 export function stages(view) {
     const required = (view.workItems ?? []).filter((item) => item.required);
-    let review = 'upcoming';
-    if (required.length && required.every((item) => item.status === 'completed')) review = 'done';
-    else if (required.some((item) => ATTENTION.has(item.status))) review = 'blocked';
-    else if (required.length) review = 'active';
     const proposed = view.findings.filter((finding) => finding.disposition === 'proposed').length;
-    let verify = 'upcoming';
-    if (review === 'done' && proposed === 0) verify = 'done';
-    else if (proposed || view.findings.length || review === 'done') verify = 'active';
+    let review = 'upcoming';
+    if (required.some((item) => ATTENTION.has(item.status))) review = 'blocked';
+    else if (required.length && required.every((item) => item.status === 'completed') && proposed === 0) review = 'done';
+    else if (required.length || view.findings.length) review = 'active';
     let outcome = 'upcoming';
     if (view.outcome && !view.stale) outcome = 'done';
     else if (view.status === 'incomplete') outcome = 'blocked';
     const reviewed = view.areas.filter((area) => area.status === 'reviewed').length;
+    const checking = proposed ? `, ${proposed} being checked` : '';
     return [
         { id: 'capture', label: 'Capture', icon: 'file', status: view.stale ? 'blocked' : 'done', detail: `${view.files.length} ${view.files.length === 1 ? 'file' : 'files'}` },
-        { id: 'review', label: 'Review', icon: 'code', status: review, detail: view.areas.length ? `${reviewed} of ${view.areas.length} areas reviewed` : 'Not scheduled' },
-        { id: 'verify', label: 'Verify', icon: 'shield-check', status: verify, detail: proposed ? `${proposed} to verify` : `${view.findings.length} ${view.findings.length === 1 ? 'finding' : 'findings'}` },
+        { id: 'review', label: 'Review', icon: 'code', status: review, detail: view.areas.length ? `${reviewed} of ${view.areas.length} areas reviewed${checking}` : 'Not scheduled' },
         { id: 'outcome', label: 'Outcome', icon: 'flag', status: outcome, detail: (OUTCOME[view.stale ? 'none' : view.outcome ?? 'none'] ?? OUTCOME.none).label },
     ];
+}
+
+/**
+ * The board's lanes, in order. In progress also holds areas whose required work is blocked,
+ * unavailable, skipped, or stale; those cards carry a marker instead of a lane of their own.
+ */
+export const LANES = Object.freeze([
+    Object.freeze({ id: 'pending', title: 'Needs review', icon: 'circle', tone: 'muted', statuses: Object.freeze(['pending']) }),
+    Object.freeze({ id: 'active', title: 'In progress', icon: 'active', tone: 'accent', statuses: Object.freeze(['in_progress', 'blocked', 'unavailable', 'skipped', 'stale']) }),
+    Object.freeze({ id: 'reviewed', title: 'Reviewed', icon: 'check-circle', tone: 'success', statuses: Object.freeze(['reviewed']) }),
+]);
+
+/** True for an area whose required work cannot finish as recorded. */
+export function needsAttention(area) {
+    return ATTENTION.has(area.status);
+}
+
+/**
+ * Each lane with its areas in review order, the one card it shows, and how many hidden cards
+ * need attention. Needs review shows the next area; In progress shows the area the agent points
+ * into, else the first that needs attention, else the first; Reviewed shows the selected area,
+ * else the last.
+ *
+ * @param {{ areas: any[] }} view
+ * @param {{ agentAreaId?: string | null, selectedAreaId?: string | null }} [options]
+ */
+export function boardLanes(view, { agentAreaId = null, selectedAreaId = null } = {}) {
+    return LANES.map((lane) => {
+        const areas = view.areas.filter((area) => lane.statuses.includes(area.status));
+        let card = null;
+        if (lane.id === 'pending') card = areas[0] ?? null;
+        else if (lane.id === 'active') card = areas.find((area) => area.id === agentAreaId) ?? areas.find(needsAttention) ?? areas[0] ?? null;
+        else card = areas.find((area) => area.id === selectedAreaId) ?? areas.at(-1) ?? null;
+        const hidden = areas.filter((area) => area !== card && needsAttention(area)).length;
+        return { ...lane, areas, card, hidden };
+    });
+}
+
+/**
+ * Findings grouped for the Review stage: one group per severity holding retained findings,
+ * then Set aside for rejected ones. Critical and High start open. Each group keeps ID order, so a
+ * finding stays put while the agent checks it.
+ */
+export function findingGroups(findings) {
+    const byId = (left, right) => String(left.id).localeCompare(String(right.id));
+    const groups = Object.keys(SEVERITY).map((severity) => ({
+        id: severity.toLowerCase(), label: severity, severity, open: ['Critical', 'High'].includes(severity),
+        findings: findings.filter((finding) => finding.disposition !== 'rejected' && finding.severity === severity).sort(byId),
+    }));
+    groups.push({ id: 'set-aside', label: 'Set aside', severity: null, open: false, findings: findings.filter((finding) => finding.disposition === 'rejected').sort(bySeverity) });
+    return groups.filter((group) => group.findings.length);
+}
+
+/** Required work per perspective: areas checked, areas in progress, and areas that need attention. */
+export function perspectiveProgress(view) {
+    const required = (view.workItems ?? []).filter((item) => item.required);
+    return [...new Set(required.map((item) => item.perspective))].map((perspective) => {
+        const items = required.filter((item) => item.perspective === perspective);
+        const areaIds = [...new Set(items.flatMap((item) => item.areaIds))];
+        const state = (areaId) => {
+            const covering = items.filter((item) => item.areaIds.includes(areaId));
+            if (covering.some((item) => ATTENTION.has(item.status))) return 'attention';
+            if (covering.every((item) => item.status === 'completed')) return 'done';
+            return covering.some((item) => item.status !== 'pending') ? 'active' : 'pending';
+        };
+        const states = areaIds.map(state);
+        return {
+            perspective, total: areaIds.length,
+            done: states.filter((value) => value === 'done').length,
+            active: states.filter((value) => value === 'active').length,
+            attention: states.filter((value) => value === 'attention').length,
+        };
+    });
+}
+
+/**
+ * Findings the reader has not been shown yet, against the IDs already shown, with a severity
+ * summary such as "1 Critical, 2 High" for the button that reveals them. `fresh` lists the held IDs
+ * that were not held before, so an arrival is announced once even after the reader revealed
+ * another finding.
+ *
+ * @param {any[]} findings
+ * @param {Set<string>} shown
+ * @param {Set<string>} [before] IDs held at the previous check; every held ID is fresh without it
+ */
+export function arrivals(findings, shown, before = new Set()) {
+    const held = findings.filter((finding) => !shown.has(finding.id));
+    const serious = ['Critical', 'High'].map((severity) => [severity, held.filter((finding) => finding.severity === severity && finding.disposition !== 'rejected').length])
+        .filter(([, count]) => count).map(([severity, count]) => `${count} ${severity}`);
+    const ids = held.map((finding) => finding.id);
+    return { ids, count: held.length, summary: serious.join(', '), fresh: ids.filter((id) => !before.has(id)) };
+}
+
+/**
+ * Which narrowing would hide any of the given findings: the reason lens, the area scope, both, or
+ * neither. Revealing findings clears only the narrowing that hides them.
+ *
+ * @param {{ findings: any[], areas: any[], files: any[], reasons?: any[] }} view
+ * @param {string[]} ids
+ * @param {{ reasonId?: string | null, areaId?: string | null }} [narrowing]
+ * @returns {{ reason: boolean, area: boolean }}
+ */
+export function hidingNarrowing(view, ids, { reasonId = null, areaId = null } = {}) {
+    const hides = (options) => {
+        const kept = new Set(findingsFor(view, options).map((finding) => finding.id));
+        return ids.some((id) => !kept.has(id));
+    };
+    return { reason: Boolean(reasonId) && hides({ reasonId }), area: Boolean(areaId) && hides({ areaId }) };
+}
+
+/**
+ * What each reason explains, mirroring the report: a hunk belongs to the reason that claims it,
+ * else to the reason that claims its file; a file without hunks counts by file. `byFile` lists each
+ * file's reasons in first-hunk order with their hunk counts, using `null` for unexplained hunks.
+ */
+export function reasonCoverage(view) {
+    const claimedHunk = new Map();
+    const claimedFile = new Map();
+    for (const reason of view.reasons ?? []) {
+        for (const fileId of reason.fileIds) claimedFile.set(fileId, reason.id);
+        for (const hunkId of reason.hunkIds) claimedHunk.set(hunkId, reason.id);
+    }
+    const totals = new Map((view.reasons ?? []).map((reason) => [reason.id, { files: new Set(), hunks: 0 }]));
+    const byFile = {};
+    const byHunk = {};
+    const open = { files: [], hunks: 0 };
+    for (const file of view.files) {
+        const segments = new Map();
+        if (!file.hunks.length) {
+            const reasonId = claimedFile.get(file.id) ?? null;
+            segments.set(reasonId, 0);
+            if (reasonId) totals.get(reasonId).files.add(file.id);
+            else open.files.push(file.id);
+        }
+        for (const hunk of file.hunks) {
+            const reasonId = claimedHunk.get(hunk.id) ?? claimedFile.get(file.id) ?? null;
+            byHunk[hunk.id] = reasonId;
+            segments.set(reasonId, (segments.get(reasonId) ?? 0) + 1);
+            if (reasonId) {
+                totals.get(reasonId).files.add(file.id);
+                totals.get(reasonId).hunks += 1;
+            } else open.hunks += 1;
+        }
+        if (file.hunks.length && segments.has(null)) open.files.push(file.id);
+        byFile[file.id] = [...segments].map(([reasonId, hunks]) => ({ reasonId, hunks }));
+    }
+    return {
+        reasons: (view.reasons ?? []).map((reason) => ({ id: reason.id, files: totals.get(reason.id).files.size, hunks: totals.get(reason.id).hunks })),
+        unexplained: { files: open.files.length, hunks: open.hunks, fileIds: open.files },
+        byFile, byHunk,
+    };
+}
+
+/** The reason selection that stands for changes no reason explains. */
+export const NOT_EXPLAINED = 'not-explained';
+
+/**
+ * Files a reason explains in whole or in part, in snapshot order. `NOT_EXPLAINED` gives the files
+ * with any change no reason explains.
+ *
+ * @param {any} view
+ * @param {string} reasonId
+ * @param {ReturnType<typeof reasonCoverage>} [coverage]
+ * @returns {string[]}
+ */
+export function reasonFiles(view, reasonId, coverage = reasonCoverage(view)) {
+    const want = reasonId === NOT_EXPLAINED ? null : reasonId;
+    return view.files.filter((file) => (coverage.byFile[file.id] ?? []).some((segment) => segment.reasonId === want)).map((file) => file.id);
+}
+
+/**
+ * Findings narrowed to a reason or an area. A line anchor belongs to its hunk's reason; a file
+ * anchor belongs to every reason that explains part of the file. Metadata anchors match neither.
+ * `NOT_EXPLAINED` narrows to findings on changes no reason explains.
+ *
+ * @param {any} view
+ * @param {{ reasonId?: string | null, areaId?: string | null }} filter
+ */
+export function findingsFor(view, { reasonId = null, areaId = null } = {}) {
+    if (!reasonId && !areaId) return view.findings;
+    const area = areaId ? view.areas.find((entry) => entry.id === areaId) : null;
+    const coverage = reasonId ? reasonCoverage(view) : null;
+    const want = reasonId === NOT_EXPLAINED ? null : reasonId;
+    const matchesReason = (anchor) => {
+        if (!anchor.fileId) return false;
+        if (anchor.hunkId) return coverage.byHunk[anchor.hunkId] === want;
+        return (coverage.byFile[anchor.fileId] ?? []).some((segment) => segment.reasonId === want);
+    };
+    return view.findings.filter((finding) => finding.anchors.some((anchor) =>
+        (!area || area.fileIds.includes(anchor.fileId)) && (!reasonId || matchesReason(anchor))));
 }
 
 export function isRetained(finding) {
@@ -146,36 +319,11 @@ export function needsYou(view) {
         .filter((finding) => isRetained(finding) && ['Critical', 'High'].includes(finding.severity)
             && !isMarked(view.feedback, 'seen', { kind: 'finding', id: finding.id, snapshotId: view.snapshotId }))
         .sort(bySeverity)
-        .map((finding) => ({ kind: 'finding', id: finding.id, stage: 'verify', label: finding.claim, severity: finding.severity }));
+        .map((finding) => ({ kind: 'finding', id: finding.id, stage: 'review', label: finding.claim, severity: finding.severity }));
 }
 
 export function bySeverity(left, right) {
     return (SEVERITY[left.severity]?.rank ?? 9) - (SEVERITY[right.severity]?.rank ?? 9) || String(left.id).localeCompare(String(right.id));
-}
-
-export const FINDING_FILTERS = [
-    { id: 'verify', label: 'To verify', test: (finding) => finding.disposition === 'proposed' },
-    { id: 'retained', label: 'Retained', test: (finding) => ['accepted', 'disputed', 'deferred'].includes(finding.disposition) },
-    { id: 'rejected', label: 'Rejected', test: (finding) => finding.disposition === 'rejected' },
-    { id: 'all', label: 'All', test: () => true },
-];
-
-export function findingFilter(view, id) {
-    const filter = FINDING_FILTERS.find((entry) => entry.id === id) ?? FINDING_FILTERS[3];
-    return view.findings.filter(filter.test).sort(bySeverity);
-}
-
-/** Opens on the first filter with findings, so the default never hides what exists. */
-export function defaultFindingFilter(view) {
-    return FINDING_FILTERS.find((entry) => view.findings.some(entry.test))?.id ?? 'all';
-}
-
-/** Keeps the current filter when it shows the finding; otherwise picks the finding's own group. */
-export function filterShowing(view, current, findingId) {
-    const finding = view.findings.find((entry) => entry.id === findingId);
-    const active = FINDING_FILTERS.find((entry) => entry.id === current);
-    if (!finding || (active && active.test(finding))) return current;
-    return FINDING_FILTERS.find((entry) => entry.id !== 'all' && entry.test(finding))?.id ?? 'all';
 }
 
 export function feedbackState(item) {
@@ -220,93 +368,15 @@ export function plainText(value) {
     return String(value ?? '').replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, '$1');
 }
 
-function wrapLabel(text, width = 22, maxLines = 3) {
-    const lines = [];
-    let line = '';
-    for (const word of String(text).split(/\s+/).filter(Boolean)) {
-        const pieces = word.length > width ? word.match(new RegExp(`.{1,${width}}`, 'g')) : [word];
-        for (const piece of pieces) {
-            if (!line) line = piece;
-            else if (`${line} ${piece}`.length <= width) line = `${line} ${piece}`;
-            else {
-                lines.push(line);
-                line = piece;
-            }
-        }
-    }
-    if (line) lines.push(line);
-    if (lines.length > maxLines) {
-        lines.length = maxLines;
-        lines[maxLines - 1] = `${lines[maxLines - 1].slice(0, width - 1)}…`;
-    }
-    return lines.length ? lines : [''];
-}
-
-/**
- * Lays out impact relationships as columns ordered by longest path, so a change reads left to
- * right toward what it affects. Cycles and back-links route below the boxes.
- */
-export function impactLayout(edges, { nodeWidth = 184, gapX = 64, gapY = 16, pad = 8, lineHeight = 18 } = {}) {
-    const names = [];
-    for (const edge of edges) for (const name of [edge.from, edge.to]) if (!names.includes(name)) names.push(name);
-    const layer = new Map(names.map((name) => [name, 0]));
-    for (let pass = 0; pass < names.length; pass += 1) {
-        let changed = false;
-        for (const edge of edges) {
-            const next = layer.get(edge.from) + 1;
-            if (edge.from !== edge.to && next < names.length && layer.get(edge.to) < next) {
-                layer.set(edge.to, next);
-                changed = true;
-            }
-        }
-        if (!changed) break;
-    }
-    const columns = [];
-    for (const name of names) (columns[layer.get(name)] ??= []).push(name);
-    const nodes = new Map();
-    const heights = columns.map((column) => column.reduce((sum, name) => sum + 16 + wrapLabel(name).length * lineHeight, 0) + gapY * Math.max(column.length - 1, 0));
-    const tallest = Math.max(0, ...heights);
-    columns.forEach((column, index) => {
-        let y = pad + (tallest - heights[index]) / 2;
-        for (const name of column) {
-            const lines = wrapLabel(name);
-            const height = 16 + lines.length * lineHeight;
-            nodes.set(name, { id: name, label: name, lines, x: pad + index * (nodeWidth + gapX), y, width: nodeWidth, height });
-            y += height + gapY;
-        }
-    });
-    let back = false;
-    const links = edges.map((edge, index) => {
-        const source = nodes.get(edge.from);
-        const target = nodes.get(edge.to);
-        let path;
-        if (target.x > source.x) {
-            const x1 = source.x + source.width;
-            const y1 = source.y + source.height / 2;
-            const x2 = target.x;
-            const y2 = target.y + target.height / 2;
-            const bend = (x2 - x1) / 2;
-            path = `M${x1} ${y1}C${x1 + bend} ${y1} ${x2 - bend} ${y2} ${x2} ${y2}`;
-        } else {
-            back = true;
-            const x1 = source.x + source.width / 2;
-            const y1 = source.y + source.height;
-            const x2 = target.x + target.width / 2 + (source === target ? 24 : 0);
-            const y2 = target.y + target.height;
-            path = `M${x1} ${y1}C${x1} ${y1 + 40} ${x2} ${y2 + 40} ${x2} ${y2}`;
-        }
-        return { index, from: edge.from, to: edge.to, path, uncertain: Boolean(edge.uncertainty) };
-    });
-    return {
-        nodes: [...nodes.values()], links,
-        width: pad * 2 + columns.length * nodeWidth + Math.max(columns.length - 1, 0) * gapX,
-        height: pad * 2 + tallest + (back ? 44 : 0),
-    };
-}
-
 /** Findings and comments anchored to one hunk, for the diff margin. */
-export function hunkAnnotations(view, file, hunk) {
-    const findings = view.findings.filter((finding) => finding.anchors.some((anchor) => anchor.hunkId === hunk.id));
+/**
+ * Findings and comments beside one hunk. With `shown`, findings the reader has not been shown yet
+ * stay out, so an arrival never adds a note or a margin column to the diff being read.
+ *
+ * @param {Set<string> | null} [shown] IDs of findings already shown; null keeps every finding
+ */
+export function hunkAnnotations(view, file, hunk, shown = null) {
+    const findings = view.findings.filter((finding) => (!shown || shown.has(finding.id)) && finding.anchors.some((anchor) => anchor.hunkId === hunk.id));
     const comments = view.discussion.items.filter((comment) => {
         if (comment.outdated || !comment.commit || comment.commit !== view.target.head || comment.line === null) return false;
         if (comment.path !== file.newPath && comment.path !== file.oldPath) return false;
@@ -316,9 +386,10 @@ export function hunkAnnotations(view, file, hunk) {
     return { findings: findings.sort(bySeverity), comments };
 }
 
-export function fileAnnotations(view, file) {
+/** Findings and comments on one file; `shown` leaves out findings the reader has not been shown yet. */
+export function fileAnnotations(view, file, shown = null) {
     return {
-        findings: view.findings.filter((finding) => finding.anchors.some((anchor) => anchor.fileId === file.id)),
+        findings: view.findings.filter((finding) => (!shown || shown.has(finding.id)) && finding.anchors.some((anchor) => anchor.fileId === file.id)),
         comments: view.discussion.items.filter((comment) => comment.path && (comment.path === file.newPath || comment.path === file.oldPath)),
     };
 }
@@ -339,6 +410,9 @@ export function resolveFocus(view, target) {
         const area = view.areas.find((entry) => entry.id === key);
         selected.areaId = area?.id ?? null;
         selected.fileId = area?.fileIds[0] ?? null;
+    } else if (kind === 'reason') {
+        selected.fileId = (view.reasons ?? []).some((reason) => reason.id === key) ? reasonFiles(view, key)[0] ?? null : null;
+        selected.mapped = Boolean(selected.fileId);
     } else if (kind === 'file') selected.fileId = view.files.find((entry) => entry.id === key)?.id ?? null;
     else if (kind === 'hunk') {
         selected.fileId = view.files.find((file) => file.hunks.some((hunk) => hunk.id === key))?.id ?? null;
@@ -365,10 +439,8 @@ export function resolveFocus(view, target) {
     return selected;
 }
 
-/** The stage a focus target belongs to, so an agent focus request opens the right view. */
-export function stageFor(target) {
-    if (!target) return 'review';
-    if (target.kind === 'finding' || target.kind === 'comment') return 'verify';
+/** The stage a focus target belongs to, so an agent focus request opens the right view. Every focus target lives in Review. */
+export function stageFor() {
     return 'review';
 }
 
