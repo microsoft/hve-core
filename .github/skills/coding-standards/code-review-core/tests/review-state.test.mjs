@@ -3,7 +3,7 @@
 
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { areaStatus, assess, finalizeState, initialState, mergeResult, newWork, validateSnapshot, validateState } from '../scripts/lib/model.mjs';
+import { areaStatus, assess, finalizeState, initialState, mergeResult, newWork, reasonCoverage, validateSnapshot, validateState } from '../scripts/lib/model.mjs';
 
 function setup() {
     const snapshot = {
@@ -148,5 +148,114 @@ describe('shared review state', () => {
         finalizeState(next, snapshot);
         assert.equal(next.outcome, 'request_changes');
         assert.deepEqual(next.workItems, workBefore);
+    });
+});
+
+/** Three files: one hunk, two hunks, and an omitted binary without hunks, all in one area. */
+function storySetup() {
+    const { snapshot, state } = setup();
+    snapshot.files.push({
+        id: 'file-two', status: 'M', oldPath: 'src/view.js', newPath: 'src/view.js', oldOid: null, newOid: null,
+        evidencePath: 'snapshots/snapshot-one/files/file-two.json', omission: null,
+        hunks: [
+            { id: 'hunk-two', oldStart: 1, oldCount: 1, newStart: 1, newCount: 1, oldLines: [1], newLines: [1] },
+            { id: 'hunk-three', oldStart: 9, oldCount: 1, newStart: 9, newCount: 1, oldLines: [9], newLines: [9] },
+        ],
+    }, {
+        id: 'file-three', status: 'A', oldPath: null, newPath: 'assets/logo.png', oldOid: null, newOid: null,
+        evidencePath: null, omission: 'Binary content stays in inventory without text.', hunks: [],
+    });
+    state.areas[0].fileIds.push('file-two', 'file-three');
+    const reasons = [
+        { id: 'R1', title: 'Return the computed result', why: 'The agent reads the app change as a fix for a dropped value.', fileIds: ['file-one'], hunkIds: ['hunk-two'] },
+        { id: 'R2', title: 'Show the result', why: 'The view now renders what the app returns.', fileIds: [], hunkIds: ['hunk-three'] },
+    ];
+    const changeMap = {
+        title: 'After: the view renders the returned result', description: 'The view calls the app, which now returns its result.',
+        boxes: [{ id: 'src', label: 'src/', parent: null }],
+        parts: [
+            { id: 'app', label: 'app.js', box: 'src', change: 'changed', before: 'Dropped the result', after: 'Returns the result', fileIds: ['file-one'], reasonIds: ['R1'] },
+            { id: 'view', label: 'view.js', box: 'src', change: 'changed', before: 'Showed nothing', after: 'Shows the result', fileIds: ['file-two'], reasonIds: ['R2'] },
+            { id: 'cache', label: 'cache.js', box: 'src', change: 'removed', before: 'Held stale results', after: null, fileIds: [], reasonIds: [] },
+        ],
+        links: [
+            { from: 'view', to: 'app', label: 'renders the result of', change: 'unchanged', kind: 'uses', anchor: { fileId: 'file-two', hunkId: 'hunk-three', side: 'new', startLine: 9, endLine: 9 }, uncertainty: null },
+            { from: 'view', to: 'cache', label: 'read', change: 'removed', kind: 'uses', anchor: null, uncertainty: 'The removed call site is outside the captured hunks.' },
+        ],
+    };
+    return { snapshot, state, reasons, changeMap };
+}
+
+describe('reasons and the change map', () => {
+    it('accepts records that match the snapshot and counts what the reasons explain', () => {
+        const { snapshot, state, reasons, changeMap } = storySetup();
+        assert.doesNotThrow(() => validateState(state, snapshot));
+        Object.assign(state, { reasons, changeMap });
+        assert.doesNotThrow(() => validateState(state, snapshot));
+        assert.deepEqual(reasonCoverage(state, snapshot), {
+            reasons: [{ id: 'R1', files: 2, hunks: 2 }, { id: 'R2', files: 1, hunks: 1 }],
+            unexplained: { files: 1, hunks: 0 },
+        });
+        delete state.changeMap;
+        state.reasons = [reasons[0]];
+        assert.deepEqual(reasonCoverage(state, snapshot).unexplained, { files: 2, hunks: 1 });
+    });
+
+    it('rejects reasons that claim a hunk twice, mix a whole file with its hunks, or name unknown evidence', () => {
+        const cases = [
+            [(reasons) => { reasons[1].hunkIds = ['hunk-two']; }, /at most one reason/],
+            [(reasons) => { reasons[1].fileIds = ['file-two']; }, /claims whole cannot have hunks/],
+            [(reasons) => { reasons[1].fileIds = ['file-one']; }, /whole to at most one reason/],
+            [(reasons) => { reasons[0].hunkIds = ['hunk-missing']; }, /unknown ID/],
+            [(reasons) => { reasons[1].hunkIds = []; }, /at least one file or hunk/],
+            [(reasons) => { reasons[1].id = 'R10'; }, /R1 to R9/],
+            [(reasons) => { reasons[0].title = 'x'.repeat(81); }, /at most 80 characters/],
+            [(reasons) => { reasons.length = 0; }, /between 1 and 9/],
+            [(reasons) => { reasons[0].confidence = 'high'; }, /unsupported field/],
+            [(reasons) => { reasons[0].title = ''; }, /reason title must be text/],
+            [(reasons) => { reasons[0].title = 'Return the\ncomputed result'; }, /reason title must be one line/],
+            [(reasons) => { reasons[0].why = ''; }, /reason why must be text/],
+            [(reasons) => { reasons[0].why = 'x'.repeat(401); }, /reason why must be at most 400 characters/],
+            [(reasons) => { reasons[1].id = 'R1'; }, /duplicate IDs/],
+        ];
+        for (const [mutate, expected] of cases) {
+            const { snapshot, state, reasons } = storySetup();
+            mutate(reasons);
+            state.reasons = reasons;
+            assert.throws(() => validateState(state, snapshot), expected);
+        }
+    });
+
+    it('rejects change maps with unknown references, unsupported links, or too many parts', () => {
+        const cases = [
+            [(map) => { map.parts[0].reasonIds = ['R9']; }, /unknown ID/],
+            [(map) => { map.parts[0].fileIds = ['file-missing']; }, /unknown ID/],
+            [(map) => { map.parts[0].box = 'lib'; }, /known box/],
+            [(map) => { map.links[0].uncertainty = null; map.links[0].anchor = null; }, /evidence or an explicit uncertainty/],
+            [(map) => { map.links[1].change = 'unchanged'; }, /removed part is removed/],
+            [(map) => { map.links[0].to = 'view'; }, /two different known parts/],
+            [(map) => { map.parts[2].after = 'Still here'; }, /removed part has no after/],
+            [(map) => { map.parts[0].before = null; }, /part before must be text/],
+            [(map) => { map.boxes.push({ id: 'deep', label: 'deep/', parent: 'inner' }, { id: 'inner', label: 'inner/', parent: 'src' }); }, /inside one top-level box/],
+            [(map) => { map.parts.push(...Array.from({ length: 14 }, (_, index) => ({ id: `extra-${index}`, label: 'extra', box: null, change: 'unchanged', before: null, after: null, fileIds: [], reasonIds: [] }))); }, /at most 6 boxes, 16 parts/],
+            [(map) => { map.boxes.push(...Array.from({ length: 6 }, (_, index) => ({ id: `box-${index}`, label: 'box/', parent: null }))); }, /at most 6 boxes/],
+            [(map) => { map.links.push(...Array.from({ length: 31 }, () => ({ ...map.links[0] }))); }, /32 links/],
+            [(map) => { map.title = 'x'.repeat(121); }, /map title must be at most 120 characters/],
+            [(map) => { map.description = 'x'.repeat(301); }, /map description must be at most 300 characters/],
+            [(map) => { map.links[0].label = 'x'.repeat(61); }, /link label must be at most 60 characters/],
+            [(map) => { Object.assign(map.parts[0], { change: 'new', before: null }); }, /link to a new part is new/],
+            [(map) => { map.parts[0].change = 'moved'; }, /part change must be one of/],
+            [(map) => { map.links[0].change = 'moved'; }, /link change must be one of/],
+            [(map) => { map.links[0].kind = 'calls'; }, /link kind must be one of/],
+            [(map) => { map.parts[0].change = 'new'; }, /A new part has no before line/],
+            [(map) => { Object.assign(map.parts[0], { change: 'unchanged', before: null }); }, /An unchanged part has no after line/],
+            [(map) => { map.parts[0].id = 'src'; }, /Box and part IDs must differ/],
+        ];
+        for (const [mutate, expected] of cases) {
+            const { snapshot, state, reasons, changeMap } = storySetup();
+            mutate(changeMap);
+            Object.assign(state, { reasons, changeMap });
+            assert.throws(() => validateState(state, snapshot), expected);
+        }
     });
 });

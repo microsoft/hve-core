@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import fs from 'node:fs/promises';
-import { areaStatus, assess, check, finalizeState, id, mergeResult, newWork, object, PERSPECTIVES, SEVERITIES, stableJson, text, unassignedFiles, validateResult } from './model.mjs';
+import { areaStatus, assess, check, finalizeState, id, mergeResult, newWork, object, PERSPECTIVES, reasonCoverage, SEVERITIES, stableJson, text, unassignedFiles, validateResult } from './model.mjs';
 import { digest, exists, loadReview, readJson, readText, updateState, writeJson, writeText } from './storage.mjs';
 
 export async function schedule(location, revision, request) {
@@ -111,7 +111,7 @@ export async function assessFindings(location, revision, request) {
 }
 
 export async function updateContext(location, revision, request) {
-    object(request, [], 'context update', ['areas', 'context', 'limitations']);
+    object(request, [], 'context update', ['areas', 'context', 'limitations', 'reasons', 'changeMap']);
     return updateState(location, revision, (state, snapshot) => {
         for (const area of request.areas ?? []) {
             object(area, ['id', 'summary', 'before', 'after', 'impact'], 'area description');
@@ -120,6 +120,12 @@ export async function updateContext(location, revision, request) {
             Object.assign(existing, area);
         }
         if (request.context) state.context = { ...state.context, ...request.context };
+        // Reasons and the change map replace whole; null removes them.
+        for (const key of ['reasons', 'changeMap']) {
+            if (!Object.hasOwn(request, key)) continue;
+            if (request[key] === null) delete state[key];
+            else state[key] = request[key];
+        }
         for (const limitation of request.limitations ?? []) {
             id(limitation.id);
             const index = state.limitations.findIndex((entry) => entry.id === limitation.id);
@@ -170,10 +176,21 @@ export async function renderReport(location, revision) {
             ...state.workItems.flatMap((work) => work.observations.map(markdownText)),
             ...(state.context ? [markdownText(JSON.stringify(state.context, null, 2))] : []),
         ].join('\n\n') || 'No additional context recorded.';
+        const explained = reasonCoverage(state, snapshot);
+        const count = (value, noun) => `${value} ${noun}${value === 1 ? '' : 's'}`;
+        const { files: openFiles, hunks: openHunks } = explained.unexplained;
+        const reasons = state.reasons?.length ? [
+            'The agent\'s reading of why these changes were made.',
+            state.reasons.map((reason) => {
+                const totals = explained.reasons.find((entry) => entry.id === reason.id);
+                return `* ${reason.id}: ${markdownText(reason.title)} (${count(totals.files, 'file')}, ${count(totals.hunks, 'hunk')}). ${markdownText(reason.why)}`;
+            }).join('\n'),
+            openFiles ? `Not explained yet: ${count(openFiles, 'file')} (${count(openHunks, 'hunk')}).` : 'Every captured file and hunk has a reason.',
+        ].join('\n\n') : 'The agent recorded no reasons for these changes.';
         const event = state.outcome === 'request_changes' ? 'REQUEST_CHANGES' : state.outcome === 'approve' ? 'APPROVE' : 'COMMENT';
         const draft = snapshot.target.kind === 'pr' ? `## PR comment draft\n\nProposed event: ${event}\n\n${state.outcome ? `Review outcome: ${state.outcome}.` : 'Review is incomplete; no approval is proposed.'} ${state.findings.filter((entry) => entry.disposition !== 'rejected').length} finding(s) require human consideration.\n\n- [ ] Reviewed, edited, and approved this comment for posting to the PR` : '';
-        const values = { coverage, findings, context, draft, disclaimer };
-        const output = `<!-- markdownlint-disable-file -->\n${template.replace(/\{\{(coverage|findings|context|draft|disclaimer)\}\}/g, (_, key) => values[key])}`;
+        const values = { coverage, reasons, findings, context, draft, disclaimer };
+        const output = `<!-- markdownlint-disable-file -->\n${template.replace(/\{\{(coverage|reasons|findings|context|draft|disclaimer)\}\}/g, (_, key) => values[key])}`;
         if (prior !== undefined) check(await readText(location.root, 'review.md') === prior, 'Report changed during rendering.', 'draft_conflict');
         await writeText(location.root, 'review.md', output, prior === undefined);
         state.artifacts = { report: 'review.md', reportDigest: digest(output) };

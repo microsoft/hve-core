@@ -89,6 +89,38 @@ An impact relationship has `from`, `to`, `description`, `anchor`, and
 include every captured file: put a file no perspective needs in an area and
 complete its work with a not-applicable reason rather than leaving it out.
 
+Two optional records explain why the change exists and how its parts connect.
+Neither counts as coverage or affects status and outcome.
+
+`reasons` holds one to nine reasons. Each has an `id` from `R1` to `R9`, a
+one-line `title` of at most 80 characters, a `why` of at most 400, and the
+`fileIds` or single `hunkIds` it explains. Every reason is the agent's reading,
+not the author's statement. A reason claims whole files, or single hunks when a
+file serves two reasons. A hunk belongs to at most one reason, and a file claimed
+whole has none of its hunks claimed. Hunks no reason claims stay unexplained.
+
+`changeMap` has a `title` of at most 120 characters, a one-sentence
+`description` of at most 300, and `boxes`, `parts`, and `links`:
+
+* A box has `id`, a `label` of at most 120 characters, and `parent`: `null`, or
+  a top-level box. Box and part IDs differ.
+* A part has `id`, a `label` of at most 120 characters, `box` (or `null`),
+  `change`, `before`, `after`, `fileIds`, and `reasonIds`, which name recorded
+  reasons. `change` is `new`, `changed`, `removed`, or `unchanged`. Changed and
+  removed parts need a `before` line; new and changed parts need an `after` line.
+  Each line is at most 160 characters, and an inapplicable line is `null`.
+* A link has `from`, `to`, an active-verb `label` of at most 60 characters,
+  `change` (`new`, `removed`, or `unchanged`), `kind` (`uses` for code and data,
+  `checks` for tests and docs), `anchor`, and an `uncertainty` of at most 300
+  characters. Like an impact relationship, it needs an anchor or an explicit
+  uncertainty. A link that touches a new or removed part shares that change.
+
+A map holds at least 1 part and at most 6 boxes, 16 parts, and 32 links; aim for
+about 10 parts in 4 boxes. Before shows the unchanged, changed, and removed
+parts; After shows the unchanged, changed, and new ones. Because parts name
+reasons, a `context` call that removes or renumbers a reason the map names
+fails unless the same call sends the updated map.
+
 A work item has `id`, `snapshotId`, `perspective`, `areaIds`, `fileIds`,
 `hunkIds`, `required`, `status`, `outputPath`, `coverage`, `resultKey`,
 `summary`, and `observations`. Perspectives are `functional`, `standards`,
@@ -195,11 +227,14 @@ ID, disposition, reason, and optional re-rated `severity` backed by the parent's
 decision evidence. `assess` adds parent-verified domain finding candidates under
 an existing `workItemId` using `findings`; they still require dispositions and
 do not change worker coverage. `context` accepts area descriptions, optional
-domain `context`, and limitations. These are parent operations.
+domain `context`, limitations, `reasons`, and `changeMap`. Each of the last two
+replaces its earlier record whole, and `null` removes it. These are parent
+operations.
 
 Use `capture` again with the current root and revision only when evidence
-changes. It archives the old state and resets coverage, leaving feedback,
-reports, and prior snapshots in place. `status` resumes without recapture.
+changes. It archives the old state and resets coverage, reasons, and the change
+map, leaving feedback, reports, and prior snapshots in place. `status` resumes
+without recapture.
 Revision conflicts require a reload; report conflicts require human-edit
 reconciliation. An abandoned lock requires operator recovery after confirming
 no writer is running.

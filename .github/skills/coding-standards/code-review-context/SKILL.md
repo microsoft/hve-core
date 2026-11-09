@@ -17,7 +17,10 @@ evidence-backed explanations. Use `code-review-core` when not preloaded.
 1. Read the parent's assignment and the relevant captured evidence. For an
    overview, group the assigned surface by responsibility and explain intent,
    before/after behavior, entry points, control/data flow, and affected consumers.
-   For a symbol question, answer that question and trace its immediate context.
+   An overview may also propose reasons for the change, with the files or hunks
+   each explains, and change-map parts and links; the parent decides what to
+   record. For a symbol question, answer that question and trace its immediate
+   context.
 2. Link relationships to source evidence. Keep unverified relationships as
    explicit questions or uncertainties; do not fabricate a whole-codebase graph.
    Use semantic/symbol tools when available and bounded file reads otherwise.
@@ -27,7 +30,8 @@ evidence-backed explanations. Use `code-review-core` when not preloaded.
 ## Completion
 
 Return `findings: []`. The parent uses the observations to update area
-descriptions and impact relationships; note unresolved questions there too.
+descriptions, impact relationships, reasons, and the change map; note unresolved
+questions there too.
 
 Success means the requested explanation is supported and understandable.
 Explanation does not complete review coverage or assign severity, verdicts,
