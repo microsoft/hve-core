@@ -3,7 +3,7 @@ title: VEX Capability
 description: HVE Core's VEX capability - triage dependency vulnerabilities and draft OpenVEX documents via the SSSC Reviewer, SSSC Planner, and the vex skill
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-07
 ms.topic: concept
 keywords:
   - VEX
@@ -100,7 +100,7 @@ The agent classifies each finding into a confidence band, and each band constrai
 | High                           | Vulnerable symbol on a reachable path    | `affected` with a remediation note                          |
 | Medium / Low / Vendor-disputed | Reachability ambiguous or undeterminable | `under_investigation` only                                  |
 
-The authoritative routing rules and forbidden-transition list live in the agent and its referenced instructions; see the [VEX generation rules](https://github.com/microsoft/hve-core/blob/main/.github/skills/security/vex/references/vex-generation.md) in the `vex` skill.
+The authoritative routing rules and forbidden-transition list live in the agent and the `vex` skill; see the [VEX generation rules](https://github.com/microsoft/hve-core/blob/main/.github/skills/security/vex/references/vex-generation.md).
 
 ## Output
 

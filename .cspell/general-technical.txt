@@ -1562,6 +1562,7 @@ filelock
 setuptools
 zizmor
 zizmorcore
+deepmerge
 
 # Video & Image Processing
 drawtext
