@@ -104,6 +104,18 @@ describe('artifact kinds and state', () => {
         assert.deepEqual(state.warnings, ['parent_task names no task_id or state_path.', 'child_tasks entry 2 names no task_id or state_path.', 'child_tasks entry 4 names no task_id or state_path.']);
         assert.deepEqual(parseState({ task_id: 'x', child_tasks: 'not a list' }).warnings, ['child_tasks is not a list.']);
     });
+
+    it('reads the Copilot session a link names, and leaves a link without one as it was', () => {
+        const SESSION = '3f2a6c1e-8d4b-4f7a-9c2e-1a2b3c4d5e6f';
+        const state = parseState({
+            task_id: 'linked',
+            parent_task: { task_id: 'root', state_path: '.copilot-tracking/rpi-sessions/2026-01-15/s/root-state.json', session_id: ` ${SESSION} ` },
+            child_tasks: [{ task_id: 'kid', state_path: '.copilot-tracking/rpi-sessions/2026-01-15/k/kid-state.json', session_id: 42 }, { task_id: 'local', state_path: '.copilot-tracking/rpi-sessions/2026-01-15/l/local-state.json' }],
+        });
+        assert.deepEqual(state.parent, { taskId: 'root', taskSlug: 'root', statePath: '.copilot-tracking/rpi-sessions/2026-01-15/s/root-state.json', sessionId: SESSION });
+        assert.deepEqual(state.children.map((link) => link.sessionId), ['', undefined], 'a session that is not a string is kept as an unreadable one');
+        assert.deepEqual(state.warnings, []);
+    });
 });
 
 describe('research', () => {

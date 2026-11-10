@@ -272,7 +272,7 @@ function sessionTree(tree, state, statePath, title) {
             key: tree.key ?? null,
             date: tree.date ?? null,
             name: tree.name ?? state.sessionName ?? null,
-            tasks: tree.tasks.map((task) => ({ id: task.id, title: task.title, status: task.status, depth: task.depth, statePath: task.statePath, parent: task.parent, shown: task.shown, continues: task.continues ?? null })),
+            tasks: tree.tasks.map((task) => ({ id: task.id, title: task.title, status: task.status, depth: task.depth, statePath: task.statePath, parent: task.parent, shown: task.shown, continues: task.continues ?? null, sessionId: task.sessionId ?? null, sessionName: task.sessionName ?? null, root: task.root ?? null, phase: task.phase ?? null })),
         };
     }
     return {

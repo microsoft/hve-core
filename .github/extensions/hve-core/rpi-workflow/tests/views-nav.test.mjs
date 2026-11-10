@@ -459,3 +459,93 @@ describe('change-map part previews', () => {
         assert.equal(await preview(ctx, 'part:after:missing'), null);
     });
 });
+
+describe('session tree', () => {
+    const LINKED = '3f2a6c1e-8d4b-4f7a-9c2e-1a2b3c4d5e6f';
+    const OTHER = '7b9e1d2c-4a6f-4e8b-8c3d-2f1e0a9b8c7d';
+    const CHILD_PATH = '.copilot-tracking/rpi-sessions/2026-01-15/trail-maps/map-api-state.json';
+    const PROJECT_PATH = '.copilot-tracking/rpi-sessions/2026-01-14/project-x/project-x-state.json';
+
+    /**
+     * The Follow-up view of a session whose tree holds a child task in another Copilot session. The
+     * context's actions record what they are asked to show; `linkedSessions` is what /api/state reports.
+     */
+    async function followUp({ linkedSessions, continues = null, calls = [] }) {
+        const { PATHS, rootSession } = await import('./helpers/rpi-fixture.mjs');
+        const { session: shown } = rootSession();
+        shown.followUps.tree = {
+            key: '2026-01-15/trail-maps',
+            date: '2026-01-15',
+            name: 'Offline trail maps',
+            tasks: [
+                { id: 'trail-maps', title: 'Offline trail maps', status: 'completed', depth: 0, statePath: PATHS.rootState, parent: null, shown: true, continues, sessionId: null, sessionName: null, root: null, phase: null },
+                { id: 'map-api', title: 'Map API', status: 'running', depth: 1, statePath: CHILD_PATH, parent: PATHS.rootState, shown: false, continues: null, sessionId: LINKED, sessionName: 'API session', root: '/work/api', phase: 'plan' },
+                { id: 'trail-maps-fixes', title: 'Offline trail maps review fixes', status: 'completed', depth: 1, statePath: PATHS.childState, parent: PATHS.rootState, shown: false, continues: null, sessionId: null, sessionName: null, root: null, phase: null },
+            ],
+        };
+        const ctx = makeContext(shown, 'followup');
+        ctx.data.linkedSessions = linkedSessions;
+        ctx.act = { showTask: (ref) => calls.push(ref) };
+        const view = await import('../ui/view-followup.mjs');
+        const root = document.createElement('div');
+        for (const node of [view.renderView(ctx)].flat(Infinity).filter(Boolean)) root.appendChild(node);
+        return { root, ctx, view, calls };
+    }
+
+    const waiting = [{ taskId: 'map-api', sessionId: LINKED, sessionName: 'API session', statePath: CHILD_PATH, phase: 'plan', status: 'running', decisionsWaiting: [{ id: 'D2', title: 'Pick a sync rule' }] }];
+    const textOf = (node) => node.textContent.replace(/\s+/g, ' ');
+    const itemFor = (root, id) => elements(root).find((node) => node.localName === 'li' && node.dataset?.task === id);
+
+    it('labels a child task in another session with its session, phase, status, and decisions waiting', async () => {
+        const { root, view, ctx } = await followUp({ linkedSessions: waiting });
+        const linked = itemFor(root, 'map-api');
+        assert.ok(linked.classList.contains('is-linked'));
+        assert.match(textOf(linked), /Map API.*In session API session.*Phase: Plan.*1 decision waiting/);
+        assert.match(textOf(linked), /Running/, 'the status is a word, not only a color');
+        const local = itemFor(root, 'trail-maps-fixes');
+        assert.ok(!local.classList.contains('is-linked'));
+        assert.doesNotMatch(textOf(local), /In session/);
+        assert.equal(view.outline(ctx).find((item) => item.id === 'session-loops').count, 2, 'the outline counts this session\'s loops only');
+    });
+
+    it('says when a child\'s decisions are not read yet, and when none wait', async () => {
+        const unread = await followUp({ linkedSessions: [{ ...waiting[0], decisionsWaiting: null }] });
+        assert.match(textOf(itemFor(unread.root, 'map-api')), /Decisions not read yet/);
+        const none = await followUp({ linkedSessions: [{ ...waiting[0], decisionsWaiting: [] }] });
+        assert.match(textOf(itemFor(none.root, 'map-api')), /No decisions waiting/);
+        const absent = await followUp({ linkedSessions: [] });
+        assert.match(textOf(itemFor(absent.root, 'map-api')), /Decisions not read yet/, 'a task no canvas has listed reads as not read yet');
+    });
+
+    it('activates Show on a child task with the keyboard, asking to show it in its own session', async () => {
+        const { root, calls } = await followUp({ linkedSessions: waiting });
+        const show = elements(root).find((node) => node.getAttribute('data-key') === `followup-linked-${LINKED}-map-api`);
+        assert.equal(show.localName, 'button', 'a native button takes Enter and Space');
+        assert.equal(show.getAttribute('type'), 'button');
+        assert.notEqual(show.getAttribute('tabindex'), '-1', 'the control stays in the tab order');
+        assert.equal(show.getAttribute('aria-label'), 'Show Map API, in session API session');
+        show.listeners.click[0]({});
+        assert.deepEqual(calls, [{ statePath: CHILD_PATH, session: LINKED }]);
+        assert.equal(elements(root).filter((node) => node.localName === 'button' && node.getAttribute('data-key')?.startsWith('followup-show-')).length, 1, 'the local loop keeps its own Show');
+    });
+
+    it('names the session of a parent in another session and shows it by that session', async () => {
+        const parent = { id: 'project-x', title: 'Project X', statePath: PROJECT_PATH, sessionId: OTHER, sessionName: 'Project X session', root: '/work/x', phase: 'plan', status: 'running', changedAt: 0 };
+        const { root, calls } = await followUp({ linkedSessions: [], continues: parent });
+        const line = elements(root).find((node) => node.classList.contains('tree-continues'));
+        assert.match(textOf(line), /Continues Project X in session Project X session/);
+        const show = elements(line).find((node) => node.localName === 'button');
+        assert.equal(show.getAttribute('aria-label'), 'Show Project X, in session Project X session');
+        show.listeners.click[0]({});
+        assert.deepEqual(calls, [{ statePath: PROJECT_PATH, session: OTHER }]);
+    });
+
+    it('keeps a parent in this workspace worded and shown as before', async () => {
+        const parent = { id: 'base', title: 'Base', statePath: PROJECT_PATH, sessionId: null, sessionName: null, root: null, phase: null, status: 'completed', changedAt: 0 };
+        const { root, calls } = await followUp({ linkedSessions: [], continues: parent });
+        const line = elements(root).find((node) => node.classList.contains('tree-continues'));
+        assert.match(textOf(line), /Continues Base from another session/);
+        elements(line).find((node) => node.localName === 'button').listeners.click[0]({});
+        assert.deepEqual(calls, [{ statePath: PROJECT_PATH }]);
+    });
+});

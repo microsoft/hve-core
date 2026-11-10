@@ -2,7 +2,7 @@
 title: RPI Workflow Canvas Style Guide
 description: Visual language, interaction grammar, and accessibility requirements for the hve-core RPI Workflow canvas
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-09
 ms.topic: reference
 keywords:
   - canvas
@@ -154,7 +154,7 @@ One family carries the interface; monospace is reserved for IDs, paths, code, an
   For a real session, the follow state comes next: the active icon and "Following" in the accent hue, or the pause icon and "Paused" in the attention hue followed by a Resume following link button. Assistive technology hears "Following the running loop" or "Paused: following the running loop is paused".
 * Source label: the session line continues with where the content comes from.
   A real session shows a muted badge with the file icon and the canvas handle in monospace; "RPI canvas" is kept for assistive technology and the tooltip. Then come the task ID in monospace, and the repository and branch.
-  A child loop then adds "Child of" and its parent's title as a link button that shows the parent.
+  A child loop then adds "Child of" and its parent's title as a link button that shows the parent; when the parent is in another session, the button's name also names that session.
   The sample shows its "Sample session" badge instead.
   When space runs out, the repository and branch shorten first, then the task ID down to 9 characters, and the parent link keeps at least 14 characters. The line clips rather than run under the phase rail.
   Each shortened part keeps its full text in a tooltip, and the header height never changes.
@@ -163,7 +163,8 @@ One family carries the interface; monospace is reserved for IDs, paths, code, an
 * Only the navigator, the document, and the steering panel scroll; the page itself never scrolls. The sticky header and context bar reserve scroll padding so a focused element is never hidden beneath them.
 * Below 1400px the phase rail moves to its own full-width header row. Below 720px the Needs you, Review and send, Live, and follow state labels become icon-only with their names kept for assistive technology; below 560px the source label hides, the session button narrows to 24 characters, and the rail shows icons plus the viewed phase's label. Content reflows at 320px without horizontal scrolling of text.
 * Session menu: the session button opens a non-modal menu below the title, 460px wide and scrolling within 72 percent of the viewport height.
-  It holds an `h2` ("Session: Offline trail maps") that takes focus, a meta line with the session folder and follow state, "Loops in this session" as a session tree, and, for a real session, "Other sessions" as full-width rows naming each session, its date, loop count, and running loop. `Escape`, a click outside, or moving focus out closes it, and `Escape` returns focus to the button.
+  It holds an `h2` ("Session: Offline trail maps") that takes focus, a meta line with the session folder and follow state, "Loops in this session" as a session tree, and, for a real session, "Other sessions" as full-width rows naming each session, its date, loop count, and running loop.
+  A child task in another Copilot session is a dashed card in that tree, with its session's name, its phase, and its decisions waiting as words; its Show button names the task and its session, and choosing it shows that session's task and stops following. `Escape`, a click outside, or moving focus out closes it, and `Escape` returns focus to the button.
 * Status area: failures and follow moves appear as notes centered at the bottom of the document, sticky above its content, at most 640px wide with the floating shadow, and at most three at once. Each note is a notice in its tone (danger for failures, accent for moves) with its icon, its text, and a Dismiss icon button. A note never takes focus and stays until dismissed or, for a move, until the next move; it is announced politely.
 
 ## Phase Rail
@@ -492,6 +493,7 @@ Four icons keep one meaning wherever they mark a click: go-to (a box with an arr
 | 2026-11-02 | The navigator docks at 720px canvas width and wider instead of 1024px; crossing 720px keeps focus in the docked navigator or moves it to the navigator toggle                                                                                     | The navigator vanished behind a drawer in typical side-panel widths; 720px keeps the 320px reflow commitment                                                                                       |
 | 2026-11-02 | The Implement legend's progress swatches carry the map's corner marks, and in forced colors done parts and the Done swatch take a system-color hatch                                                                                              | In a Windows contrast theme done and not-done parts looked the same apart from a small corner mark the legend never explained                                                                      |
 | 2026-11-02 | Change-map previews pin only on purpose; the pin is a toggle button that pins and unpins any preview, and the UI says pin rather than lock                                                                                                        | Change-map previews locked by accident after a second of hovering and piled up, and the pin looked like a button but was not one                                                                   |
+| 2026-11-09 | Session tree shows a child task in another Copilot session as a dashed card labeled with its session, phase, and decisions waiting, and its Show names the task and session                                                                       | A child in another session was not shown in the tree, so its phase and decisions waiting were not visible from the canvas or get_state                                                             |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

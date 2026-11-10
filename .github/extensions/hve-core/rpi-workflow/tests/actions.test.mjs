@@ -10,9 +10,13 @@ import { after, before, describe, it } from 'node:test';
 import { ACTION_DEFINITIONS, ACTION_GROUPS, createActionHandlers } from '../lib/actions.mjs';
 import { createDelivery } from '../lib/delivery.mjs';
 import { createInstanceRegistry } from '../lib/lifecycle.mjs';
-import { createFeedback, ModelError, queueForAgent, suggestEdit } from '../lib/model.mjs';
+import { createFeedback, ModelError, queueForAgent, suggestEdit, upsertDecision } from '../lib/model.mjs';
 import { buildScenario, SCENARIO_ID } from '../lib/scenario.mjs';
+import { createSourceController } from '../lib/sources.mjs';
+import { importIntoStore, loadTask, resolveWorkspace, storeIdFor } from '../lib/source/workspace.mjs';
 import { createStore } from '../lib/store.mjs';
+import { CHILD_TASK, PATHS, ROOT_STATE, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
+import { scratchFolder } from './helpers/scratch.mjs';
 
 class FakeCanvasError extends Error {
     constructor(code, message) {
@@ -273,5 +277,75 @@ describe('instance registry', () => {
         servers[0].release();
         assert.ok(await reopened);
         assert.equal(registry.size, 1);
+    });
+});
+
+describe('linked sessions in get_state', () => {
+    const COORD = '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
+    const CHILD = '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e';
+    const WHEN = '2026-01-15T12:00:00.000Z';
+    let scratch;
+    let stateRoot;
+    let coordRoot;
+    let childRoot;
+    let otherRoot;
+    let store;
+    let child;
+
+    before(async () => {
+        scratch = await scratchFolder('linked-actions');
+        stateRoot = path.join(scratch, 'session-state');
+        coordRoot = path.join(scratch, 'coordinator');
+        childRoot = path.join(scratch, 'child');
+        otherRoot = path.join(scratch, 'other');
+        await fs.mkdir(stateRoot);
+        for (const root of [coordRoot, childRoot, otherRoot]) await writeFixtureWorkspace(root);
+        await fs.rm(path.join(coordRoot, PATHS.childState));
+        for (const [id, root] of [[COORD, coordRoot], [CHILD, childRoot]]) {
+            await fs.mkdir(path.join(stateRoot, id));
+            await fs.writeFile(path.join(stateRoot, id, 'workspace.yaml'), `cwd: ${root}\n`);
+        }
+        await fs.writeFile(path.join(coordRoot, PATHS.rootState), JSON.stringify({ ...ROOT_STATE, child_tasks: [{ task_id: CHILD_TASK, task_slug: CHILD_TASK, state_path: PATHS.childState, session_id: CHILD }] }));
+        store = createStore({ root: path.join(scratch, 'store') });
+        child = await resolveWorkspace([childRoot]);
+    });
+    after(async () => {
+        store.close();
+        await fs.rm(scratch, { recursive: true, force: true });
+    });
+
+    /** An instance that shows the coordinator's current task, and the handlers that serve it. */
+    async function coordinator() {
+        const sources = createSourceController({ store, sessionRoot: () => stateRoot, ownSessionId: () => null, intervalMs: 60000 });
+        const prepared = await sources.prepare({ session: COORD, task: 'current' });
+        const instance = { instanceId: 'linked', handle: 'K7QF', sessionId: prepared.sessionId, source: prepared.source, server: { url: 'http://127.0.0.1:1/', address: null, clientInfo: null, streamClients: 0, editor: null, notifyReload: () => {} } };
+        const handlers = createActionHandlers({ getInstance: (id) => (id === 'linked' ? instance : undefined), store, makeError });
+        return { handlers, prepared };
+    }
+
+    it('lists each child task in another session with its session, phase, status, and no decisions until a canvas has read it', async () => {
+        const { handlers } = await coordinator();
+        const state = await handlers.get_state({ instanceId: 'linked', input: {} });
+        assert.deepEqual(state.linkedSessions, [{ taskId: CHILD_TASK, sessionId: CHILD, sessionName: 'Offline trail maps', statePath: PATHS.childState, phase: 'followup', status: 'completed', decisionsWaiting: null }]);
+        assert.deepEqual((await handlers.get_state({ instanceId: 'linked', input: { detail: 'full' } })).linkedSessions, state.linkedSessions);
+        assert.deepEqual(state.otherTasks, [], 'the child is not a task of this session\'s feedback');
+    });
+
+    it('reads the decisions waiting from the child\'s own document, once a canvas has read it', async () => {
+        const imported = await importIntoStore(store, await loadTask(child, PATHS.childState, WHEN), WHEN);
+        await store.update(imported.session.id, (session) => upsertDecision(session, { owner: 'user', phase: 'plan', title: 'Pick a sync rule', question: 'Which sync rule should the maps use?', options: [{ label: 'Merge' }, { label: 'Replace' }] }, WHEN), { by: 'user' });
+        const { handlers } = await coordinator();
+        const [linked] = (await handlers.get_state({ instanceId: 'linked', input: {} })).linkedSessions;
+        assert.ok(linked.decisionsWaiting.some((item) => item.title === 'Pick a sync rule'), JSON.stringify(linked.decisionsWaiting));
+    });
+
+    it('keys the child\'s document by its workspace, so the same task in another workspace is not read', async () => {
+        const other = await resolveWorkspace([otherRoot]);
+        assert.notEqual(storeIdFor(CHILD_TASK, other.root), storeIdFor(CHILD_TASK, child.root));
+        const imported = await importIntoStore(store, await loadTask(other, PATHS.childState, WHEN), WHEN);
+        await store.update(imported.session.id, (session) => upsertDecision(session, { owner: 'user', phase: 'plan', title: 'Other workspace decision', question: 'Which one?', options: [{ label: 'A' }] }, WHEN), { by: 'user' });
+        const { handlers } = await coordinator();
+        const [linked] = (await handlers.get_state({ instanceId: 'linked', input: {} })).linkedSessions;
+        assert.ok(!linked.decisionsWaiting.some((item) => item.title === 'Other workspace decision'));
     });
 });

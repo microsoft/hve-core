@@ -24,7 +24,8 @@ import {
     takeBackFeedback,
     transitionFeedback,
 } from './model.mjs';
-import { loadSessionDocs } from './session-docs.mjs';
+import { loadLinkedSessions, loadSessionDocs } from './session-docs.mjs';
+import { isSessionId } from './source/sessions.mjs';
 import { agentTask } from './source/tree.mjs';
 import { preferencesPatch } from './store.mjs';
 import { EditorError } from './editor.mjs';
@@ -186,7 +187,7 @@ export function clientInfoFrom(body) {
  *   log?: (message: string, level?: string) => void,
  *   now?: () => string,
  *   getSource?: () => { kind?: string, reason?: string, detail?: string | null, boundSession?: string | null, workspace?: { root: string } | null, follow?: { paused: boolean }, follower?: { start: () => void, stop: () => void } } | undefined,
- *   switchTask?: (ref: { taskId?: string, statePath?: string }, options?: { paused?: boolean }) => Promise<{ sessionId: string }>,
+ *   switchTask?: (ref: { taskId?: string, statePath?: string, session?: string }, options?: { paused?: boolean }) => Promise<{ sessionId: string }>,
  *   switchSession?: (key: string, options?: { paused?: boolean }) => Promise<{ sessionId: string }>,
  *   resumeFollowing?: () => Promise<{ sessionId: string }>,
  *   pauseFollowing?: () => Promise<{ sessionId: string }>,
@@ -364,6 +365,7 @@ export function createCanvasServer(deps) {
             editor: getEditor() && deps.getSource?.()?.kind === 'rpi' ? { name: getEditor().name } : null,
             follow: source?.kind === 'rpi' ? { paused: Boolean(source.follow?.paused), agent: agentLoop(source.tasks) } : null,
             otherTasks: docs.slice(1).map((doc) => ({ taskId: doc.taskId, title: doc.task?.title ?? doc.session.task.title, status: doc.task?.status ?? null, statePath: doc.task?.statePath ?? null, ...feedbackOverview(doc.session, at) })),
+            linkedSessions: await loadLinkedSessions(store, session),
         };
     }
 
@@ -615,7 +617,11 @@ export function createCanvasServer(deps) {
             if (!deps.switchTask) {
                 throw new HttpError(404, 'not_found', 'This canvas cannot switch tasks.');
             }
-            const ref = typeof body?.statePath === 'string' ? { statePath: body.statePath } : { taskId: typeof body?.taskId === 'string' ? body.taskId : '' };
+            if (body?.session !== undefined && body.session !== null && !isSessionId(body.session)) {
+                throw new HttpError(400, 'invalid_input', 'session must be a Copilot session ID (a UUID).');
+            }
+            const linked = typeof body?.session === 'string' ? { session: body.session } : {};
+            const ref = { ...(typeof body?.statePath === 'string' ? { statePath: body.statePath } : { taskId: typeof body?.taskId === 'string' ? body.taskId : '' }), ...linked };
             // A switch the reader chose stops following when the page asks, even onto a running loop.
             const result = await deps.switchTask(ref, { paused: body?.follow === false });
             return { sessionId: result.sessionId };

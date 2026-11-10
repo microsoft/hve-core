@@ -4779,6 +4779,11 @@ circle.diagram-mark-glyph {
   background: var(--rw-bg-selected);
 }
 
+/* A task in another session has a dashed card, so the difference does not depend on color. */
+.tree-task.is-linked > .tree-card {
+  border-style: dashed;
+}
+
 .tree-title {
   min-width: 0;
   font: 600 13px/20px var(--rw-font);

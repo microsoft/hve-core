@@ -851,3 +851,103 @@ describe('binding a canvas to a Copilot session', () => {
     });
 });
 
+describe('showing a child task in another session', () => {
+    const COORD = '6a7b8c9d-0e1f-4a2b-8c3d-4e5f6a7b8c9d';
+    const KID = '7b8c9d0e-1f2a-4b3c-8d4e-5f6a7b8c9d0e';
+    const NOT_A_SESSION = 'not-a-session';
+    let scratch;
+    let stateRoot;
+    let coordRoot;
+    let kidRoot;
+
+    before(async () => {
+        scratch = await scratchFolder('linked-switch');
+        stateRoot = path.join(scratch, 'session-state');
+        coordRoot = path.join(scratch, 'coordinator');
+        kidRoot = path.join(scratch, 'kid');
+        await fs.mkdir(stateRoot);
+        await writeFixtureWorkspace(coordRoot);
+        await writeFixtureWorkspace(kidRoot);
+        await fs.rm(path.join(coordRoot, PATHS.childState));
+        await fs.writeFile(path.join(coordRoot, PATHS.rootState), JSON.stringify({ ...ROOT_STATE, child_tasks: [{ task_id: CHILD_TASK, task_slug: CHILD_TASK, state_path: PATHS.childState, session_id: KID }] }));
+        for (const [id, root] of [[COORD, coordRoot], [KID, kidRoot]]) {
+            await fs.mkdir(path.join(stateRoot, id));
+            await fs.writeFile(path.join(stateRoot, id, 'workspace.yaml'), `cwd: ${root}\n`);
+        }
+    });
+    after(() => fs.rm(scratch, { recursive: true, force: true }));
+
+    const controller = (store) => createSourceController({ store, sessionRoot: () => stateRoot, ownSessionId: () => null, intervalMs: 60000 });
+
+    it('binds the canvas to the child\'s session, paused, and refuses a child named without its session', async (t) => {
+        const store = createStore({ root: path.join(scratch, 'store-switch') });
+        t.after(() => store.close());
+        const sources = controller(store);
+        const prepared = await sources.prepare({ session: COORD, task: 'current' });
+        const record = { sessionId: '', source: null, server: { rebind: () => {} } };
+        sources.attach(record, prepared);
+        assert.deepEqual(prepared.session.followUps.tree.tasks.map((task) => [task.id, task.sessionId]), [[ROOT_TASK, null], [CHILD_TASK, KID]]);
+
+        await assert.rejects(sources.switchToTask(record, { taskId: CHILD_TASK }), { code: 'invalid_input' }, 'a task ID alone never matches a task of another session');
+        await assert.rejects(sources.switchToTask(record, { statePath: PATHS.childState, session: NOT_A_SESSION }), { code: 'invalid_input' });
+        assert.equal(record.source.boundSession, COORD, 'the canvas still shows the coordinator\'s session');
+
+        await sources.switchToTask(record, { statePath: PATHS.childState, session: KID.toUpperCase() });
+        await sources.settled(record);
+        assert.deepEqual([record.source.boundSession, record.source.taskId, record.source.workspace.root, record.source.follow.paused], [KID, CHILD_TASK, await fs.realpath(kidRoot), true]);
+        assert.equal(record.sessionId, storeIdFor(CHILD_TASK, await fs.realpath(kidRoot)), 'the document is the child\'s own, keyed to its workspace');
+        sources.detach(record);
+    });
+
+    it('serves a task request with its session to the canvas, and lists the linked tasks in the state', async (t) => {
+        const store = createStore({ root: path.join(scratch, 'store-route') });
+        t.after(() => store.close());
+        const sources = controller(store);
+        const prepared = await sources.prepare({ session: COORD, task: 'current' });
+        const requests = [];
+        const server = createCanvasServer({
+            store,
+            getSessionId: () => prepared.sessionId,
+            getSource: () => prepared.source,
+            getCanvas: () => ({ handle: '7KQ2', instanceId: 'route' }),
+            switchTask: async (ref) => {
+                requests.push(ref);
+                return { sessionId: prepared.sessionId };
+            },
+        });
+        const url = new URL(await server.start());
+        assert.equal((await post(url, '/api/task', { statePath: PATHS.childState, session: KID })).status, 200);
+        assert.equal((await post(url, '/api/task', { taskId: ROOT_TASK, session: NOT_A_SESSION })).status, 400);
+        assert.equal((await post(url, '/api/task', { statePath: PATHS.childState })).status, 200);
+        assert.deepEqual(requests, [{ statePath: PATHS.childState, session: KID }, { statePath: PATHS.childState }]);
+        const state = await new Promise((resolve, reject) => {
+            http.get({ host: '127.0.0.1', port: url.port, path: '/api/state', headers: { 'x-rw-key': url.searchParams.get('k') } }, (res) => {
+                let text = '';
+                res.setEncoding('utf8');
+                res.on('data', (chunk) => {
+                    text += chunk;
+                });
+                res.on('end', () => resolve(JSON.parse(text)));
+            }).on('error', reject);
+        });
+        assert.deepEqual(state.linkedSessions.map((item) => [item.taskId, item.sessionId, item.sessionName, item.status]), [[CHILD_TASK, KID, 'Offline trail maps', 'completed']]);
+        await server.stop();
+        store.close();
+    });
+
+    function post(url, pathname, body) {
+        return new Promise((resolve, reject) => {
+            const req = http.request({ host: '127.0.0.1', port: url.port, method: 'POST', path: pathname, headers: { 'content-type': 'application/json', 'x-rw-key': url.searchParams.get('k') } }, (res) => {
+                let text = '';
+                res.setEncoding('utf8');
+                res.on('data', (chunk) => {
+                    text += chunk;
+                });
+                res.on('end', () => resolve({ status: res.statusCode, json: JSON.parse(text) }));
+            });
+            req.on('error', reject);
+            req.end(JSON.stringify(body));
+        });
+    }
+});
+

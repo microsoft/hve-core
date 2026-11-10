@@ -175,8 +175,10 @@ const objects = (value) => (Array.isArray(value) ? value.filter((item) => item &
 const isObject = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 /**
- * A task link from `parent_task` or a `child_tasks` entry: task ID, slug, and the
- * workspace-relative state path, or null when the entry names neither a task nor a path.
+ * A task link from `parent_task` or a `child_tasks` entry: task ID, slug, the workspace-relative
+ * state path, and, only when the link names one, the Copilot session that holds the task
+ * (`sessionId`). A session that is not a string gets an empty `sessionId`, so the reader refuses
+ * it rather than reading this workspace. Null when the entry names neither a task nor a path.
  *
  * @param {unknown} value
  */
@@ -186,7 +188,9 @@ function taskLink(value) {
     const taskId = str(link.task_id);
     const statePath = str(link.state_path);
     if (!taskId && !statePath) return null;
-    return { taskId, taskSlug: str(link.task_slug) ?? taskId, statePath };
+    const session = link.session_id;
+    const sessionId = session === undefined || session === null ? {} : { sessionId: typeof session === 'string' ? session.trim() : '' };
+    return { taskId, taskSlug: str(link.task_slug) ?? taskId, statePath, ...sessionId };
 }
 
 const ARTIFACT_KINDS = Object.freeze(['research', 'plan', 'critique', 'changes', 'review']);

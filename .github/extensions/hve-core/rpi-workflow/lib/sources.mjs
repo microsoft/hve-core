@@ -137,7 +137,8 @@ export function notConnected(reason, detail = null) {
  *
  * A task read through `session` belongs to that Copilot session's workspace, found from its
  * local metadata. Requests that name a task without a session keep the session the instance
- * shows, and the instance remembers it with the state path.
+ * shows, and the instance remembers it with the state path. A task that another session holds
+ * and that a link of the shown task names is read the same way, and the instance binds to it.
  *
  * @param {{
  *   store: ReturnType<typeof import('./store.mjs').createStore>,
@@ -153,6 +154,8 @@ export function createSourceController(deps) {
     const log = deps.log ?? (() => {});
     const now = deps.now ?? (() => new Date().toISOString());
     const sessionRoot = () => (deps.sessionRoot ? deps.sessionRoot() : resolveSessionStateRoot().root);
+    /** The workspace of a Copilot session that a task link or request names. */
+    const resolveSession = (sessionId) => resolveSessionWorkspace(sessionId, { root: sessionRoot() });
 
     async function prepareSample(stage, replace) {
         const existing = await store.load(SCENARIO_ID);
@@ -171,9 +174,6 @@ export function createSourceController(deps) {
         return { sessionId: SCENARIO_ID, source: { kind: 'sample', stage: existing.scenario?.stage }, session: existing, note: '' };
     }
 
-    /**
-     * Reads a task by ID, `current`, or state path, and starts following its files.
-     *
     /**
      * Reads a task by ID, `current`, or state path, and starts following its files.
      *
@@ -210,6 +210,7 @@ export function createSourceController(deps) {
             intervalMs: deps.intervalMs,
             now,
             log,
+            resolveSession,
             onImport: async (loaded) => {
                 source.tasks = loaded.tree.tasks;
                 if (source.record) await followRunning(source.record);
@@ -290,7 +291,11 @@ export function createSourceController(deps) {
     }
 
     async function switchTo(record, ref, paused) {
-        const prepared = await prepareTask(ref, record.source.workspace, undefined, { paused, session: record.source.boundSession });
+        // A task another Copilot session holds is read from that session's workspace, and the canvas binds to it.
+        const linked = ref.session !== undefined && ref.session !== null;
+        const workspace = linked ? await resolveSession(ref.session) : record.source.workspace;
+        const session = linked ? ref.session.toLowerCase() : record.source.boundSession;
+        const prepared = await prepareTask({ state: ref.state }, workspace, undefined, { paused, session });
         attach(record, prepared);
         void followRunning(record);
         return prepared;
@@ -336,7 +341,7 @@ export function createSourceController(deps) {
             if (request.session !== undefined) {
                 // The conversation's own session resolves from the candidates, as it does without `session`.
                 if (sameSession(request.session, deps.ownSessionId?.())) return prepareRpi(request, null, context.candidates, null);
-                const workspace = await resolveSessionWorkspace(request.session, { root: sessionRoot() });
+                const workspace = await resolveSession(request.session);
                 return prepareRpi(request, workspace, undefined, request.session.toLowerCase());
             }
             if (request.state !== undefined || (request.task !== undefined && request.task !== 'sample')) {
@@ -417,22 +422,26 @@ export function createSourceController(deps) {
         /**
          * Shows another task of the instance's session, or the parent a task continues
          * from another session. Showing a task that is not running pauses following, and
-         * `paused` keeps it paused even for a running task.
+         * `paused` keeps it paused even for a running task. A `session` names the Copilot
+         * session that holds a task linked from this one, such as a child in another session,
+         * which the instance then binds to.
          *
          * @param {{ sessionId: string, source?: any, server?: any }} record
-         * @param {{ taskId?: string, statePath?: string } | string} ref
+         * @param {{ taskId?: string, statePath?: string, session?: string } | string} ref
          * @param {{ paused?: boolean }} [options]
          */
         async switchToTask(record, ref, options = {}) {
             requireRpi(record);
             const want = typeof ref === 'string' ? { taskId: ref } : ref ?? {};
+            const session = typeof want.session === 'string' ? want.session.toLowerCase() : null;
             const tasks = await treeOf(record);
             const candidates = [...tasks, ...tasks.map((task) => task.continues).filter(Boolean)];
-            const match = candidates.find((task) => (want.statePath ? task.statePath === want.statePath : task.id === want.taskId));
+            // A task of this session never matches a request that names another session, and the reverse.
+            const match = candidates.find((task) => (task.sessionId ?? null) === session && (want.statePath ? task.statePath === want.statePath : task.id === want.taskId));
             if (!match?.statePath) {
                 throw new ModelError('invalid_input', `${String(want.statePath ?? want.taskId).slice(0, 120)} is not in this session.`);
             }
-            return switchTo(record, { state: match.statePath }, options.paused === true || match.status !== 'running');
+            return switchTo(record, { state: match.statePath, session: match.sessionId ?? null }, options.paused === true || match.status !== 'running');
         },
 
         /**
@@ -487,7 +496,7 @@ export function createSourceController(deps) {
             requireRpi(record);
             const { workspace, statePath } = record.source;
             const self = await loadState(workspace, statePath).catch(() => null);
-            const target = self ? agentTask((await sessionTreeOf(workspace, self)).tasks) : null;
+            const target = self ? agentTask((await sessionTreeOf(workspace, self, undefined, { resolveSession })).tasks) : null;
             if (target && target.statePath !== statePath) return switchTo(record, { state: target.statePath }, false);
             record.source.follow.paused = false;
             record.server?.rebind?.({});
@@ -524,7 +533,7 @@ export function sourceSummary(record, session) {
             session: {
                 key: tree.key,
                 name: tree.name,
-                tasks: tree.tasks.map((task) => ({ taskId: task.id, status: task.status, depth: task.depth, shown: task.shown, statePath: task.statePath })),
+                tasks: tree.tasks.map((task) => ({ taskId: task.id, status: task.status, depth: task.depth, shown: task.shown, statePath: task.statePath, sessionId: task.sessionId ?? null })),
             },
             following: record.source.follow?.paused ? 'paused' : 'enabled',
             polling: Boolean(record.server?.streamClients > 0),
