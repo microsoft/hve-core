@@ -12,11 +12,12 @@ import { fileURLToPath } from 'node:url';
 import { agentEditSection, claimDelivery, createFeedback, markDelivered, markDeliveryUncertain, ModelError, recordActivity, recordInterpretation, takeFeedback, upsertDecision } from '../lib/model.mjs';
 import { buildScenario } from '../lib/scenario.mjs';
 import { clientInfoFrom, createCanvasServer as newServer, MAX_BODY, renderShell } from '../lib/server.mjs';
-import { createInboxRunner } from '../lib/inbox.mjs';
+import { createInboxRunner, INBOX_VERSION, PRESENCE_TTL_MS } from '../lib/inbox.mjs';
+import { CANVAS_ID, createPanelOpener } from '../lib/panels.mjs';
 import { storeIdFor } from '../lib/source/workspace.mjs';
 import { createStore } from '../lib/store.mjs';
 import { stopTracked, track } from './helpers/cleanup.mjs';
-import { CHILD_TASK, childSession, FIXTURE_ROOT, ROOT_TASK, rootSession } from './helpers/rpi-fixture.mjs';
+import { CHILD_TASK, childSession, FIXTURE_ROOT, PATHS, ROOT_TASK, rootSession } from './helpers/rpi-fixture.mjs';
 
 /** A canvas server that stops after the test even when an assertion fails. */
 const createCanvasServer = (deps) => track(newServer(deps));
@@ -1029,6 +1030,202 @@ describe('a canvas that shows no session', () => {
         const state = await request(url, { pathname: '/api/state' });
         assert.deepEqual([state.json.connected, state.json.session.scenario.sample], [undefined, true]);
         assert.equal((await request(url, { method: 'POST', pathname: '/api/connect-request', body: {} })).status, 409);
+        await server.stop();
+        store.close();
+    });
+});
+
+describe('opening a child session in a new panel', () => {
+    const PROVIDER = 'project:rpi-workflow';
+    const CHILD = 'c4d5e6f7-0a1b-4c2d-9e3f-4a5b6c7d8e9f';
+    const OTHER = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
+    const INSTANCE = 'rpi-c4d5e6f7-trail-maps-fixes';
+    const NOW = Date.parse('2026-01-15T12:00:00.000Z');
+    const OPEN = { session: CHILD, statePath: PATHS.childState };
+    const FIXED_LINE = `RPI canvas K7QF: open an RPI Workflow canvas for session ${CHILD} with state ${PATHS.childState}.`;
+
+    /**
+     * The host's canvas API as a fake: `listed` is what it reports open at first, `openError` makes its open
+     * refuse, and `listError` makes its listing fail. Every open is recorded, and an opened panel is listed.
+     */
+    function hostCanvas({ listed = [], openError = null, listError = null } = {}) {
+        const calls = [];
+        const open = [...listed];
+        return {
+            calls,
+            canvas: {
+                listOpen: async () => {
+                    if (listError) throw listError;
+                    return { openCanvases: [...open] };
+                },
+                open: async (params) => {
+                    calls.push(params);
+                    if (openError) throw openError;
+                    const instance = { instanceId: params.instanceId, extensionId: params.extensionId, canvasId: params.canvasId };
+                    open.push(instance);
+                    return instance;
+                },
+            },
+        };
+    }
+
+    /**
+     * A canvas that shows the Project's root task, whose tree links its child task to another session. The
+     * canvas opens panels through `rpc` as the joined session does, or has no opener when `opener` is false.
+     * Its clock is the test's, so presence and the ask interval can be checked.
+     */
+    async function panelSetup(name, { rpc, deliver, opener = true } = {}) {
+        const store = createStore({ root: path.join(tmp, name), pollMs: 20 });
+        const shown = rootSession().session;
+        shown.followUps.tree.tasks = [
+            ...shown.followUps.tree.tasks.filter((task) => task.shown),
+            { id: CHILD_TASK, title: 'Offline trail maps review fixes', status: 'completed', depth: 1, statePath: PATHS.childState, parent: PATHS.rootState, shown: false, continues: null, sessionId: CHILD, sessionName: 'Offline trail maps', root: FIXTURE_ROOT, phase: 'followup' },
+        ];
+        const session = await store.create({ ...shown, id: storeIdFor(ROOT_TASK, FIXTURE_ROOT) });
+        const sent = [];
+        let clock = NOW;
+        const server = createCanvasServer({
+            store,
+            getSessionId: () => session.id,
+            getCanvas: () => ({ handle: 'K7QF', instanceId: 'rpi-workflow-demo' }),
+            getSource: () => ({ kind: 'rpi', workspace: { root: FIXTURE_ROOT }, follow: { paused: false } }),
+            getExtensionId: () => PROVIDER,
+            ...(opener ? { openPanel: createPanelOpener({ rpc: () => rpc, extensionId: () => PROVIDER, canvasId: CANVAS_ID }) } : {}),
+            deliver: deliver ?? (async (message) => {
+                sent.push(message);
+            }),
+            now: () => new Date(clock).toISOString(),
+        });
+        const url = new URL(await server.start());
+        return { store, server, url, sent, advance: (ms) => { clock += ms; } };
+    }
+
+    const askPanel = (url, body = OPEN) => request(url, { method: 'POST', pathname: '/api/open-panel', body });
+
+    it('opens the child\'s canvas in a new panel of the host, bound to the child, and reports it opened', async () => {
+        const host = hostCanvas();
+        const { server, url, store, sent } = await panelSetup('panel-opened', { rpc: host });
+        const opened = await askPanel(url);
+        assert.deepEqual([opened.status, opened.json], [200, { outcome: 'opened', instanceId: INSTANCE }]);
+        assert.deepEqual(host.calls, [{ extensionId: PROVIDER, canvasId: 'hve-core-rpi-workflow', instanceId: INSTANCE, input: { session: CHILD, state: PATHS.childState } }]);
+        assert.deepEqual(sent, [], 'no message goes to the agent when the host opens the panel');
+        await server.stop();
+        store.close();
+    });
+
+    it('reports focused, and opens nothing new, when the host already lists that panel open', async () => {
+        const host = hostCanvas({ listed: [{ instanceId: INSTANCE, extensionId: PROVIDER, canvasId: 'hve-core-rpi-workflow' }] });
+        const { server, url, store } = await panelSetup('panel-focused', { rpc: host });
+        const focused = await askPanel(url);
+        assert.deepEqual([focused.status, focused.json], [200, { outcome: 'focused', instanceId: INSTANCE }]);
+        assert.equal(host.calls.length, 1, 'the host focuses the panel it already has for that instance');
+        await server.stop();
+        store.close();
+    });
+
+    it('still opens the panel when the host cannot list its canvases', async () => {
+        const host = hostCanvas({ listError: new Error('Listing is not available.') });
+        const { server, url, store } = await panelSetup('panel-no-list', { rpc: host });
+        assert.equal((await askPanel(url)).json.outcome, 'opened');
+        await server.stop();
+        store.close();
+    });
+
+    it('asks the agent with one fixed line when the host refuses to open the panel, and says it did', async () => {
+        const host = hostCanvas({ openError: new Error('Canvases cannot open from this session.') });
+        const { server, url, store, sent } = await panelSetup('panel-refused', { rpc: host });
+        const asked = await askPanel(url);
+        assert.deepEqual(asked.json, { outcome: 'asked', retryAfterMs: 30000 });
+        assert.equal(sent.length, 1);
+        assert.equal(sent[0].displayPrompt, FIXED_LINE, 'the page cannot change the text');
+        assert.ok(sent[0].prompt.startsWith(FIXED_LINE));
+        assert.ok(sent[0].prompt.includes(`canvasId "hve-core-rpi-workflow", instanceId "${INSTANCE}", input ${JSON.stringify({ session: CHILD, state: PATHS.childState })}, extensionId "${PROVIDER}"`), sent[0].prompt);
+        assert.equal(sent[0].mode, undefined, 'the message waits for the agent\'s turn, as Ask the agent does');
+        await server.stop();
+        store.close();
+    });
+
+    it('asks the agent when the host has no canvas API, or the canvas has no panel opener', async () => {
+        const noApi = await panelSetup('panel-no-api', { rpc: {} });
+        assert.equal((await askPanel(noApi.url)).json.outcome, 'asked');
+        const noOpener = await panelSetup('panel-no-opener', { opener: false });
+        assert.equal((await askPanel(noOpener.url)).json.outcome, 'asked');
+        assert.equal(noOpener.sent.length, 1);
+        await noApi.server.stop();
+        noApi.store.close();
+        await noOpener.server.stop();
+        noOpener.store.close();
+    });
+
+    it('waits 30 seconds between asks, and says how long is left', async () => {
+        const { server, url, store, sent, advance } = await panelSetup('panel-wait', { rpc: {} });
+        assert.deepEqual((await askPanel(url)).json, { outcome: 'asked', retryAfterMs: 30000 });
+        advance(10000);
+        assert.deepEqual((await askPanel(url)).json, { outcome: 'wait', retryAfterMs: 20000 });
+        assert.equal(sent.length, 1, 'the agent is asked once in the interval');
+        advance(20000);
+        assert.deepEqual((await askPanel(url)).json, { outcome: 'asked', retryAfterMs: 30000 });
+        assert.equal(sent.length, 2);
+        await server.stop();
+        store.close();
+    });
+
+    it('does not hold back panels by the ask interval, since opening a panel sends nothing to the agent', async () => {
+        const host = hostCanvas();
+        const { server, url, store, sent } = await panelSetup('panel-no-wait', { rpc: host });
+        assert.equal((await askPanel(url)).json.outcome, 'opened');
+        assert.equal((await askPanel(url)).json.outcome, 'focused', 'the second request finds the panel listed open');
+        assert.deepEqual(sent, []);
+        await server.stop();
+        store.close();
+    });
+
+    it('reports a failed message with its reason, and lets the next request ask at once', async () => {
+        let failing = true;
+        const { server, url, store, sent } = await panelSetup('panel-send-fails', {
+            rpc: {},
+            deliver: async (message) => {
+                if (failing) throw new ModelError('delivery_unavailable', 'This host cannot take messages from the canvas.');
+                sent.push(message);
+            },
+        });
+        assert.deepEqual((await askPanel(url)).json, { outcome: 'failed', reason: 'This host cannot take messages from the canvas.' });
+        failing = false;
+        assert.deepEqual((await askPanel(url)).json, { outcome: 'asked', retryAfterMs: 30000 });
+        assert.equal(sent.length, 1);
+        await server.stop();
+        store.close();
+    });
+
+    it('refuses a session or state path that is not a child of the shown task, and opens nothing', async () => {
+        const host = hostCanvas();
+        const { server, url, store, sent } = await panelSetup('panel-not-linked', { rpc: host });
+        for (const body of [{ session: OTHER, statePath: PATHS.childState }, { session: CHILD, statePath: PATHS.rootState }, { session: CHILD }, { session: 42, statePath: PATHS.childState }, {}]) {
+            const refused = await askPanel(url, body);
+            assert.deepEqual([refused.status, refused.json.error.code], [404, 'not_found'], JSON.stringify(body));
+        }
+        assert.deepEqual([host.calls, sent], [[], []]);
+        await server.stop();
+        store.close();
+    });
+
+    it('matches the child\'s session ID whatever its letter case, and opens it under the lowercase ID', async () => {
+        const host = hostCanvas();
+        const { server, url, store } = await panelSetup('panel-case', { rpc: host });
+        assert.equal((await askPanel(url, { session: CHILD.toUpperCase(), statePath: PATHS.childState })).json.outcome, 'opened');
+        assert.equal(host.calls[0].input.session, CHILD);
+        await server.stop();
+        store.close();
+    });
+
+    it('reports for each child whether a canvas process of its session runs, from that session\'s presence', async () => {
+        const { server, url, store, advance } = await panelSetup('panel-live', { rpc: hostCanvas() });
+        const liveOf = async () => (await request(url, { pathname: '/api/state' })).json.linkedSessions[0].live;
+        assert.equal(await liveOf(), false, 'no canvas process has announced itself');
+        await store.updatePresence(CHILD, () => [{ pid: 4242, version: INBOX_VERSION, updatedAt: new Date(NOW).toISOString() }]);
+        assert.equal(await liveOf(), true);
+        advance(PRESENCE_TTL_MS + 1000);
+        assert.equal(await liveOf(), false, 'a process that has not refreshed in the presence window is gone');
         await server.stop();
         store.close();
     });

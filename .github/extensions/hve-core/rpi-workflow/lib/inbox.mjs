@@ -59,6 +59,18 @@ export function withoutEntry(entries, id) {
 }
 
 /**
+ * Whether a session's presence lists a canvas process that speaks this protocol and refreshed within
+ * the presence window at `at`, in milliseconds.
+ *
+ * @param {{ processes: { version: number, updatedAt: string }[] } | null | undefined} presence
+ * @param {number} at
+ * @returns {boolean}
+ */
+export function hasLiveProcess(presence, at) {
+    return Boolean(presence?.processes.some((entry) => entry.version >= INBOX_VERSION && at - Date.parse(entry.updatedAt) <= PRESENCE_TTL_MS));
+}
+
+/**
  * Whether a failure may pass on a later check: a busy or failed write, or a file error. Data
  * that is wrong fails the same way every time, so its claim is left to go stale rather than
  * being returned to the queue, which would retry it on every check.

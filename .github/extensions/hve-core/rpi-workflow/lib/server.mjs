@@ -24,10 +24,11 @@ import {
     takeBackFeedback,
     transitionFeedback,
 } from './model.mjs';
-import { loadLinkedSessions, loadSessionDocs } from './session-docs.mjs';
+import { loadLinkedSessions, linkedTasksOf, loadSessionDocs } from './session-docs.mjs';
 import { isSessionId } from './source/sessions.mjs';
 import { agentTask } from './source/tree.mjs';
-import { CLAIM_WINDOW_MS, INBOX_VERSION, PRESENCE_TTL_MS } from './inbox.mjs';
+import { CLAIM_WINDOW_MS, hasLiveProcess } from './inbox.mjs';
+import { CANVAS_ID, panelInstanceId } from './panels.mjs';
 import { INBOX_MAX_ITEMS, preferencesPatch } from './store.mjs';
 import { EditorError } from './editor.mjs';
 import { FileError, readWorkspaceFile } from './workspace-files.mjs';
@@ -108,6 +109,18 @@ export const CONNECT_REQUEST_INTERVAL_MS = 30000;
  */
 export function connectRequestText(handle) {
     return `${handle ? `RPI canvas ${handle}` : 'RPI canvas'}: connect this canvas to this conversation's RPI session.`;
+}
+
+/**
+ * The request a canvas sends its own chat when a child session's canvas cannot open from there. Its
+ * session and state path come from the shown task's links, never from the page.
+ *
+ * @param {string | null | undefined} handle
+ * @param {string} session
+ * @param {string} statePath
+ */
+export function panelRequestText(handle, session, statePath) {
+    return `${handle ? `RPI canvas ${handle}` : 'RPI canvas'}: open an RPI Workflow canvas for session ${session} with state ${statePath}.`;
 }
 
 /** Error that maps to a JSON error response. */
@@ -199,6 +212,8 @@ export function clientInfoFrom(body) {
  *   markRetryMs?: number,
  *   claimWindowMs?: number,
  *   wakeOutbox?: () => unknown,
+ *   openPanel?: (request: { session: string, statePath: string, taskId: string }) => Promise<{ outcome: 'opened' | 'focused', instanceId: string }>,
+ *   getExtensionId?: () => string | null | undefined,
  * }} deps
  */
 export function createCanvasServer(deps) {
@@ -236,6 +251,8 @@ export function createCanvasServer(deps) {
     let others = new Set();
     /** When Ask the agent last sent, so a double press does not send twice. */
     let lastConnectRequest = 0;
+    /** When the canvas last asked its agent to open a child's canvas; the open-panel fallback waits on its own clock. */
+    let lastPanelAsk = 0;
     /** False while the canvas shows no session, until the agent connects it. */
     const connected = () => deps.getSource?.()?.kind !== 'none';
     const notConnectedError = () => new HttpError(409, 'not_connected', 'This canvas is not connected to an RPI session. Ask the agent to connect it.');
@@ -371,7 +388,7 @@ export function createCanvasServer(deps) {
             editor: getEditor() && deps.getSource?.()?.kind === 'rpi' ? { name: getEditor().name } : null,
             follow: source?.kind === 'rpi' ? { paused: Boolean(source.follow?.paused), agent: agentLoop(source.tasks) } : null,
             otherTasks: docs.slice(1).map((doc) => ({ taskId: doc.taskId, title: doc.task?.title ?? doc.session.task.title, status: doc.task?.status ?? null, statePath: doc.task?.statePath ?? null, ...feedbackOverview(doc.session, at, { viewer: ownSessionId() }) })),
-            linkedSessions: await loadLinkedSessions(store, session),
+            linkedSessions: await loadLinkedSessions(store, session, { at: Date.parse(at) }),
             delivery: deliveryTargetOf(session),
             ownSessionId: ownSessionId(),
         };
@@ -491,8 +508,7 @@ export function createCanvasServer(deps) {
             log(`Could not read another session's presence: ${error instanceof Error ? error.message : 'error'}`, 'warning');
             return null;
         });
-        const at = Date.parse(now());
-        return Boolean(presence?.processes.some((entry) => entry.version >= INBOX_VERSION && at - Date.parse(entry.updatedAt) <= PRESENCE_TTL_MS));
+        return hasLiveProcess(presence, Date.parse(now()));
     }
 
     /**
@@ -639,6 +655,34 @@ export function createCanvasServer(deps) {
             handedOff: holds.map((hold) => ({ taskId: hold.taskId, ids: hold.ids, entryId: hold.entryId })),
             route,
         };
+    }
+
+    /**
+     * The fallback when a child session's canvas cannot open from here: the canvas's own chat gets one
+     * fixed line, at most once in each interval, asking the agent to open the canvas with the host's
+     * canvas tool. The result says whether the agent was asked, how long to wait, or why it was not sent.
+     *
+     * @param {{ session: string, statePath: string, taskId: string }} child a child session of the shown task
+     */
+    async function askForPanel(child) {
+        const at = Date.parse(now());
+        if (lastPanelAsk && at - lastPanelAsk < CONNECT_REQUEST_INTERVAL_MS) {
+            return { outcome: 'wait', retryAfterMs: CONNECT_REQUEST_INTERVAL_MS - (at - lastPanelAsk) };
+        }
+        const canvas = getCanvas();
+        const displayPrompt = panelRequestText(canvas?.handle, child.session, child.statePath);
+        const provider = deps.getExtensionId?.() ?? null;
+        const input = JSON.stringify({ session: child.session, state: child.statePath });
+        const instanceId = panelInstanceId(child.session, child.taskId);
+        const prompt = `${displayPrompt}\n\nOpen it with the open_canvas tool: canvasId "${CANVAS_ID}", instanceId "${instanceId}", input ${input}${provider ? `, extensionId "${provider}"` : ''}. It opens in a new panel of this conversation, or focuses the panel already open. Then tell the user it is open, or why it could not be opened.`;
+        lastPanelAsk = at;
+        try {
+            await deliver({ prompt, displayPrompt, ids: [] });
+        } catch (error) {
+            lastPanelAsk = 0;
+            return { outcome: 'failed', reason: error instanceof Error ? error.message : 'The message could not be sent.' };
+        }
+        return { outcome: 'asked', retryAfterMs: CONNECT_REQUEST_INTERVAL_MS };
     }
 
     const routes = {
@@ -877,6 +921,25 @@ export function createCanvasServer(deps) {
                 throw error;
             }
             return { sent: true, retryAfterMs: CONNECT_REQUEST_INTERVAL_MS };
+        },
+
+        // Opens a child session's canvas in a new panel of this conversation. The request must name a child of the
+        // shown task; the host opens or focuses the panel, or the agent is asked to when the host cannot.
+        'POST /api/open-panel': async (body) => {
+            const session = await shownSession();
+            const wanted = typeof body?.session === 'string' ? body.session.toLowerCase() : '';
+            const child = linkedTasksOf(session).find((task) => task.sessionId.toLowerCase() === wanted && task.statePath === body?.statePath);
+            if (!child) throw new HttpError(404, 'not_found', 'That session is not a child session of this task.');
+            const request = { session: child.sessionId.toLowerCase(), statePath: child.statePath, taskId: child.id };
+            if (deps.openPanel) {
+                try {
+                    const opened = await deps.openPanel(request);
+                    return { outcome: opened.outcome, instanceId: opened.instanceId };
+                } catch (error) {
+                    log(`Could not open a canvas panel: ${error instanceof Error ? error.message : 'error'}`, 'warning');
+                }
+            }
+            return askForPanel(request);
         },
 
         'POST /api/source': async (body) => {
