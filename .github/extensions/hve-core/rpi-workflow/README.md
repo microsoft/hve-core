@@ -2,7 +2,7 @@
 title: RPI Workflow Canvas
 description: Canvas extension for following and steering RPI sessions through research, planning, implementation, review, and follow-up
 author: Microsoft
-ms.date: 2026-11-09
+ms.date: 2026-11-10
 ms.topic: reference
 keywords:
   - canvas
@@ -59,7 +59,8 @@ The canvas follows those files while it is open and never changes them. What you
 ### Regions
 
 * The header holds the task title, the phase rail, Needs you, Review and send, the Live control, appearance, the ID legend, keyboard shortcuts, and the panel toggles. The rail marks the phase the agent works in, and you can read any other phase meanwhile.
-  Each phase shows what its documents hold, with the status they record, wherever the agent is, so a phase the agent moved back from keeps its content; only a later phase with no document yet shows that it has not started. Research or a plan that the user or another session provided shows Provided, and its Source section names where the work came from. While the agent works in that phase, it shows In progress; once the session stops there, it shows Provided.
+  Each phase shows what its documents hold, with the status they record, wherever the agent is, so a phase the agent moved back from keeps its content; only a later phase with no document yet shows that it has not started. Research or a plan that the user or another session provided shows Provided, and its Source section names where the work came from.
+  Research that arrived only with a provided plan also reads Provided, and its Source section says it came with the plan. While the agent works in that phase, it shows In progress; once the session stops there, it shows Provided.
   Under the title, the session button names the session and counts its loops; it opens the session menu, which lists the session's loops as a tree,
   then, when the session has child sessions in other Copilot sessions, a Child sessions group, and, for a real session, the workspace's other sessions.
   Next comes the canvas badge with the handle that starts this canvas's messages; it never shrinks. For a real session, the line continues with the task ID, the repository and branch, and, for a child loop, a link to its parent task. In a narrow header the session name shortens first, then the task details give way.

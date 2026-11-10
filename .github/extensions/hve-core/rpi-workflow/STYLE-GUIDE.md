@@ -2,7 +2,7 @@
 title: RPI Workflow Canvas Style Guide
 description: Visual language, interaction grammar, and accessibility requirements for the hve-core RPI Workflow canvas
 author: Microsoft
-ms.date: 2026-11-09
+ms.date: 2026-11-10
 ms.topic: reference
 keywords:
   - canvas
@@ -176,7 +176,7 @@ One family carries the interface; monospace is reserved for IDs, paths, code, an
 ## Phase Rail
 
 * The rail is an ARIA tab list of the five phases in order. The selected tab chooses which phase the document shows; it has a 2px accent underline and a 600 weight label, matching the Session Log tab treatment.
-* A phase other than the agent's shows the status its document records: Done, In progress, or Blocked. Research or a plan the user or another session provided shows Provided. The agent's phase shows In progress while the session runs in it, and Provided once the session stops there.
+* A phase other than the agent's shows the status its document records: Done, In progress, or Blocked. Research or a plan the user or another session provided shows Provided, and so does Research that arrived only with a provided plan. The agent's phase shows In progress while the session runs in it, and Provided once the session stops there.
   Its tab's tooltip and description say "Provided by the user or another session", and its Source section names where the work came from. A phase the agent moved back from keeps that status and its content; only a later phase with no document is Upcoming and shows "has not started".
 * Each tab shows its phase status icon and label. Done segments of the connecting line use `--rw-success`; others use `--rw-border-muted`.
 * The agent's active phase carries an "Agent" marker (sparkle icon and the word, in the agent hue). Viewing another phase never moves the marker, so a person can read Research while the agent implements.
@@ -265,6 +265,7 @@ A decision whose anchor has no row in a started phase, or that has no anchor, ap
 ## Phase Views
 
 * Research: a summary band (bottom line, research status, readiness), What you may not know, a questions tracker, findings rows with evidence state and confidence, alternatives with dispositions, risks, research lanes, and a collapsed research record with the evidence log. A provided research opens with a Source section: "Research came from" the session's short ID or the user, then the recorded evidence as text.
+  Research that came with a provided plan has no document, so it opens with a Source section that reads "Research came with the plan from session" and the short ID, or "Research came with the plan the user supplied.", then the recorded evidence as text.
 * Plan: a summary band with the critique verdict, a change map (the After, a Before and After switch only when the plan has a Before, its boxes where changes land, a phase selector that highlights a phase's parts on either view when the map has tags, and the plan's walk-through as prose under it),
   phases as rows with progress, tasks as nested rows whose details expand in place, requirement coverage, planning decisions, and critique findings with dispositions. Moving a task uses Move up and Move down buttons, never dragging.
   * While a critique runs, the summary's critique card and the Critique row show Running (accent, active icon) in place of a verdict, each lens with its status badge (Queued, In progress, Done, Partial, Blocked), a progress bar of finished lenses, and the lens in progress with the findings so far. A critique left started by a session that stopped shows Stopped (attention, pause icon). While findings are open, both show "N of M findings addressed in the plan" with a bar.
@@ -513,6 +514,7 @@ Four icons keep one meaning wherever they mark a click: go-to (a box with an arr
 | 2026-11-09 | The session menu groups a session's child sessions, each with its task, phase, status, whether its canvas runs, and decisions waiting, and offers Show here and Open in new panel; child cards in the tree offer Open in new panel too                           | A child session was listed only in the tree, so the menu did not show which child's canvas ran or needed a decision, and a child's canvas could be opened only by asking the agent                 |
 | 2026-11-09 | Provided Research and Plan show Provided, with a teal nodes icon and a tooltip, outside the agent's phase; they keep their content and open with a Source row that names where the work came from; reused and satisfied-and-skipped Research stays Skipped       | Research and plans the user or another session supplied looked like work this session did itself, and the canvas did not say where a phase's content came from                                     |
 | 2026-11-09 | Review and send previews each route's message: a hand-off gets one message for each task, and a note there is a comment; Send now names its route; a provided phase reads In progress while the session runs and Provided once it stops                          | The preview showed the own-chat message for a hand-off, so the text checked was not the text sent; a stopped session showed its provided phase as In progress                                      |
+| 2026-11-10 | Research that came with a provided plan shows Provided, with a Source section that says it came with the plan and names the session or the user; its evidence is the third form, Came with the provided plan, and it has no document                             | Research that arrived with a provided plan was recorded as satisfied-and-skipped and showed Skipped, though the user or another session supplied it                                                |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
