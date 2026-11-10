@@ -51,6 +51,10 @@ the statistical runtime is missing. They reject extra prose and contradictory su
 while allowing case changes, horizontal whitespace, LF or CRLF line endings, and reordered
 basis IDs. The prompts specify the response format, not the expected decision.
 
+RCA grader IDs retain the complete stimulus ID as a prefix and fit the 60-character
+schema limit. Identifier-only renames leave prompt hashes and grading logic unchanged;
+historical evaluation snapshots retain their original identifiers.
+
 Offline regression tests exercise the actual YAML patterns with native JavaScript,
 including correct variants, incorrect decisions, irrelevant or duplicate IDs, missing
 fields, prompt echoes, unavailable-skill replies, and contradictory additions. Run them

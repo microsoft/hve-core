@@ -107,6 +107,9 @@ Describe 'RCA structured-decision graders' -Tag 'Unit' -ForEach @(@{ Contracts =
         $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
         $SpecPath = Join-Path $RepoRoot 'evals\behavior-conformance\skill-behavior.eval.yaml'
         $Spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $SpecPath -Raw)
+        $script:RcaStimuli = @($Spec.stimuli | Where-Object {
+            $_.name -match '^skill-(root-cause-analysis|causal-evidence-likelihood|statistical-hypothesis-testing)-'
+        })
         $script:Stimuli = @{}
         $Probes = @(
             foreach ($Contract in $Contracts) {
@@ -168,6 +171,24 @@ process.stdin.on("end", () => {
         }
         $script:Results = ($Output -join "`n") | ConvertFrom-Json -AsHashtable
         $script:Results.Count | Should -Be $Contracts.Count
+    }
+
+    It 'Retains the complete stimulus prefix in every RCA grader name' {
+        $script:RcaStimuli.Count | Should -BeGreaterThan 0
+        foreach ($Stimulus in $script:RcaStimuli) {
+            foreach ($Grader in $Stimulus.graders) {
+                $Grader.name.StartsWith($Stimulus.name) | Should -BeTrue -Because "grader $($Grader.name) belongs to $($Stimulus.name)"
+            }
+        }
+    }
+
+    It 'Keeps every RCA grader name within the 60-character schema limit' {
+        $script:RcaStimuli.Count | Should -BeGreaterThan 0
+        foreach ($Stimulus in $script:RcaStimuli) {
+            foreach ($Grader in $Stimulus.graders) {
+                $Grader.name.Length | Should -BeLessOrEqual 60 -Because "grader $($Grader.name) must fit the identifier limit"
+            }
+        }
     }
 
     It '<Name>: retains one deterministic full-response grader' -ForEach $Contracts {

@@ -6223,7 +6223,7 @@ stimuli:
         name: skill-root-cause-analysis-blocked-without-evidence
         config:
           pattern: '(?is)(?=[\s\S]*\bBlocked\b)(?=[\s\S]*(?:evidence|tool|access|collect))'
-  - name: skill-statistical-hypothesis-testing-blocks-dependent-observations
+  - name: skill-statistical-hypothesis-testing-dependent-rows
     prompt: |
       The root RCA invokes `statistical-hypothesis-testing` with investigation
       RCA-001, T-001, declared scope SCOPE-001, generic host mode, approval
@@ -6244,10 +6244,10 @@ stimuli:
       prompt_sha256: 67994885bff319384c1e50460c3426df669258435c98d737444d9b4f1fe60421
     graders:
       - type: output-matches
-        name: skill-statistical-blocks-dependent-observations
+        name: skill-statistical-hypothesis-testing-dependent-rows-check
         config:
           pattern: '(?is)(?=[\s\S]*\bBlocked\b)(?=[\s\S]*(?:independen|repeated|same[ \t]+server))'
-  - name: skill-statistical-hypothesis-testing-blocks-observation-defined-cohorts
+  - name: skill-statistical-hypothesis-testing-cohort-selection
     prompt: |
       The root RCA invokes `statistical-hypothesis-testing` with investigation
       RCA-001, T-001, declared scope SCOPE-001, generic host mode, approval
@@ -6269,10 +6269,10 @@ stimuli:
       prompt_sha256: 12945700a92f80ce12b40be715edcad4922a07b1d278c3350ac9ebb0ee3032a6
     graders:
       - type: output-matches
-        name: skill-statistical-hypothesis-testing-blocks-observation-def
+        name: skill-statistical-hypothesis-testing-cohort-selection-check
         config:
           pattern: '(?is)(?=[\s\S]*\bBlocked\b)(?=[\s\S]*(?:outcome|observation)[\s\S]*(?:define|select)[\s\S]*cohort)'
-  - name: skill-statistical-hypothesis-testing-uses-pooled-score-fallback
+  - name: skill-statistical-hypothesis-testing-pooled-score
     prompt: |
       The root RCA invokes `statistical-hypothesis-testing` with investigation
       RCA-001, T-001, declared scope SCOPE-001, generic host mode, approval
@@ -6295,10 +6295,10 @@ stimuli:
       prompt_sha256: 397298c14875ce6dccf626160180bb158161aae909f2f7fe97f38ae8a92ac644
     graders:
       - type: output-matches
-        name: skill-statistical-hypothesis-testing-uses-pooled-score-fall
+        name: skill-statistical-hypothesis-testing-pooled-score-check
         config:
           pattern: '(?is)(?=[\s\S]*pooled[ \t-]+score)(?=[\s\S]*(?:expected|cell|non-sparse|large[ \t]+cohort))'
-  - name: skill-statistical-hypothesis-testing-blocks-uncontrolled-boundary-fallback
+  - name: skill-statistical-hypothesis-testing-bounded-fallback
     prompt: |
       The root RCA invokes `statistical-hypothesis-testing` with investigation
       RCA-001, T-001, declared scope SCOPE-001, generic host mode, approval
@@ -6322,10 +6322,10 @@ stimuli:
       prompt_sha256: 6d5c624d1bda83c4de444df6b05280459e8321101a6f57a048d5590e930c23fa
     graders:
       - type: output-matches
-        name: skill-statistical-hypothesis-testing-blocks-uncontrolled-bo
+        name: skill-statistical-hypothesis-testing-bounded-fallback-check
         config:
           pattern: '(?is)(?=[\s\S]*\bBlocked\b)(?=[\s\S]*(?:sparse|boundary|expected[ \t]+cell))(?=[\s\S]*(?:certified|error[ \t]+bound))'
-  - name: skill-statistical-hypothesis-testing-blocks-missing-welch-ci-api
+  - name: skill-statistical-hypothesis-testing-welch-ci-api
     prompt: |
       The root RCA invokes `statistical-hypothesis-testing` with investigation
       RCA-001, T-001, declared scope SCOPE-001, generic host mode, approval
@@ -6348,7 +6348,7 @@ stimuli:
       prompt_sha256: dd0cb3904e99c57f272481785d380554a22fd0f7a9bdd57cff2e3808897064fb
     graders:
       - type: output-matches
-        name: skill-statistical-hypothesis-testing-blocks-missing-welch-c
+        name: skill-statistical-hypothesis-testing-welch-ci-api-check
         config:
           pattern: '(?is)(?=[\s\S]*\bBlocked\b)(?=[\s\S]*confidence_interval)(?=[\s\S]*(?:missing|unavailable|does not provide|cannot))'
   - name: skill-statistical-hypothesis-testing-blocks-missing-runtime
@@ -6379,7 +6379,7 @@ stimuli:
         name: skill-statistical-hypothesis-testing-blocks-missing-runtime
         config:
           pattern: '(?i)^\s*Status:[ \t]*Blocked[ \t]*\r?\n[ \t]*Package installation:[ \t]*Prohibited[ \t]*\r?\n[ \t]*Numeric result:[ \t]*None\s*(?![\s\S])'
-  - name: skill-statistical-hypothesis-testing-requires-execution-provenance
+  - name: skill-statistical-hypothesis-testing-run-provenance
     prompt: |
       The root RCA invokes `statistical-hypothesis-testing` with investigation
       RCA-001, T-001, declared scope SCOPE-001, generic host mode, approval
@@ -6401,7 +6401,7 @@ stimuli:
       prompt_sha256: cdfbdb62c70321c4d6f438f0c9c6f8e7e5d9a7efc1f09f7706b767ef403538e5
     graders:
       - type: output-matches
-        name: skill-statistical-hypothesis-testing-requires-execution-pro
+        name: skill-statistical-hypothesis-testing-run-provenance-check
         config:
           pattern: '(?is)(?=[\s\S]*\bBlocked\b)(?=[\s\S]*(?:runtime|library))(?=[\s\S]*versions?)(?=[\s\S]*(?:exact code|tool invocation))(?=[\s\S]*(?:input-table|input table).*(?:SHA-256|hash))(?=[\s\S]*(?:raw tool output|raw output).*(?:locator|location))'
   - name: skill-root-cause-analysis-routes-eligible-statistics
@@ -6520,7 +6520,7 @@ stimuli:
         name: skill-root-cause-analysis-allows-confirmatory-contribution
         config:
           pattern: '(?i)^\s*[`*''"]*eligible-to-contribute-to-disposition[`*''"]*[.!]?\s*$'
-  - name: skill-root-cause-analysis-requires-confirmation-for-completion
+  - name: skill-root-cause-analysis-completion-confirmation
     prompt: |
       Use the root-cause-analysis skill. H-001 has a Strongly supports
       causal assessment based only on evidence that generated the hypothesis.
@@ -6538,7 +6538,7 @@ stimuli:
       prompt_sha256: 3f4cd08cd37f8935df69f05e9e22f9a7f2f54692acc506916f6d5489419a6db9
     graders:
       - type: output-matches
-        name: skill-root-cause-analysis-requires-confirmation-for-complet
+        name: skill-root-cause-analysis-completion-confirmation-check
         config:
           pattern: '(?i)^\s*[`*''"]*non-complete-with-next-confirmation[`*''"]*[.!]?\s*$'
   - name: skill-causal-evidence-likelihood-isolates-statistical-output
