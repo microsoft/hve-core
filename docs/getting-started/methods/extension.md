@@ -3,7 +3,7 @@ title: VS Code Extension Installation
 description: Install HVE Core as a VS Code extension from the Marketplace and learn which components reach Copilot sessions
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-06
+ms.date: 2026-11-10
 ms.topic: how-to
 keywords:
   - extension
@@ -239,14 +239,14 @@ To customize HVE Core instead, follow [Copy HVE Core Into Your Repository](../in
 | Aspect                           | Status                                           |
 |----------------------------------|--------------------------------------------------|
 | Instructions in Copilot sessions | ⚠️ May not reach them                            |
-| Canvases                         | ❌ Not included                                   |
-| Customization                    | ❌ Cannot modify components                       |
+| Canvases                         | ❌ Not included                                  |
+| Customization                    | ❌ Cannot modify components                      |
 | Version control                  | ⚠️ Extension updates only, no git control        |
 | Team enforcement                 | ⚠️ Each member installs independently            |
 | Dev/testing                      | ⚠️ Pre-release channel only, not custom branches |
-| Portable paths                   | ✅ Works everywhere                               |
-| Setup complexity                 | ✅ Simplest possible                              |
-| Disk usage                       | ✅ Single installation across all projects        |
+| Portable paths                   | ✅ Works everywhere                              |
+| Setup complexity                 | ✅ Simplest possible                             |
+| Disk usage                       | ✅ Single installation across all projects       |
 
 ## Next Steps
 

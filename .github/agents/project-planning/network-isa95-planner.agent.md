@@ -158,7 +158,7 @@ If any baseline element is missing, MUST include it in Priority 0 or Priority 1 
 MUST produce the conduit matrix before final recommendations using this schema:
 
 | Flow ID | Source Zone | Source Asset Class | Destination Zone | Destination Asset Class | Direction | Protocol | Dest Port | Auth Method | Encryption | Operational Justification | Monitoring Source | Control Owner |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
+|---------|-------------|--------------------|------------------|-------------------------|-----------|----------|-----------|-------------|------------|---------------------------|-------------------|---------------|
 
 Conduit rules:
 
