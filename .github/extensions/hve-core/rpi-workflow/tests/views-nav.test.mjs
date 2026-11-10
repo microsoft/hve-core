@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
 import { after, before, describe, it } from 'node:test';
 
 import { buildScenario } from '../lib/scenario.mjs';
@@ -122,6 +123,42 @@ describe('legend', () => {
         assert.match(section('legend-previews'), /In a pinned preview, hover or focus an ID to preview it too\./);
         assert.match(section('legend-map'), /it goes away when you move off\. Click the part, press Enter on it, or press the pin to pin it, then go to a task\./);
         assert.doesNotMatch(root.textContent, /\block(s|ed)?\b/i);
+    });
+});
+
+describe('phase status', () => {
+    it('gives Provided its word, a sprite icon, a legend entry, and a tooltip that says where the work came from', async () => {
+        const { legendContent } = await import('../ui/legend.mjs');
+        const { badge, PHASE_STATUS } = await import('../ui/dom.mjs');
+        const { tipText } = await import('../ui/tooltips.mjs');
+        const provided = PHASE_STATUS.provided;
+        assert.deepEqual([provided.label, provided.icon, provided.tip], ['Provided', 'nodes', 'Provided by the user or another session']);
+        const sprite = await fs.readFile(new URL('../ui/index.html', import.meta.url), 'utf8');
+        assert.ok(sprite.includes(`<symbol id="i-${provided.icon}"`), 'the icon is one the sprite already has');
+        const chip = badge(provided, { title: provided.tip });
+        assert.equal(chip.textContent, 'Provided');
+        assert.equal(tipText(chip), 'Provided by the user or another session');
+        const root = document.createElement('div');
+        for (const node of legendContent()) root.appendChild(node);
+        const section = elements(root).find((node) => node.getAttribute('aria-labelledby') === 'legend-phase');
+        assert.ok(section, 'the legend explains phase statuses');
+        assert.ok(elements(section).some((node) => node.localName === 'dt' && node.textContent.trim() === 'Provided'), 'the legend names the word');
+        assert.ok(iconsOf(section).includes('#i-nodes'), 'and shows its icon');
+        assert.match(section.textContent, /Provided by the user or another session\. A provided phase's Source section says where its work came from\./);
+    });
+
+    it('names a provided phase\'s tab, its tooltip, and its description, and keeps the other tabs as they were', async () => {
+        const { phaseTabText, PHASE_STATUS } = await import('../ui/dom.mjs');
+        assert.deepEqual(phaseTabText({ phase: 'research', meta: PHASE_STATUS.provided, active: false, needs: 0, key: null }), {
+            name: 'Research, Provided',
+            tooltip: 'Research, Provided. Provided by the user or another session',
+            description: 'Provided by the user or another session',
+        });
+        assert.deepEqual(phaseTabText({ phase: 'plan', meta: PHASE_STATUS.active, active: true, needs: 2, key: '2' }), {
+            name: 'Plan, In progress, agent is here, 2 items need you',
+            tooltip: 'Plan, In progress, agent is here, 2 items need you (2)',
+            description: null,
+        });
     });
 });
 

@@ -149,6 +149,68 @@ describe('assembled document', () => {
     });
 });
 
+describe('provided research and plans', () => {
+    const SOURCE_SESSION = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+    const COPIED = `Copied from session ${SOURCE_SESSION}; path ${PATHS.research}; content hash 9f2c4e1a`;
+    const SUPPLIED = 'User supplied the plan in chat.';
+    const copied = { status: 'provided', evidence: COPIED };
+    const supplied = { status: 'provided', evidence: SUPPLIED };
+    const artifacts = () => ({ research: parseResearch(RESEARCH), plan: parsePlan(PLAN), changes: parseChanges(CHANGES) });
+    /** The root task's state at an active phase, with the given research and plan dispositions when set. */
+    const stateWith = (activePhase, research, plan) => parseState({
+        ...ROOT_STATE,
+        active_phase: activePhase,
+        status: 'active',
+        session_status: 'running',
+        confirmed_decisions: [
+            { decision: 'Automatic session scope', status: 'current', evidence: 'User request: offline trail maps.' },
+            ...(research ? [{ decision: 'Research disposition', ...research }] : []),
+            ...(plan ? [{ decision: 'Plan disposition', ...plan }] : []),
+        ],
+    });
+    const assembled = (state, files = artifacts(), extra = {}) => assembleSession({ id: 'x', state, artifacts: files, statePath: PATHS.rootState, now: NOW, ...extra }).session;
+    const statuses = (session) => Object.values(session.phases).map((phase) => phase.status);
+
+    it('shows research and plan as Provided once the agent is past them', () => {
+        assert.deepEqual(statuses(assembled(stateWith('Implement', copied, supplied))), ['provided', 'provided', 'active', 'upcoming', 'upcoming']);
+    });
+
+    it('keeps a provided phase active while the agent turns it into its own artifact', () => {
+        assert.deepEqual(statuses(assembled(stateWith('Research', copied, supplied), { research: parseResearch(RESEARCH) })), ['active', 'provided', 'upcoming', 'upcoming', 'upcoming']);
+        assert.deepEqual(statuses(assembled(stateWith('Plan', copied, supplied))).slice(0, 2), ['provided', 'active']);
+    });
+
+    it('keeps reused and satisfied research Skipped, and a planned plan on its own status', () => {
+        const files = { plan: parsePlan(PLAN) };
+        assert.equal(assembled(stateWith('Plan', { status: 'reused', evidence: 'The review record' }), files).phases.research.status, 'skipped');
+        assert.equal(assembled(stateWith('Plan', { status: 'satisfied-and-skipped', evidence: 'Existing research' }), files).phases.research.status, 'skipped');
+        assert.deepEqual(statuses(assembled(stateWith('Implement', null, { status: 'planned', evidence: 'Planned here' }))), statuses(assembled(stateWith('Implement', null, null))), 'a planned plan changes nothing');
+    });
+
+    it('names where provided work came from in a Source section, with the evidence as recorded', () => {
+        const { sections, phases } = assembled(stateWith('Implement', copied, supplied));
+        assert.equal(sections['research-source'].markdown, `Research came from session 3fa85f64.\n\n${COPIED}`);
+        assert.equal(sections['research-source'].doc, 'research');
+        assert.equal(sections['research-source'].title, 'Source');
+        assert.equal(sections['plan-source'].markdown, `The plan came from the user.\n\n${SUPPLIED}`);
+        assert.ok(sections['research-summary'], 'a provided research document renders as today');
+        assert.equal(phases.research.artifact, PATHS.research);
+        assert.equal(assembled(stateWith('Implement', null, { status: 'provided', evidence: '' })).sections['plan-source'].markdown, 'The plan came from the user or another session.');
+    });
+
+    it('keeps evidence that holds markup as text, without changing it', () => {
+        const markup = '<img src=x onerror="alert(1)"> supplied by the user';
+        assert.equal(assembled(stateWith('Implement', null, { status: 'provided', evidence: markup })).sections['plan-source'].markdown, `The plan came from the user.\n\n${markup}`);
+    });
+
+    it('does not read a provided research as reused, even when its state path names another kind', () => {
+        const session = assembled(stateWith('Plan', copied, null), { plan: parsePlan(PLAN) }, { mismatched: [{ key: 'research', path: PATHS.review, kind: 'review' }] });
+        assert.equal(session.phases.research.status, 'provided');
+        assert.equal(session.sections['research-summary'], undefined, 'no reused-evidence summary');
+        assert.match(session.sections['research-source'].markdown, /^Research came from session 3fa85f64\./);
+    });
+});
+
 describe('a critique while it runs', () => {
     const record = (execution, statuses) => [
         '# RPI Plan Critique: Offline trail maps',

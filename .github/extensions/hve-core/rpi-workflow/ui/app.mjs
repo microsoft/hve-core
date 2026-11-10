@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, button, clear, decisionAlias, fullTime, h, icon, idTag, PHASE_META, PHASE_STATUS, plural, relTime, sr } from './dom.mjs';
+import { badge, button, clear, decisionAlias, fullTime, h, icon, idTag, PHASE_META, PHASE_STATUS, phaseTabText, plural, relTime, sr } from './dom.mjs';
 import { confirmPress, deliveryNotices, deliveryRequest, disclosure, filePreview, handAnnouncement, hasMarginHome, presentationControl, revealRow, reviewSheet, ROUTE_CHANGED_NOTE, routeBlock, sendItems, sessionMenuNodes, staleAnnouncement, steerPanel, taskRef, uncertainAnnouncement, waitingCount } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
@@ -1497,12 +1497,12 @@ function renderRail() {
         const active = session.session.activePhase === phase;
         const selected = state.ui.phase === phase;
         const needs = view.needsYouByPhase[phase] ?? 0;
-        const label = [PHASE_META[phase].label, meta.label, active ? 'agent is here' : null, needs ? `${plural(needs, 'item')} ${needs === 1 ? 'needs' : 'need'} you` : null].filter(Boolean).join(', ');
+        const text = phaseTabText({ phase, meta, active, needs, key: state.ui.shortcuts ? PHASE_META[phase].key : null });
         if (index > 0) rail.append(h('span', { class: ['rail-seg', session.phases[PHASES[index - 1]].status === 'done' ? 'is-done' : null], 'aria-hidden': 'true' }));
         rail.append(h('button', {
             type: 'button', role: 'tab', class: ['rail-tab', `is-${status}`, active ? 'is-agent' : null], 'aria-selected': String(selected), tabindex: selected ? '0' : '-1',
-            'aria-label': label, 'aria-controls': 'document', 'aria-keyshortcuts': state.ui.shortcuts ? PHASE_META[phase].key : undefined, dataset: { phase },
-            title: state.ui.shortcuts ? `${label} (${PHASE_META[phase].key})` : label,
+            'aria-label': text.name, 'aria-description': text.description, 'aria-controls': 'document', 'aria-keyshortcuts': state.ui.shortcuts ? PHASE_META[phase].key : undefined, dataset: { phase },
+            title: text.tooltip,
             onclick: () => setPhase(phase),
             onkeydown: (event) => {
                 const moves = { ArrowRight: 1, ArrowLeft: -1, Home: -99, End: 99 };
@@ -1578,7 +1578,7 @@ function renderContextBar() {
         h('div', { class: 'context-main' },
             h('span', { class: 'history-nav', role: 'group', 'aria-label': 'Back and forward' }, travelButton('back', back), travelButton('forward', forward)),
             h('h2', { class: 'context-title' }, icon(PHASE_META[phase].icon), PHASE_META[phase].label),
-            badge(meta),
+            badge(meta, { title: meta.tip }),
             presentationControl(context()),
             documentSwitcher(phase),
             artifact && state.ui.presentation === 'focused' ? disclosure(context(), `source-${phase}`, 'context-source', 'Source file', artifact) : artifact,
