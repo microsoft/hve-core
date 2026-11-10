@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, clear, decisionAlias, fullTime, h, icon, idTag, PHASE_META, PHASE_STATUS, phaseTabText, plural, relTime, sr } from './dom.mjs';
-import { confirmPress, deliveryNotices, deliveryRequest, disclosure, filePreview, handAnnouncement, hasMarginHome, presentationControl, revealRow, reviewSheet, ROUTE_CHANGED_NOTE, routeBlock, sendItems, sessionMenuNodes, staleAnnouncement, steerPanel, taskRef, uncertainAnnouncement, waitingCount } from './components.mjs';
+import { confirmPress, deliveryNotices, deliveryRequest, disclosure, filePreview, handAnnouncement, hasMarginHome, presentationControl, revealRow, reviewSheet, ROUTE_CHANGED_NOTE, routeBlock, sendItems, sendShape, sessionMenuNodes, staleAnnouncement, steerPanel, taskRef, uncertainAnnouncement, waitingCount } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
 import { notConnectedView } from './connect-view.mjs';
@@ -1741,7 +1741,8 @@ function updateSendPreview() {
     const pre = $('send-preview');
     const confirm = sheet.querySelector('[data-key="send-confirm"]');
     const error = $('send-error');
-    if (!pre || !confirm || Boolean(error) !== Boolean(state.ui.send.error)) {
+    // The route's wording and the number of messages are built into the dialog, so a change to either rebuilds it.
+    if (!pre || !confirm || Boolean(error) !== Boolean(state.ui.send.error) || $('send-modes')?.dataset.sendShape !== sendShape(state.ui.send.preview)) {
         renderSendSheet();
         return;
     }

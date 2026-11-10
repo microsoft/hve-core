@@ -9,6 +9,8 @@ import { fileURLToPath } from 'node:url';
 
 import {
     claimDelivery,
+    composeInboxDelivery,
+    composeRelayDelivery,
     composeSessionDelivery,
     createFeedback,
     deriveView,
@@ -74,6 +76,8 @@ const MARK_RETRY_MS = 50;
 const TASK_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
 /** The routes a Send now can take, as the preview names them. */
 const ROUTE_KINDS = new Set(['own', 'inbox', 'relay']);
+/** What a hand-off says when this canvas has no Copilot session to send from. */
+const HAND_OFF_UNAVAILABLE = 'The canvas is not connected to a Copilot session. Your items stay here; ask the agent to collect them with take_feedback.';
 
 const STATUS_FOR = Object.freeze({
     invalid_input: 400,
@@ -535,7 +539,70 @@ export function createCanvasServer(deps) {
     }
 
     /** The 409 that tells the page its preview is out of date, carrying the preview to show instead. */
-    const staleSend = (message, route, text) => Object.assign(new HttpError(409, 'preview_stale', text), { detail: { preview: { ...message, route } } });
+    const staleSend = (preview, text) => Object.assign(new HttpError(409, 'preview_stale', text), { detail: { preview } });
+
+    /**
+     * The parts a hand-off to another session writes, in the order the preview names them: each task
+     * with items, then the note. The note is a comment of the shown task, so it joins that task's part,
+     * or gets a part of its own when that task has no items. Parts with nothing to hand off are left out.
+     *
+     * @param {any[]} groups the tasks and their items, from `deliveryGroups`
+     * @param {any} body the request body
+     * @returns {Promise<{ note: string, parts: { id: string, taskId: string, session: any, ids: string[], note: boolean }[] }>}
+     */
+    async function handOffParts(groups, body) {
+        const note = typeof body?.note === 'string' ? body.note.trim() : '';
+        const parts = groups.map((group) => ({ id: group.id, taskId: group.taskId, session: group.session, ids: group.ids, note: false }));
+        if (note) {
+            const shown = await shownSession();
+            const own = parts.find((part) => part.id === shown.id);
+            if (own) own.note = true;
+            else parts.push({ id: shown.id, taskId: shown.task.id, session: shown, ids: [], note: true });
+        }
+        return { note, parts: parts.filter((part) => part.ids.length > 0 || part.note) };
+    }
+
+    /**
+     * The preview Send now shows for the route the items take. Its prompt and displayPrompt are the message
+     * that Send now delivers. On the own route, that is the canvas's chat message. On a hand-off, it is what
+     * the receiving canvas process sends into its chat, composed from the same parts that handOffGroups
+     * writes, so the preview and the message agree. The note is added to an in-memory copy only. With
+     * several tasks, `messages` holds one message for each, and the prompt lists them under headings.
+     * Without a Copilot session no hand-off can be sent, so the preview keeps the canvas's own message
+     * and Queue still works; Send now then reports why it cannot send.
+     *
+     * @param {any[]} groups the tasks and their items, from `deliveryGroups`
+     * @param {any} body the request body
+     * @param {{ kind: 'own' | 'inbox' | 'relay', sessionId?: string | null, sessionName?: string | null }} route
+     */
+    async function previewFor(groups, body, route) {
+        const composed = compose(groups, body);
+        if (route.kind === 'own') return { ...composed, route };
+        const sender = ownSessionId();
+        if (!sender) return { ...composed, route };
+        const handle = getCanvas()?.handle ?? null;
+        const at = now();
+        const { note, parts } = await handOffParts(groups, body);
+        const messages = parts.map((part) => {
+            const created = part.note ? createFeedback(part.session, { kind: 'comment', text: note }, at) : null;
+            const session = created ? created.session : part.session;
+            const ids = created ? [...part.ids, created.result.id] : part.ids;
+            const message = route.kind === 'inbox'
+                ? composeInboxDelivery(session, ids, { sessionId: sender, handle })
+                : composeRelayDelivery(session, ids, { handle, sessionId: route.sessionId }, { requireHold: false });
+            return { taskId: part.taskId, prompt: message.prompt, displayPrompt: message.displayPrompt };
+        });
+        if (messages.length === 1) {
+            return { ...composed, prompt: messages[0].prompt, displayPrompt: messages[0].displayPrompt, messages, route };
+        }
+        return {
+            ...composed,
+            prompt: messages.map((message, index) => `Message ${index + 1} of ${messages.length}, task ${message.taskId}:\n${message.prompt}`).join('\n\n'),
+            displayPrompt: messages.map((message) => message.displayPrompt).join(' / '),
+            messages,
+            route,
+        };
+    }
 
     /** Asks this process's inbox runner to check its outbox now. Send does not wait for the check. */
     function wakeRelays() {
@@ -592,21 +659,13 @@ export function createCanvasServer(deps) {
     async function handOffGroups(groups, body, route) {
         const sender = deps.getJoinedSessionId?.();
         if (typeof sender !== 'string' || !sender) {
-            throw new ModelError('delivery_unavailable', 'The canvas is not connected to a Copilot session. Your items stay here; ask the agent to collect them with take_feedback.');
+            throw new ModelError('delivery_unavailable', HAND_OFF_UNAVAILABLE);
         }
         const from = sender.toLowerCase();
         const target = route.sessionId;
         const handle = getCanvas()?.handle ?? null;
-        const note = typeof body?.note === 'string' ? body.note.trim() : '';
-        const parts = groups.map((group) => ({ id: group.id, taskId: group.taskId, session: group.session, ids: group.ids, note: false }));
-        if (note) {
-            const shown = await shownSession();
-            const own = parts.find((part) => part.id === shown.id);
-            if (own) own.note = true;
-            else parts.push({ id: shown.id, taskId: shown.task.id, session: shown, ids: [], note: true });
-        }
-        const pending = parts.filter((part) => part.ids.length > 0 || part.note);
-        if (pending.reduce((sum, part) => sum + part.ids.length, 0) + (note ? 1 : 0) > INBOX_MAX_ITEMS) {
+        const { note, parts } = await handOffParts(groups, body);
+        if (parts.reduce((sum, part) => sum + part.ids.length, 0) + (note ? 1 : 0) > INBOX_MAX_ITEMS) {
             throw new HttpError(400, 'invalid_input', `A send takes at most ${INBOX_MAX_ITEMS} items, counting the note.`);
         }
         const at = now();
@@ -614,7 +673,7 @@ export function createCanvasServer(deps) {
         const holds = [];
         let outboxWritten = false;
         try {
-            for (const part of pending) {
+            for (const part of parts) {
                 const entryId = randomBytes(12).toString('hex');
                 const { session, result } = await store.update(part.id, (current) => {
                     if (!sameItems(current, part.session, part.ids)) {
@@ -749,7 +808,7 @@ export function createCanvasServer(deps) {
 
         'POST /api/delivery/preview': async (body) => {
             const groups = await deliveryGroups(body);
-            return { ...compose(groups, body), route: await routeFor(groups, otherSessionOf()) };
+            return previewFor(groups, body, await routeFor(groups, otherSessionOf()));
         },
 
         // Sends the items the user reviewed, only when they still match the preview (by digest).
@@ -775,14 +834,14 @@ export function createCanvasServer(deps) {
             const message = compose(groups, body);
             const target = otherSessionOf();
             if (message.digest !== digest) {
-                throw staleSend(message, await routeFor(groups, target), 'Your items changed since you opened this. Check the list, then send again.');
+                throw staleSend(await previewFor(groups, body, await routeFor(groups, target)), 'Your items changed since you opened this. Check the list, then send again.');
             }
             if (mode === 'queue') {
                 return queueGroups(groups, body);
             }
             const route = await routeFor(groups, target);
             if (named !== null && named !== route.kind) {
-                throw staleSend(message, route, 'Where these items go has changed since you opened this. Check the route, then send again.');
+                throw staleSend(await previewFor(groups, body, route), 'Where these items go has changed since you opened this. Check the route, then send again.');
             }
             if (target) {
                 return handOffGroups(groups, body, route);

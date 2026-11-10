@@ -42,7 +42,7 @@ export function legendContent() {
         section('legend-phase', 'Phase status',
             h('dl', { class: 'legend-list' },
                 h('dt', null, h('span', { class: 'legend-badges' }, badge(PHASE_STATUS.provided))),
-                h('dd', null, `${PHASE_STATUS.provided.tip}. A provided phase's Source section says where its work came from. While the agent works in the phase, it shows In progress.`))),
+                h('dd', null, `${PHASE_STATUS.provided.tip}. A provided phase's Source section says where its work came from. While the agent works in the phase, it shows In progress; once the session stops there, it shows Provided.`))),
         section('legend-comments', 'Comments and the canvas menu',
             h('ul', { class: 'legend-steps' },
                 h('li', { text: 'Hover a paragraph, list item, table row, or heading, and choose the speech bubble beside it to comment on exactly that part.' }),

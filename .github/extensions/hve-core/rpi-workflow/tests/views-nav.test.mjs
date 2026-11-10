@@ -144,7 +144,7 @@ describe('phase status', () => {
         assert.ok(section, 'the legend explains phase statuses');
         assert.ok(elements(section).some((node) => node.localName === 'dt' && node.textContent.trim() === 'Provided'), 'the legend names the word');
         assert.ok(iconsOf(section).includes('#i-nodes'), 'and shows its icon');
-        assert.match(section.textContent, /Provided by the user or another session\. A provided phase's Source section says where its work came from\./);
+        assert.match(section.textContent, /Provided by the user or another session\. A provided phase's Source section says where its work came from\. While the agent works in the phase, it shows In progress; once the session stops there, it shows Provided\./);
     });
 
     it('names a provided phase\'s tab, its tooltip, and its description, and keeps the other tabs as they were', async () => {
