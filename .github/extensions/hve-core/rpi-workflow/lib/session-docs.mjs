@@ -3,7 +3,7 @@
 
 import { hasLiveProcess } from './inbox.mjs';
 import { deriveView } from './model.mjs';
-import { legacyDocumentFor, storeIdFor } from './source/workspace.mjs';
+import { currentLinkedState, legacyDocumentFor, storeIdFor } from './source/workspace.mjs';
 
 /**
  * The store documents of a session: the shown task's document first, then the documents
@@ -59,11 +59,11 @@ export function linkedTasksOf(shown) {
 }
 
 /**
- * The tasks of a session's tree that another Copilot session holds, each with its session, phase,
- * and status from the tree, the decisions waiting from its store document, and whether a canvas
- * process of that session is live. The document is the one keyed to the task's own workspace, so a
- * task of the same ID in another workspace is not read. `decisionsWaiting` is null when no canvas
- * has read the task yet.
+ * The tasks of a session's tree that another Copilot session holds, each with its session, its phase
+ * and status as the task's state file records them now (or as the tree recorded them when that file
+ * cannot be read), the decisions waiting from its store document, and whether a canvas process of that
+ * session is live. The document is the one keyed to the task's own workspace, so a task of the same ID
+ * in another workspace is not read. `decisionsWaiting` is null when no canvas has read the task yet.
  *
  * @param {ReturnType<typeof import('./store.mjs').createStore>} store
  * @param {any} shown The shown task's document.
@@ -76,13 +76,14 @@ export async function loadLinkedSessions(store, shown, options = {}) {
     for (const task of linkedTasksOf(shown)) {
         const session = (await store.load(storeIdFor(task.id, task.root)).catch(() => undefined)) ?? (await legacyDocumentFor(store, task.id, task.root));
         const presence = await store.loadPresence(task.sessionId).catch(() => null);
+        const current = await currentLinkedState(task.root, task.id, task.statePath);
         linked.push({
             taskId: task.id,
             sessionId: task.sessionId,
             sessionName: task.sessionName ?? null,
             statePath: task.statePath,
-            phase: task.phase ?? null,
-            status: task.status,
+            phase: current ? current.phase : (task.phase ?? null),
+            status: current ? current.status : task.status,
             decisionsWaiting: session ? decisionsWaitingOf(session) : null,
             live: hasLiveProcess(presence, at),
         });

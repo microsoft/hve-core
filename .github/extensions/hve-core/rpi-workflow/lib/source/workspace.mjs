@@ -362,6 +362,26 @@ async function loadLinkTarget(target, link) {
 }
 
 /**
+ * The phase and status a linked task's state file records now, read in the task's workspace root
+ * under the containment rules for linked reads. Null when the file cannot be read or names another task.
+ *
+ * @param {string | null | undefined} root the task's workspace root, as a session's tree records it
+ * @param {string} taskId
+ * @param {string | null | undefined} statePath the task's state path in that workspace
+ * @returns {Promise<{ phase: string | null, status: string } | null>}
+ */
+export async function currentLinkedState(root, taskId, statePath) {
+    try {
+        const workspace = await resolveWorkspace([root]);
+        const loaded = await loadState(workspace, statePath);
+        if (loaded.state.taskId !== taskId) return null;
+        return { phase: phaseKey(loaded.state.activePhase), status: lineageStatusOf(loaded.state) };
+    } catch {
+        return null;
+    }
+}
+
+/**
  * Reads the tasks the links of a folder's tasks reach outside it, keyed by `linkKey`: a parent in
  * another folder of this workspace, and each link that names a Copilot session. A session-named
  * link that reaches a task of this folder after all is listed in `localKeys` instead, so the tree
