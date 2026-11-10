@@ -47,6 +47,7 @@ export const LIMITS = Object.freeze({
 
 const ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$/;
 const SECTION_ID_RE = /^[a-z0-9][a-z0-9._-]{0,79}$/;
+const COPILOT_SESSION_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Error with a stable code that the server and actions map to responses. */
 export class ModelError extends Error {
@@ -548,6 +549,9 @@ export function editFeedback(session, feedbackId, value, now) {
     if (!EDITABLE_KINDS.includes(existing.kind)) {
         fail('invalid_input', `A ${KIND_LABELS[existing.kind]?.[1] ?? existing.kind} is changed where it was made, not here.`);
     }
+    if (isDeliveryUncertain(existing)) {
+        fail('invalid_state', uncertainWords(id));
+    }
     if (!unsent(existing, now)) {
         fail('invalid_state', isClaimed(existing, now) ? `Feedback ${id} is being sent.` : `Feedback ${id} was already sent.`);
     }
@@ -597,16 +601,31 @@ export const SUGGESTION_DIFF_MAX = 20000;
 export const CLAIM_STALE_MS = 10 * 60 * 1000;
 
 /**
- * True while a delivery holds a queued item, so takes and other deliveries skip it.
+ * True while a delivery holds a queued item, so takes and other deliveries skip it. A handoff to
+ * another session's inbox holds its items until they are sent, relayed, or marked uncertain,
+ * however long that takes; any other hold lapses after the claim window.
  *
  * @param {any} item
  * @param {string} now ISO time
  */
 export function isClaimed(item, now) {
+    if (item?.handoff) return true;
     if (!item?.deliveringSince) return false;
     const age = Date.parse(now) - Date.parse(item.deliveringSince);
     return Number.isFinite(age) && age < CLAIM_STALE_MS;
 }
+
+/**
+ * True when a delivery's outcome is unknown, so its items may already be in another session's
+ * chat. No path sends such an item again; it can still be discarded.
+ *
+ * @param {any} item
+ */
+export function isDeliveryUncertain(item) {
+    return Boolean(item?.deliveryUncertainAt);
+}
+
+const uncertainWords = (id) => `Feedback ${id} may already have been sent; check its session's chat before sending it again.`;
 
 /**
  * Marks pending items as sent through the queue and returns them for the agent: at a
@@ -617,7 +636,7 @@ export function isClaimed(item, now) {
  * @param {{ queuedOnly?: boolean }} [options]
  */
 export function takeFeedback(session, now, options = {}) {
-    const wanted = (item) => item.state === 'queued' && !isClaimed(item, now) && (!options.queuedOnly || Boolean(item.queuedForAgentAt));
+    const wanted = (item) => item.state === 'queued' && !isClaimed(item, now) && !isDeliveryUncertain(item) && (!options.queuedOnly || Boolean(item.queuedForAgentAt));
     if (!session.feedback.some(wanted)) {
         return { session, result: [] };
     }
@@ -659,6 +678,8 @@ export function markDelivered(session, ids, mode, now, extra = {}) {
         for (const item of draft.feedback) {
             if (wanted.has(item.id) && item.state === 'queued') {
                 delete item.deliveringSince;
+                delete item.handoff;
+                delete item.deliveryUncertainAt;
                 item.state = 'sent';
                 item.sentAt = now;
                 item.updatedAt = now;
@@ -705,18 +726,42 @@ export function markPickedUp(session, ids, pickup, now) {
 }
 
 /**
+ * Checks a handoff to another session's inbox: the target Copilot session, the inbox entry that
+ * carries the items, and when the source canvas relays them itself if no process claimed the entry.
+ *
+ * @param {any} value
+ * @returns {{ sessionId: string, entryId: string, relayAfter: string }}
+ */
+function handoffRecord(value) {
+    if (value === null || typeof value !== 'object' || typeof value.sessionId !== 'string' || !COPILOT_SESSION_RE.test(value.sessionId)) {
+        fail('invalid_input', 'handoff.sessionId must be a Copilot session ID.');
+    }
+    if (typeof value.relayAfter !== 'string' || Number.isNaN(Date.parse(value.relayAfter))) {
+        fail('invalid_input', 'handoff.relayAfter must be an ISO time.');
+    }
+    return { sessionId: value.sessionId.toLowerCase(), entryId: identifier(value.entryId, 'handoff.entryId'), relayAfter: value.relayAfter };
+}
+
+/**
  * Holds queued items for one delivery so a concurrent take or delivery cannot send them too.
+ * With `options.handoff`, each item also records the handoff to another session's inbox, and the
+ * hold lasts until the items are sent, relayed, or marked uncertain.
  *
  * @param {any} session
  * @param {string[]} ids
  * @param {string} now
+ * @param {{ handoff?: { sessionId: string, entryId: string, relayAfter: string } }} [options]
  */
-export function claimDelivery(session, ids, now) {
+export function claimDelivery(session, ids, now, options = {}) {
+    const handoff = options.handoff === undefined ? null : handoffRecord(options.handoff);
     const wanted = ids.map((id) => identifier(id, 'ids[]'));
     for (const id of wanted) {
         const item = byId(session.feedback, id);
         if (!item || item.state !== 'queued') {
             fail('invalid_state', `Feedback ${id} is no longer queued.`);
+        }
+        if (isDeliveryUncertain(item)) {
+            fail('invalid_state', uncertainWords(id));
         }
         if (isClaimed(item, now)) {
             fail('invalid_state', `Feedback ${id} is already being delivered.`);
@@ -724,23 +769,73 @@ export function claimDelivery(session, ids, now) {
     }
     return mutate(session, now, (draft) => {
         for (const id of wanted) {
-            byId(draft.feedback, id).deliveringSince = now;
+            const item = byId(draft.feedback, id);
+            item.deliveringSince = now;
+            if (handoff) item.handoff = { ...handoff };
         }
         return wanted;
     });
 }
 
-/** Releases a claim after a failed delivery; the items stay queued. */
+/**
+ * Marks queued items whose delivery outcome is unknown: the hold ends, and no path sends them
+ * again. Items that were already sent or already uncertain do not change.
+ *
+ * @param {any} session
+ * @param {string[]} ids
+ * @param {string} now
+ */
+export function markDeliveryUncertain(session, ids, now) {
+    const wanted = new Set(ids);
+    const open = (item) => wanted.has(item.id) && item.state === 'queued' && !isDeliveryUncertain(item);
+    if (!session.feedback.some(open)) {
+        return { session, result: [] };
+    }
+    return mutate(session, now, (draft) => {
+        const marked = [];
+        for (const item of draft.feedback) {
+            if (open(item)) {
+                delete item.deliveringSince;
+                delete item.handoff;
+                item.deliveryUncertainAt = now;
+                item.updatedAt = now;
+                marked.push(item.id);
+            }
+        }
+        return marked;
+    });
+}
+
+/**
+ * The items among `ids` that the inbox entry `entryId` still holds for sending: queued, not
+ * uncertain, and handed off with that entry. Items sent, relayed, or marked uncertain since, or
+ * held by another delivery, are left alone.
+ *
+ * @param {any} session
+ * @param {string[]} ids
+ * @param {string} entryId
+ * @returns {string[]} the held item IDs, in the order given
+ */
+export function heldItemIds(session, ids, entryId) {
+    return ids.filter((id) => {
+        const item = byId(session.feedback, id);
+        return item?.state === 'queued' && !isDeliveryUncertain(item) && item.handoff?.entryId === entryId;
+    });
+}
+
+/** Releases a claim or handoff after a failed delivery; the items stay queued. */
 export function releaseDelivery(session, ids, now) {
     const wanted = new Set(ids);
-    if (!session.feedback.some((item) => wanted.has(item.id) && item.deliveringSince)) {
+    const held = (item) => wanted.has(item.id) && (item.deliveringSince || item.handoff);
+    if (!session.feedback.some(held)) {
         return { session, result: [] };
     }
     return mutate(session, now, (draft) => {
         const released = [];
         for (const item of draft.feedback) {
-            if (wanted.has(item.id) && item.deliveringSince) {
+            if (held(item)) {
                 delete item.deliveringSince;
+                delete item.handoff;
                 released.push(item.id);
             }
         }
@@ -763,6 +858,9 @@ export function queueForAgent(session, ids, now) {
         const item = byId(session.feedback, id);
         if (!item || item.state !== 'queued') {
             fail('invalid_state', `Feedback ${id} is no longer waiting to be sent.`);
+        }
+        if (isDeliveryUncertain(item)) {
+            fail('invalid_state', uncertainWords(id));
         }
         if (isClaimed(item, now)) {
             fail('invalid_state', `Feedback ${id} is being sent.`);
@@ -873,6 +971,9 @@ function sendableItems(session, ids, now) {
         if (item.state !== 'queued') {
             fail('invalid_state', `Feedback ${id} is ${item.state}; only items not yet sent can be sent.`);
         }
+        if (isDeliveryUncertain(item)) {
+            fail('invalid_state', uncertainWords(id));
+        }
         if (isClaimed(item, now)) {
             fail('invalid_state', `Feedback ${id} is already being sent.`);
         }
@@ -926,6 +1027,13 @@ function itemLines(session, items, start) {
     return lines;
 }
 
+/** The items of each kind, in words: "2 comments and 1 answer". */
+function tallyOf(items) {
+    const counts = new Map();
+    for (const item of items) counts.set(wordsKind(item.kind), (counts.get(wordsKind(item.kind)) ?? 0) + 1);
+    return listOf([...counts].map(([kind, count]) => `${count} ${KIND_LABELS[kind][count === 1 ? 1 : 2]}`));
+}
+
 const isCompleted = (session) => session.session?.status === 'completed';
 
 /**
@@ -957,9 +1065,7 @@ export function composeSessionDelivery(parts, now = new Date().toISOString(), op
     const handle = typeof options.canvas?.handle === 'string' && options.canvas.handle ? options.canvas.handle : null;
     const instanceId = typeof options.canvas?.instanceId === 'string' && options.canvas.instanceId ? options.canvas.instanceId : null;
     const name = handle ? `RPI canvas ${handle}` : 'RPI canvas';
-    const counts = new Map();
-    for (const item of all) counts.set(wordsKind(item.kind), (counts.get(wordsKind(item.kind)) ?? 0) + 1);
-    const tally = listOf([...counts].map(([kind, count]) => `${count} ${KIND_LABELS[kind][count === 1 ? 1 : 2]}`));
+    const tally = tallyOf(all);
     const sent = `${all.length} ${all.length === 1 ? 'item' : 'items'}`;
     const rpi = sections[0].session.source?.kind === 'rpi';
     const multi = sections.length > 1;
@@ -1020,6 +1126,48 @@ export function composeSessionDelivery(parts, now = new Date().toISOString(), op
 }
 
 /**
+ * Composes the message a session's canvas process sends into its own chat for items that another
+ * session's canvas handed over through the inbox. The first line is the inbox contract, naming the
+ * source canvas and session. The task and its files follow, then the items as the canvas formats
+ * them for its own chat. The items' words come from the task document; the inbox entry supplies
+ * only the source canvas handle and session ID, which the store validates.
+ *
+ * @param {any} session the task document that holds the items
+ * @param {string[]} ids the items to send, each still queued
+ * @param {{ handle: string, sessionId: string }} from the canvas and session that sent them
+ * @returns {{ prompt: string, displayPrompt: string, ids: string[] }}
+ */
+export function composeInboxDelivery(session, ids, from) {
+    const items = ids.map((id) => byId(session.feedback, id));
+    if (items.length === 0 || items.some((item) => !item || item.state !== 'queued' || isDeliveryUncertain(item))) {
+        fail('invalid_state', 'Only items that are still queued can be delivered to a session.');
+    }
+    const phase = PHASE_LABELS[session.session?.activePhase];
+    const rpi = session.source?.kind === 'rpi';
+    const rest = ['', 'How to handle these items:'];
+    if (rpi) {
+        rest.push("- The canvas does not change the task's files. Make each change yourself in the file named for it; the canvas shows the change once the file is saved.");
+    }
+    if (rpi && isCompleted(session)) {
+        rest.push("- This task is completed, so these items are follow-up work for the session: plan them as new work rather than editing the task's finished files.");
+    }
+    rest.push('- Then reply in this chat with how you understood each item and whether you made the change.');
+    const files = rpi ? fileLines(session) : [];
+    if (files.length) rest.push('', ...files);
+    rest.push('', 'Items:', ...itemLines(session, items, 1));
+    const count = `${items.length} ${items.length === 1 ? 'item' : 'items'}`;
+    const head = [
+        `RPI canvas ${from.handle} in session ${from.sessionId} sent ${count} for this task. They are the user's input from that canvas.`,
+        `Task ${session.task.id}: ${session.task.title}${phase ? ` (current phase: ${phase})` : ''}`,
+    ];
+    return {
+        prompt: [...head, ...rest].join('\n'),
+        displayPrompt: `RPI canvas ${from.handle} sent ${count}: ${tallyOf(items)}.`,
+        ids: items.map((item) => item.id),
+    };
+}
+
+/**
  * What the canvas shows of another task's feedback: its unsent items with what they
  * target, and how many sent items wait for the agent.
  *
@@ -1028,7 +1176,7 @@ export function composeSessionDelivery(parts, now = new Date().toISOString(), op
  */
 export function feedbackOverview(session, now) {
     const pending = session.feedback
-        .filter((item) => item.state === 'queued' && !isClaimed(item, now))
+        .filter((item) => item.state === 'queued' && !isClaimed(item, now) && !isDeliveryUncertain(item))
         .map((item) => {
             const about = item.target ? describeTarget(session, item.target) : 'the session';
             return {

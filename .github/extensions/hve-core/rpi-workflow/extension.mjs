@@ -6,6 +6,7 @@ import { CanvasError, createCanvas, joinSession } from '@github/copilot-sdk/exte
 import { ACTION_DEFINITIONS, createActionHandlers } from './lib/actions.mjs';
 import { createDelivery } from './lib/delivery.mjs';
 import { createEditorOpener, findEditor } from './lib/editor.mjs';
+import { createInboxRunner } from './lib/inbox.mjs';
 import { createPickupTracker } from './lib/pickup.mjs';
 import { createInstanceRegistry } from './lib/lifecycle.mjs';
 import { ModelError, PHASE_LABELS } from './lib/model.mjs';
@@ -170,4 +171,17 @@ if (typeof joined?.on === 'function') {
     joined.on('user.message', (event) => {
         pickups.observe(event).catch((error) => log(`Could not read a chat event: ${error instanceof Error ? error.message : 'error'}`, 'warning'));
     });
+}
+// Runs whether or not a canvas panel is open: announces this process for the session and sends the items other canvases hand to it.
+// Its timers are unref'd, so they never keep the process alive; an exited process's presence entry ages out after two minutes.
+if (joined?.sessionId) {
+    const inbox = createInboxRunner({
+        store,
+        sessionId: joined.sessionId,
+        deliver: createDelivery({ getSession: () => joined }),
+        pickups,
+        canDeliver: () => typeof joined?.send === 'function',
+        log,
+    });
+    inbox.start().catch(() => {});
 }

@@ -22,6 +22,13 @@ export const DEFAULT_PREFERENCES = Object.freeze({ theme: 'system', contrast: 's
 const THEMES = new Set(['system', 'light', 'dark']);
 const CONTRASTS = new Set(['standard', 'more']);
 const SESSION_ID_RE = /^[a-z0-9][a-z0-9-]{0,79}$/;
+const COPILOT_SESSION_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const REFERENCE_RE = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$/;
+const HANDLE_RE = /^[0-9A-Za-z][0-9A-Za-z-]{0,23}$/;
+/** Most items one inbox entry names, the same limit a send takes. */
+export const INBOX_MAX_ITEMS = 50;
+/** The states an inbox entry moves through, in order: waiting, claimed by one process, then sending. */
+export const INBOX_STATES = Object.freeze(['waiting', 'claimed', 'sending']);
 
 /**
  * Resolves the Copilot home every host shares: a non-empty `COPILOT_HOME`, otherwise
@@ -99,9 +106,77 @@ export function preferencesPatch(patch) {
     return result;
 }
 
+const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+const isInstant = (value) => typeof value === 'string' && Number.isFinite(Date.parse(value));
+const isProcessId = (value) => Number.isInteger(value) && value > 0;
+/** Whether a record has no keys beyond the given ones, so a file cannot carry fields the contract does not name. */
+const onlyKeys = (value, keys) => Object.keys(value).every((key) => keys.has(key));
+const PROCESS_KEYS = new Set(['pid', 'version', 'updatedAt']);
+const ENTRY_KEYS = new Set(['id', 'taskDoc', 'itemIds', 'from', 'createdAt', 'state', 'owner']);
+const FROM_KEYS = new Set(['sessionId', 'handle']);
+const OWNER_KEYS = new Set(['pid', 'at']);
+
 /**
- * Durable store for sessions and preferences. Writes are atomic (temporary file, then
- * rename), read-modify-write runs under an exclusive lock file so several processes can
+ * Normalizes a Copilot session ID to the lowercase form that names its presence and inbox files.
+ *
+ * @param {unknown} value
+ * @returns {string}
+ */
+function copilotSessionId(value) {
+    if (typeof value !== 'string' || !COPILOT_SESSION_RE.test(value)) {
+        throw new StoreError('invalid_input', 'Copilot session IDs are UUIDs.');
+    }
+    return value.toLowerCase();
+}
+
+/** Owner of a claimed or sending inbox entry: the process that took it and when. */
+const isOwner = (value) => isRecord(value) && onlyKeys(value, OWNER_KEYS) && isProcessId(value.pid) && isInstant(value.at);
+
+/** A presence entry: a process that announced itself for a session, with its protocol version and refresh time. */
+const isProcess = (value) => isRecord(value) && onlyKeys(value, PROCESS_KEYS) && isProcessId(value.pid) && Number.isInteger(value.version) && value.version > 0 && isInstant(value.updatedAt);
+
+/** An inbox entry names items in a task document by reference; it never carries their text. */
+function isInboxEntry(value) {
+    return isRecord(value)
+        && onlyKeys(value, ENTRY_KEYS)
+        && typeof value.id === 'string' && REFERENCE_RE.test(value.id)
+        && typeof value.taskDoc === 'string' && SESSION_ID_RE.test(value.taskDoc)
+        && Array.isArray(value.itemIds) && value.itemIds.length >= 1 && value.itemIds.length <= INBOX_MAX_ITEMS
+        && value.itemIds.every((id) => typeof id === 'string' && REFERENCE_RE.test(id))
+        && new Set(value.itemIds).size === value.itemIds.length
+        && isRecord(value.from) && onlyKeys(value.from, FROM_KEYS)
+        && typeof value.from.sessionId === 'string' && COPILOT_SESSION_RE.test(value.from.sessionId)
+        && typeof value.from.handle === 'string' && HANDLE_RE.test(value.from.handle)
+        && isInstant(value.createdAt)
+        && INBOX_STATES.includes(value.state)
+        && (value.state === 'waiting' ? value.owner === undefined || value.owner === null || isOwner(value.owner) : isOwner(value.owner));
+}
+
+/** The presence entries of a session, or none when its file is missing. */
+function presenceOf(sessionId, doc) {
+    if (doc === undefined) return { sessionId, processes: [] };
+    if (!isRecord(doc) || doc.sessionId !== sessionId || !Array.isArray(doc.processes) || !doc.processes.every(isProcess)) {
+        throw new StoreError('storage_corrupt', `Presence for ${sessionId} has an unrecognized shape.`);
+    }
+    return { sessionId, processes: doc.processes };
+}
+
+/** The inbox entries of a session, or none when its file is missing. Entry IDs are unique within a file. */
+function inboxOf(file, doc) {
+    const name = path.basename(file);
+    if (doc === undefined) return { entries: [] };
+    if (!isRecord(doc) || !Array.isArray(doc.entries) || !doc.entries.every(isInboxEntry)) {
+        throw new StoreError('storage_corrupt', `${name} has an unrecognized shape.`);
+    }
+    if (new Set(doc.entries.map((entry) => entry.id)).size !== doc.entries.length) {
+        throw new StoreError('storage_corrupt', `${name} has entries with the same ID.`);
+    }
+    return { entries: doc.entries };
+}
+
+/**
+ * Durable store for sessions, preferences, presence, and inboxes. Writes are atomic (temporary
+ * file, then rename), read-modify-write runs under an exclusive lock file so several processes can
  * share a session without lost updates, and changes from other processes are detected by
  * polling file size and time while anyone is subscribed. Each lock hold carries its own
  * token: only the holder releases it, a stale takeover removes only the lock it judged
@@ -126,6 +201,16 @@ export function createStore(options = {}) {
     const sessionsDir = path.join(root, 'sessions');
     const preferencesFile = path.join(root, 'preferences.json');
     const instancesFile = path.join(root, 'instances.json');
+    const presenceDir = path.join(root, 'presence');
+    const inboxDir = path.join(root, 'inbox');
+
+    function presenceFile(id) {
+        return path.join(presenceDir, `${copilotSessionId(id)}.json`);
+    }
+
+    function inboxFile(id) {
+        return path.join(inboxDir, `${copilotSessionId(id)}.json`);
+    }
 
     function sessionFile(id) {
         if (typeof id !== 'string' || !SESSION_ID_RE.test(id)) {
@@ -432,6 +517,101 @@ export function createStore(options = {}) {
                 publish(id, next);
                 return { value: { session: next, result, changed: true } };
             }));
+        },
+
+        /**
+         * Reads a session's presence: the canvas processes that announced themselves for it. A
+         * missing file reads as none. Reads take the same lock as writes.
+         *
+         * @param {string} sessionId a Copilot session ID
+         * @returns {Promise<{ sessionId: string, processes: { pid: number, version: number, updatedAt: string }[] }>}
+         */
+        async loadPresence(sessionId) {
+            const id = copilotSessionId(sessionId);
+            const file = presenceFile(id);
+            return withLock(file, async () => presenceOf(id, await readJson(file)));
+        },
+
+        /**
+         * Changes a session's presence under the lock. `change` receives the current process
+         * entries and returns the next list. Presence only says which processes are live, so a
+         * presence file that cannot be read is replaced rather than left in place.
+         *
+         * @param {string} sessionId a Copilot session ID
+         * @param {(processes: any[]) => any[]} change
+         * @returns {Promise<{ sessionId: string, processes: { pid: number, version: number, updatedAt: string }[] }>} the stored presence
+         */
+        async updatePresence(sessionId, change) {
+            const id = copilotSessionId(sessionId);
+            const file = presenceFile(id);
+            return serialized(file, () => lockedWrite(file, async (stillHeld) => {
+                const current = await readJson(file).then((doc) => presenceOf(id, doc)).catch((error) => {
+                    if (error instanceof StoreError && error.code === 'storage_corrupt') {
+                        return { sessionId: id, processes: [] };
+                    }
+                    throw error;
+                });
+                const next = presenceOf(id, { sessionId: id, processes: change(current.processes) });
+                if (!(await stillHeld())) {
+                    return { retry: true };
+                }
+                await writeAtomic(file, next);
+                return { value: next };
+            }));
+        },
+
+        /**
+         * Reads a session's inbox entries under the lock. A missing file reads as none; a file that
+         * is not valid throws `storage_corrupt` and is left in place.
+         *
+         * @param {string} sessionId a Copilot session ID
+         * @returns {Promise<{ entries: any[] }>}
+         */
+        async loadInbox(sessionId) {
+            const file = inboxFile(sessionId);
+            return withLock(file, async () => inboxOf(file, await readJson(file)));
+        },
+
+        /**
+         * Changes a session's inbox entries under the lock, as one read-change-write. `change`
+         * receives the current entries and returns `{ entries, result }`; returning the same array
+         * writes nothing. Resolves to the `result` and whether the file was written.
+         *
+         * @template T
+         * @param {string} sessionId a Copilot session ID
+         * @param {(entries: any[]) => { entries: any[], result: T }} change
+         * @returns {Promise<{ result: T, changed: boolean }>}
+         */
+        async updateInbox(sessionId, change) {
+            const file = inboxFile(sessionId);
+            return serialized(file, () => lockedWrite(file, async (stillHeld) => {
+                const current = inboxOf(file, await readJson(file));
+                const { entries, result } = change(current.entries);
+                if (entries === current.entries) {
+                    return { value: { result, changed: false } };
+                }
+                const next = inboxOf(file, { entries }).entries;
+                if (!(await stillHeld())) {
+                    return { retry: true };
+                }
+                await writeAtomic(file, { entries: next });
+                return { value: { result, changed: true } };
+            }));
+        },
+
+        /**
+         * A token for the state of a session's inbox file. It changes whenever the file is replaced,
+         * and reads `missing` when there is no file. Takes no lock, so a check costs one stat.
+         *
+         * @param {string} sessionId a Copilot session ID
+         * @returns {Promise<string>}
+         */
+        async inboxStamp(sessionId) {
+            const stat = await fs.stat(inboxFile(sessionId)).catch((error) => {
+                if (error && error.code === 'ENOENT') return null;
+                throw error;
+            });
+            return stat ? `${stat.ino}:${stat.size}:${stat.mtimeMs}` : 'missing';
         },
 
         async loadPreferences() {
