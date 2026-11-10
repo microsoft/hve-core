@@ -1,9 +1,9 @@
 ---
 title: RPI Workflow Canvas
-description: Follow an RPI session phase by phase in a canvas beside the chat, answer the agent's decisions, and send it your input
+description: Follow an RPI session phase by phase in a canvas beside the chat, answer the agent's decisions, send it your input, and follow a Project's child sessions
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-09
 ms.topic: how-to
 keywords:
   - rpi workflow canvas
@@ -14,7 +14,9 @@ keywords:
   - feedback
   - review and send
   - github copilot
-estimated_reading_time: 11
+  - child sessions
+  - copilot project
+estimated_reading_time: 14
 ---
 
 The RPI Workflow canvas shows the session the RPI Agent is working on, one phase at a time, in a panel beside the chat. You read the research and the plan as the agent writes them, answer the decisions it asks you about, watch tasks move during implementation, and work through review findings and follow-ups. Anything you add waits in the canvas until you send it, and the agent reads each item back so you can see how it understood you.
@@ -99,7 +101,7 @@ Answers, overrides, comments, and suggestions wait under **Your feedback** until
 
 **Send now** gives the items to the agent at its next step, even in the middle of a task, as one chat message. The chat shows a line such as "RPI canvas XWK0 sent 2 items: 1 answer and 1 comment." **Queue** keeps them in the canvas until the agent's next checkpoint: when it changes phase, finishes a task, asks you something, or ends its turn. Until then, you can take a queued item back.
 
-Before you send, you can edit or discard any item, add a message for the agent, and open the exact text Send now will deliver.
+Before you send, you can edit or discard any item, add a message for the agent, and open the exact text Send now will deliver. Items for a child session of a Project take a different route. See [Follow Child Sessions from a Project](#follow-child-sessions-from-a-project).
 
 When the RPI Agent asks you a question in the chat, it also offers **Answered in the canvas**. Choose it after answering in the canvas, and the agent collects your answers before it goes on.
 
@@ -169,6 +171,55 @@ Follow-up ranks the work that remains. Required items keep the session open, and
 ### Earlier Documents
 
 When one session takes on a new request, the new work gets its own research, plan, changes record, and review. A **Document** switcher in the context bar then lists each phase's earlier documents by title and time. An earlier document opens read-only, with a button back to the current one.
+
+## Follow Child Sessions from a Project
+
+A Project can split RPI work across child sessions, and each child runs its own loop. Without the canvas, you would switch sessions to read each child's plan and answer its decisions. From the Project's session, you can show any child's task in this canvas and send input to that child's agent.
+
+### Find the Children
+
+The session button in the header opens the session menu. When the session has child sessions in other Copilot sessions, the menu shows a **Child sessions** group. Each child lists its task, its session's name, its phase, its status, the decisions waiting for you, and whether its canvas runs, shown as **Canvas running** or **No canvas running**.
+Until a canvas has read a child's task, its decisions show as **Decisions not read yet**. Under **Loops in this session**, each child also appears as a card with its session name, phase, and decisions.
+
+### Open a Child Only When You Want
+
+The canvas never opens a child's canvas by itself. To open one, choose a button on the child:
+
+* Choose **Show here** to show the child's task in this canvas. Following the agent stops, as it does for any session you show.
+* Choose **Open in new panel** to open the child's canvas in a new panel of this conversation. If that panel is already open, the canvas focuses it, and this canvas stays as it is.
+
+The card under **Loops in this session** has the same two buttons, labeled **Show** and **Open in new panel**.
+
+If the host cannot open the panel, the canvas asks the Project's agent, in the chat, to open it. It asks at most once every 30 seconds. The page reports the result: the panel opened, an open panel was focused, the agent was asked, the canvas must wait before asking again, or the request failed and says why.
+
+### Where Your Input Goes
+
+Input for a child's task waits in **Review and send** like any other item. Before you send, the review names the route that Send now takes. Direct delivery does not involve the Project's agent. A relayed item reaches that agent as a chat message, which it forwards:
+
+| Route the review names             | Where the items go                                                                                                                        |
+|------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| The child's canvas is running      | Straight to the child's agent through its canvas. If that canvas does not take them within 20 seconds, the Project's agent forwards them. |
+| No canvas is running for the child | The Project's agent forwards them to the child.                                                                                           |
+
+If the route changes while the review is open, the review says so and asks you to check it again. Queue sends nothing. The items wait in the child's task until its agent collects them.
+
+After you send, each item shows whether it went direct or was relayed, and through which chat. Until the Project's agent takes relayed items, a notice at the bottom of the document begins with "Relayed to" and names the child's session. You can dismiss that notice.
+
+An item whose delivery may already have reached its chat shows **May have been sent**, and a notice names the chat to check. The canvas never sends that item again. Check that chat, then discard the item.
+
+### Provided Research and Plans
+
+The phase shows **Provided** when you or another session supplied its research or plan, unless the agent is working in that phase. Its **Source** section names the session the work came from, or the user. Research that the agent reused, or found already satisfied and skipped, still shows **Skipped**.
+
+### Limits
+
+* Cloud sessions are not supported. A child in a cloud session has no local workspace, so the canvas cannot read it or follow a link to it. Create the children you want to follow as local sessions.
+* A child session that runs an older hve-core build does not announce a running canvas or take inbox items, so its items go through the Project's agent.
+* During a rollout, an older copy of the provider keeps a task's feedback in its legacy store document. Until every copy updates, feedback can split across two documents.
+* Forwarding needs a chat whose agent has the `send_session_message` tool, such as a GitHub Copilot app Project. Without that tool, the agent cannot pass relayed items to the child.
+* Opening a panel depends on the host's experimental canvas open and list calls. When the host cannot open a panel, the canvas asks the agent instead.
+
+The [canvas README](https://github.com/microsoft/hve-core/blob/main/.github/extensions/hve-core/rpi-workflow/README.md) lists the storage and security rules for these features. The [project coordination reference](https://github.com/microsoft/hve-core/blob/main/.github/skills/rpi/rpi/references/project-coordination.md) describes how the Project's agent starts, hands off, and resumes its children.
 
 ## Themes, Accessibility, and Keyboard
 
