@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, clear, decisionAlias, fullTime, h, icon, idTag, PHASE_META, PHASE_STATUS, plural, relTime, sr } from './dom.mjs';
-import { confirmPress, disclosure, filePreview, hasMarginHome, presentationControl, revealRow, reviewSheet, sendItems, sessionTree, steerPanel, taskRef, waitingCount } from './components.mjs';
+import { confirmPress, deliveryNotices, deliveryRequest, disclosure, filePreview, handAnnouncement, hasMarginHome, presentationControl, revealRow, reviewSheet, ROUTE_CHANGED_NOTE, routeBlock, sendItems, sessionTree, staleAnnouncement, steerPanel, taskRef, uncertainAnnouncement, waitingCount } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
 import { notConnectedView } from './connect-view.mjs';
@@ -26,9 +26,9 @@ const PHASES = ['research', 'plan', 'implement', 'review', 'followup'];
 const VIEWS = { research: researchView, plan: planView, implement: implementView, review: reviewView, followup: followupView };
 const $ = (id) => document.getElementById(id);
 
-/** The Review and send dialog's state: the person's message, the previewed text, and progress. */
+/** The Review and send dialog's state: the person's message, the previewed text, progress, and the note when the route changed. */
 function freshSend() {
-    return { note: '', preview: null, previewNote: null, sending: false, busy: null, error: null };
+    return { note: '', preview: null, previewNote: null, sending: false, busy: null, error: null, routeNote: null };
 }
 
 const state = {
@@ -55,6 +55,8 @@ const state = {
         expanded: new Set(),
         openEvidence: new Set(),
         send: freshSend(),
+        /** Delivery notices the person dismissed, by their signature; a notice returns when its items change. */
+        dismissedNotices: new Set(),
         composer: { text: '', anchor: null, part: null, quote: null, title: null },
         decisionDrafts: new Map(),
         corrections: new Map(),
@@ -154,11 +156,18 @@ function dismissNote(id) {
 
 function renderStatus() {
     const area = $('statusArea');
-    area.hidden = state.notes.length === 0;
-    area.replaceChildren(...state.notes.map((note) => h('div', { class: ['status-note', 'notice', `tone-${note.tone}`], dataset: { note: note.id } },
+    const notices = state.data && !state.notConnected ? deliveryNotices(context()) : [];
+    area.hidden = state.notes.length === 0 && notices.length === 0;
+    area.replaceChildren(...notices, ...state.notes.map((note) => h('div', { class: ['status-note', 'notice', `tone-${note.tone}`], dataset: { note: note.id } },
         icon(note.icon, { className: 'status-note-icon' }),
         h('p', { class: 'status-note-text', text: note.text }),
         button('Dismiss', { iconName: 'x', hideLabel: true, title: 'Dismiss this note', attrs: { 'data-key': `dismiss-${note.id}` }, onClick: () => dismissNote(note.id) }))));
+}
+
+/** Moves focus to the first control in the status area, or to the document when none is left. */
+function focusStatusArea() {
+    const first = $('statusArea').querySelector('button');
+    if (!first || !focusQuietly(first)) focusQuietly($('document'));
 }
 
 // Lookup and navigation
@@ -475,6 +484,8 @@ function announceChanges(previous, next, moved = false) {
     const read = (next.view.readBacks ?? []).filter((id) => !readBefore.has(id));
     for (const id of read) state.ui.revealed.add(id);
     if (read.length) messages.push(`The agent read back ${listIds(read)}. ${read.length === 1 ? 'It is' : 'They are'} in Your feedback, where you can correct ${read.length === 1 ? 'it' : 'them'}.`);
+    const uncertain = uncertainAnnouncement(previous, next);
+    if (uncertain) messages.push(uncertain);
     if (previous.session.session.activePhase !== next.session.session.activePhase) {
         messages.push(`The agent moved to ${PHASE_META[next.session.session.activePhase].label}${moved ? '; the canvas moved with it' : ''}.`);
     }
@@ -1045,11 +1056,19 @@ const act = {
             reportFailure(`Request not added: ${error.message}`);
         }
     },
+    /** Hides a delivery notice until its items change, keeping focus in the status area when it had it. */
+    dismissDeliveryNotice(signature) {
+        const hadFocus = $('statusArea').contains(document.activeElement);
+        state.ui.dismissedNotices.add(signature);
+        renderStatus();
+        if (hadFocus) focusStatusArea();
+    },
     /** Opens Review and send from the header and prepares the exact text. */
     openSend() {
         const sheet = $('sendSheet');
         if (!state.data || sheet.open) return;
         state.ui.send.error = null;
+        state.ui.send.routeNote = null;
         sendOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         renderSendSheet();
         sheet.showModal();
@@ -1063,7 +1082,8 @@ const act = {
     },
     /**
      * Sends the listed items now as one chat message, or queues them for the agent's next
-     * checkpoint, after checking the list still matches the text prepared for it.
+     * checkpoint, after checking the list still matches the text prepared for it. Send now also
+     * names the route the preview showed, so a route that changed since is checked again.
      *
      * @param {'send' | 'queue'} [mode]
      */
@@ -1083,21 +1103,24 @@ const act = {
         send.error = null;
         renderSendSheet();
         try {
-            const result = await api('/api/delivery', { items, digest: send.preview.digest, mode, ...(send.note.trim() ? { note: send.note } : {}) });
+            const result = await api('/api/delivery', deliveryRequest(send.preview, items, mode, send.note));
             const handle = state.data.canvas?.handle;
             Object.assign(state.ui.send, freshSend());
             $('sendSheet').close();
             announce(mode === 'queue'
                 ? `Queued ${plural(result.queued.length, 'item')} for the agent. It collects them at its next checkpoint; until then, you can take them back from Your feedback.`
-                : result.warning ?? `Sent ${plural(result.delivered.length, 'item')} to the agent. Look for “RPI canvas${handle ? ` ${handle}` : ''} sent” in the chat.`);
+                : result.handedOff ? handAnnouncement(result) : (result.warning ?? `Sent ${plural(result.delivered.length, 'item')} to the agent. Look for “RPI canvas${handle ? ` ${handle}` : ''} sent” in the chat.`));
             await refresh();
         } catch (error) {
             send.sending = false;
             send.busy = null;
             if (error.code === 'preview_stale' && error.detail?.preview) {
+                const previous = send.preview;
                 send.preview = error.detail.preview;
                 send.previewNote = send.note;
-                announce(`Your items changed since this opened. Check the list, then ${mode === 'queue' ? 'queue' : 'send'} again.`);
+                const routeMoved = mode === 'send' && Boolean(previous?.route?.kind) && previous.route.kind !== send.preview.route?.kind;
+                if (routeMoved) send.routeNote = ROUTE_CHANGED_NOTE;
+                announce(staleAnnouncement({ listChanged: previewKey(previous) !== previewKey(send.preview), routeMoved, route: send.preview.route, verb: mode === 'queue' ? 'queue' : 'send' }));
             } else {
                 send.error = `${mode === 'queue' ? 'Not queued' : 'Not sent'}: ${error.message}`;
                 announce(send.error);
@@ -1683,7 +1706,7 @@ async function refreshSendPreview() {
     updateSendPreview();
 }
 
-/** Updates the exact text and Send in place, so typing a message is never interrupted. */
+/** Updates the exact text, the route, and Send in place, so typing a message is never interrupted. */
 function updateSendPreview() {
     const sheet = $('sendSheet');
     if (!sheet.open) return;
@@ -1698,6 +1721,12 @@ function updateSendPreview() {
     confirm.disabled = state.ui.send.sending || !state.ui.send.preview;
     const queue = sheet.querySelector('[data-key="send-queue"]');
     if (queue) queue.disabled = confirm.disabled;
+    const route = $('send-route');
+    if (route) {
+        const block = routeBlock(state.ui.send.preview?.route, state.ui.send.routeNote);
+        route.hidden = block.length === 0;
+        clear(route).append(...block);
+    }
 }
 
 /** Rebuilds the open dialog, keeping focus, selection, and the exact-text disclosure where they were. */
@@ -1770,6 +1799,7 @@ function focusKey() {
     const fallback = {
         holder: holder ? (holder.dataset.item ? ['item', holder.dataset.item] : ['row', holder.dataset.row]) : null,
         heading: element.closest('.steer-section')?.getAttribute('aria-labelledby') ?? null,
+        status: Boolean(element.closest('.status-area')),
     };
     if (element.id) return { id: element.id, selection, ...fallback };
     if (element.dataset.key) return { dataKey: element.dataset.key, selection, ...fallback };
@@ -1799,11 +1829,12 @@ function restoreFocus(key) {
         if (key.selection && typeof element.setSelectionRange === 'function') element.setSelectionRange(key.selection[0], key.selection[1]);
         return;
     }
-    // The control went away: move to its card or row, then to its steering section heading.
+    // The control went away: move to its card or row, then to its steering section heading, or to the status area.
     const holder = key.holder ? document.querySelector(`[data-${key.holder[0]}="${CSS.escape(key.holder[1])}"]`) : null;
     if (holder && focusQuietly(holder)) return;
     const heading = key.heading ? $(key.heading) : null;
-    if (heading) focusQuietly(heading);
+    if (heading && focusQuietly(heading)) return;
+    if (key.status) focusStatusArea();
 }
 
 // Not connected
@@ -1964,6 +1995,7 @@ function renderPage() {
     renderNavigator();
     renderContextBar();
     renderDocument();
+    renderStatus();
     renderSteer();
     watchOffsets();
     doc.scrollTop = scroll;

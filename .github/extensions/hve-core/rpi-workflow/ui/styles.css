@@ -3329,6 +3329,33 @@ details > summary:hover {
   margin-top: 2px;
 }
 
+/* Where Send now takes the items, in words, between the exact text and what Send now and Queue do. */
+.send-route {
+  margin: 14px 0 0;
+  color: var(--rw-fg-muted);
+  font: 400 12.5px/19px var(--rw-font);
+}
+
+.send-route[hidden] {
+  display: none;
+}
+
+.send-route .notice {
+  margin: 0 0 8px;
+}
+
+.send-route-line {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  margin: 0;
+}
+
+.send-route-line .icon {
+  margin-top: 2px;
+}
+
 .group-hint {
   margin: 0 0 6px;
 }
