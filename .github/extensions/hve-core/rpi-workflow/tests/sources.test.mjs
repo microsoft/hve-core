@@ -14,8 +14,10 @@ import { createFeedback, markDelivered } from '../lib/model.mjs';
 import { buildScenario, SCENARIO_ID } from '../lib/scenario.mjs';
 import { createCanvasServer as newServer } from '../lib/server.mjs';
 import { createSourceController, notConnected, openPlan, sourceSummary, validateOpenInput } from '../lib/sources.mjs';
+import { storeIdFor } from '../lib/source/workspace.mjs';
 import { createStore, MAX_INSTANCES } from '../lib/store.mjs';
 import { stopTracked, track } from './helpers/cleanup.mjs';
+import { scratchFolder } from './helpers/scratch.mjs';
 import { CHILD_STATE, CHILD_TASK, PATHS, ROOT_STATE, ROOT_TASK, SESSION_KEY, STALE_SESSION_KEY, STALE_TASK, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
 
 /** A canvas server that stops after the test even when an assertion fails. */
@@ -244,7 +246,7 @@ describe('source controller', () => {
         t.after(() => store.close());
         const sources = createSourceController({ store });
         const opened = await sources.prepare({ state: PATHS.childState }, { candidates: [root] });
-        assert.deepEqual([opened.sessionId, opened.source.taskId, opened.source.sessionKey], ['rpi-trail-maps-fixes', CHILD_TASK, SESSION_KEY]);
+        assert.deepEqual([opened.sessionId, opened.source.taskId, opened.source.sessionKey], [storeIdFor(CHILD_TASK, root), CHILD_TASK, SESSION_KEY]);
         await writeJson(root, '.copilot-tracking/plans/2026-01-15/stray-state.json', { task_id: 'stray' });
         await writeJson(root, '.copilot-tracking/rpi-sessions/2026-01-15/flat-state.json', { task_id: 'flat' });
         await fs.writeFile(path.join(tmp, 'outside-state.json'), JSON.stringify({ task_id: 'outside' }));
@@ -365,16 +367,16 @@ describe('source controller', () => {
         assert.equal(await codeOf(() => sources.prepare({ task: 'current' }, { candidates: [path.join(tmp, 'nowhere')] })), 'source_unavailable');
         assert.equal(await codeOf(() => sources.prepare({ task: 'bad id!' }, { candidates: [root] })), 'invalid_input');
         const task = await sources.prepare({ task: 'current' }, { candidates: [undefined, root] });
-        assert.equal(task.sessionId, 'rpi-trail-maps');
+        assert.equal(task.sessionId, storeIdFor(ROOT_TASK, root));
         assert.deepEqual([task.source.kind, task.source.taskId, task.source.statePath], ['rpi', ROOT_TASK, PATHS.rootState]);
         assert.equal(task.source.follower.running, false, 'following waits for a page');
         const rebinds = [];
         const record = { sessionId: task.sessionId, source: task.source, server: { rebind: () => rebinds.push(record.sessionId) } };
         task.source.follower.start();
         const child = await sources.switchToTask(record, CHILD_TASK);
-        assert.deepEqual([record.sessionId, record.source.taskId], ['rpi-trail-maps-fixes', CHILD_TASK]);
+        assert.deepEqual([record.sessionId, record.source.taskId], [storeIdFor(CHILD_TASK, root), CHILD_TASK]);
         assert.equal(task.source.follower.running, false, 'the previous follower stops');
-        assert.deepEqual(rebinds, ['rpi-trail-maps-fixes']);
+        assert.deepEqual(rebinds, [storeIdFor(CHILD_TASK, root)]);
         assert.equal(child.session.phases.research.status, 'skipped');
         assert.equal(await codeOf(() => sources.switchToTask(record, 'old-task')), 'invalid_input', 'only tasks in the session');
         const byPath = await sources.switchToTask(record, { statePath: PATHS.rootState });
@@ -503,12 +505,12 @@ describe('actions on a canvas that follows RPI files', () => {
             assert.equal(await codeOf(() => call('show_task', input)), 'invalid_input', JSON.stringify(input));
         }
         const child = await call('show_task', { task: CHILD_TASK });
-        assert.deepEqual([child.source.taskId, instance.sessionId], [CHILD_TASK, 'rpi-trail-maps-fixes']);
+        assert.deepEqual([child.source.taskId, instance.sessionId], [CHILD_TASK, storeIdFor(CHILD_TASK, root)]);
         assert.equal(instance.source.follow.paused, true, 'a task the agent names that is not running stays shown');
         const sample = await call('show_task', { task: 'sample', stage: 'plan' });
         assert.deepEqual([sample.source, instance.sessionId], [{ kind: 'sample', stage: 'plan' }, SCENARIO_ID]);
         await call('show_task', { task: 'current' }, { session: { workingDirectory: root } });
-        assert.equal(instance.sessionId, 'rpi-trail-maps');
+        assert.equal(instance.sessionId, storeIdFor(ROOT_TASK, root));
         assert.equal(instance.source.follow.paused, false, '"current" asks for where the work is, so following stays on');
         const loaded = await call('load_scenario', { stage: 'review' });
         assert.equal(loaded.activePhase, 'review');
@@ -644,3 +646,208 @@ describe('server following and task switching', () => {
         store.close();
     });
 });
+
+describe('binding a canvas to a Copilot session', () => {
+    const OWN = '0c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f';
+    const BOUND = '5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b';
+    const UNKNOWN = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d';
+    const NO_YAML = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
+    const NO_TRACKING = 'b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e';
+    const LINKED = 'c3d4e5f6-a7b8-4c9d-8e0f-2a3b4c5d6e7f';
+    let scratch;
+    let stateRoot;
+    let ownRoot;
+    let boundRoot;
+    let bareRoot;
+
+    before(async () => {
+        scratch = await scratchFolder('binding');
+        stateRoot = path.join(scratch, 'session-state');
+        ownRoot = path.join(scratch, 'own-repo');
+        boundRoot = path.join(scratch, 'child-repo');
+        bareRoot = path.join(scratch, 'bare-repo');
+        await writeFixtureWorkspace(ownRoot);
+        await writeFixtureWorkspace(boundRoot);
+        await fs.mkdir(bareRoot);
+        await fs.writeFile(path.join(scratch, 'outside-state.json'), JSON.stringify({ task_id: 'outside' }));
+        await writeSession(BOUND, [`git_root: ${boundRoot}`, `cwd: ${boundRoot}`]);
+        await writeSession(NO_YAML, null);
+        await writeSession(NO_TRACKING, [`cwd: ${bareRoot}`]);
+    });
+    after(() => fs.rm(scratch, { recursive: true, force: true }));
+
+    async function writeSession(id, lines) {
+        await fs.mkdir(path.join(stateRoot, id), { recursive: true });
+        if (lines) await fs.writeFile(path.join(stateRoot, id, 'workspace.yaml'), `${lines.join('\n')}\n`);
+    }
+
+    /** A controller whose session-state root is the scratch folder and whose own session is `OWN`. */
+    const controller = (store) => createSourceController({ store, sessionRoot: () => stateRoot, ownSessionId: () => OWN, intervalMs: 60000 });
+
+    const post = (url, pathname, body) => new Promise((resolve, reject) => {
+        const req = http.request({ host: '127.0.0.1', port: url.port, method: 'POST', path: pathname, headers: { 'content-type': 'application/json', 'x-rw-key': url.searchParams.get('k') } }, (res) => {
+            let text = '';
+            res.setEncoding('utf8');
+            res.on('data', (chunk) => {
+                text += chunk;
+            });
+            res.on('end', () => resolve({ status: res.statusCode, json: JSON.parse(text) }));
+        });
+        req.on('error', reject);
+        req.end(JSON.stringify(body));
+    });
+
+    it('accepts a session with a state or task, or alone, and refuses a bad ID or a session with stage or scenario', async () => {
+        assert.deepEqual(validateOpenInput({ session: BOUND }, makeError), { session: BOUND });
+        assert.deepEqual(validateOpenInput({ session: BOUND, task: 'current' }, makeError), { session: BOUND, task: 'current' });
+        assert.deepEqual(validateOpenInput({ session: BOUND, state: PATHS.childState }, makeError), { session: BOUND, state: PATHS.childState });
+        for (const bad of [{ session: '../x' }, { session: 'nope' }, { session: 7 }, { session: '' }, { session: `${BOUND}/..` }, { session: BOUND, stage: 'plan' }, { session: BOUND, scenario: SCENARIO_ID }, { session: BOUND, task: 'sample' }]) {
+            assert.equal(await codeOf(() => validateOpenInput(bad, makeError)), 'invalid_input', JSON.stringify(bad));
+        }
+    });
+
+    it('reads a task from the bound session\'s workspace, with state relative to it, and keeps the binding', async (t) => {
+        const store = createStore({ root: path.join(scratch, 'store-bound') });
+        t.after(() => store.close());
+        const sources = controller(store);
+        const byState = await sources.prepare({ session: BOUND, state: PATHS.childState });
+        assert.equal(byState.sessionId, storeIdFor(CHILD_TASK, boundRoot), 'the document is keyed to the bound workspace');
+        assert.deepEqual([byState.source.boundSession, byState.source.workspace.root, byState.source.taskId], [BOUND, boundRoot, CHILD_TASK]);
+        const current = await sources.prepare({ session: BOUND.toUpperCase() });
+        assert.deepEqual([current.source.boundSession, current.source.taskId], [BOUND, ROOT_TASK], 'a session alone shows its current task');
+        const byTask = await sources.prepare({ session: BOUND, task: CHILD_TASK });
+        assert.equal(byTask.source.taskId, CHILD_TASK);
+    });
+
+    it('refuses a state that leaves the bound tracking folder, and a session that cannot be read', async (t) => {
+        const store = createStore({ root: path.join(scratch, 'store-refusals') });
+        t.after(() => store.close());
+        const sources = controller(store);
+        await assert.rejects(sources.prepare({ session: '../escape', task: 'current' }), { code: 'session_invalid' });
+        const traversal = '.copilot-tracking/rpi-sessions/../../../outside-state.json';
+        await assert.rejects(sources.prepare({ session: BOUND, state: traversal }), { code: 'source_outside' }, 'traversal out of the tracking folder');
+        await assert.rejects(sources.prepare({ session: BOUND, state: path.join(scratch, 'outside-state.json') }), { code: 'source_outside' }, 'an absolute path outside');
+        await assert.rejects(sources.prepare({ session: BOUND, state: PATHS.plan }), { code: 'invalid_input' }, 'not a state file');
+        await assert.rejects(sources.prepare({ session: UNKNOWN, task: 'current' }), { code: 'session_not_found' });
+        await assert.rejects(sources.prepare({ session: NO_YAML, task: 'current' }), { code: 'session_no_workspace' });
+        await assert.rejects(sources.prepare({ session: NO_TRACKING, task: 'current' }), { code: 'session_no_tracking' });
+    });
+
+    it('refuses a bound workspace whose tracking folder is a symbolic link', async (t) => {
+        const store = createStore({ root: path.join(scratch, 'store-linked') });
+        t.after(() => store.close());
+        const real = path.join(scratch, 'real-tracking-repo');
+        const linked = path.join(scratch, 'linked-tracking-repo');
+        await fs.mkdir(path.join(real, '.copilot-tracking'), { recursive: true });
+        await fs.mkdir(linked);
+        await writeSession(LINKED, [`cwd: ${linked}`]);
+        if (!(await symlinkOrSkip(t, path.join(real, '.copilot-tracking'), path.join(linked, '.copilot-tracking'), 'dir'))) return;
+        await assert.rejects(controller(store).prepare({ session: LINKED, task: 'current' }), { code: 'session_no_tracking' });
+    });
+
+    it('resolves the conversation\'s own session from the candidates, as it does without session', async (t) => {
+        const store = createStore({ root: path.join(scratch, 'store-own') });
+        t.after(() => store.close());
+        const sources = controller(store);
+        const own = await sources.prepare({ session: OWN, task: 'current' }, { candidates: [ownRoot] });
+        assert.deepEqual([own.source.boundSession, own.source.workspace.root], [null, ownRoot], 'the own session keeps no binding');
+        const plain = await sources.prepare({ task: 'current' }, { candidates: [ownRoot] });
+        assert.equal(own.sessionId, plain.sessionId);
+    });
+
+    it('keeps the bound session across show_task calls that omit it, and moves when another session is named', async (t) => {
+        const store = createStore({ root: path.join(scratch, 'store-sticky') });
+        t.after(() => store.close());
+        const sources = controller(store);
+        const record = { sessionId: '', source: null, server: { rebind: () => {} } };
+        sources.attach(record, await sources.prepare({ session: BOUND, state: PATHS.childState }));
+        await sources.show(record, { state: PATHS.rootState });
+        assert.deepEqual([record.source.boundSession, record.source.taskId, record.source.workspace.root], [BOUND, ROOT_TASK, boundRoot], 'a state path is relative to the bound workspace');
+        await sources.show(record, { task: 'current' });
+        assert.deepEqual([record.source.boundSession, record.source.taskId], [BOUND, ROOT_TASK]);
+        await sources.show(record, { session: BOUND });
+        assert.equal(record.source.follow.paused, false, 'a session alone asks for where the work is, so following stays on');
+        await sources.show(record, { session: OWN, task: 'current' }, { candidates: [ownRoot] });
+        assert.deepEqual([record.source.boundSession, record.source.workspace.root], [null, ownRoot], 'another session replaces the binding');
+        sources.detach(record);
+    });
+
+    it('remembers the bound session with the state path, and a reopen that cannot read it says why', async (t) => {
+        const store = createStore({ root: path.join(scratch, 'store-memory') });
+        t.after(() => store.close());
+        const sources = controller(store);
+        const record = { instanceId: 'bound-panel', sessionId: '', source: null, server: { rebind: () => {} }, hostSessionId: 'chat-1' };
+        sources.attach(record, await sources.prepare({ session: BOUND, state: PATHS.childState }));
+        await sources.settled(record);
+        assert.equal(sourceSummary(record, await store.load(record.sessionId)).boundSession, BOUND);
+        const memory = await store.loadInstance('bound-panel', 'chat-1');
+        assert.deepEqual([memory.kind, memory.state, memory.session], ['rpi', PATHS.childState, BOUND]);
+        sources.detach(record);
+
+        const plan = openPlan({}, { open: false, remembered: memory });
+        assert.deepEqual(plan.restore, { state: PATHS.childState, paused: false, session: BOUND });
+        const back = await sources.restore(plan.restore, {});
+        assert.deepEqual([back.source.kind, back.source.boundSession, back.source.taskId], ['rpi', BOUND, CHILD_TASK]);
+
+        const cases = [
+            [{ ...plan.restore, session: UNKNOWN }, 'session-not-found', UNKNOWN],
+            [{ ...plan.restore, session: 'not-a-session' }, 'session-not-found', plan.restore.state],
+            [{ ...plan.restore, session: NO_YAML }, 'session-no-workspace', path.join(stateRoot, NO_YAML, 'workspace.yaml')],
+            [{ ...plan.restore, session: NO_TRACKING }, 'session-no-tracking', path.join(bareRoot, '.copilot-tracking')],
+            [{ ...plan.restore, state: '.copilot-tracking/rpi-sessions/2026-01-15/trail-maps/missing-state.json' }, 'missing-session', '.copilot-tracking/rpi-sessions/2026-01-15/trail-maps/missing-state.json'],
+        ];
+        for (const [restore, reason, detail] of cases) {
+            const outcome = await sources.restore(restore, {});
+            assert.deepEqual([outcome.source.kind, outcome.source.reason, outcome.source.detail], ['none', reason, detail], reason);
+        }
+        assert.equal((await sources.restore({ task: 'sample' }, {})).source.kind, 'sample', 'a remembered sample restores as before');
+    });
+
+    it('shows another session\'s task through show_task, and refuses a session that is not one', async (t) => {
+        const store = createStore({ root: path.join(scratch, 'store-actions') });
+        t.after(() => store.close());
+        const sources = controller(store);
+        const prepared = await sources.prepare({ task: 'current' }, { candidates: [ownRoot] });
+        const instance = { server: { url: 'http://127.0.0.1:1/', clientInfo: null, streamClients: 0, notifyReload: () => {}, rebind: () => {} }, sessionId: prepared.sessionId, source: prepared.source };
+        const handlers = createActionHandlers({
+            getInstance: (id) => (id === 'i1' ? instance : undefined),
+            store,
+            makeError,
+            async switchSource(target, request, context) {
+                return sources.show(target, request, { candidates: [context.workingDirectory, ownRoot] });
+            },
+        });
+        const call = (input) => handlers.show_task({ instanceId: 'i1', input });
+        for (const bad of [{ session: '../nope' }, { session: BOUND, stage: 'plan' }, { session: BOUND, task: 'sample' }]) {
+            assert.equal(await codeOf(() => call(bad)), 'invalid_input', JSON.stringify(bad));
+        }
+        assert.equal(await codeOf(() => call({ session: UNKNOWN })), 'session_not_found');
+        const shown = await call({ session: BOUND, state: PATHS.childState });
+        assert.deepEqual([shown.source.kind, shown.source.boundSession, shown.source.taskId], ['rpi', BOUND, CHILD_TASK]);
+        assert.equal((await call({ session: BOUND })).source.taskId, ROOT_TASK);
+        assert.equal((await call({ task: CHILD_TASK })).source.boundSession, BOUND, 'a task without session keeps the session shown');
+    });
+
+    it('names the session and its workspace root in a message about a task of another session, and not for the own session', async (t) => {
+        const store = createStore({ root: path.join(scratch, 'store-messages') });
+        t.after(() => store.close());
+        const sources = controller(store);
+        const shown = await sources.prepare({ session: BOUND, state: PATHS.childState });
+        const { result } = await store.update(shown.sessionId, (current) => createFeedback(current, { kind: 'comment', text: 'Check the child' }, NOW), { by: 'user' });
+        const items = [{ taskId: CHILD_TASK, id: result.id }];
+        const expected = `Task files, in session ${BOUND} at workspace root ${boundRoot}; paths are relative to that root:\n- State: .copilot-tracking/rpi-sessions/`;
+
+        const elsewhere = createCanvasServer({ store, getSessionId: () => shown.sessionId, getCanvas: () => ({ handle: '3WF0', instanceId: 'panel' }), getSource: () => shown.source, getJoinedSessionId: () => OWN, deliver: async () => {} });
+        const away = await post(new URL(await elsewhere.start()), '/api/delivery/preview', { items });
+        assert.equal(away.status, 200);
+        assert.ok(away.json.prompt.includes(expected), away.json.prompt);
+
+        const home = createCanvasServer({ store, getSessionId: () => shown.sessionId, getCanvas: () => ({ handle: '3WF0', instanceId: 'panel' }), getSource: () => shown.source, getJoinedSessionId: () => BOUND, deliver: async () => {} });
+        const same = await post(new URL(await home.start()), '/api/delivery/preview', { items });
+        assert.equal(same.status, 200);
+        assert.doesNotMatch(same.json.prompt, /in session/);
+        assert.match(same.json.prompt, /Task files:\n- State: \.copilot-tracking\/rpi-sessions\//);
+        assert.notEqual(same.json.digest, away.json.digest, 'the digest covers the session line');
+    });
+});
+

@@ -11,6 +11,9 @@ const CONTRIBUTING = `${REPOSITORY}/blob/main/CONTRIBUTING.md`;
 const REASONS = Object.freeze({
     'no-input': 'The canvas opened without an RPI session to show.',
     'missing-session': 'The session this canvas showed before could not be found.',
+    'session-not-found': 'The Copilot session this canvas showed before is not in this machine\'s session data.',
+    'session-no-workspace': 'The Copilot session this canvas showed before records no workspace folder.',
+    'session-no-tracking': 'The workspace of the Copilot session this canvas showed before has no .copilot-tracking folder.',
 });
 
 /**

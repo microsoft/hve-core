@@ -9,6 +9,8 @@ import { after, before, describe, it } from 'node:test';
 
 import { symlinkOrSkip } from '../../session-log/tests/helpers.mjs';
 import { createFeedback } from '../lib/model.mjs';
+import { loadSessionDocs } from '../lib/session-docs.mjs';
+import { parseWorkspaceYaml, resolveSessionStateRoot, resolveSessionWorkspace } from '../lib/source/sessions.mjs';
 import {
     createFollower,
     documentName,
@@ -32,6 +34,7 @@ import {
     storeIdFor,
 } from '../lib/source/workspace.mjs';
 import { createStore } from '../lib/store.mjs';
+import { scratchFolder } from './helpers/scratch.mjs';
 import { CHILD_STATE, CHILD_TASK, EARLY, PATHS, PLAN, ROOT_STATE, ROOT_TASK, SESSION_KEY, STALE_TASK, writeEarlierWork, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
 
 const EARLY_RESEARCH = `# Task Research: Offline trail maps, first look
@@ -270,18 +273,25 @@ describe('sessions in the workspace', () => {
         });
     });
 
-    it('derives store IDs that fit the store pattern and never match the sample', () => {
-        assert.equal(storeIdFor('trail-maps'), 'rpi-trail-maps');
-        const odd = storeIdFor('Task_With Spaces');
-        assert.match(odd, /^rpi-task-with-spaces-[0-9a-f]{8}$/);
-        assert.ok(storeIdFor('x'.repeat(120)).length <= 80);
+    it('derives store IDs per workspace that fit the store pattern and never match the sample', () => {
+        const here = storeIdFor('trail-maps', '/work/one');
+        assert.match(here, /^rpi-trail-maps-[0-9a-f]{10}$/);
+        assert.equal(storeIdFor('trail-maps', '/work/one'), here, 'the same workspace gives the same ID');
+        assert.notEqual(here, storeIdFor('trail-maps', '/work/two'), 'one task ID in two workspaces keeps two documents');
+        assert.match(storeIdFor('Task_With Spaces', '/work/one'), /^rpi-task-with-spaces-[0-9a-f]{8}-[0-9a-f]{10}$/);
+        for (const taskId of ['x'.repeat(120), 'y'.repeat(60), 'Task_With Spaces', 'trail-maps']) {
+            const id = storeIdFor(taskId, '/work/one');
+            assert.match(id, /^rpi-[a-z0-9-]+$/);
+            assert.ok(id.length <= 80, id);
+        }
+        assert.notEqual(storeIdFor('x'.repeat(120), '/work/one'), storeIdFor('x'.repeat(121), '/work/one'), 'long task IDs stay distinct');
     });
 });
 
 describe('loading and importing a task', () => {
     it('loads a task with its artifacts, session tree, and watched files', async () => {
         const loaded = await loadTask(workspace, PATHS.rootState, NOW);
-        assert.equal(loaded.session.id, 'rpi-trail-maps');
+        assert.equal(loaded.session.id, storeIdFor(ROOT_TASK, root));
         assert.equal(loaded.session.task.title, 'Offline trail maps');
         assert.equal(loaded.session.task.branch, 'feat/offline-maps');
         assert.deepEqual(loaded.session.followUps.tree.tasks.map((task) => task.id), [ROOT_TASK, CHILD_TASK]);
@@ -542,3 +552,283 @@ describe('following the files', () => {
         store.close();
     });
 });
+
+describe('sessions resolve to their workspaces', () => {
+    const SESSION = '3f2a6c1e-8d4b-4f7a-9c2e-1a2b3c4d5e6f';
+    const OTHER = '7b9e1d2c-4a6f-4e8b-8c3d-2f1e0a9b8c7d';
+    const UNKNOWN = '00000000-0000-4000-8000-000000000000';
+    const NO_YAML = '11111111-2222-4333-8444-555555555555';
+    const EMPTY = '22222222-3333-4444-8555-666666666666';
+    const RELATIVE = '33333333-4444-4555-8666-777777777777';
+    const NO_TRACKING = '44444444-5555-4666-8777-888888888888';
+    const LINKED_TRACKING = '55555555-6666-4777-8888-999999999999';
+    const ESCAPES = '66666666-7777-4888-8999-aaaaaaaaaaaa';
+    const LINKED_YAML = '77777777-8888-4999-8aaa-bbbbbbbbbbbb';
+    const DENIED = '88888888-9999-4aaa-8bbb-cccccccccccc';
+    let scratch;
+    let stateRoot;
+
+    before(async () => {
+        scratch = await scratchFolder('sessions');
+        stateRoot = path.join(scratch, 'session-state');
+        await fs.mkdir(stateRoot);
+    });
+    after(() => fs.rm(scratch, { recursive: true, force: true }));
+
+    /** A workspace root in the scratch folder, with a tracking folder unless `tracking` is false. */
+    async function workspaceAt(name, tracking = true) {
+        const dir = path.join(scratch, name);
+        await fs.mkdir(tracking ? path.join(dir, '.copilot-tracking') : dir, { recursive: true });
+        return dir;
+    }
+
+    /** A session folder whose `workspace.yaml` holds `lines`, or no file when `lines` is null. */
+    async function sessionAt(id, lines) {
+        const folder = path.join(stateRoot, id);
+        await fs.mkdir(folder, { recursive: true });
+        if (lines !== null) await fs.writeFile(path.join(folder, 'workspace.yaml'), `${lines.join('\n')}\n`);
+        return folder;
+    }
+
+    const resolveAt = (id) => resolveSessionWorkspace(id, { root: stateRoot });
+
+    it('takes the workspace from git_root, then cwd, and reads the session ID in any letter case', async () => {
+        const gitRoot = await workspaceAt('git-root');
+        const cwd = await workspaceAt('cwd');
+        await sessionAt(SESSION, [`git_root: ${gitRoot}`, `cwd: ${cwd}`]);
+        const expected = { root: await fs.realpath(gitRoot), tracking: await fs.realpath(path.join(gitRoot, '.copilot-tracking')) };
+        assert.deepEqual(await resolveAt(SESSION), expected);
+        assert.deepEqual(await resolveAt(SESSION.toUpperCase()), expected);
+
+        const bare = await workspaceAt('bare', false);
+        await sessionAt(OTHER, [`git_root: ${bare}`, `cwd: ${cwd}`]);
+        assert.equal((await resolveAt(OTHER)).root, await fs.realpath(cwd), 'cwd is the candidate when git_root has no tracking folder');
+    });
+
+    it('takes only absolute workspace paths', async () => {
+        const dir = await workspaceAt('absolute-only');
+        await sessionAt(EMPTY, ['git_root: relative/repo', `cwd: ${dir}`]);
+        assert.equal((await resolveAt(EMPTY)).root, await fs.realpath(dir));
+        await sessionAt(RELATIVE, ['git_root: relative/repo', 'cwd: also/relative']);
+        await assert.rejects(resolveAt(RELATIVE), { code: 'session_no_workspace' });
+    });
+
+    it('refuses an ID that is not a session ID, in any form', async () => {
+        for (const bad of ['', 'not-a-session', `../${SESSION}`, `${SESSION}/..`, `${SESSION}\u0000`, `${SESSION}-x`, '../../etc', 42, null]) {
+            await assert.rejects(resolveAt(bad), { code: 'session_invalid' }, JSON.stringify(bad));
+        }
+    });
+
+    it('names the path for an unknown session, a session with no workspace, and a workspace with no tracking folder', async () => {
+        await assert.rejects(resolveAt(UNKNOWN), (error) => error.code === 'session_not_found' && error.message.includes(stateRoot));
+        await sessionAt(NO_YAML, null);
+        await assert.rejects(resolveAt(NO_YAML), (error) => error.code === 'session_no_workspace' && error.message.includes(path.join(stateRoot, NO_YAML)));
+        await sessionAt(RELATIVE, ['name: nothing here']);
+        await assert.rejects(resolveAt(RELATIVE), { code: 'session_no_workspace' }, 'a file with no workspace path');
+        const bare = await workspaceAt('no-tracking', false);
+        await sessionAt(NO_TRACKING, [`cwd: ${bare}`]);
+        await assert.rejects(resolveAt(NO_TRACKING), (error) => error.code === 'session_no_tracking' && error.detail === path.join(bare, '.copilot-tracking') && error.message.includes(path.join(bare, '.copilot-tracking')));
+    });
+
+    it('refuses a tracking folder that is a symbolic link', async (t) => {
+        const real = await workspaceAt('real-tracking');
+        const linked = await workspaceAt('linked-tracking', false);
+        await sessionAt(LINKED_TRACKING, [`cwd: ${linked}`]);
+        if (!(await symlinkOrSkip(t, path.join(real, '.copilot-tracking'), path.join(linked, '.copilot-tracking'), 'dir'))) return;
+        await assert.rejects(resolveAt(LINKED_TRACKING), { code: 'session_no_tracking' });
+    });
+
+    it('refuses a session folder that leads outside the session-state root', async (t) => {
+        const outside = path.join(scratch, 'outside-session');
+        await fs.mkdir(outside, { recursive: true });
+        await fs.writeFile(path.join(outside, 'workspace.yaml'), `cwd: ${await workspaceAt('escape-target')}\n`);
+        if (!(await symlinkOrSkip(t, outside, path.join(stateRoot, ESCAPES), 'dir'))) return;
+        await assert.rejects(resolveAt(ESCAPES), { code: 'session_invalid' });
+    });
+
+    it('refuses a workspace file that is a symbolic link', async (t) => {
+        const target = path.join(scratch, 'real-workspace.yaml');
+        await fs.writeFile(target, `cwd: ${await workspaceAt('linked-yaml-target')}\n`);
+        await fs.mkdir(path.join(stateRoot, LINKED_YAML));
+        if (!(await symlinkOrSkip(t, target, path.join(stateRoot, LINKED_YAML, 'workspace.yaml'), 'file'))) return;
+        await assert.rejects(resolveAt(LINKED_YAML), { code: 'session_no_workspace' });
+    });
+
+    it('reads through the file functions it is given', async () => {
+        const dir = await workspaceAt('injected');
+        await sessionAt(DENIED, [`cwd: ${dir}`]);
+        const denied = { readFile: async () => { throw Object.assign(new Error('denied'), { code: 'EACCES' }); } };
+        await assert.rejects(resolveSessionWorkspace(DENIED, { root: stateRoot, fs: denied }), { code: 'session_no_workspace' });
+        assert.equal((await resolveAt(DENIED)).root, await fs.realpath(dir));
+    });
+
+    it('finds the session-state folder from the joined workspace, then COPILOT_HOME, then the home folder', () => {
+        const joined = path.join(scratch, 'copilot-a', 'session-state');
+        assert.deepEqual(resolveSessionStateRoot({ workspacePath: path.join(joined, SESSION), env: {}, homedir: '/unused' }), { root: joined, source: 'workspace' });
+        assert.deepEqual(resolveSessionStateRoot({ workspacePath: path.join(scratch, 'elsewhere'), env: { COPILOT_HOME: '/copilot-home' }, homedir: '/unused' }), { root: path.join('/copilot-home', 'session-state'), source: 'COPILOT_HOME' });
+        assert.deepEqual(resolveSessionStateRoot({ workspacePath: '/nowhere/not-a-session', env: { COPILOT_HOME: '' }, homedir: '/home/me' }), { root: path.join('/home/me', '.copilot', 'session-state'), source: 'home' });
+    });
+
+    it('reads the top-level keys of workspace.yaml, unquoting values and skipping nested content', () => {
+        const parsed = parseWorkspaceYaml([
+            'id: 3f2a',
+            'cwd: /work/app: beta',
+            "git_root: '/work/it''s'",
+            'name: "Trail \\"maps\\""',
+            'empty:',
+            'summary: |',
+            '  cwd: /not/this',
+            'nested:',
+            '  cwd: /not/this/either',
+        ].join('\n'));
+        assert.deepEqual([parsed.id, parsed.cwd, parsed.git_root, parsed.name, parsed.empty], ['3f2a', '/work/app: beta', "/work/it's", 'Trail "maps"', null]);
+    });
+});
+
+describe('documents keyed by workspace', () => {
+    let scratch;
+    let workspaceA;
+    let workspaceB;
+    const LEGACY_ID = `rpi-${ROOT_TASK}`;
+
+    before(async () => {
+        scratch = await scratchFolder('keys');
+        await writeFixtureWorkspace(path.join(scratch, 'repo-a'));
+        await writeFixtureWorkspace(path.join(scratch, 'repo-b'));
+        workspaceA = await resolveWorkspace([path.join(scratch, 'repo-a')]);
+        workspaceB = await resolveWorkspace([path.join(scratch, 'repo-b')]);
+    });
+    after(() => fs.rm(scratch, { recursive: true, force: true }));
+
+    const comment = (text) => (session) => createFeedback(session, { kind: 'comment', text }, NOW);
+
+    it('keeps one task in two workspaces apart, and gives one workspace one document', async (t) => {
+        const store = createStore({ root: path.join(scratch, 'store-apart') });
+        t.after(() => store.close());
+        const first = await importIntoStore(store, await loadTask(workspaceA, PATHS.rootState, NOW), NOW);
+        const second = await importIntoStore(store, await loadTask(workspaceB, PATHS.rootState, NOW), NOW);
+        assert.equal(first.session.id, storeIdFor(ROOT_TASK, workspaceA.root));
+        assert.notEqual(first.session.id, second.session.id);
+        assert.equal((await importIntoStore(store, await loadTask(workspaceA, PATHS.rootState, NOW), NOW)).changed, false);
+    });
+
+    it('starts a workspace document from the matching earlier one once, and keeps the earlier one', async (t) => {
+        const store = createStore({ root: path.join(scratch, 'store-migrate') });
+        t.after(() => store.close());
+        const loaded = await loadTask(workspaceA, PATHS.rootState, NOW);
+        await store.create({ ...loaded.session, id: LEGACY_ID });
+        await store.update(LEGACY_ID, comment('Kept from before'), { by: 'user' });
+        const migrated = await importIntoStore(store, loaded, NOW);
+        assert.equal(migrated.session.id, loaded.session.id);
+        assert.deepEqual(migrated.session.feedback.map((item) => item.text), ['Kept from before']);
+        assert.equal(migrated.session.scenario.userChanges, 1, 'the migrated changes keep their count');
+        assert.equal((await store.load(LEGACY_ID)).feedback.length, 1, 'the earlier document stays');
+
+        await store.update(LEGACY_ID, comment('Added to the old document'), { by: 'user' });
+        const again = await importIntoStore(store, await loadTask(workspaceA, PATHS.rootState, NOW), NOW);
+        assert.deepEqual(again.session.feedback.map((item) => item.text), ['Kept from before'], 'the migration copies once');
+    });
+
+    it('leaves an earlier document from another workspace alone', async (t) => {
+        const store = createStore({ root: path.join(scratch, 'store-other-root') });
+        t.after(() => store.close());
+        const loaded = await loadTask(workspaceA, PATHS.rootState, NOW);
+        await store.create({ ...loaded.session, id: LEGACY_ID, source: { ...loaded.session.source, root: workspaceB.root } });
+        await store.update(LEGACY_ID, comment('Belongs to the other workspace'), { by: 'user' });
+        const fresh = await importIntoStore(store, loaded, NOW);
+        assert.deepEqual(fresh.session.feedback, [], 'nothing moves across workspaces');
+        assert.equal((await store.load(LEGACY_ID)).feedback.length, 1);
+        assert.equal((await store.load(LEGACY_ID)).source.root, workspaceB.root);
+    });
+
+    it('lists a related task from its earlier document in the same workspace, and not from another', async (t) => {
+        const store = createStore({ root: path.join(scratch, 'store-related') });
+        t.after(() => store.close());
+        const shown = await importIntoStore(store, await loadTask(workspaceA, PATHS.rootState, NOW), NOW);
+        const child = await loadTask(workspaceA, PATHS.childState, NOW);
+        await store.create({ ...child.session, id: `rpi-${CHILD_TASK}` });
+        await store.update(`rpi-${CHILD_TASK}`, comment('Earlier child note'), { by: 'user' });
+        const source = { kind: 'rpi', workspace: workspaceA };
+        const listed = await loadSessionDocs(store, shown.session, source);
+        assert.deepEqual(listed.map((doc) => [doc.taskId, doc.id, doc.session.feedback.length]), [[ROOT_TASK, shown.session.id, 0], [CHILD_TASK, `rpi-${CHILD_TASK}`, 1]]);
+        const otherStore = createStore({ root: path.join(scratch, 'store-related-other') });
+        t.after(() => otherStore.close());
+        await otherStore.create({ ...child.session, id: `rpi-${CHILD_TASK}`, source: { ...child.session.source, root: workspaceB.root } });
+        const unlisted = await loadSessionDocs(otherStore, shown.session, source);
+        assert.deepEqual(unlisted.map((doc) => doc.taskId), [ROOT_TASK], 'a document from another workspace is not listed');
+    });
+});
+
+describe('git worktrees', () => {
+    let scratch;
+
+    before(async () => {
+        scratch = await scratchFolder('git');
+    });
+    after(() => fs.rm(scratch, { recursive: true, force: true }));
+
+    const ORIGIN = '[remote "origin"]\n\turl = git@github.com:contoso/trails.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*\n';
+
+    /**
+     * A main checkout with a linked worktree named `feature`, laid out as git writes them. The
+     * worktree's `.git` file points at `pointer` (its git directory by default).
+     */
+    async function worktree(name, { pointer, config = `[core]\n\tbare = false\n${ORIGIN}` } = {}) {
+        const main = path.join(scratch, name, 'main');
+        const gitdir = path.join(main, '.git', 'worktrees', 'feature');
+        await fs.mkdir(gitdir, { recursive: true });
+        await fs.writeFile(path.join(main, '.git', 'HEAD'), 'ref: refs/heads/main\n');
+        await fs.writeFile(path.join(main, '.git', 'config'), config);
+        await fs.writeFile(path.join(gitdir, 'HEAD'), 'ref: refs/heads/feat/offline-maps\n');
+        await fs.writeFile(path.join(gitdir, 'commondir'), '../..\n');
+        const root = path.join(scratch, name, 'feature');
+        await fs.mkdir(root, { recursive: true });
+        await fs.writeFile(path.join(root, '.git'), `gitdir: ${pointer ?? gitdir}\n`);
+        return { main, gitdir, root };
+    }
+
+    it('reads the branch from the worktree and the repository from the common config', async () => {
+        const { root } = await worktree('absolute');
+        assert.deepEqual(await readGit(root), { repository: 'contoso/trails', branch: 'feat/offline-maps' });
+    });
+
+    it('reads a relative gitdir pointer the same way', async () => {
+        const { root } = await worktree('relative', { pointer: '../main/.git/worktrees/feature' });
+        assert.deepEqual(await readGit(root), { repository: 'contoso/trails', branch: 'feat/offline-maps' });
+    });
+
+    it('leaves the header empty for a pointer that names no git directory or has no pointer line', async () => {
+        const missing = await worktree('missing', { pointer: path.join(scratch, 'nowhere', 'gitdir') });
+        assert.equal(await readGit(missing.root), null);
+        const plain = path.join(scratch, 'plain-file');
+        await fs.mkdir(plain, { recursive: true });
+        await fs.writeFile(path.join(plain, '.git'), 'not a pointer\n');
+        assert.equal(await readGit(plain), null);
+    });
+
+    it('reads the config from the git directory itself when there is no common directory', async () => {
+        const gitdir = path.join(scratch, 'standalone', 'gitdir');
+        await fs.mkdir(gitdir, { recursive: true });
+        await fs.writeFile(path.join(gitdir, 'HEAD'), 'ref: refs/heads/topic\n');
+        await fs.writeFile(path.join(gitdir, 'config'), ORIGIN);
+        const root = path.join(scratch, 'standalone', 'checkout');
+        await fs.mkdir(root, { recursive: true });
+        await fs.writeFile(path.join(root, '.git'), `gitdir: ${gitdir}\n`);
+        assert.deepEqual(await readGit(root), { repository: 'contoso/trails', branch: 'topic' });
+    });
+
+    it('keeps the branch when the common config is too large to read', async () => {
+        const { root } = await worktree('large', { config: `${ORIGIN}${'# filler\n'.repeat(9000)}` });
+        assert.deepEqual(await readGit(root), { repository: null, branch: 'feat/offline-maps' });
+    });
+
+    it('does not read a pointer file that is a symbolic link', async (t) => {
+        const { root } = await worktree('linked-pointer');
+        const linked = path.join(scratch, 'linked-pointer', 'alias');
+        await fs.mkdir(linked, { recursive: true });
+        await fs.writeFile(path.join(scratch, 'linked-pointer', 'real-pointer'), `gitdir: ${path.join(root, '..', 'main', '.git', 'worktrees', 'feature')}\n`);
+        if (!(await symlinkOrSkip(t, path.join(scratch, 'linked-pointer', 'real-pointer'), path.join(linked, '.git'), 'file'))) return;
+        assert.equal(await readGit(linked), null);
+    });
+});
+

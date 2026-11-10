@@ -21,6 +21,7 @@ import {
 } from './model.mjs';
 import { buildScenario, SCENARIO_ID, STAGES } from './scenario.mjs';
 import { loadSessionDocs } from './session-docs.mjs';
+import { isSessionId } from './source/sessions.mjs';
 import { sourceSummary } from './sources.mjs';
 
 const str = (description, extra = {}) => ({ type: 'string', description, ...extra });
@@ -46,12 +47,13 @@ export const ACTION_DEFINITIONS = Object.freeze([
     },
     {
         name: 'show_task',
-        description: 'Point this canvas at an RPI task read from the workspace .copilot-tracking folder, or back at the sample. Give state, the workspace-relative path of a state file in a session folder, or task: "current" (the most recently changed task whose session is running), a task ID from a state file, or "sample" with an optional stage. The canvas follows the session\'s files while the page is open and moves to its running loop; showing a task that is not running pauses that until the user resumes it. Your edits and the user\'s feedback stay in the canvas.',
+        description: 'Point this canvas at an RPI task read from a workspace .copilot-tracking folder, or back at the sample. Give session, the Copilot session ID of a local session, to read the task from that session\'s workspace: state is then relative to that workspace, and session alone shows its current task. Without session, give state, the workspace-relative path of a state file in a session folder, or task: "current" (the most recently changed task whose session is running), a task ID from a state file, or "sample" with an optional stage. The canvas keeps the session it shows across calls that omit session. It follows the session\'s files while the page is open and moves to its running loop; showing a task that is not running pauses that until the user resumes it. Your edits and the user\'s feedback stay in the canvas.',
         inputSchema: {
             type: 'object',
             properties: {
-                state: str('State file path such as .copilot-tracking/rpi-sessions/2026-10-23/rpi-workflow-canvas/rpi-workflow-canvas-state.json'),
-                task: str('"current", a task ID such as rpi-workflow-canvas, or "sample"'),
+                session: str('Copilot session ID (a UUID) of a local session whose workspace holds the task. Omit it to keep the session this canvas shows.'),
+                state: str('State file path such as .copilot-tracking/rpi-sessions/2026-10-23/rpi-workflow-canvas/rpi-workflow-canvas-state.json; relative to the bound session\'s workspace when session is given'),
+                task: str('"current", a task ID such as rpi-workflow-canvas, or "sample"; with session, a task of that session\'s workspace'),
                 stage: { type: 'string', enum: [...STAGES], description: 'Sample stage, when task is "sample"' },
             },
             additionalProperties: false,
@@ -234,7 +236,7 @@ export function summarize(session) {
  *   store: ReturnType<import('./store.mjs').createStore>,
  *   makeError: (code: string, message: string) => Error,
  *   now?: () => number,
- *   switchSource?: (instance: any, request: { task?: string, stage?: string, replace?: boolean }, context: { workingDirectory?: string }) => Promise<{ session: any }>,
+ *   switchSource?: (instance: any, request: { session?: string, state?: string, task?: string, stage?: string, replace?: boolean }, context: { workingDirectory?: string }) => Promise<{ session: any }>,
  * }} deps
  */
 export function createActionHandlers(deps) {
@@ -396,6 +398,9 @@ export function createActionHandlers(deps) {
             if (!deps.switchSource) {
                 throw makeError('unavailable', 'This canvas cannot switch sources.');
             }
+            if (input.session !== undefined && !isSessionId(input.session)) {
+                throw makeError('invalid_input', 'session must be a Copilot session ID (a UUID).');
+            }
             if (input.task !== undefined && typeof input.task !== 'string') {
                 throw makeError('invalid_input', 'task must be "current", a task ID, or "sample".');
             }
@@ -408,13 +413,21 @@ export function createActionHandlers(deps) {
             if (input.stage !== undefined && !STAGES.includes(input.stage)) {
                 throw makeError('invalid_input', `stage must be one of: ${STAGES.join(', ')}.`);
             }
-            if (input.task === undefined && input.state === undefined && input.stage === undefined) {
-                throw makeError('invalid_input', 'Give state, task ("current", a task ID, or "sample"), or a sample stage.');
+            if (input.task === undefined && input.state === undefined && input.session === undefined && input.stage === undefined) {
+                throw makeError('invalid_input', 'Give session, state, task ("current", a task ID, or "sample"), or a sample stage.');
+            }
+            if (input.session !== undefined && (input.task === 'sample' || input.stage !== undefined)) {
+                throw makeError('invalid_input', 'session shows a task in that session, so it cannot be combined with stage or task "sample".');
             }
             if (((input.task !== undefined && input.task !== 'sample') || input.state !== undefined) && input.stage !== undefined) {
                 throw makeError('invalid_input', 'stage applies only to the sample.');
             }
-            const request = input.state !== undefined ? { state: input.state } : input.task === 'sample' ? { task: 'sample', stage: input.stage } : input.task === undefined ? { stage: input.stage } : { task: input.task };
+            let request;
+            if (input.session !== undefined) {
+                request = { session: input.session, ...(input.state !== undefined ? { state: input.state } : { task: input.task ?? 'current' }) };
+            } else {
+                request = input.state !== undefined ? { state: input.state } : input.task === 'sample' ? { task: 'sample', stage: input.stage } : input.task === undefined ? { stage: input.stage } : { task: input.task };
+            }
             const prepared = await deps.switchSource(instance, request, { workingDirectory: ctx?.session?.workingDirectory });
             return { ...summarize(prepared.session), source: sourceSummary(instance, prepared.session) };
         }),

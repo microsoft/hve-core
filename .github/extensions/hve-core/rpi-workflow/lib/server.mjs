@@ -181,10 +181,11 @@ export function clientInfoFrom(body) {
  *   store: ReturnType<import('./store.mjs').createStore>,
  *   getSessionId: () => string,
  *   getCanvas?: () => { handle: string, instanceId: string } | null,
+ *   getJoinedSessionId?: () => string | null,
  *   deliver?: (request: { prompt: string, displayPrompt: string, ids: string[] }) => Promise<void>,
  *   log?: (message: string, level?: string) => void,
  *   now?: () => string,
- *   getSource?: () => { kind?: string, reason?: string, detail?: string | null, follow?: { paused: boolean }, follower?: { start: () => void, stop: () => void } } | undefined,
+ *   getSource?: () => { kind?: string, reason?: string, detail?: string | null, boundSession?: string | null, workspace?: { root: string } | null, follow?: { paused: boolean }, follower?: { start: () => void, stop: () => void } } | undefined,
  *   switchTask?: (ref: { taskId?: string, statePath?: string }, options?: { paused?: boolean }) => Promise<{ sessionId: string }>,
  *   switchSession?: (key: string, options?: { paused?: boolean }) => Promise<{ sessionId: string }>,
  *   resumeFollowing?: () => Promise<{ sessionId: string }>,
@@ -408,10 +409,20 @@ export function createCanvasServer(deps) {
         return docs.filter((doc) => wanted.has(doc.taskId)).map((doc) => ({ ...doc, ids: wanted.get(doc.taskId) }));
     }
 
+    /** The Copilot session and workspace root that hold the shown tasks, when they are not the canvas's own session; null otherwise. */
+    const otherSessionOf = () => {
+        const source = deps.getSource?.();
+        const bound = source?.kind === 'rpi' && typeof source.boundSession === 'string' ? source.boundSession : null;
+        const own = deps.getJoinedSessionId?.();
+        if (!bound || (typeof own === 'string' && own.toLowerCase() === bound.toLowerCase())) return null;
+        return { id: bound, root: typeof source.workspace?.root === 'string' ? source.workspace.root : null };
+    };
+
     const compose = (groups, body) => composeSessionDelivery(groups.map((group) => ({ session: group.session, ids: group.ids })), now(), {
         canvas: getCanvas(),
         note: body?.note,
         sessionName: groups[0]?.session.followUps?.tree?.name ?? null,
+        otherSession: otherSessionOf(),
     });
 
     const sameItems = (a, b, ids) => ids.every((id) => JSON.stringify(a.feedback.find((item) => item.id === id)) === JSON.stringify(b.feedback.find((item) => item.id === id)));
