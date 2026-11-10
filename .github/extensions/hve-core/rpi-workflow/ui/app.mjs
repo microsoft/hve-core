@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, clear, decisionAlias, fullTime, h, icon, idTag, PHASE_META, PHASE_STATUS, plural, relTime, sr } from './dom.mjs';
-import { confirmPress, deliveryNotices, deliveryRequest, disclosure, filePreview, handAnnouncement, hasMarginHome, presentationControl, revealRow, reviewSheet, ROUTE_CHANGED_NOTE, routeBlock, sendItems, sessionTree, staleAnnouncement, steerPanel, taskRef, uncertainAnnouncement, waitingCount } from './components.mjs';
+import { confirmPress, deliveryNotices, deliveryRequest, disclosure, filePreview, handAnnouncement, hasMarginHome, presentationControl, revealRow, reviewSheet, ROUTE_CHANGED_NOTE, routeBlock, sendItems, sessionMenuNodes, staleAnnouncement, steerPanel, taskRef, uncertainAnnouncement, waitingCount } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
 import { notConnectedView } from './connect-view.mjs';
@@ -82,6 +82,8 @@ const state = {
         drawer: null,
         /** The Not connected screen: Ask the agent's progress and whether its help is open. */
         connect: { asking: false, askedAt: 0, retryAfterMs: 30000, error: null, helpOpen: false },
+        /** What the last Open in new panel said, shown in the session menu while it is open. */
+        panelNote: null,
     },
 };
 
@@ -139,6 +141,32 @@ function noteMoved(moved) {
     state.notes = [...state.notes.filter((note) => note.kind !== 'moved'), { id: `note-${++noteSeq}`, kind: 'moved', tone: 'accent', icon: 'arrow-right', text }].slice(-MAX_NOTES);
     renderStatus();
     announce(`Moved to ${moved.title}, the loop the agent works in.`);
+}
+
+/** The note for a child's canvas that did not open. */
+const failedPanel = (title, reason) => ({ tone: 'danger', icon: 'alert', text: `Opening a canvas for ${title} failed: ${String(reason).replace(/\.$/, '')}.` });
+
+/** What Open in new panel's result says, in words: the note's tone and icon, and its text. */
+function panelOutcome(result, title) {
+    switch (result.outcome) {
+        case 'opened': return { tone: 'accent', icon: 'panel', text: `Opened a canvas for ${title} in a new panel.` };
+        case 'focused': return { tone: 'accent', icon: 'panel', text: `Focused the canvas for ${title}, which was already open in a panel.` };
+        case 'asked': return { tone: 'accent', icon: 'message', text: `Asked the agent to open a canvas for ${title}. Look for the line in the chat.` };
+        case 'wait': return { tone: 'attention', icon: 'info', text: `The agent was just asked to open a canvas for ${title}. Wait ${plural(Math.max(1, Math.ceil(result.retryAfterMs / 1000)), 'second')}, then try again.` };
+        default: return failedPanel(title, result.reason ?? 'the request was not sent');
+    }
+}
+
+/** Says what Open in new panel did: in the session menu while it is open, otherwise as a status note. */
+function reportPanel(note) {
+    announce(note.text);
+    if (!$('sessionMenu').hidden) {
+        state.ui.panelNote = note;
+        renderSessionMenu();
+        return;
+    }
+    state.notes = [...state.notes.filter((item) => item.kind !== 'panel'), { id: `note-${++noteSeq}`, kind: 'panel', tone: note.tone, icon: note.icon, text: note.text }].slice(-MAX_NOTES);
+    renderStatus();
 }
 
 function dismissNote(id) {
@@ -844,6 +872,14 @@ const act = {
             reportFailure(`Could not show that session: ${error.message}`);
         }
     },
+    /** Opens a child session's canvas in a new panel, or asks the agent to; says what happened and leaves focus where it is. */
+    async openPanel(ref) {
+        try {
+            reportPanel(panelOutcome(await api('/api/open-panel', { session: ref.session, statePath: ref.statePath }), ref.title));
+        } catch (error) {
+            reportPanel(failedPanel(ref.title, error.message));
+        }
+    },
     /** Follows the agent again: its running loop and the phase it works in. */
     resumeFollowing: () => startFollowing(),
     toggleOverride(id) {
@@ -1390,12 +1426,13 @@ function renderSessionControls() {
     btn.title = `Session “${name}”: ${plural(loops, 'loop')}${tree.key ? ` in ${tree.key}` : ''}`;
 }
 
-/** Opens or closes the session menu: this session's loops, then the workspace's other sessions. */
+/** Opens or closes the session menu: this session's loops, its child sessions, then the workspace's other sessions. */
 function toggleSessionMenu(open) {
     const menu = $('sessionMenu');
     const show = open ?? menu.hidden;
     if (show && !state.data) return;
     menu.hidden = !show;
+    state.ui.panelNote = null;
     $('sessionBtn').setAttribute('aria-expanded', String(show));
     if (!show) return;
     renderSessionMenu();
@@ -1418,25 +1455,16 @@ async function loadSessions() {
 function renderSessionMenu() {
     const menu = $('sessionMenu');
     const { session } = state.data;
-    const tree = session.followUps.tree;
-    const rpi = session.source?.kind === 'rpi';
-    const where = [tree.key, rpi ? (state.following === false ? 'not following the agent' : 'following the agent') : 'sample session'].filter(Boolean).join(' · ');
     const keepFocus = menu.contains(document.activeElement) ? document.activeElement.dataset.key ?? null : null;
-    menu.replaceChildren(
-        h('h2', { class: 'menu-title session-menu-title', id: 'sessionMenuTitle', tabindex: '-1' }, icon('nodes'), tree.name ? `Session: ${tree.name}` : 'This session'),
-        h('p', { class: 'meta session-menu-where', text: where }),
-        h('h3', { class: 'menu-subtitle', text: 'Loops in this session' }),
-        sessionTree(context(), {
-            label: `Loops in ${tree.name ?? 'this session'}, parent first`,
-            keyPrefix: 'menu',
-            onShow: (task) => {
-                toggleSessionMenu(false);
-                act.showTask(taskRef(task));
-            },
-        }),
-        ...(rpi ? [h('h3', { class: 'menu-subtitle', text: 'Other sessions' }), h('div', { id: 'sessionList' })] : []),
-        h('p', { class: 'menu-note', text: rpi ? 'Choosing a loop, a task in another session, or a session stops following the agent; choose Follow agent at the top to catch up with it.' : 'The sample has no other loops or sessions to show.' }));
-    if (rpi) renderSessionList();
+    menu.replaceChildren(...sessionMenuNodes(context(), {
+        following: state.following !== false,
+        note: state.ui.panelNote,
+        onShow: (task) => {
+            toggleSessionMenu(false);
+            act.showTask(taskRef(task));
+        },
+    }));
+    if (session.source?.kind === 'rpi') renderSessionList();
     if (keepFocus) menu.querySelector(`[data-key="${CSS.escape(keepFocus)}"]`)?.focus({ preventScroll: true });
 }
 

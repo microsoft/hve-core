@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { after, before, describe, it } from 'node:test';
 
 import { CLAIM_STALE_MS, claimDelivery, claimRelay, createFeedback, isDeliveryUncertain, markDelivered, ModelError, takeFeedback } from '../lib/model.mjs';
-import { createInboxRunner } from '../lib/inbox.mjs';
+import { createInboxRunner, hasLiveProcess, INBOX_VERSION, PRESENCE_TTL_MS } from '../lib/inbox.mjs';
 import { createPickupTracker } from '../lib/pickup.mjs';
 import { buildScenario } from '../lib/scenario.mjs';
 import { createStore, StoreError } from '../lib/store.mjs';
@@ -823,5 +823,21 @@ describe('outbox relay', () => {
         await runner.wakeOutbox();
         assert.deepEqual(idsOf(sends), [['FB-001', 'FB-002']]);
         store.close();
+    });
+});
+
+describe('live presence', () => {
+    const AT = Date.parse('2026-01-15T12:00:00.000Z');
+    const beat = (updatedAt) => ({ pid: 1, version: INBOX_VERSION, updatedAt: new Date(updatedAt).toISOString() });
+
+    it('counts a process that refreshed within the presence window, through its last moment', () => {
+        assert.equal(hasLiveProcess({ processes: [beat(AT - PRESENCE_TTL_MS)] }, AT), true);
+        assert.equal(hasLiveProcess({ processes: [beat(AT - PRESENCE_TTL_MS - 1)] }, AT), false);
+        assert.equal(hasLiveProcess({ processes: [beat(AT - PRESENCE_TTL_MS - 1), beat(AT - 1000)] }, AT), true, 'one live process is enough');
+    });
+
+    it('reads a missing presence, or one with no processes, as not live', () => {
+        assert.equal(hasLiveProcess(null, AT), false);
+        assert.equal(hasLiveProcess({ processes: [] }, AT), false);
     });
 });

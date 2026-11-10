@@ -8,6 +8,7 @@ import { createDelivery } from './lib/delivery.mjs';
 import { createEditorOpener, findEditor } from './lib/editor.mjs';
 import { createInboxRunner } from './lib/inbox.mjs';
 import { createPickupTracker } from './lib/pickup.mjs';
+import { CANVAS_ID, createPanelOpener, providerOf } from './lib/panels.mjs';
 import { createInstanceRegistry } from './lib/lifecycle.mjs';
 import { ModelError, PHASE_LABELS } from './lib/model.mjs';
 import { SCENARIO_ID, STAGES } from './lib/scenario.mjs';
@@ -15,8 +16,6 @@ import { createCanvasServer } from './lib/server.mjs';
 import { resolveSessionStateRoot } from './lib/source/sessions.mjs';
 import { createSourceController, NOT_CONNECTED_WHY, openPlan, validateOpenInput } from './lib/sources.mjs';
 import { createStore } from './lib/store.mjs';
-
-const CANVAS_ID = 'hve-core-rpi-workflow';
 
 /** @type {import('@github/copilot-sdk/extension').CopilotSession | null} */
 let joined = null;
@@ -81,6 +80,9 @@ const registry = createInstanceRegistry({
             deliver: createDelivery({ getSession: () => joined }),
             pickups,
             wakeOutbox: () => inbox?.wakeOutbox(),
+            // The provider that opened this instance opens its child panels too.
+            getExtensionId: () => record.extensionId ?? null,
+            openPanel: createPanelOpener({ rpc: () => joined?.rpc, extensionId: () => record.extensionId, canvasId: CANVAS_ID }),
             log,
         });
     },
@@ -157,6 +159,8 @@ const canvas = createCanvas({
         const ready = /** @type {{ sessionId: string, source: any, session: any, note: string }} */ (prepared);
         // The conversation keys the instance's memory.
         instance.hostSessionId = hostSessionId;
+        // The provider the host opened this instance through, which its child panels reuse.
+        instance.extensionId = providerOf(ctx);
         sources.attach(instance, ready);
         return openResult(instance, ready.source, ready.session, ready.note);
     },

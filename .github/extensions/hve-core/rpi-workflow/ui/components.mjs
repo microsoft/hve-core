@@ -1221,6 +1221,9 @@ export const TASK_STATUS = Object.freeze({
 /** The ref the page sends to show a task: its state path, and its Copilot session when another session holds it. */
 export const taskRef = (task) => ({ statePath: task.statePath, ...(task.sessionId ? { session: task.sessionId } : {}) });
 
+/** The ref the page sends to open a child session's canvas in a new panel. */
+const panelRef = (task, title = task.title) => ({ session: task.sessionId, statePath: task.statePath, title });
+
 /** Where a task of another Copilot session is, in words for its Show control and its continuation line. */
 const sessionPhrase = (task) => (task.sessionId ? `in session ${task.sessionName ?? task.sessionId}` : 'from another session');
 
@@ -1239,7 +1242,8 @@ function decisionsBadge(linked) {
  * The session's tasks as nested lists, parent first, in the order the reader built them.
  * The shown task is marked; other tasks, and a parent in another session, offer Show when
  * the canvas reads real tracking files. A child task in another Copilot session is labeled with
- * its session, phase, and decisions waiting, and its Show switches the canvas to it.
+ * its session, phase, and decisions waiting, its Show switches the canvas to it, and its Open in
+ * new panel opens the child's canvas beside this one.
  *
  * @param {any} ctx
  * @param {{ label: string, keyPrefix: string, onShow?: (task: any) => void }} options
@@ -1279,8 +1283,78 @@ export function sessionTree(ctx, options) {
                     ? h('span', { class: 'badge tone-accent tree-shown' }, icon('eye'), 'Shown')
                     : switchable && task.statePath
                         ? button('Show', { iconName: 'arrow-right', attrs: { 'aria-label': where ? `Show ${task.title}, ${where}` : `Show ${task.title}`, 'data-key': `${options.keyPrefix}-${task.sessionId ? `linked-${task.sessionId}` : 'show'}-${task.id}` }, onClick: () => show(task) })
-                        : null));
+                        : null,
+                task.sessionId && switchable && task.statePath
+                    ? button('Open in new panel', { iconName: 'panel', attrs: { 'aria-label': `Open in new panel: ${task.title}, ${where}`, 'data-key': `${options.keyPrefix}-open-${task.sessionId}-${task.id}` }, onClick: () => ctx.act.openPanel(panelRef(task)) })
+                    : null));
         stack[stack.length - 1].append(last);
     }
     return root;
 }
+
+/** Liveness of a child session's canvas, in words and an icon: its canvas process runs, or none does. */
+function liveBadge(linked) {
+    return linked.live
+        ? badge({ icon: 'live', label: 'Canvas running', tone: 'success' })
+        : badge({ icon: 'live-off', label: 'No canvas running', tone: 'muted' });
+}
+
+/**
+ * The Child sessions group of the session menu: a row for each child session that this session's tree
+ * links to in another Copilot session. Each row names the session and its task, and gives the task's
+ * phase, status, whether its canvas runs, and decisions waiting, in words. Show here switches this canvas
+ * to the child and stops following, as a loop's Show does; Open in new panel opens the child's canvas in
+ * a new panel and leaves this canvas as it is. `note` is the outcome of the last Open in new panel.
+ * Returns null when no child session is linked.
+ *
+ * @param {any} ctx
+ * @param {{ onShow?: (task: any) => void, note?: { tone: string, icon: string, text: string } | null }} [options]
+ */
+export function childSessionsGroup(ctx, options = {}) {
+    const children = ctx.data.linkedSessions ?? [];
+    if (!children.length) return null;
+    const { tree } = ctx.data.session.followUps;
+    const show = (child) => (options.onShow ? options.onShow(child) : ctx.act.showTask(taskRef(child)));
+    return h('div', { class: 'child-sessions', role: 'group', 'aria-labelledby': 'childSessionsTitle' },
+        h('h3', { class: 'menu-subtitle', id: 'childSessionsTitle', text: 'Child sessions' }),
+        h('ul', { class: 'child-session-list' }, children.map((child) => {
+            const title = tree.tasks.find((task) => task.id === child.taskId && task.sessionId === child.sessionId)?.title ?? child.taskId;
+            const name = child.sessionName ?? child.sessionId.slice(0, 8);
+            const where = `in session ${name}`;
+            const status = known(TASK_STATUS, child.status) ?? { icon: 'info', label: child.status ?? 'Unknown', tone: 'muted' };
+            return h('li', { class: 'child-session', dataset: { task: child.taskId } },
+                h('div', { class: 'child-session-card' },
+                    h('strong', { class: 'child-session-title', text: title }),
+                    h('p', { class: 'meta', text: `${where} · Phase: ${PHASE_META[child.phase]?.label ?? 'not recorded'}` }),
+                    h('div', { class: 'child-session-facts' }, badge(status), liveBadge(child), decisionsBadge(child)),
+                    h('div', { class: 'btn-row' },
+                        button('Show here', { iconName: 'arrow-right', attrs: { 'aria-label': `Show here: ${title}, ${where}`, 'data-key': `child-show-${child.sessionId}-${child.taskId}` }, onClick: () => show(child) }),
+                        button('Open in new panel', { iconName: 'panel', attrs: { 'aria-label': `Open in new panel: ${title}, ${where}`, 'data-key': `child-open-${child.sessionId}-${child.taskId}` }, onClick: () => ctx.act.openPanel(panelRef(child, title)) }))));
+        })),
+        options.note ? h('p', { class: ['child-note', 'notice', `tone-${options.note.tone}`] }, icon(options.note.icon, { className: 'status-note-icon' }), h('span', { text: options.note.text })) : null);
+}
+
+/**
+ * The session menu's content, in order: the session's name and follow state, its loops as a tree, the
+ * Child sessions group, a heading and an empty list the page fills with the workspace's other sessions,
+ * and the menu's note. The sample has no other sessions, so it has neither.
+ *
+ * @param {any} ctx
+ * @param {{ following: boolean, note?: { tone: string, icon: string, text: string } | null, onShow?: (task: any) => void }} options
+ */
+export function sessionMenuNodes(ctx, options) {
+    const { session } = ctx.data;
+    const { tree } = session.followUps;
+    const rpi = session.source?.kind === 'rpi';
+    const where = [tree.key, rpi ? (options.following ? 'following the agent' : 'not following the agent') : 'sample session'].filter(Boolean).join(' · ');
+    return [
+        h('h2', { class: 'menu-title session-menu-title', id: 'sessionMenuTitle', tabindex: '-1' }, icon('nodes'), tree.name ? `Session: ${tree.name}` : 'This session'),
+        h('p', { class: 'meta session-menu-where', text: where }),
+        h('h3', { class: 'menu-subtitle', text: 'Loops in this session' }),
+        sessionTree(ctx, { label: `Loops in ${tree.name ?? 'this session'}, parent first`, keyPrefix: 'menu', onShow: options.onShow }),
+        childSessionsGroup(ctx, { onShow: options.onShow, note: options.note }),
+        ...(rpi ? [h('h3', { class: 'menu-subtitle', text: 'Other sessions' }), h('div', { id: 'sessionList' })] : []),
+        h('p', { class: 'menu-note', text: rpi ? 'Choosing a loop, a task in another session, or a session stops following the agent; choose Follow agent at the top to catch up with it. Open in new panel leaves this canvas as it is.' : 'The sample has no other loops or sessions to show.' }),
+    ].filter(Boolean);
+}
+

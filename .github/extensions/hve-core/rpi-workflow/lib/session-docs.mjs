@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
+import { hasLiveProcess } from './inbox.mjs';
 import { deriveView } from './model.mjs';
 import { legacyDocumentFor, storeIdFor } from './source/workspace.mjs';
 
@@ -47,20 +48,34 @@ function decisionsWaitingOf(session) {
 }
 
 /**
+ * The tasks of the shown session's tree that another Copilot session holds and that the canvas can
+ * read from that session's workspace: each has a session ID and the workspace root it names.
+ *
+ * @param {any} shown The shown task's document.
+ * @returns {any[]}
+ */
+export function linkedTasksOf(shown) {
+    return (shown.followUps?.tree?.tasks ?? []).filter((task) => task.sessionId && task.root);
+}
+
+/**
  * The tasks of a session's tree that another Copilot session holds, each with its session, phase,
- * and status from the tree, and the decisions waiting from its store document. The document is the
- * one keyed to the task's own workspace, so a task of the same ID in another workspace is not read.
- * `decisionsWaiting` is null when no canvas has read the task yet.
+ * and status from the tree, the decisions waiting from its store document, and whether a canvas
+ * process of that session is live. The document is the one keyed to the task's own workspace, so a
+ * task of the same ID in another workspace is not read. `decisionsWaiting` is null when no canvas
+ * has read the task yet.
  *
  * @param {ReturnType<typeof import('./store.mjs').createStore>} store
  * @param {any} shown The shown task's document.
- * @returns {Promise<{ taskId: string, sessionId: string, sessionName: string | null, statePath: string, phase: string | null, status: string, decisionsWaiting: { id: string, title: string }[] | null }[]>}
+ * @param {{ at?: number }} [options] `at` is the time liveness is judged at, in milliseconds; the current time by default.
+ * @returns {Promise<{ taskId: string, sessionId: string, sessionName: string | null, statePath: string, phase: string | null, status: string, decisionsWaiting: { id: string, title: string }[] | null, live: boolean }[]>}
  */
-export async function loadLinkedSessions(store, shown) {
+export async function loadLinkedSessions(store, shown, options = {}) {
+    const at = options.at ?? Date.now();
     const linked = [];
-    for (const task of shown.followUps?.tree?.tasks ?? []) {
-        if (!task.sessionId || !task.root) continue;
+    for (const task of linkedTasksOf(shown)) {
         const session = (await store.load(storeIdFor(task.id, task.root)).catch(() => undefined)) ?? (await legacyDocumentFor(store, task.id, task.root));
+        const presence = await store.loadPresence(task.sessionId).catch(() => null);
         linked.push({
             taskId: task.id,
             sessionId: task.sessionId,
@@ -69,6 +84,7 @@ export async function loadLinkedSessions(store, shown) {
             phase: task.phase ?? null,
             status: task.status,
             decisionsWaiting: session ? decisionsWaitingOf(session) : null,
+            live: hasLiveProcess(presence, at),
         });
     }
     return linked;

@@ -326,7 +326,7 @@ describe('linked sessions in get_state', () => {
     it('lists each child task in another session with its session, phase, status, and no decisions until a canvas has read it', async () => {
         const { handlers } = await coordinator();
         const state = await handlers.get_state({ instanceId: 'linked', input: {} });
-        assert.deepEqual(state.linkedSessions, [{ taskId: CHILD_TASK, sessionId: CHILD, sessionName: 'Offline trail maps', statePath: PATHS.childState, phase: 'followup', status: 'completed', decisionsWaiting: null }]);
+        assert.deepEqual(state.linkedSessions, [{ taskId: CHILD_TASK, sessionId: CHILD, sessionName: 'Offline trail maps', statePath: PATHS.childState, phase: 'followup', status: 'completed', decisionsWaiting: null, live: false }]);
         assert.deepEqual((await handlers.get_state({ instanceId: 'linked', input: { detail: 'full' } })).linkedSessions, state.linkedSessions);
         assert.deepEqual(state.otherTasks, [], 'the child is not a task of this session\'s feedback');
     });
