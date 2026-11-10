@@ -20,6 +20,7 @@ import {
     LIMITS,
     markDelivered,
     releaseDelivery,
+    releaseHandoff,
     ModelError,
     queueForAgent,
     suggestEdit,
@@ -29,7 +30,7 @@ import {
 import { loadLinkedSessions, linkedTasksOf, loadSessionDocs } from './session-docs.mjs';
 import { isSessionId } from './source/sessions.mjs';
 import { agentTask } from './source/tree.mjs';
-import { CLAIM_WINDOW_MS, hasLiveProcess } from './inbox.mjs';
+import { CLAIM_WINDOW_MS, commitHandOff, hasLiveProcess } from './inbox.mjs';
 import { CANVAS_ID, panelInstanceId } from './panels.mjs';
 import { INBOX_MAX_ITEMS, preferencesPatch } from './store.mjs';
 import { EditorError } from './editor.mjs';
@@ -610,47 +611,42 @@ export function createCanvasServer(deps) {
     }
 
     /**
-     * Undoes a hand-off that failed before its inbox entries were written, so no target process can
-     * have claimed them. Removes the outbox entries when they were written, then releases each hold
-     * and dismisses the note it created. Items that already carry a relay claim are left to the
-     * process relaying them, so they are never both relayed and offered again.
+     * Undoes a hand-off that failed before it stood: before the target's inbox entries were written, or
+     * before its relay commit. Each part's items are released and its note is dismissed. The outbox
+     * entries are removed only when every release succeeded; an entry whose release failed stays pending,
+     * so the runner settles it after the claim window and nothing is sent meanwhile.
      *
-     * @param {{ id: string, ids: string[], entryId: string, noteId: string | null }[]} holds
-     * @param {boolean} outboxWritten whether the outbox entries were written
+     * @param {{ part: any, entryId: string }[]} entries the parts and the outbox entry each one recorded
      * @param {string} sender the canvas's own session
      */
-    async function undoHandOff(holds, outboxWritten, sender) {
+    async function undoHandOff(entries, sender) {
         const warn = (what, error) => log(`Could not ${what}: ${error instanceof Error ? error.message : 'error'}`, 'warning');
-        if (outboxWritten) {
-            const ids = new Set(holds.map((hold) => hold.entryId));
-            await store.updateOutbox(sender, (entries) => {
-                const kept = entries.filter((entry) => !ids.has(entry.id));
-                return { entries: kept.length === entries.length ? entries : kept, result: null };
-            }).catch((error) => warn('remove outbox entries', error));
-        }
-        for (const hold of holds) {
+        let released = true;
+        for (const { part, entryId } of entries) {
             try {
-                await store.update(hold.id, (current) => {
-                    const free = hold.ids.filter((id) => !current.feedback.find((item) => item.id === id)?.handoff?.relaying);
-                    return releaseDelivery(current, free, now());
-                }, { by: 'user' });
+                await store.update(part.id, (current) => releaseHandoff(current, entryId, now()), { by: 'user' });
             } catch (error) {
-                warn('release delivery claim', error);
-                continue;
-            }
-            if (hold.noteId) {
-                await store.update(hold.id, (current) => discardFeedback(current, [hold.noteId], now()), { by: 'user' }).catch((error) => warn('dismiss the note', error));
+                released = false;
+                warn('release the items of a send that failed', error);
             }
         }
+        if (!released) return;
+        const ids = new Set(entries.map((entry) => entry.entryId));
+        await store.updateOutbox(sender, (current) => {
+            const kept = current.filter((entry) => !ids.has(entry.id));
+            return { entries: kept.length === current.length ? current : kept, result: null };
+        }).catch((error) => warn('remove outbox entries', error));
     }
 
     /**
-     * Hands the items of another session's tasks over, when Send now goes there. Each task's items are
-     * held with a handoff that names the target session and a fresh entry ID. An outbox entry records the
-     * handoff for this session's canvas processes; the inbox route also writes an inbox entry for the
-     * target, which its canvas process claims and sends. A note becomes a comment item of the shown task,
-     * held with that task's items. A failure undoes what was written and fails as Send now does. The
-     * response does not wait for the items to reach the agent.
+     * Hands the items of another session's tasks over, when Send now goes there. The hand-off is recorded
+     * in this order. The outbox first gets one pending entry per task, so no item is held without an entry
+     * that can settle it. Each task's items are then held with a handoff that names its entry; a note
+     * becomes a comment item of the shown task, held with that task's items. The inbox route then writes
+     * the target's inbox entries, and once they are written the hand-off stands, since a target process may
+     * send them. The outbox entries then commit, so the runner may relay them when due. A failure before the
+     * inbox entries are written, or on the relay route before the commit, undoes what was written and fails
+     * as Send now does. The response does not wait for the items to reach the agent.
      *
      * @param {any[]} groups the tasks and their items, from `deliveryGroups`
      * @param {any} body the request body
@@ -670,11 +666,17 @@ export function createCanvasServer(deps) {
         }
         const at = now();
         const relayAfter = route.kind === 'inbox' ? new Date(Date.parse(at) + claimWindowMs).toISOString() : at;
+        const entries = parts.map((part) => ({ part, entryId: randomBytes(12).toString('hex') }));
+        const entryIds = entries.map((entry) => entry.entryId);
         const holds = [];
-        let outboxWritten = false;
+        let entriesWritten = false;
         try {
-            for (const part of parts) {
-                const entryId = randomBytes(12).toString('hex');
+            await store.updateOutbox(from, (current) => ({
+                entries: [...current, ...entries.map(({ part, entryId }) => ({ id: entryId, taskDoc: part.id, target, handle, relayAfter, createdAt: at, state: 'pending' }))],
+                result: null,
+            }));
+            entriesWritten = true;
+            for (const { part, entryId } of entries) {
                 const { session, result } = await store.update(part.id, (current) => {
                     if (!sameItems(current, part.session, part.ids)) {
                         throw new HttpError(409, 'preview_stale', 'Your items changed since you opened this. Check the list, then send again.');
@@ -688,23 +690,28 @@ export function createCanvasServer(deps) {
                         noteId = created.result.id;
                         ids.push(noteId);
                     }
-                    return { session: claimDelivery(next, ids, at, { handoff: { sessionId: target, entryId, relayAfter } }).session, result: { ids, noteId } };
+                    return { session: claimDelivery(next, ids, at, { handoff: { sessionId: target, entryId, relayAfter }, note: noteId }).session, result: { ids } };
                 }, { by: 'user' });
-                holds.push({ id: part.id, taskId: part.taskId, entryId, ids: result.ids, noteId: result.noteId, revision: session.revision });
+                holds.push({ id: part.id, taskId: part.taskId, entryId, ids: result.ids, revision: session.revision });
             }
-            // Each file takes all of its entries in one write, the outbox first: once the inbox entries
-            // exist, a target process may send them, so nothing after that write can fail.
-            await store.updateOutbox(from, (entries) => ({ entries: [...entries, ...holds.map((hold) => ({ id: hold.entryId, taskDoc: hold.id, target, handle, relayAfter, createdAt: at }))], result: null }));
-            outboxWritten = true;
             if (route.kind === 'inbox') {
-                await store.updateInbox(target, (entries) => ({ entries: [...entries, ...holds.map((hold) => ({ id: hold.entryId, taskDoc: hold.id, itemIds: hold.ids, from: { sessionId: from, handle }, createdAt: at, state: 'waiting', owner: null }))], result: null }));
+                await store.updateInbox(target, (current) => ({
+                    entries: [...current, ...holds.map((hold) => ({ id: hold.entryId, taskDoc: hold.id, itemIds: hold.ids, from: { sessionId: from, handle }, createdAt: at, state: 'waiting', owner: null }))],
+                    result: null,
+                }));
+            } else if (!(await commitHandOff(store, from, entryIds))) {
+                throw new ModelError('invalid_state', 'The hand-off was settled before it committed.');
             }
         } catch (error) {
-            await undoHandOff(holds, outboxWritten, from);
+            if (entriesWritten) await undoHandOff(entries, from);
             if (error instanceof ModelError && error.code === 'invalid_state') {
                 throw new HttpError(409, 'preview_stale', 'Some of these items were sent or removed meanwhile. Check the list, then send again.');
             }
             throw error;
+        }
+        if (route.kind === 'inbox') {
+            // The target's inbox holds the entries, so the hand-off stands even if this commit fails; the runner settles the entries.
+            await commitHandOff(store, from, entryIds).catch((error) => log(`Could not commit a hand-off to another session: ${error instanceof Error ? error.message : 'error'}`, 'warning'));
         }
         wakeRelays();
         const shown = holds.find((hold) => hold.id === getSessionId());

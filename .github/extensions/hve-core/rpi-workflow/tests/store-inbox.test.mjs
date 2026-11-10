@@ -196,6 +196,14 @@ describe('outbox files', () => {
         store.close();
     });
 
+    it('accepts an outbox state of pending or committed, or none for files written before states, and refuses other states', async () => {
+        const store = fresh('outbox-state');
+        await store.updateOutbox(OTHER, (entries) => ({ entries: [...entries, handoff({ state: 'pending' }), handoff({ id: 'entry-2', state: 'committed' }), handoff({ id: 'entry-3' })], result: null }));
+        assert.deepEqual((await store.loadOutbox(OTHER)).entries.map((item) => item.state), ['pending', 'committed', undefined]);
+        await assert.rejects(store.updateOutbox(OTHER, (entries) => ({ entries: [...entries, handoff({ id: 'entry-4', state: 'waiting' })], result: null })), { code: 'storage_corrupt' });
+        store.close();
+    });
+
     it('takes the lock that task documents use, so a held lock blocks outbox changes', async () => {
         const store = fresh('outbox-locked');
         await fs.mkdir(path.join(store.root, 'outbox'), { recursive: true });

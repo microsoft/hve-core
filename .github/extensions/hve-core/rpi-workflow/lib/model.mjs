@@ -602,8 +602,8 @@ export const CLAIM_STALE_MS = 10 * 60 * 1000;
 
 /**
  * True while a delivery holds a queued item, so takes and other deliveries skip it. A handoff to
- * another session's inbox holds its items until they are sent, relayed, or marked uncertain,
- * however long that takes; any other hold lapses after the claim window.
+ * another session's inbox holds its items until they are sent, relayed, marked uncertain, or
+ * released, however long that takes; any other hold lapses after the claim window.
  *
  * @param {any} item
  * @param {string} now ISO time
@@ -755,16 +755,21 @@ function handoffRecord(value) {
 /**
  * Holds queued items for one delivery so a concurrent take or delivery cannot send them too.
  * With `options.handoff`, each item also records the handoff to another session's inbox, and the
- * hold lasts until the items are sent, relayed, or marked uncertain.
+ * hold lasts until the items are sent, relayed, marked uncertain, or released. `options.note` names
+ * the item in `ids` that is the handoff's note: releasing the handoff dismisses it.
  *
  * @param {any} session
  * @param {string[]} ids
  * @param {string} now
- * @param {{ handoff?: { sessionId: string, entryId: string, relayAfter: string } }} [options]
+ * @param {{ handoff?: { sessionId: string, entryId: string, relayAfter: string }, note?: string | null }} [options]
  */
 export function claimDelivery(session, ids, now, options = {}) {
     const handoff = options.handoff === undefined ? null : handoffRecord(options.handoff);
+    const note = options.note === undefined || options.note === null ? null : identifier(options.note, 'note');
     const wanted = ids.map((id) => identifier(id, 'ids[]'));
+    if (note !== null && (handoff === null || !wanted.includes(note))) {
+        fail('invalid_input', 'note must be one of the items handed off.');
+    }
     for (const id of wanted) {
         const item = byId(session.feedback, id);
         if (!item || item.state !== 'queued') {
@@ -781,7 +786,10 @@ export function claimDelivery(session, ids, now, options = {}) {
         for (const id of wanted) {
             const item = byId(draft.feedback, id);
             item.deliveringSince = now;
-            if (handoff) item.handoff = { ...handoff };
+            if (handoff) {
+                item.handoff = { ...handoff };
+                if (id === note) item.handoff.note = true;
+            }
         }
         return wanted;
     });
@@ -835,6 +843,27 @@ export function heldItemIds(session, ids, entryId) {
         const item = byId(session.feedback, id);
         return item?.state === 'queued' && !isDeliveryUncertain(item) && item.handoff?.entryId === entryId;
     });
+}
+
+/**
+ * Settles a handoff that did not stand: each item it holds is released, and its note, when it has
+ * one, is dismissed. Only items still held by `entryId` change. A handoff that did not stand has no
+ * relay claim, because only committed entries are relayed.
+ *
+ * @param {any} session
+ * @param {string} entryId
+ * @param {string} now
+ * @returns {{ session: any, result: string[] }} the released item IDs
+ */
+export function releaseHandoff(session, entryId, now) {
+    const id = identifier(entryId, 'entryId');
+    const held = session.feedback.filter((item) => item.handoff?.entryId === id);
+    if (held.length === 0) {
+        return { session, result: [] };
+    }
+    const notes = held.filter((item) => item.handoff.note === true).map((item) => item.id);
+    const released = releaseDelivery(session, held.map((item) => item.id), now).session;
+    return { session: discardFeedback(released, notes, now).session, result: held.map((item) => item.id) };
 }
 
 /** Releases a claim or handoff after a failed delivery; the items stay queued. */

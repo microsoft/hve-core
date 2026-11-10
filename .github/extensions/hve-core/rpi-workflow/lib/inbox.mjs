@@ -16,9 +16,14 @@
  * entry falls due and the target's inbox entry is still waiting, a process relays the items through
  * this session's chat. The relay claim on the items and the removal of the inbox entry happen under
  * locks, so an item is relayed only when the target never claimed it, and at most once.
+ *
+ * An outbox entry is `pending` while its handoff is being recorded, and `committed` once the entry may be
+ * relayed. A pending entry is never relayed. Once it has been pending past the claim window, it is
+ * settled: it commits when the target's inbox entry exists, since the target may hold the items, and
+ * otherwise its items are released and nothing is sent.
  */
 
-import { CLAIM_STALE_MS, claimRelay, composeInboxDelivery, composeRelayDelivery, handedItemIds, heldItemIds, markDelivered, markDeliveryUncertain, ModelError, releaseRelay, relayItemIds } from './model.mjs';
+import { CLAIM_STALE_MS, claimRelay, composeInboxDelivery, composeRelayDelivery, handedItemIds, heldItemIds, markDelivered, markDeliveryUncertain, ModelError, releaseHandoff, releaseRelay, relayItemIds } from './model.mjs';
 
 /** Version of the presence and inbox protocol. A process reports it; only processes that speak it take entries. */
 export const INBOX_VERSION = 1;
@@ -56,6 +61,26 @@ const ownedBy = (owner, state) => (entry) => entry.state === state && sameOwner(
 export function withoutEntry(entries, id) {
     const kept = entries.filter((entry) => entry.id !== id);
     return { entries: kept.length === entries.length ? entries : kept, result: null };
+}
+
+/**
+ * Commits the pending outbox entries `entryIds` of `sessionId`, so their items may be relayed once due.
+ * Resolves to false, and writes nothing, when an entry is missing or no longer pending: the runner has
+ * settled it, so the handoff must not commit.
+ *
+ * @param {any} store
+ * @param {string} sessionId
+ * @param {string[]} entryIds
+ * @returns {Promise<boolean>}
+ */
+export async function commitHandOff(store, sessionId, entryIds) {
+    const wanted = new Set(entryIds);
+    const { result } = await store.updateOutbox(sessionId, (entries) => {
+        const pending = entries.filter((entry) => wanted.has(entry.id) && entry.state === 'pending');
+        if (pending.length !== wanted.size) return { entries, result: false };
+        return { entries: entries.map((entry) => (wanted.has(entry.id) ? { ...entry, state: 'committed' } : entry)), result: true };
+    });
+    return result;
 }
 
 /**
@@ -148,6 +173,7 @@ export function createInboxRunner(deps) {
         entries: failureReport('Could not handle an inbox entry', log),
         outbox: failureReport('Could not check the outbox', log),
         relays: failureReport('Could not relay items to another session', log),
+        settles: failureReport('Could not settle a hand-off to another session', log),
     };
 
     let started = false;
@@ -363,6 +389,9 @@ export function createInboxRunner(deps) {
         outboxDueAt = outboxDueAt === null ? at : Math.min(outboxDueAt, at);
     }
 
+    /** When an outbox entry needs a check: a pending handoff once its claim window has passed, a committed one at its relay time. */
+    const dueAt = (entry) => (entry.state === 'pending' ? Date.parse(entry.createdAt) + claimStaleMs + 1 : Date.parse(entry.relayAfter));
+
     /** Removes an outbox entry, or does nothing when it is already gone. */
     const forgetOutbox = (id) => store.updateOutbox(sessionId, (entries) => withoutEntry(entries, id));
 
@@ -472,6 +501,25 @@ export function createInboxRunner(deps) {
     }
 
     /**
+     * Settles a pending handoff whose claim window has passed. When the target's inbox entry exists, the
+     * target may hold the items, so the handoff commits and follows the relay path like any other.
+     * Otherwise nothing was sent: the items are released, their note is dismissed, and the entry is
+     * removed. The send that wrote the entry finishes well within the claim window.
+     */
+    async function settlePending(entry) {
+        if (await inboxEntryOf(entry.target, entry.id)) {
+            await commitHandOff(store, sessionId, [entry.id]);
+            outboxDirty = true;
+            return;
+        }
+        if (await store.load(entry.taskDoc)) {
+            await store.update(entry.taskDoc, (doc) => releaseHandoff(doc, entry.id, iso(now())), { by: 'agent' });
+        }
+        await forgetOutbox(entry.id);
+        log(`A send from RPI canvas ${entry.handle} did not finish. Its items were released and not sent.`, 'warning');
+    }
+
+    /**
      * Acts on one due outbox entry. Its items are relayed only by the process that holds their relay
      * claim, and only once the target's inbox entry is withdrawn or was never there. A fresh claim
      * by another process, or an entry the target's process owns, is left for a later check.
@@ -514,17 +562,19 @@ export function createInboxRunner(deps) {
         const { entries } = await store.loadOutbox(sessionId);
         for (const entry of entries) {
             if (stopped) return;
-            const due = Date.parse(entry.relayAfter);
+            const due = dueAt(entry);
             if (now() < due) {
                 noteOutboxDue(due);
                 continue;
             }
             try {
-                await relay(entry);
+                if (entry.state === 'pending') await settlePending(entry);
+                else await relay(entry);
             } catch (error) {
-                // The relay claim is released or goes stale, so the entry is safe to retry at the next check.
+                // A relay claim is released or goes stale, and a settle can be repeated, so the entry is retried at the next check.
                 outboxDirty = true;
-                reports.relays.failed(error);
+                if (entry.state === 'pending') reports.settles.failed(error);
+                else reports.relays.failed(error);
             }
         }
     }

@@ -9,7 +9,7 @@ import path from 'node:path';
 import { after, afterEach, before, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { agentEditSection, claimDelivery, createFeedback, markDelivered, markDeliveryUncertain, ModelError, recordActivity, recordInterpretation, takeFeedback, upsertDecision } from '../lib/model.mjs';
+import { agentEditSection, CLAIM_STALE_MS, claimDelivery, createFeedback, markDelivered, markDeliveryUncertain, ModelError, recordActivity, recordInterpretation, takeFeedback, upsertDecision } from '../lib/model.mjs';
 import { buildScenario } from '../lib/scenario.mjs';
 import { clientInfoFrom, createCanvasServer as newServer, MAX_BODY, renderShell } from '../lib/server.mjs';
 import { createInboxRunner, INBOX_VERSION, PRESENCE_TTL_MS } from '../lib/inbox.mjs';
@@ -562,22 +562,25 @@ describe('a send to another session', () => {
     /**
      * A canvas that shows the child's task, bound to the child's session and joined to the Project's
      * session. `childRunner` is the child's canvas process, and `source` is this canvas's own process
-     * for the Project's session. `failOn` makes the first write of that store method fail, and
+     * for the Project's session. `failWrites` decides which of the canvas's writes fail: it receives
+     * the number of each write, counted from 1 across task documents, the outbox, and the inbox, and
+     * returns true for a write that fails. Tests reassign `writes.failWrites` to let the canvas restart.
      * `hooks.beforeInboxWrite`, when set, runs once before the source writes an inbox entry. `withParent`
      * also stores the parent task's document, in the same session, and `joined` is the Copilot session
-     * this canvas joins, or null for none.
+     * this canvas joins, or null for none. `settleClock` gives the source process a clock the test moves
+     * (in `sourceClock.at`), so its claim window can pass without waiting.
      */
-    async function crossSetup(name, { claimWindowMs, failOn = null, withParent = false, joined = PROJECT } = {}) {
+    async function crossSetup(name, { claimWindowMs, failWrites = () => false, withParent = false, joined = PROJECT, settleClock = false } = {}) {
         const store = createStore({ root: path.join(tmp, name), pollMs: 20 });
         const child = await store.create({ ...childSession().session, id: storeIdFor(CHILD_TASK, FIXTURE_ROOT) });
         const parent = withParent ? await store.create({ ...rootSession().session, id: storeIdFor(ROOT_TASK, FIXTURE_ROOT) }) : null;
-        let failures = failOn ? 1 : 0;
+        const writes = { count: 0, failWrites };
         const flaky = Object.create(store);
-        for (const method of ['updateOutbox', 'updateInbox']) {
+        for (const method of ['update', 'updateOutbox', 'updateInbox']) {
             flaky[method] = (...args) => {
-                if (method === failOn && failures > 0) {
-                    failures -= 1;
-                    return Promise.reject(new ModelError('storage_failed', 'The entry could not be written.'));
+                writes.count += 1;
+                if (writes.failWrites(writes.count)) {
+                    return Promise.reject(new ModelError('storage_failed', 'The write could not be saved.'));
                 }
                 return store[method](...args);
             };
@@ -598,7 +601,8 @@ describe('a send to another session', () => {
             childChat.push(request);
             return { messageId: 'child-1' };
         } });
-        const source = createInboxRunner({ store: sourceStore, sessionId: PROJECT, pid: 5151, pause: async () => {}, deliver: async (request) => {
+        const sourceClock = { at: Date.now() };
+        const source = createInboxRunner({ store: sourceStore, sessionId: PROJECT, pid: 5151, pause: async () => {}, now: settleClock ? () => sourceClock.at : undefined, deliver: async (request) => {
             chat.push(request);
             return { messageId: `relay-${chat.length}` };
         } });
@@ -618,7 +622,7 @@ describe('a send to another session', () => {
         });
         const url = new URL(await server.start());
         return {
-            store, server, url, child, parent, chat, childChat, childRunner, source, hooks,
+            store, server, url, child, parent, chat, childChat, childRunner, source, hooks, writes, sourceClock,
             async stop() {
                 await server.stop();
                 await childRunner.stop();
@@ -626,6 +630,16 @@ describe('a send to another session', () => {
                 store.close();
             },
         };
+    }
+
+    /**
+     * Moves the source process's clock past the claim window of the pending hand-off that the Send wrote,
+     * then checks the outbox.
+     */
+    async function passClaimWindow(f) {
+        const [entry] = (await f.store.loadOutbox(PROJECT)).entries;
+        f.sourceClock.at = Date.parse(entry.createdAt) + CLAIM_STALE_MS + 1;
+        await f.source.checkOutbox();
     }
 
     /** Previews the items as the page does, then sends them with the previewed digest. */
@@ -769,27 +783,184 @@ describe('a send to another session', () => {
         }
     });
 
-    for (const failOn of ['updateOutbox', 'updateInbox']) {
-        it(`undoes a hand-off whose ${failOn} write fails: releases the holds, removes the entries, dismisses the note, and sends again on retry`, async () => {
-            const f = await crossSetup(`cross-undo-${failOn}`, { failOn });
-            try {
-                const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
-                await f.childRunner.heartbeat();
-                const body = { items: [{ taskId: CHILD_TASK, id: mine.id }], note: 'Also this.' };
-                const failed = await sendItems(f, body);
-                assert.equal(failed.sent.status, 500, JSON.stringify(failed.sent.json));
-                const held = await itemIn(f.store, f.child.id, mine.id);
-                assert.deepEqual([held.state, held.handoff, held.deliveringSince], ['queued', undefined, undefined]);
-                assert.deepEqual((await f.store.load(f.child.id)).feedback.filter((entry) => entry.text === 'Also this.').map((entry) => entry.state), ['dismissed']);
-                assert.deepEqual([(await f.store.loadOutbox(PROJECT)).entries, (await f.store.loadInbox(CHILD)).entries, f.chat.length], [[], [], 0]);
-                const retried = await sendItems(f, body);
-                assert.equal(retried.sent.status, 200, JSON.stringify(retried.sent.json));
-                assert.equal(retried.sent.json.handedOff[0].ids.length, 2);
-            } finally {
-                await f.stop();
-            }
-        });
-    }
+    it('undoes a hand-off whose inbox write fails: releases the holds, removes the entries, dismisses the note, and sends again on retry', async () => {
+        const f = await crossSetup('cross-undo-inbox', { failWrites: (n) => n === 3 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const body = { items: [{ taskId: CHILD_TASK, id: mine.id }], note: 'Also this.' };
+            const failed = await sendItems(f, body);
+            assert.equal(failed.sent.status, 500, JSON.stringify(failed.sent.json));
+            const held = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([held.state, held.handoff, held.deliveringSince], ['queued', undefined, undefined]);
+            assert.deepEqual((await f.store.load(f.child.id)).feedback.filter((entry) => entry.text === 'Also this.').map((entry) => entry.state), ['dismissed']);
+            assert.deepEqual([(await f.store.loadOutbox(PROJECT)).entries, (await f.store.loadInbox(CHILD)).entries, f.chat.length], [[], [], 0]);
+            const retried = await sendItems(f, body);
+            assert.equal(retried.sent.status, 200, JSON.stringify(retried.sent.json));
+            assert.equal(retried.sent.json.handedOff[0].ids.length, 2);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('a hand-off whose outbox write fails holds nothing, writes no note, and sends again on retry', async () => {
+        const f = await crossSetup('cross-undo-outbox', { failWrites: (n) => n === 1 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const body = { items: [{ taskId: CHILD_TASK, id: mine.id }], note: 'Also this.' };
+            const failed = await sendItems(f, body);
+            assert.equal(failed.sent.status, 500, JSON.stringify(failed.sent.json));
+            const held = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([held.state, held.handoff, held.deliveringSince], ['queued', undefined, undefined]);
+            assert.deepEqual((await f.store.load(f.child.id)).feedback.filter((entry) => entry.text === 'Also this.'), [], 'no note is written');
+            assert.deepEqual([(await f.store.loadOutbox(PROJECT)).entries, (await f.store.loadInbox(CHILD)).entries, f.chat.length], [[], [], 0]);
+            const retried = await sendItems(f, body);
+            assert.equal(retried.sent.status, 200, JSON.stringify(retried.sent.json));
+            assert.equal(retried.sent.json.handedOff[0].ids.length, 2);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('a canvas that stops after the holds are written and before the hand-off commits leaves items that the runner releases after the claim window, unsent; a retry sends them once', async () => {
+        // Every write from the commit on fails, as if the canvas had stopped there, so no undo runs.
+        const f = await crossSetup('cross-stop', { settleClock: true, failWrites: (n) => n >= 3 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const items = [{ taskId: CHILD_TASK, id: mine.id }];
+            const { sent } = await sendItems(f, { items });
+            assert.equal(sent.status, 500, JSON.stringify(sent.json));
+            const [entry] = (await f.store.loadOutbox(PROJECT)).entries;
+            assert.deepEqual([entry.state, (await itemIn(f.store, f.child.id, mine.id)).handoff.entryId], ['pending', entry.id], 'the items stay held by the pending entry');
+            await f.source.checkOutbox();
+            assert.deepEqual([f.chat.length, f.childChat.length, (await f.store.loadOutbox(PROJECT)).entries.length], [0, 0, 1], 'nothing is sent or released inside the claim window');
+            f.writes.failWrites = () => false;
+            await passClaimWindow(f);
+            const released = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([released.state, released.handoff, released.deliveringSince], ['queued', undefined, undefined]);
+            assert.deepEqual([(await f.store.loadOutbox(PROJECT)).entries, f.chat.length, f.childChat.length], [[], 0, 0], 'the runner released the items and sent nothing');
+            const retried = await sendItems(f, { items });
+            assert.equal(retried.sent.status, 200, JSON.stringify(retried.sent.json));
+            await until(async () => (await itemIn(f.store, f.child.id, mine.id)).state === 'sent' && (await f.store.loadOutbox(PROJECT)).entries.length === 0);
+            assert.equal(f.chat.length, 1, 'the retry relays the items once');
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('a hand-off whose undo cannot release its items leaves them to the runner: nothing is relayed, and after the claim window the runner releases them and dismisses the note', async () => {
+        // The commit and the undo's release both fail, so the undo stops with the items still held.
+        const f = await crossSetup('cross-release-fails', { settleClock: true, failWrites: (n) => n === 3 || n === 4 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const body = { items: [{ taskId: CHILD_TASK, id: mine.id }], note: 'Also this.' };
+            const failed = await sendItems(f, body);
+            assert.equal(failed.sent.status, 500, JSON.stringify(failed.sent.json));
+            assert.ok((await itemIn(f.store, f.child.id, mine.id)).handoff, 'the item is still held');
+            assert.deepEqual((await f.store.load(f.child.id)).feedback.filter((entry) => entry.text === 'Also this.').map((entry) => entry.state), ['queued'], 'the note is still held too');
+            assert.deepEqual([(await f.store.loadOutbox(PROJECT)).entries.map((entry) => entry.state), f.chat.length], [['pending'], 0]);
+            await f.source.checkOutbox();
+            assert.deepEqual([f.chat.length, f.childChat.length], [0, 0], 'nothing is relayed while the entry is pending');
+            f.writes.failWrites = () => false;
+            await passClaimWindow(f);
+            const released = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([released.state, released.handoff], ['queued', undefined]);
+            assert.deepEqual((await f.store.load(f.child.id)).feedback.filter((entry) => entry.text === 'Also this.').map((entry) => entry.state), ['dismissed']);
+            assert.deepEqual([f.chat.length, f.childChat.length], [0, 0], 'nothing is relayed');
+            const retried = await sendItems(f, body);
+            assert.equal(retried.sent.status, 200, JSON.stringify(retried.sent.json));
+            await until(async () => (await itemIn(f.store, f.child.id, mine.id)).state === 'sent' && (await f.store.loadOutbox(PROJECT)).entries.length === 0);
+            assert.equal(f.chat.length, 1, 'the retry relays the items once');
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('a hand-off whose inbox write and undo release both fail sends nothing, and the runner releases the items after the claim window', async () => {
+        const f = await crossSetup('cross-inbox-release-fails', { settleClock: true, failWrites: (n) => n === 3 || n === 4 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const items = [{ taskId: CHILD_TASK, id: mine.id }];
+            const failed = await sendItems(f, { items });
+            assert.equal(failed.sent.status, 500, JSON.stringify(failed.sent.json));
+            assert.deepEqual([(await f.store.loadInbox(CHILD)).entries, (await f.store.loadOutbox(PROJECT)).entries.map((entry) => entry.state)], [[], ['pending']]);
+            await f.childRunner.checkInbox();
+            assert.equal(f.childChat.length, 0, 'the target has no entry to send');
+            f.writes.failWrites = () => false;
+            await passClaimWindow(f);
+            assert.deepEqual([(await itemIn(f.store, f.child.id, mine.id)).handoff, (await f.store.loadOutbox(PROJECT)).entries], [undefined, []]);
+            await f.childRunner.checkInbox();
+            assert.deepEqual([f.childChat.length, f.chat.length], [0, 0], 'nothing is sent');
+            const retried = await sendItems(f, { items });
+            assert.equal(retried.sent.status, 200, JSON.stringify(retried.sent.json));
+            await f.childRunner.checkInbox();
+            assert.deepEqual([f.childChat.length, f.chat.length], [1, 0], 'the retry is delivered once, through the target');
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('a hand-off whose inbox write fails is never delivered, and the retry is delivered once through the target', async () => {
+        const f = await crossSetup('cross-inbox-fails', { failWrites: (n) => n === 3 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const items = [{ taskId: CHILD_TASK, id: mine.id }];
+            const failed = await sendItems(f, { items });
+            assert.equal(failed.sent.status, 500, JSON.stringify(failed.sent.json));
+            await f.childRunner.checkInbox();
+            await f.source.checkOutbox();
+            assert.deepEqual([f.chat.length, f.childChat.length, (await f.store.loadOutbox(PROJECT)).entries.length, (await f.store.loadInbox(CHILD)).entries.length], [0, 0, 0, 0]);
+            assert.equal((await itemIn(f.store, f.child.id, mine.id)).handoff, undefined);
+            const retried = await sendItems(f, { items });
+            assert.equal(retried.sent.status, 200, JSON.stringify(retried.sent.json));
+            assert.equal(retried.sent.json.route.kind, 'inbox');
+            await f.childRunner.checkInbox();
+            const after = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([f.childChat.length, after.state, after.route, f.chat.length], [1, 'sent', 'inbox', 0]);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('a commit that fails after the target\'s inbox entries are written leaves the hand-off standing: the target sends the items once, and the runner releases nothing', async () => {
+        const f = await crossSetup('cross-commit-fails', { settleClock: true, failWrites: (n) => n === 4 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const { sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }] });
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            assert.deepEqual((await f.store.loadOutbox(PROJECT)).entries.map((entry) => entry.state), ['pending']);
+            await f.childRunner.checkInbox();
+            const after = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([f.childChat.length, after.state, after.route], [1, 'sent', 'inbox']);
+            await passClaimWindow(f);
+            assert.deepEqual([(await f.store.loadOutbox(PROJECT)).entries, f.chat.length, f.childChat.length], [[], 0, 1], 'the items went once, through the target');
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('a commit that fails after the target\'s inbox entries are written, with no claim from the target, is committed once the claim window has passed, and relayed', async () => {
+        const f = await crossSetup('cross-commit-unclaimed', { settleClock: true, failWrites: (n) => n === 4 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const { sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }] });
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            assert.equal((await f.store.loadInbox(CHILD)).entries.length, 1, 'the target has its entry, unclaimed');
+            await passClaimWindow(f);
+            assert.deepEqual((await f.store.loadOutbox(PROJECT)).entries.map((entry) => entry.state), ['committed']);
+            await f.source.checkOutbox();
+            assert.deepEqual([f.childChat.length, f.chat.length, (await f.store.loadInbox(CHILD)).entries.length, (await f.store.loadOutbox(PROJECT)).entries.length], [0, 1, 0, 0]);
+            const after = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([after.state, after.route], ['sent', 'relay']);
+        } finally {
+            await f.stop();
+        }
+    });
 
     it('reports the own route for the canvas\'s own tasks, with no session to name', async () => {
         const { server, url, store } = await setup('route-own');

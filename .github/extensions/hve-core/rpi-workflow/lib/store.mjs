@@ -29,6 +29,8 @@ const HANDLE_RE = /^[0-9A-Za-z][0-9A-Za-z-]{0,23}$/;
 export const INBOX_MAX_ITEMS = 50;
 /** The states an inbox entry moves through, in order: waiting, claimed by one process, then sending. */
 export const INBOX_STATES = Object.freeze(['waiting', 'claimed', 'sending']);
+/** The states an outbox entry moves through: pending while its handoff is recorded, then committed, when it may be relayed. */
+export const OUTBOX_STATES = Object.freeze(['pending', 'committed']);
 
 /**
  * Resolves the Copilot home every host shares: a non-empty `COPILOT_HOME`, otherwise
@@ -113,7 +115,7 @@ const isProcessId = (value) => Number.isInteger(value) && value > 0;
 const onlyKeys = (value, keys) => Object.keys(value).every((key) => keys.has(key));
 const PROCESS_KEYS = new Set(['pid', 'version', 'updatedAt']);
 const ENTRY_KEYS = new Set(['id', 'taskDoc', 'itemIds', 'from', 'createdAt', 'state', 'owner']);
-const OUTBOX_ENTRY_KEYS = new Set(['id', 'taskDoc', 'target', 'handle', 'relayAfter', 'createdAt']);
+const OUTBOX_ENTRY_KEYS = new Set(['id', 'taskDoc', 'target', 'handle', 'relayAfter', 'createdAt', 'state']);
 const FROM_KEYS = new Set(['sessionId', 'handle']);
 const OWNER_KEYS = new Set(['pid', 'at']);
 
@@ -153,7 +155,7 @@ function isInboxEntry(value) {
         && (value.state === 'waiting' ? value.owner === undefined || value.owner === null || isOwner(value.owner) : isOwner(value.owner));
 }
 
-/** An outbox entry records a handoff this session's canvas made to another session: the task document, the target, and when the items may be relayed. It carries no text. */
+/** An outbox entry records a handoff this session's canvas made to another session: the task document, the target, and when the items may be relayed. It carries no text. A pending entry is a handoff still being recorded; a missing state is committed, as in files written before states were recorded. */
 function isOutboxEntry(value) {
     return isRecord(value)
         && onlyKeys(value, OUTBOX_ENTRY_KEYS)
@@ -162,7 +164,8 @@ function isOutboxEntry(value) {
         && typeof value.target === 'string' && COPILOT_SESSION_RE.test(value.target)
         && typeof value.handle === 'string' && HANDLE_RE.test(value.handle)
         && isInstant(value.relayAfter)
-        && isInstant(value.createdAt);
+        && isInstant(value.createdAt)
+        && (value.state === undefined || OUTBOX_STATES.includes(value.state));
 }
 
 /** The presence entries of a session, or none when its file is missing. */
