@@ -229,7 +229,7 @@ describe('send dialog', () => {
         const confirm = keyed(sheet, 'send-confirm');
         assert.equal(confirm.getAttribute('disabled'), null);
         assert.match(serialize(confirm), /<span>Send now<\/span>/);
-        assert.equal(confirm.getAttribute('aria-describedby'), 'send-modes');
+        assert.equal(confirm.getAttribute('aria-describedby'), 'send-modes send-route');
         const queue = keyed(sheet, 'send-queue');
         assert.match(serialize(queue), /<span>Queue<\/span>/);
         assert.equal(queue.getAttribute('aria-describedby'), 'send-modes');

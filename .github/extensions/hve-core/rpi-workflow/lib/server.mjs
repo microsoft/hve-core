@@ -27,7 +27,8 @@ import {
 import { loadLinkedSessions, loadSessionDocs } from './session-docs.mjs';
 import { isSessionId } from './source/sessions.mjs';
 import { agentTask } from './source/tree.mjs';
-import { preferencesPatch } from './store.mjs';
+import { CLAIM_WINDOW_MS, INBOX_VERSION, PRESENCE_TTL_MS } from './inbox.mjs';
+import { INBOX_MAX_ITEMS, preferencesPatch } from './store.mjs';
 import { EditorError } from './editor.mjs';
 import { FileError, readWorkspaceFile } from './workspace-files.mjs';
 
@@ -70,6 +71,8 @@ const MARK_ATTEMPTS = 3;
 /** The pause before the first retry of recording a send; each later retry waits one step longer. */
 const MARK_RETRY_MS = 50;
 const TASK_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
+/** The routes a Send now can take, as the preview names them. */
+const ROUTE_KINDS = new Set(['own', 'inbox', 'relay']);
 
 const STATUS_FOR = Object.freeze({
     invalid_input: 400,
@@ -194,11 +197,14 @@ export function clientInfoFrom(body) {
  *   listSessions?: () => Promise<{ sessions: any[], skipped: string[] }>,
  *   showSample?: () => Promise<{ sessionId: string }>,
  *   markRetryMs?: number,
+ *   claimWindowMs?: number,
+ *   wakeOutbox?: () => unknown,
  * }} deps
  */
 export function createCanvasServer(deps) {
     const { store, getSessionId } = deps;
     const markRetryMs = Number.isFinite(deps.markRetryMs) ? deps.markRetryMs : MARK_RETRY_MS;
+    const claimWindowMs = Number.isFinite(deps.claimWindowMs) ? deps.claimWindowMs : CLAIM_WINDOW_MS;
     const getCanvas = deps.getCanvas ?? (() => null);
     // Every API call must carry this key, which only the page the host opens knows, so other
     // local processes cannot read, change, or send through this canvas.
@@ -364,8 +370,10 @@ export function createCanvasServer(deps) {
             canvas: getCanvas(),
             editor: getEditor() && deps.getSource?.()?.kind === 'rpi' ? { name: getEditor().name } : null,
             follow: source?.kind === 'rpi' ? { paused: Boolean(source.follow?.paused), agent: agentLoop(source.tasks) } : null,
-            otherTasks: docs.slice(1).map((doc) => ({ taskId: doc.taskId, title: doc.task?.title ?? doc.session.task.title, status: doc.task?.status ?? null, statePath: doc.task?.statePath ?? null, ...feedbackOverview(doc.session, at) })),
+            otherTasks: docs.slice(1).map((doc) => ({ taskId: doc.taskId, title: doc.task?.title ?? doc.session.task.title, status: doc.task?.status ?? null, statePath: doc.task?.statePath ?? null, ...feedbackOverview(doc.session, at, { viewer: ownSessionId() }) })),
             linkedSessions: await loadLinkedSessions(store, session),
+            delivery: deliveryTargetOf(session),
+            ownSessionId: ownSessionId(),
         };
     }
 
@@ -420,6 +428,18 @@ export function createCanvasServer(deps) {
         return { id: bound, root: typeof source.workspace?.root === 'string' ? source.workspace.root : null };
     };
 
+    /** The canvas's own Copilot session, in lowercase; null before the canvas joins one. */
+    const ownSessionId = () => {
+        const id = deps.getJoinedSessionId?.();
+        return typeof id === 'string' && id ? id.toLowerCase() : null;
+    };
+
+    /** The session that Send now takes the shown tasks to, named as the page names it; null when they are the canvas's own. */
+    const deliveryTargetOf = (session) => {
+        const target = otherSessionOf();
+        return target ? { sessionId: target.id.toLowerCase(), sessionName: session.followUps?.tree?.name ?? null } : null;
+    };
+
     const compose = (groups, body) => composeSessionDelivery(groups.map((group) => ({ session: group.session, ids: group.ids })), now(), {
         canvas: getCanvas(),
         note: body?.note,
@@ -464,6 +484,162 @@ export function createCanvasServer(deps) {
         }
         return { revision, queued };
     };
+
+    /** Whether another session has a canvas process that announced itself recently and speaks the inbox protocol. */
+    async function liveProcess(sessionId) {
+        const presence = await store.loadPresence(sessionId).catch((error) => {
+            log(`Could not read another session's presence: ${error instanceof Error ? error.message : 'error'}`, 'warning');
+            return null;
+        });
+        const at = Date.parse(now());
+        return Boolean(presence?.processes.some((entry) => entry.version >= INBOX_VERSION && at - Date.parse(entry.updatedAt) <= PRESENCE_TTL_MS));
+    }
+
+    /**
+     * The route Send now takes for the shown items: the canvas's own chat, the inbox of the session
+     * that holds them when one of its canvas processes is live, or the relay through the canvas's own
+     * chat when none is.
+     *
+     * @param {any[]} groups the tasks and their items
+     * @param {{ id: string } | null} target the session that holds the shown tasks, when it is not the canvas's own
+     */
+    /**
+     * The route Send now takes for the shown items: the canvas's own chat, the inbox of the session
+     * that holds them when one of its canvas processes is live, or the relay through the canvas's own
+     * chat when none is.
+     *
+     * @param {any[]} groups the tasks and their items
+     * @param {{ id: string } | null} target the session that holds the shown tasks, when it is not the canvas's own
+     */
+    async function routeFor(groups, target) {
+        const sessionName = groups[0]?.session.followUps?.tree?.name ?? null;
+        if (!target) return { kind: 'own', sessionId: deps.getJoinedSessionId?.() ?? null, sessionName };
+        const live = await liveProcess(target.id);
+        return { kind: live ? 'inbox' : 'relay', sessionId: target.id.toLowerCase(), sessionName };
+    }
+
+    /** The 409 that tells the page its preview is out of date, carrying the preview to show instead. */
+    const staleSend = (message, route, text) => Object.assign(new HttpError(409, 'preview_stale', text), { detail: { preview: { ...message, route } } });
+
+    /** Asks this process's inbox runner to check its outbox now. Send does not wait for the check. */
+    function wakeRelays() {
+        new Promise((resolve) => resolve(deps.wakeOutbox?.())).catch((error) => log(`Could not check the outbox: ${error instanceof Error ? error.message : 'error'}`, 'warning'));
+    }
+
+    /**
+     * Undoes a hand-off that failed before its inbox entries were written, so no target process can
+     * have claimed them. Removes the outbox entries when they were written, then releases each hold
+     * and dismisses the note it created. Items that already carry a relay claim are left to the
+     * process relaying them, so they are never both relayed and offered again.
+     *
+     * @param {{ id: string, ids: string[], entryId: string, noteId: string | null }[]} holds
+     * @param {boolean} outboxWritten whether the outbox entries were written
+     * @param {string} sender the canvas's own session
+     */
+    async function undoHandOff(holds, outboxWritten, sender) {
+        const warn = (what, error) => log(`Could not ${what}: ${error instanceof Error ? error.message : 'error'}`, 'warning');
+        if (outboxWritten) {
+            const ids = new Set(holds.map((hold) => hold.entryId));
+            await store.updateOutbox(sender, (entries) => {
+                const kept = entries.filter((entry) => !ids.has(entry.id));
+                return { entries: kept.length === entries.length ? entries : kept, result: null };
+            }).catch((error) => warn('remove outbox entries', error));
+        }
+        for (const hold of holds) {
+            try {
+                await store.update(hold.id, (current) => {
+                    const free = hold.ids.filter((id) => !current.feedback.find((item) => item.id === id)?.handoff?.relaying);
+                    return releaseDelivery(current, free, now());
+                }, { by: 'user' });
+            } catch (error) {
+                warn('release delivery claim', error);
+                continue;
+            }
+            if (hold.noteId) {
+                await store.update(hold.id, (current) => discardFeedback(current, [hold.noteId], now()), { by: 'user' }).catch((error) => warn('dismiss the note', error));
+            }
+        }
+    }
+
+    /**
+     * Hands the items of another session's tasks over, when Send now goes there. Each task's items are
+     * held with a handoff that names the target session and a fresh entry ID. An outbox entry records the
+     * handoff for this session's canvas processes; the inbox route also writes an inbox entry for the
+     * target, which its canvas process claims and sends. A note becomes a comment item of the shown task,
+     * held with that task's items. A failure undoes what was written and fails as Send now does. The
+     * response does not wait for the items to reach the agent.
+     *
+     * @param {any[]} groups the tasks and their items, from `deliveryGroups`
+     * @param {any} body the request body
+     * @param {{ kind: 'inbox' | 'relay', sessionId: string, sessionName: string | null }} route
+     */
+    async function handOffGroups(groups, body, route) {
+        const sender = deps.getJoinedSessionId?.();
+        if (typeof sender !== 'string' || !sender) {
+            throw new ModelError('delivery_unavailable', 'The canvas is not connected to a Copilot session. Your items stay here; ask the agent to collect them with take_feedback.');
+        }
+        const from = sender.toLowerCase();
+        const target = route.sessionId;
+        const handle = getCanvas()?.handle ?? null;
+        const note = typeof body?.note === 'string' ? body.note.trim() : '';
+        const parts = groups.map((group) => ({ id: group.id, taskId: group.taskId, session: group.session, ids: group.ids, note: false }));
+        if (note) {
+            const shown = await shownSession();
+            const own = parts.find((part) => part.id === shown.id);
+            if (own) own.note = true;
+            else parts.push({ id: shown.id, taskId: shown.task.id, session: shown, ids: [], note: true });
+        }
+        const pending = parts.filter((part) => part.ids.length > 0 || part.note);
+        if (pending.reduce((sum, part) => sum + part.ids.length, 0) + (note ? 1 : 0) > INBOX_MAX_ITEMS) {
+            throw new HttpError(400, 'invalid_input', `A send takes at most ${INBOX_MAX_ITEMS} items, counting the note.`);
+        }
+        const at = now();
+        const relayAfter = route.kind === 'inbox' ? new Date(Date.parse(at) + claimWindowMs).toISOString() : at;
+        const holds = [];
+        let outboxWritten = false;
+        try {
+            for (const part of pending) {
+                const entryId = randomBytes(12).toString('hex');
+                const { session, result } = await store.update(part.id, (current) => {
+                    if (!sameItems(current, part.session, part.ids)) {
+                        throw new HttpError(409, 'preview_stale', 'Your items changed since you opened this. Check the list, then send again.');
+                    }
+                    let next = current;
+                    const ids = [...part.ids];
+                    let noteId = null;
+                    if (part.note) {
+                        const created = createFeedback(next, { kind: 'comment', text: note }, at);
+                        next = created.session;
+                        noteId = created.result.id;
+                        ids.push(noteId);
+                    }
+                    return { session: claimDelivery(next, ids, at, { handoff: { sessionId: target, entryId, relayAfter } }).session, result: { ids, noteId } };
+                }, { by: 'user' });
+                holds.push({ id: part.id, taskId: part.taskId, entryId, ids: result.ids, noteId: result.noteId, revision: session.revision });
+            }
+            // Each file takes all of its entries in one write, the outbox first: once the inbox entries
+            // exist, a target process may send them, so nothing after that write can fail.
+            await store.updateOutbox(from, (entries) => ({ entries: [...entries, ...holds.map((hold) => ({ id: hold.entryId, taskDoc: hold.id, target, handle, relayAfter, createdAt: at }))], result: null }));
+            outboxWritten = true;
+            if (route.kind === 'inbox') {
+                await store.updateInbox(target, (entries) => ({ entries: [...entries, ...holds.map((hold) => ({ id: hold.entryId, taskDoc: hold.id, itemIds: hold.ids, from: { sessionId: from, handle }, createdAt: at, state: 'waiting', owner: null }))], result: null }));
+            }
+        } catch (error) {
+            await undoHandOff(holds, outboxWritten, from);
+            if (error instanceof ModelError && error.code === 'invalid_state') {
+                throw new HttpError(409, 'preview_stale', 'Some of these items were sent or removed meanwhile. Check the list, then send again.');
+            }
+            throw error;
+        }
+        wakeRelays();
+        const shown = holds.find((hold) => hold.id === getSessionId());
+        return {
+            revision: shown?.revision ?? null,
+            delivered: [],
+            handedOff: holds.map((hold) => ({ taskId: hold.taskId, ids: hold.ids, entryId: hold.entryId })),
+            route,
+        };
+    }
 
     const routes = {
         'GET /api/state': () => stateResponse(),
@@ -527,7 +703,10 @@ export function createCanvasServer(deps) {
 
         'POST /api/preferences': async (body) => ({ preferences: await store.savePreferences(preferencesPatch(body)) }),
 
-        'POST /api/delivery/preview': async (body) => compose(await deliveryGroups(body), body),
+        'POST /api/delivery/preview': async (body) => {
+            const groups = await deliveryGroups(body);
+            return { ...compose(groups, body), route: await routeFor(groups, otherSessionOf()) };
+        },
 
         // Sends the items the user reviewed, only when they still match the preview (by digest).
         // Queue marks them for the agent's next checkpoint; they stay in the canvas, and an
@@ -535,20 +714,34 @@ export function createCanvasServer(deps) {
         // message the agent reads at its next step. Each task's items are held first so a
         // concurrent take or send cannot repeat them; any failure before the message is handed
         // to the chat releases every hold. Once it is handed over, the items are marked sent,
-        // with the chat's message ID, and never released.
+        // with the chat's message ID, and never released. Items of another session's tasks go
+        // to that session instead, through its inbox or this canvas's relay (see handOffGroups).
+        // A Send now that names a route the preview did not show is refused before anything changes.
         'POST /api/delivery': async (body) => {
             const mode = body?.mode === undefined ? 'send' : body.mode;
             if (mode !== 'send' && mode !== 'queue') {
                 throw new HttpError(400, 'invalid_input', "mode is send, which the chat delivers at the agent's next step, or queue, which waits in the canvas for the agent's next checkpoint.");
             }
+            const named = body?.route === undefined || body.route === null ? null : body.route;
+            if (named !== null && !ROUTE_KINDS.has(named)) {
+                throw new HttpError(400, 'invalid_input', 'route is own, inbox, or relay: the route the preview showed.');
+            }
             const digest = typeof body?.digest === 'string' ? body.digest : '';
             const groups = await deliveryGroups(body);
             const message = compose(groups, body);
+            const target = otherSessionOf();
             if (message.digest !== digest) {
-                throw Object.assign(new HttpError(409, 'preview_stale', 'Your items changed since you opened this. Check the list, then send again.'), { detail: { preview: message } });
+                throw staleSend(message, await routeFor(groups, target), 'Your items changed since you opened this. Check the list, then send again.');
             }
             if (mode === 'queue') {
                 return queueGroups(groups, body);
+            }
+            const route = await routeFor(groups, target);
+            if (named !== null && named !== route.kind) {
+                throw staleSend(message, route, 'Where these items go has changed since you opened this. Check the route, then send again.');
+            }
+            if (target) {
+                return handOffGroups(groups, body, route);
             }
             const held = [];
             const releaseAll = async () => {

@@ -8,7 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { after, before, describe, it } from 'node:test';
 
-import { CLAIM_STALE_MS, claimDelivery, createFeedback, isDeliveryUncertain, ModelError, takeFeedback } from '../lib/model.mjs';
+import { CLAIM_STALE_MS, claimDelivery, claimRelay, createFeedback, isDeliveryUncertain, markDelivered, ModelError, takeFeedback } from '../lib/model.mjs';
 import { createInboxRunner } from '../lib/inbox.mjs';
 import { createPickupTracker } from '../lib/pickup.mjs';
 import { buildScenario } from '../lib/scenario.mjs';
@@ -24,6 +24,10 @@ const OTHER_SESSION = 'b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e';
 const FROM = { sessionId: 'a0b1c2d3-e4f5-4a6b-8c7d-9e0f1a2b3c4d', handle: 'K7QF' };
 const TASK_DOC = 'rpi-report-export-csv-0123456789';
 const iso = (ms) => new Date(ms).toISOString();
+/** The session whose canvas hands the items over; its outbox records the handoffs. */
+const SOURCE = FROM.sessionId;
+/** When a handoff made at NOW is relayed, if no process claims it in the default window. */
+const AFTER = iso(T0 + 20_000);
 let scratch;
 
 before(async () => {
@@ -112,9 +116,25 @@ async function seed(store, { itemIds = ['FB-001', 'FB-002'], holds = [{ ids: ite
     return doc;
 }
 
+/**
+ * Stores the source task document with the items held for `entry-1` (the handoff to SESSION), the
+ * outbox entry that records that handoff for SOURCE, and optionally the target's inbox entry and a
+ * relay claim on the items taken at `claim.at`.
+ */
+async function seedRelay(store, { holds = ['FB-001', 'FB-002'], relayAfter = NOW, claim = null, inbox = null } = {}) {
+    let doc = claimDelivery(taskDoc(), holds, NOW, { handoff: { sessionId: SESSION, entryId: 'entry-1', relayAfter } }).session;
+    if (claim) doc = claimRelay(doc, 'entry-1', claim, claim.at, { policy: 'take' }).session;
+    await store.create(doc);
+    await store.updateOutbox(SOURCE, (entries) => ({ entries: [...entries, { id: 'entry-1', taskDoc: TASK_DOC, target: SESSION, handle: FROM.handle, relayAfter, createdAt: NOW }], result: null }));
+    if (inbox) {
+        await store.updateInbox(SESSION, (entries) => ({ entries: [...entries, { id: 'entry-1', taskDoc: TASK_DOC, itemIds: holds, from: { sessionId: SOURCE, handle: FROM.handle }, createdAt: NOW, state: inbox.state, owner: inbox.owner }], result: null }));
+    }
+    return doc;
+}
+
 /** Counts the store calls a test checks, and can make task document writes fail. */
 function countingStore(store, { failDocUpdate = () => false } = {}) {
-    const counts = { stamps: 0, reads: 0, presence: 0 };
+    const counts = { stamps: 0, reads: 0, presence: 0, outboxStamps: 0, outboxReads: 0 };
     return {
         ...store,
         counts,
@@ -125,6 +145,14 @@ function countingStore(store, { failDocUpdate = () => false } = {}) {
         loadInbox: async (id) => {
             counts.reads += 1;
             return store.loadInbox(id);
+        },
+        outboxStamp: async (id) => {
+            counts.outboxStamps += 1;
+            return store.outboxStamp(id);
+        },
+        loadOutbox: async (id) => {
+            counts.outboxReads += 1;
+            return store.loadOutbox(id);
         },
         updatePresence: async (id, change) => {
             counts.presence += 1;
@@ -137,11 +165,11 @@ function countingStore(store, { failDocUpdate = () => false } = {}) {
     };
 }
 
-/** An inbox runner for SESSION on the fake clock, with an injectable send function. */
+/** An inbox runner for SESSION (or `options.sessionId`) on the fake clock, with an injectable send function. */
 function runnerFor(store, clock, options = {}) {
     return createInboxRunner({
         store,
-        sessionId: SESSION,
+        sessionId: options.sessionId ?? SESSION,
         deliver: options.deliver ?? (async () => ({ messageId: 'message-1' })),
         pickups: options.pickups ?? null,
         canDeliver: options.canDeliver,
@@ -282,6 +310,7 @@ describe('inbox consumer', () => {
         const doc = await store.load(TASK_DOC);
         for (const id of ['FB-001', 'FB-002']) {
             assert.ok(isDeliveryUncertain(itemOf(doc, id)));
+            assert.equal(itemOf(doc, id).uncertainIn, SESSION, 'the message may be in this session\'s chat');
             assert.deepEqual([itemOf(doc, id).deliveringSince, itemOf(doc, id).handoff], [undefined, undefined]);
             assert.equal(itemOf(doc, id).state, 'queued');
         }
@@ -469,5 +498,330 @@ describe('inbox consumer', () => {
         await Promise.all([run(301), run(302)]);
         const lines = (await fs.readFile(log, 'utf8').catch(() => '')).split('\n').filter(Boolean);
         assert.deepEqual(lines, ['FB-001,FB-002']);
+    });
+
+    it('records the inbox route on the items the target process sends', async () => {
+        const store = createStore({ root: path.join(scratch, 'inbox-route') });
+        await seed(store);
+        await runnerFor(store, fakeClock()).checkInbox();
+        const doc = await store.load(TASK_DOC);
+        assert.deepEqual(['FB-001', 'FB-002'].map((id) => itemOf(doc, id).route), ['inbox', 'inbox']);
+        store.close();
+    });
+});
+
+describe('outbox relay', () => {
+    const idsOf = (sends) => sends.map((request) => request.ids);
+    const relayOnce = (sends) => async (request) => {
+        sends.push(request);
+        return { messageId: `relay-${sends.length}` };
+    };
+
+    it('stats the outbox every two seconds, and reads it only when it changed or an entry fell due', async () => {
+        const store = createStore({ root: path.join(scratch, 'outbox-cadence') });
+        const clock = fakeClock();
+        const counted = countingStore(store);
+        const sends = [];
+        const runner = runnerFor(counted, clock, { sessionId: SOURCE, deliver: relayOnce(sends) });
+        const counts = () => [counted.counts.outboxStamps, counted.counts.outboxReads];
+        await runner.start();
+        assert.deepEqual(counts(), [1, 1]);
+        await clock.advance(10_000);
+        assert.deepEqual(counts(), [6, 1], 'an absent, unchanged outbox is not read');
+        await seedRelay(store, { relayAfter: iso(T0 + 30_000) });
+        await clock.advance(2_000);
+        assert.deepEqual(counts(), [7, 2], 'a changed outbox is read once');
+        await clock.advance(16_000);
+        assert.deepEqual(counts(), [15, 2], 'an entry that is not due yet is not read');
+        await clock.advance(2_000);
+        assert.deepEqual(idsOf(sends), [['FB-001', 'FB-002']], 'the entry is read when it falls due, and relayed');
+        assert.equal(counted.counts.outboxReads, 3);
+        await clock.advance(2_000);
+        assert.deepEqual(counts(), [17, 4], 'removing the entry changes the outbox once more');
+        await clock.advance(10_000);
+        assert.deepEqual(counts(), [22, 4], 'an empty outbox is not read again');
+        await runner.stop();
+        store.close();
+    });
+
+    it('relays a due entry through the session\'s own chat when a fresh process starts, and writes no inbox entry', async () => {
+        const store = createStore({ root: path.join(scratch, 'restart') });
+        await seedRelay(store);
+        const sends = [];
+        const runner = runnerFor(store, fakeClock(), { sessionId: SOURCE, pid: 303, deliver: relayOnce(sends) });
+        await runner.start();
+        assert.equal(sends.length, 1);
+        assert.equal(sends[0].prompt.split('\n')[0], `RPI canvas K7QF has 2 items for session ${SESSION} (task report-export-csv, state workspace/rpi-sessions/2026-11-09/report/report-export-csv-state.json).`);
+        assert.equal(sends[0].displayPrompt, 'RPI canvas K7QF: 2 items for another session to forward.');
+        assert.equal(sends[0].mode, 'immediate');
+        assert.deepEqual((await store.loadInbox(SESSION)).entries, [], 'no inbox entry is written');
+        assert.deepEqual((await store.loadOutbox(SOURCE)).entries, []);
+        const doc = await store.load(TASK_DOC);
+        assert.deepEqual(['FB-001', 'FB-002'].map((id) => [itemOf(doc, id).state, itemOf(doc, id).route, itemOf(doc, id).messageId, itemOf(doc, id).handoff]), [['sent', 'relay', 'relay-1', undefined], ['sent', 'relay', 'relay-1', undefined]]);
+        await runner.stop();
+        store.close();
+    });
+
+    it('withdraws a waiting entry that no process claimed within the window, so no process can claim it, then relays its items', async () => {
+        const store = createStore({ root: path.join(scratch, 'window') });
+        await seedRelay(store, { relayAfter: AFTER, inbox: { state: 'waiting', owner: null } });
+        const sends = [];
+        const clock = fakeClock();
+        const runner = runnerFor(store, clock, { sessionId: SOURCE, deliver: relayOnce(sends) });
+        await runner.start();
+        await clock.advance(18_000);
+        assert.deepEqual(sends, [], 'nothing is relayed before the window ends');
+        await clock.advance(2_000);
+        assert.equal(sends.length, 1);
+        assert.deepEqual((await store.loadInbox(SESSION)).entries, [], 'the waiting entry is withdrawn');
+        assert.deepEqual((await store.loadOutbox(SOURCE)).entries, []);
+        const doc = await store.load(TASK_DOC);
+        assert.deepEqual(['FB-001', 'FB-002'].map((id) => [itemOf(doc, id).state, itemOf(doc, id).route]), [['sent', 'relay'], ['sent', 'relay']]);
+        await runner.stop();
+        store.close();
+    });
+
+    it('leaves an entry its target process owns, and relays nothing once that process records the items', async () => {
+        const store = createStore({ root: path.join(scratch, 'owned') });
+        await seedRelay(store, { inbox: { state: 'claimed', owner: { pid: 202, at: NOW } } });
+        const sends = [];
+        const clock = fakeClock();
+        const runner = runnerFor(store, clock, { sessionId: SOURCE, deliver: relayOnce(sends) });
+        await runner.start();
+        assert.deepEqual(sends, [], 'a fresh claim is left to its process');
+        assert.equal(itemOf(await store.load(TASK_DOC), 'FB-001').handoff.relaying, undefined, 'no relay claim is taken while the target owns the entry');
+        await store.update(TASK_DOC, (current) => markDelivered(current, ['FB-001', 'FB-002'], 'send', iso(clock.now()), { messageId: 'child-1', route: 'inbox' }), { by: 'user' });
+        await store.updateInbox(SESSION, (entries) => ({ entries: [], result: null }));
+        await clock.advance(2_000);
+        assert.deepEqual(sends, []);
+        assert.deepEqual((await store.loadOutbox(SOURCE)).entries, []);
+        await runner.stop();
+        store.close();
+    });
+
+    it('does not relay when its target claims the entry as the window ends, and the target sends the items once', async () => {
+        const store = createStore({ root: path.join(scratch, 'claims-at-end') });
+        await seedRelay(store, { relayAfter: NOW, inbox: { state: 'waiting', owner: null } });
+        const targetSends = [];
+        const target = runnerFor(store, fakeClock(), { pid: 202, deliver: async (request) => {
+            targetSends.push(request.ids);
+            return { messageId: 'child-1' };
+        } });
+        let raced = false;
+        const racing = Object.create(store);
+        racing.updateInbox = async (id, change, options) => {
+            if (id === SESSION && !raced) {
+                raced = true;
+                await target.checkInbox();
+            }
+            return store.updateInbox(id, change, options);
+        };
+        const sourceSends = [];
+        const source = runnerFor(racing, fakeClock(), { sessionId: SOURCE, deliver: relayOnce(sourceSends) });
+        await source.checkOutbox();
+        assert.deepEqual(targetSends, [['FB-001', 'FB-002']]);
+        assert.deepEqual(sourceSends, [], 'the source finds the entry gone and relays nothing');
+        assert.deepEqual((await store.loadOutbox(SOURCE)).entries, []);
+        assert.deepEqual((await store.loadInbox(SESSION)).entries, []);
+        const doc = await store.load(TASK_DOC);
+        assert.deepEqual(['FB-001', 'FB-002'].map((id) => [itemOf(doc, id).state, itemOf(doc, id).route]), [['sent', 'inbox'], ['sent', 'inbox']]);
+        await target.stop();
+        await source.stop();
+        store.close();
+    });
+
+    it('leaves a fresh relay claim of another process alone until it goes stale, then takes the items over', async () => {
+        const store = createStore({ root: path.join(scratch, 'fresh-claim') });
+        await seedRelay(store, { claim: { pid: 999, at: NOW }, inbox: { state: 'waiting', owner: null } });
+        const sends = [];
+        const clock = fakeClock(T0 + 60_000);
+        const runner = runnerFor(store, clock, { sessionId: SOURCE, deliver: relayOnce(sends) });
+        await runner.start();
+        assert.deepEqual(sends, [], 'a fresh claim is not taken over');
+        assert.deepEqual((await store.loadInbox(SESSION)).entries.map((entry) => entry.state), ['waiting']);
+        await clock.advance(CLAIM_STALE_MS);
+        assert.equal(sends.length, 1, 'once the claim is stale, the items are relayed');
+        assert.deepEqual((await store.loadInbox(SESSION)).entries, []);
+        assert.deepEqual((await store.loadOutbox(SOURCE)).entries, []);
+        await runner.stop();
+        store.close();
+    });
+
+    it('takes over a stale relay claim while the target entry still waits, and relays the items', async () => {
+        const store = createStore({ root: path.join(scratch, 'stale-claim-waiting') });
+        await seedRelay(store, { claim: { pid: 999, at: NOW }, inbox: { state: 'waiting', owner: null } });
+        const sends = [];
+        const runner = runnerFor(store, fakeClock(T0 + CLAIM_STALE_MS + 1_000), { sessionId: SOURCE, pid: 303, deliver: relayOnce(sends) });
+        await runner.start();
+        assert.equal(sends.length, 1);
+        assert.deepEqual((await store.loadInbox(SESSION)).entries, []);
+        const doc = await store.load(TASK_DOC);
+        assert.deepEqual(['FB-001', 'FB-002'].map((id) => [itemOf(doc, id).state, itemOf(doc, id).route, itemOf(doc, id).handoff]), [['sent', 'relay', undefined], ['sent', 'relay', undefined]]);
+        await runner.stop();
+        store.close();
+    });
+
+    it('marks items uncertain when their stale relay claim finds the target entry gone, and sends nothing', async () => {
+        const store = createStore({ root: path.join(scratch, 'stale-claim-gone') });
+        await seedRelay(store, { claim: { pid: 999, at: NOW } });
+        const sends = [];
+        const clock = fakeClock(T0 + CLAIM_STALE_MS + 1_000);
+        const runner = runnerFor(store, clock, { sessionId: SOURCE, deliver: relayOnce(sends) });
+        await runner.start();
+        await clock.advance(CLAIM_STALE_MS);
+        assert.deepEqual(sends, [], 'a relay that may have been sent is never sent again');
+        assert.deepEqual((await store.loadOutbox(SOURCE)).entries, []);
+        const doc = await store.load(TASK_DOC);
+        for (const id of ['FB-001', 'FB-002']) {
+            assert.ok(isDeliveryUncertain(itemOf(doc, id)));
+            assert.equal(itemOf(doc, id).uncertainIn, SOURCE, 'a lapsed relay may be in the relaying session\'s chat');
+            assert.equal(itemOf(doc, id).handoff, undefined);
+        }
+        await runner.stop();
+        store.close();
+    });
+
+    it('marks items uncertain in the target\'s chat when the target left its entry in sending, and relays nothing', async () => {
+        const store = createStore({ root: path.join(scratch, 'target-unconfirmed') });
+        await seedRelay(store, { inbox: { state: 'sending', owner: { pid: 999, at: NOW } } });
+        const sends = [];
+        const clock = fakeClock(T0 + CLAIM_STALE_MS + 1_000);
+        const runner = runnerFor(store, clock, { sessionId: SOURCE, deliver: relayOnce(sends) });
+        await runner.start();
+        assert.deepEqual(sends, [], 'the target may have sent them, so they are not relayed');
+        assert.deepEqual([(await store.loadInbox(SESSION)).entries, (await store.loadOutbox(SOURCE)).entries], [[], []]);
+        const doc = await store.load(TASK_DOC);
+        for (const id of ['FB-001', 'FB-002']) {
+            assert.ok(isDeliveryUncertain(itemOf(doc, id)));
+            assert.equal(itemOf(doc, id).uncertainIn, SESSION, 'the message may be in the target session\'s chat');
+        }
+        await clock.advance(CLAIM_STALE_MS);
+        assert.deepEqual(sends, []);
+        await runner.stop();
+        store.close();
+    });
+
+    it('releases a relay the session cannot take, and retries it at a later check', async () => {
+        const store = createStore({ root: path.join(scratch, 'unavailable-relay') });
+        await seedRelay(store);
+        const attempts = [];
+        let available = false;
+        const clock = fakeClock();
+        const runner = runnerFor(store, clock, { sessionId: SOURCE, deliver: async (request) => {
+            attempts.push(request.ids);
+            if (!available) throw new ModelError('delivery_unavailable', 'This host cannot take messages.');
+            return { messageId: 'relay-6' };
+        } });
+        await runner.start();
+        assert.equal(attempts.length, 1);
+        const held = await store.load(TASK_DOC);
+        assert.deepEqual([itemOf(held, 'FB-001').handoff.entryId, itemOf(held, 'FB-001').handoff.relaying], ['entry-1', undefined], 'the items stay held, without a relay claim');
+        assert.equal((await store.loadOutbox(SOURCE)).entries.length, 1, 'the entry stays for a later check');
+        available = true;
+        await clock.advance(2_000);
+        assert.equal(attempts.length, 2);
+        assert.deepEqual((await store.loadOutbox(SOURCE)).entries, []);
+        const doc = await store.load(TASK_DOC);
+        assert.deepEqual(['FB-001', 'FB-002'].map((id) => [itemOf(doc, id).state, itemOf(doc, id).route]), [['sent', 'relay'], ['sent', 'relay']]);
+        await runner.stop();
+        store.close();
+    });
+
+    it('retries a relay whose target inbox cannot be read yet, and relays once the file can be read', async () => {
+        const root = path.join(scratch, 'unreadable-target');
+        const store = createStore({ root });
+        await seedRelay(store);
+        await fs.mkdir(path.join(root, 'inbox'), { recursive: true });
+        const inboxFile = path.join(root, 'inbox', `${SESSION}.json`);
+        await fs.writeFile(inboxFile, '{ not json');
+        const sends = [];
+        const clock = fakeClock();
+        const runner = runnerFor(store, clock, { sessionId: SOURCE, deliver: relayOnce(sends) });
+        await runner.start();
+        assert.deepEqual(sends, [], 'the items wait while the target inbox cannot be read');
+        assert.equal(itemOf(await store.load(TASK_DOC), 'FB-001').handoff.relaying, undefined, 'no relay claim is left behind');
+        await fs.rm(inboxFile);
+        await clock.advance(2_000);
+        assert.equal(sends.length, 1);
+        assert.deepEqual((await store.loadOutbox(SOURCE)).entries, []);
+        await runner.stop();
+        store.close();
+    });
+
+    it('marks items uncertain when a relay fails with an unknown outcome, and never relays them again', async () => {
+        const store = createStore({ root: path.join(scratch, 'unknown-relay') });
+        await seedRelay(store);
+        const attempts = [];
+        const clock = fakeClock();
+        const runner = runnerFor(store, clock, { sessionId: SOURCE, deliver: async (request) => {
+            attempts.push(request.ids);
+            throw new Error('connection reset');
+        } });
+        await runner.start();
+        assert.deepEqual(attempts, [['FB-001', 'FB-002']]);
+        assert.deepEqual((await store.loadOutbox(SOURCE)).entries, []);
+        const doc = await store.load(TASK_DOC);
+        assert.ok(isDeliveryUncertain(itemOf(doc, 'FB-001')) && isDeliveryUncertain(itemOf(doc, 'FB-002')));
+        assert.equal(itemOf(doc, 'FB-001').uncertainIn, SOURCE);
+        await clock.advance(2 * CLAIM_STALE_MS);
+        assert.equal(attempts.length, 1);
+        await runner.stop();
+        store.close();
+    });
+
+    it('keeps the relay claim while the relay cannot be recorded, so the items are not relayed again before the claim goes stale', async () => {
+        const store = createStore({ root: path.join(scratch, 'relay-unrecorded') });
+        await seedRelay(store);
+        let armed = false;
+        const counted = countingStore(store, { failDocUpdate: (id) => armed && id === TASK_DOC });
+        const sends = [];
+        const clock = fakeClock();
+        const runner = runnerFor(counted, clock, { sessionId: SOURCE, deliver: async (request) => {
+            sends.push(request.ids);
+            armed = true;
+            return { messageId: 'relay-7' };
+        } });
+        await runner.start();
+        assert.equal(sends.length, 1);
+        assert.equal((await store.loadOutbox(SOURCE)).entries.length, 1, 'the entry stays while the relay is unrecorded');
+        assert.ok(itemOf(await store.load(TASK_DOC), 'FB-001').handoff.relaying, 'the relay claim stays');
+        armed = false;
+        await clock.advance(CLAIM_STALE_MS + 2_000);
+        assert.equal(sends.length, 1, 'the relay is not sent again');
+        assert.deepEqual((await store.loadOutbox(SOURCE)).entries, []);
+        assert.ok(isDeliveryUncertain(itemOf(await store.load(TASK_DOC), 'FB-001')));
+        await runner.stop();
+        store.close();
+    });
+
+    it('relays an entry once when two processes of the source session check its outbox together', async () => {
+        const root = path.join(scratch, 'two-relayers');
+        const seedStore = createStore({ root });
+        await seedRelay(seedStore);
+        const sends = [];
+        const deliver = relayOnce(sends);
+        const clock = fakeClock();
+        const firstStore = createStore({ root });
+        const secondStore = createStore({ root });
+        const first = runnerFor(firstStore, clock, { sessionId: SOURCE, pid: 101, deliver });
+        const second = runnerFor(secondStore, clock, { sessionId: SOURCE, pid: 202, deliver });
+        await Promise.all([first.checkOutbox(), second.checkOutbox()]);
+        await first.checkOutbox();
+        await second.checkOutbox();
+        assert.deepEqual(idsOf(sends), [['FB-001', 'FB-002']]);
+        assert.deepEqual((await seedStore.loadOutbox(SOURCE)).entries, []);
+        firstStore.close();
+        secondStore.close();
+        seedStore.close();
+    });
+
+    it('checks the outbox at once when woken, without waiting for the timer', async () => {
+        const store = createStore({ root: path.join(scratch, 'wake') });
+        await seedRelay(store);
+        const sends = [];
+        const runner = runnerFor(store, fakeClock(), { sessionId: SOURCE, deliver: relayOnce(sends) });
+        await runner.wakeOutbox();
+        assert.deepEqual(idsOf(sends), [['FB-001', 'FB-002']]);
+        store.close();
     });
 });

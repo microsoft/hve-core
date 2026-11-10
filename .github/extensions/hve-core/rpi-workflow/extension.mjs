@@ -34,6 +34,8 @@ const sources = createSourceController({
     ownSessionId: () => joined?.sessionId ?? null,
 });
 const pickups = createPickupTracker({ store, log: (message) => log(message, 'warning') });
+/** This process's runner for the joined session, once it starts; null while the session is unknown. */
+let inbox = null;
 
 /** The VS Code that hosts this extension, when it is one; found once at startup. */
 let editor = null;
@@ -78,6 +80,7 @@ const registry = createInstanceRegistry({
             showSample: () => sources.show(record, { task: 'sample' }, {}),
             deliver: createDelivery({ getSession: () => joined }),
             pickups,
+            wakeOutbox: () => inbox?.wakeOutbox(),
             log,
         });
     },
@@ -172,10 +175,11 @@ if (typeof joined?.on === 'function') {
         pickups.observe(event).catch((error) => log(`Could not read a chat event: ${error instanceof Error ? error.message : 'error'}`, 'warning'));
     });
 }
-// Runs whether or not a canvas panel is open: announces this process for the session and sends the items other canvases hand to it.
+// Runs whether or not a canvas panel is open: announces this process for the session, sends the items other canvases hand to it,
+// and relays the items this session's canvases handed to other sessions when no process of those sessions takes them.
 // Its timers are unref'd, so they never keep the process alive; an exited process's presence entry ages out after two minutes.
 if (joined?.sessionId) {
-    const inbox = createInboxRunner({
+    inbox = createInboxRunner({
         store,
         sessionId: joined.sessionId,
         deliver: createDelivery({ getSession: () => joined }),

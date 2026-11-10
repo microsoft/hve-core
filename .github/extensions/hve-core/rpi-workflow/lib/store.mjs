@@ -113,6 +113,7 @@ const isProcessId = (value) => Number.isInteger(value) && value > 0;
 const onlyKeys = (value, keys) => Object.keys(value).every((key) => keys.has(key));
 const PROCESS_KEYS = new Set(['pid', 'version', 'updatedAt']);
 const ENTRY_KEYS = new Set(['id', 'taskDoc', 'itemIds', 'from', 'createdAt', 'state', 'owner']);
+const OUTBOX_ENTRY_KEYS = new Set(['id', 'taskDoc', 'target', 'handle', 'relayAfter', 'createdAt']);
 const FROM_KEYS = new Set(['sessionId', 'handle']);
 const OWNER_KEYS = new Set(['pid', 'at']);
 
@@ -152,6 +153,18 @@ function isInboxEntry(value) {
         && (value.state === 'waiting' ? value.owner === undefined || value.owner === null || isOwner(value.owner) : isOwner(value.owner));
 }
 
+/** An outbox entry records a handoff this session's canvas made to another session: the task document, the target, and when the items may be relayed. It carries no text. */
+function isOutboxEntry(value) {
+    return isRecord(value)
+        && onlyKeys(value, OUTBOX_ENTRY_KEYS)
+        && typeof value.id === 'string' && REFERENCE_RE.test(value.id)
+        && typeof value.taskDoc === 'string' && SESSION_ID_RE.test(value.taskDoc)
+        && typeof value.target === 'string' && COPILOT_SESSION_RE.test(value.target)
+        && typeof value.handle === 'string' && HANDLE_RE.test(value.handle)
+        && isInstant(value.relayAfter)
+        && isInstant(value.createdAt);
+}
+
 /** The presence entries of a session, or none when its file is missing. */
 function presenceOf(sessionId, doc) {
     if (doc === undefined) return { sessionId, processes: [] };
@@ -161,11 +174,11 @@ function presenceOf(sessionId, doc) {
     return { sessionId, processes: doc.processes };
 }
 
-/** The inbox entries of a session, or none when its file is missing. Entry IDs are unique within a file. */
-function inboxOf(file, doc) {
+/** The entries of a session's inbox or outbox file, or none when the file is missing. Entry IDs are unique within a file. */
+function entriesOf(file, doc, isEntry) {
     const name = path.basename(file);
     if (doc === undefined) return { entries: [] };
-    if (!isRecord(doc) || !Array.isArray(doc.entries) || !doc.entries.every(isInboxEntry)) {
+    if (!isRecord(doc) || !Array.isArray(doc.entries) || !doc.entries.every(isEntry)) {
         throw new StoreError('storage_corrupt', `${name} has an unrecognized shape.`);
     }
     if (new Set(doc.entries.map((entry) => entry.id)).size !== doc.entries.length) {
@@ -174,8 +187,18 @@ function inboxOf(file, doc) {
     return { entries: doc.entries };
 }
 
+/** The inbox entries of a session, or none when its file is missing. */
+function inboxOf(file, doc) {
+    return entriesOf(file, doc, isInboxEntry);
+}
+
+/** The outbox entries of a session, or none when its file is missing. */
+function outboxOf(file, doc) {
+    return entriesOf(file, doc, isOutboxEntry);
+}
+
 /**
- * Durable store for sessions, preferences, presence, and inboxes. Writes are atomic (temporary
+ * Durable store for sessions, preferences, presence, inboxes, and outboxes. Writes are atomic (temporary
  * file, then rename), read-modify-write runs under an exclusive lock file so several processes can
  * share a session without lost updates, and changes from other processes are detected by
  * polling file size and time while anyone is subscribed. Each lock hold carries its own
@@ -203,6 +226,7 @@ export function createStore(options = {}) {
     const instancesFile = path.join(root, 'instances.json');
     const presenceDir = path.join(root, 'presence');
     const inboxDir = path.join(root, 'inbox');
+    const outboxDir = path.join(root, 'outbox');
 
     function presenceFile(id) {
         return path.join(presenceDir, `${copilotSessionId(id)}.json`);
@@ -210,6 +234,10 @@ export function createStore(options = {}) {
 
     function inboxFile(id) {
         return path.join(inboxDir, `${copilotSessionId(id)}.json`);
+    }
+
+    function outboxFile(id) {
+        return path.join(outboxDir, `${copilotSessionId(id)}.json`);
     }
 
     function sessionFile(id) {
@@ -435,6 +463,15 @@ export function createStore(options = {}) {
         return stat ? { size: stat.size, mtimeMs: stat.mtimeMs } : { size: -1, mtimeMs: -1 };
     }
 
+    /** A token that changes whenever the file is replaced, or `missing` when there is no file. */
+    async function stampOf(file) {
+        const stat = await fs.stat(file).catch((error) => {
+            if (error && error.code === 'ENOENT') return null;
+            throw error;
+        });
+        return stat ? `${stat.ino}:${stat.size}:${stat.mtimeMs}` : 'missing';
+    }
+
     return {
         root,
         events,
@@ -607,11 +644,57 @@ export function createStore(options = {}) {
          * @returns {Promise<string>}
          */
         async inboxStamp(sessionId) {
-            const stat = await fs.stat(inboxFile(sessionId)).catch((error) => {
-                if (error && error.code === 'ENOENT') return null;
-                throw error;
-            });
-            return stat ? `${stat.ino}:${stat.size}:${stat.mtimeMs}` : 'missing';
+            return stampOf(inboxFile(sessionId));
+        },
+
+        /**
+         * Reads a session's outbox entries under the lock: the handoffs its canvases made to other
+         * sessions and have not settled. A missing file reads as none; a file that is not valid throws
+         * `storage_corrupt` and is left in place.
+         *
+         * @param {string} sessionId a Copilot session ID
+         * @returns {Promise<{ entries: any[] }>}
+         */
+        async loadOutbox(sessionId) {
+            const file = outboxFile(sessionId);
+            return withLock(file, async () => outboxOf(file, await readJson(file)));
+        },
+
+        /**
+         * Changes a session's outbox entries under the lock, as one read-change-write. `change`
+         * receives the current entries and returns `{ entries, result }`; returning the same array
+         * writes nothing. Resolves to the `result` and whether the file was written.
+         *
+         * @template T
+         * @param {string} sessionId a Copilot session ID
+         * @param {(entries: any[]) => { entries: any[], result: T }} change
+         * @returns {Promise<{ result: T, changed: boolean }>}
+         */
+        async updateOutbox(sessionId, change) {
+            const file = outboxFile(sessionId);
+            return serialized(file, () => lockedWrite(file, async (stillHeld) => {
+                const current = outboxOf(file, await readJson(file));
+                const { entries, result } = change(current.entries);
+                if (entries === current.entries) {
+                    return { value: { result, changed: false } };
+                }
+                const next = outboxOf(file, { entries }).entries;
+                if (!(await stillHeld())) {
+                    return { retry: true };
+                }
+                await writeAtomic(file, { entries: next });
+                return { value: { result, changed: true } };
+            }));
+        },
+
+        /**
+         * A token for the state of a session's outbox file, as `inboxStamp` gives for the inbox. Takes no lock.
+         *
+         * @param {string} sessionId a Copilot session ID
+         * @returns {Promise<string>}
+         */
+        async outboxStamp(sessionId) {
+            return stampOf(outboxFile(sessionId));
         },
 
         async loadPreferences() {
