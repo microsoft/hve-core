@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Getting Started with HVE Core"
 pagination_label: Getting Started with HVE Core
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-07
 ms.topic: tutorial
 keywords:
   - github copilot
@@ -38,7 +38,7 @@ This guide walks you through four steps, each building on the last:
 > Already comfortable with AI-assisted development? Skip to
 > [First Full Workflow](first-workflow.md) or select
 > [RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent)
-> for a coordinated lifecycle, or use `/rpi-research`, `/rpi-plan`,
+> or run `/rpi` for a coordinated lifecycle, or use `/rpi-research`, `/rpi-plan`,
 > `/rpi-implement`, and `/rpi-review` for direct phase work.
 
 Need installation help? The [Installation Guide](install.md) covers every

@@ -13,7 +13,7 @@ tags:
   - architecture
   - reference
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-07
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -23,7 +23,7 @@ estimated_reading_time: 7
 ```mermaid
 flowchart TD
   accTitle: RAI Planner Agent Architecture
-  accDescr: The RAI Planner reads and writes session state, generates phase artifacts, activates research for framework questions, and follows its identity, licensing, planning, and standards guidance.
+  accDescr: The RAI Planner reads and writes session state, generates phase artifacts, activates research for framework questions, activates the planner-identity and rai-planner skills at session start, uses the rai-standards skill, and follows its licensing instruction.
   subgraph Agent ["RAI Planner Agent"]
     RP["rai-planner.agent.md"]
     RR["rpi-research"]
@@ -37,20 +37,20 @@ flowchart TD
   end
 
   subgraph Instructions ["Instruction Files"]
-    I1["rai-identity"]
-    I2["rai-license-posture"]
+    I1["rai-license-posture"]
   end
 
   subgraph Skills ["Skills"]
-    S1["rai-planner"]
+    S0["planner-identity"]
+    S1["rai-planner<br/>references/rai-identity.md"]
     S2["rai-standards"]
   end
 
   RP -->|"reads/writes"| SJ
   RP -->|"generates"| AF
   RP -->|"follows"| I1
-  RP -->|"follows"| I2
-  RP -->|"uses"| S1
+  RP -->|"activates at session start"| S0
+  RP -->|"activates at session start"| S1
   RP -->|"uses"| S2
 ```
 
@@ -60,10 +60,11 @@ The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-plann
 |---------------------------------------|---------------------------------------------------------------------------|
 | `rai-license-posture.instructions.md` | RAI standards licensing posture, source-class mapping, attribution gating |
 
-| Skill           | Domain                                                                                                         |
-|-----------------|----------------------------------------------------------------------------------------------------------------|
-| `rai-planner`   | Risk classification, impact assessment, security model, capture coaching, and backlog handoff phase references |
-| `rai-standards` | NIST AI RMF 1.0 trustworthiness characteristics, subcategory mappings, framework isolation, AI STRIDE overlay  |
+| Skill              | Domain                                                                                                                                                         |
+|--------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `planner-identity` | Shared state protocol, resume sequence, question cadence, disclaimer cadence, and error handling that `rai-identity` extends                                   |
+| `rai-planner`      | RAI identity and phase lifecycle (`references/rai-identity.md`), risk classification, impact assessment, security model, capture coaching, and backlog handoff |
+| `rai-standards`    | NIST AI RMF 1.0 trustworthiness characteristics, subcategory mappings, framework isolation, AI STRIDE overlay                                                  |
 
 ## State Management
 
