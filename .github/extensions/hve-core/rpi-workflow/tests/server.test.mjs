@@ -12,9 +12,10 @@ import { fileURLToPath } from 'node:url';
 import { agentEditSection, createFeedback, ModelError, recordActivity, recordInterpretation, takeFeedback, upsertDecision } from '../lib/model.mjs';
 import { buildScenario } from '../lib/scenario.mjs';
 import { clientInfoFrom, createCanvasServer as newServer, MAX_BODY, renderShell } from '../lib/server.mjs';
+import { storeIdFor } from '../lib/source/workspace.mjs';
 import { createStore } from '../lib/store.mjs';
 import { stopTracked, track } from './helpers/cleanup.mjs';
-import { CHILD_TASK, childSession, ROOT_TASK, rootSession } from './helpers/rpi-fixture.mjs';
+import { CHILD_TASK, childSession, FIXTURE_ROOT, ROOT_TASK, rootSession } from './helpers/rpi-fixture.mjs';
 
 /** A canvas server that stops after the test even when an assertion fails. */
 const createCanvasServer = (deps) => track(newServer(deps));
@@ -360,8 +361,8 @@ describe('a session-wide send', () => {
      */
     async function sessionSetup(name, { fail = () => false, deliver } = {}) {
         const store = createStore({ root: path.join(tmp, name), pollMs: 20 });
-        const parent = await store.create(rootSession().session);
-        const child = await store.create(childSession().session);
+        const parent = await store.create({ ...rootSession().session, id: storeIdFor(ROOT_TASK, FIXTURE_ROOT) });
+        const child = await store.create({ ...childSession().session, id: storeIdFor(CHILD_TASK, FIXTURE_ROOT) });
         const flaky = Object.create(store);
         let writes = 0;
         flaky.update = (id, change, opts) => {
@@ -374,7 +375,7 @@ describe('a session-wide send', () => {
             store: flaky,
             getSessionId: () => child.id,
             getCanvas: () => ({ handle: '3WF0', instanceId: 'rpi-workflow-demo' }),
-            getSource: () => ({ kind: 'rpi', follow: { paused: false } }),
+            getSource: () => ({ kind: 'rpi', workspace: { root: FIXTURE_ROOT }, follow: { paused: false } }),
             deliver: deliver ?? (async (message) => {
                 sent.push(message);
             }),
@@ -461,7 +462,7 @@ describe('a session-wide send', () => {
 
     it('releases every hold when a later claim fails, before anything is sent', async () => {
         let armed = false;
-        const { store, server, url, sent, parent, child } = await sessionSetup('session-claim-fails', { fail: (id) => armed && id === 'rpi-trail-maps' });
+        const { store, server, url, sent, parent, child } = await sessionSetup('session-claim-fails', { fail: (id) => armed && id === storeIdFor(ROOT_TASK, FIXTURE_ROOT) });
         const mine = await addComment(store, child.id, 'Child item');
         const theirs = await addComment(store, parent.id, 'Parent item');
         const items = [{ taskId: CHILD_TASK, id: mine.id }, { taskId: ROOT_TASK, id: theirs.id }];
@@ -482,7 +483,7 @@ describe('a session-wide send', () => {
     it('never releases once the message is handed over, and reports a mark that keeps failing', async () => {
         let marking = false;
         const { store, server, url, sent, parent, child } = await sessionSetup('session-mark-fails', {
-            fail: (id) => marking && id === 'rpi-trail-maps',
+            fail: (id) => marking && id === storeIdFor(ROOT_TASK, FIXTURE_ROOT),
             deliver: async (message) => {
                 sent.push(message);
                 marking = true;

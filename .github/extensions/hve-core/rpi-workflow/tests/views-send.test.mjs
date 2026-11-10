@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
 
-import { agentEditSection, claimDelivery, createFeedback, markDelivered, markPickedUp, queueForAgent, recordInterpretation, suggestEdit, takeFeedback, transitionFeedback } from '../lib/model.mjs';
+import { agentEditSection, claimDelivery, composeDelivery, createFeedback, markDelivered, markPickedUp, queueForAgent, recordInterpretation, suggestEdit, takeFeedback, transitionFeedback } from '../lib/model.mjs';
 import { buildScenario } from '../lib/scenario.mjs';
 import { elements, installFakeDom, serialize } from './helpers/fake-dom.mjs';
 import { rootSession } from './helpers/rpi-fixture.mjs';
@@ -240,6 +240,18 @@ describe('send dialog', () => {
         assert.equal(keyed(failed, 'send-confirm').getAttribute('disabled'), '');
         assert.equal(keyed(failed, 'send-queue').getAttribute('disabled'), '', 'neither button works without the prepared text');
         assert.match(html(failed), /role="alert" id="send-error"/);
+    });
+
+    it('shows the session and workspace root that the message names for a task of another session', () => {
+        const other = { id: '5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b', root: '/work/child' };
+        const session = createFeedback(sample(), { kind: 'comment', text: 'Please compare quotas.', target: { id: 'F1' } }, NOW).session;
+        session.source = { kind: 'rpi', statePath: '.copilot-tracking/rpi-sessions/2026-10-26/s/t-state.json', artifacts: { research: '.copilot-tracking/research/2026-10-26/t-research.md', plan: null, critique: null, changes: null, review: null } };
+        const preview = composeDelivery(session, session.feedback.filter((item) => item.state === 'queued').map((item) => item.id), NOW, { canvas: { handle: 'K7QF', instanceId: 'i1' }, otherSession: other });
+        const ui = initialUi('research');
+        ui.send = { note: '', preview, previewNote: '', sending: false, error: null };
+        const out = html(components.reviewSheet(makeContext(session, 'research', ui)));
+        assert.match(out, /Task files, in session 5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b at workspace root \/work\/child; paths are relative to that root:/);
+        assert.match(out, /- State: \.copilot-tracking\/rpi-sessions\/2026-10-26\/s\/t-state\.json/);
     });
 
     it('groups items by loop when other loops of the session have unsent items, and says completed loops get follow-up work', () => {

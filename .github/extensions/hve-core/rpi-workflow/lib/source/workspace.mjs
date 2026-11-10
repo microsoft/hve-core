@@ -367,8 +367,10 @@ export function skippedWarning(skipped) {
 }
 
 /**
- * Branch and `owner/repo` from `.git/HEAD` and the `origin` remote, when they are small
- * regular files under the root; null otherwise.
+ * Branch and `owner/repo` from the git directory's `HEAD` and the `origin` remote, when they are
+ * small regular files; null when there is no readable `HEAD`. A `.git` folder is the git
+ * directory. A `.git` file is a linked worktree's `gitdir:` pointer: its `HEAD` is in that
+ * directory, and the remote's `config` is in the common directory named by its `commondir` file.
  *
  * @param {string} root
  */
@@ -376,8 +378,7 @@ export async function readGit(root) {
     // Reads through one handle, so the type and size checks describe the file that is read.
     // O_NOFOLLOW refuses a linked file as it opens; where the platform lacks it, a link is
     // refused after opening.
-    const small = async (name, limit) => {
-        const target = path.join(root, '.git', name);
+    const small = async (target, limit) => {
         let handle;
         try {
             handle = await fs.open(target, fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW ?? 0));
@@ -395,27 +396,77 @@ export async function readGit(root) {
             await handle.close();
         }
     };
-    const head = await small('HEAD', 4096);
+    const dotGit = path.join(root, '.git');
+    const entry = await fs.stat(dotGit).catch(() => null);
+    let gitDir;
+    if (entry?.isDirectory()) {
+        gitDir = dotGit;
+    } else if (entry?.isFile()) {
+        const pointer = /^gitdir:[ \t]*(.+?)\s*$/m.exec((await small(dotGit, 4096)) ?? '')?.[1];
+        if (!pointer) return null;
+        gitDir = path.resolve(root, pointer);
+    } else {
+        return null;
+    }
+    const head = await small(path.join(gitDir, 'HEAD'), 4096);
     if (head === null) return null;
     const ref = /^ref:\s*refs\/heads\/(.+)$/m.exec(head)?.[1]?.trim();
     const branch = ref ?? (/^[0-9a-f]{40}/.exec(head.trim())?.[0].slice(0, 12) ?? null);
-    const config = await small('config', 65536);
+    const commondir = await small(path.join(gitDir, 'commondir'), 4096);
+    const commonDir = commondir?.trim() ? path.resolve(gitDir, commondir.trim()) : gitDir;
+    const config = await small(path.join(commonDir, 'config'), 65536);
     const remote = config ? /\[remote "origin"\][^[]*?\burl\s*=\s*(\S+)/.exec(config)?.[1] : null;
     const repository = remote ? /(?:github\.com|dev\.azure\.com|gitlab\.com)[:/](.+?)(?:\.git)?\/?$/.exec(remote)?.[1] ?? null : null;
     return { repository, branch };
 }
 
 /**
- * Store ID for a task's document: `rpi-` plus the task ID, kept to the store's ID pattern
- * and length, with a short hash when the task ID had to be shortened or cleaned.
+ * The store ID an earlier canvas gave a task's document, before documents were keyed by
+ * workspace: `rpi-` plus the task ID, cleaned and shortened to fit the store's pattern and length.
  *
  * @param {string} taskId
  */
-export function storeIdFor(taskId) {
+function legacyStoreIdFor(taskId) {
     const clean = String(taskId).toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
     const id = `rpi-${clean}`;
     if (id.length <= 80 && clean === taskId) return id;
     return `${id.slice(0, 70).replace(/-+$/, '')}-${createHash('sha256').update(String(taskId)).digest('hex').slice(0, 8)}`;
+}
+
+const STORE_ID_MAX = 80;
+
+/**
+ * Store ID for a task's document in one workspace: `rpi-` plus the task ID, then a short hash of
+ * the workspace root, so one task ID in two workspaces keeps two documents. A task ID that had to
+ * be cleaned or shortened also carries a hash of itself. The ID stays within the store's pattern
+ * and length.
+ *
+ * @param {string} taskId
+ * @param {string} root the workspace root's real path
+ */
+export function storeIdFor(taskId, root) {
+    const suffix = `-${createHash('sha256').update(String(root)).digest('hex').slice(0, 10)}`;
+    const clean = String(taskId).toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
+    const room = STORE_ID_MAX - 'rpi-'.length - suffix.length;
+    if (clean === taskId && clean.length <= room) return `rpi-${clean}${suffix}`;
+    const taskHash = createHash('sha256').update(String(taskId)).digest('hex').slice(0, 8);
+    return `rpi-${clean.slice(0, room - taskHash.length - 1).replace(/-+$/, '')}-${taskHash}${suffix}`;
+}
+
+/**
+ * The document an earlier canvas stored for a task under its workspace-free ID, when that document
+ * was assembled from the same workspace root. Null when there is none or it came from another root.
+ *
+ * @param {ReturnType<typeof import('../store.mjs').createStore>} store
+ * @param {string} taskId
+ * @param {string | null | undefined} root the workspace root's real path
+ */
+export async function legacyDocumentFor(store, taskId, root) {
+    if (!root) return null;
+    const legacy = await store.load(legacyStoreIdFor(taskId)).catch(() => undefined);
+    if (!legacy || legacy.source?.kind !== 'rpi' || typeof legacy.source.root !== 'string') return null;
+    const recorded = await fs.realpath(legacy.source.root).catch(() => null);
+    return recorded === root ? legacy : null;
 }
 
 const MAX_SOURCE_CHECKS = 200;
@@ -605,7 +656,7 @@ export async function loadTask(workspace, statePath, now) {
     const scan = await scanStates(workspace);
     const tree = await sessionTreeOf(workspace, self, scan);
     const input = {
-        id: storeIdFor(self.state.taskId),
+        id: storeIdFor(self.state.taskId, workspace.root),
         state: self.state,
         artifacts,
         mismatched,
@@ -722,7 +773,9 @@ export async function sourceSignature(workspace, watched, sessionKey) {
 
 /**
  * Writes a loaded task into the store: creates the document on first import, otherwise
- * merges, attributed to the source so the user's change count does not move.
+ * merges, attributed to the source so the user's change count does not move. The first import
+ * under a workspace's ID starts from the matching earlier document, when there is one, so its
+ * feedback, decisions, and history carry over; that earlier document stays where it is.
  *
  * @param {ReturnType<typeof import('../store.mjs').createStore>} store
  * @param {{ session: any }} loaded
@@ -731,8 +784,10 @@ export async function sourceSignature(workspace, watched, sessionKey) {
 export async function importIntoStore(store, loaded, now) {
     const existing = await store.load(loaded.session.id).catch(() => undefined);
     if (!existing) {
+        const earlier = await legacyDocumentFor(store, loaded.session.source.taskId, loaded.session.source.root);
+        const fresh = earlier ? { ...mergeImport(earlier, loaded.session, now), id: loaded.session.id } : loaded.session;
         try {
-            return { session: await store.create(loaded.session), changed: true };
+            return { session: await store.create(fresh), changed: true };
         } catch (error) {
             if (!(error instanceof ModelError) || error.code !== 'scenario_exists') throw error;
         }

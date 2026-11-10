@@ -19,6 +19,8 @@ export const CHILD_TASK = 'trail-maps-fixes';
 export const STALE_TASK = 'old-task';
 
 export const SESSION_KEY = `${DAY}/${ROOT_TASK}`;
+/** The workspace root the assembled fixture documents were read from. */
+export const FIXTURE_ROOT = '/work/trails';
 export const STALE_SESSION_KEY = `2026-01-10/${STALE_TASK}`;
 
 export const PATHS = {
@@ -781,7 +783,7 @@ export const rootSession = () => assembleSession({
         ],
     },
     git: { repository: 'contoso/trails', branch: 'feat/offline' },
-    root: '/work/trails',
+    root: FIXTURE_ROOT,
     now: FIXTURE_NOW,
 });
 
