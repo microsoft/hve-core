@@ -828,19 +828,20 @@ describe('binding a canvas to a Copilot session', () => {
         assert.equal((await call({ task: CHILD_TASK })).source.boundSession, BOUND, 'a task without session keeps the session shown');
     });
 
-    it('names the session and its workspace root in a message about a task of another session, and not for the own session', async (t) => {
+    it('names the session in the message about a task of another session, and not for the own session', async (t) => {
         const store = createStore({ root: path.join(scratch, 'store-messages') });
         t.after(() => store.close());
         const sources = controller(store);
         const shown = await sources.prepare({ session: BOUND, state: PATHS.childState });
         const { result } = await store.update(shown.sessionId, (current) => createFeedback(current, { kind: 'comment', text: 'Check the child' }, NOW), { by: 'user' });
         const items = [{ taskId: CHILD_TASK, id: result.id }];
-        const expected = `Task files, in session ${BOUND} at workspace root ${boundRoot}; paths are relative to that root:\n- State: .copilot-tracking/rpi-sessions/`;
+        const expected = `RPI canvas 3WF0 has 1 item for session ${BOUND} (task ${CHILD_TASK}, state .copilot-tracking/rpi-sessions/`;
 
         const elsewhere = createCanvasServer({ store, getSessionId: () => shown.sessionId, getCanvas: () => ({ handle: '3WF0', instanceId: 'panel' }), getSource: () => shown.source, getJoinedSessionId: () => OWN, deliver: async () => {} });
         const away = await post(new URL(await elsewhere.start()), '/api/delivery/preview', { items });
         assert.equal(away.status, 200);
-        assert.ok(away.json.prompt.includes(expected), away.json.prompt);
+        assert.deepEqual([away.json.route.kind, away.json.route.sessionId], ['relay', BOUND]);
+        assert.ok(away.json.prompt.startsWith(expected), away.json.prompt);
 
         const home = createCanvasServer({ store, getSessionId: () => shown.sessionId, getCanvas: () => ({ handle: '3WF0', instanceId: 'panel' }), getSource: () => shown.source, getJoinedSessionId: () => BOUND, deliver: async () => {} });
         const same = await post(new URL(await home.start()), '/api/delivery/preview', { items });

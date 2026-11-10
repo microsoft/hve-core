@@ -972,6 +972,38 @@ export function routeSentence(route) {
     return null;
 }
 
+/** How many chat messages Send now takes for a preview: one for the canvas's own chat, or one for each task of a hand-off. */
+const messageCount = (preview) => (Array.isArray(preview?.messages) && preview.messages.length > 0 ? preview.messages.length : 1);
+
+/** What the dialog's route-dependent wording is built from, so the dialog is rebuilt when it changes. */
+export const sendShape = (preview) => JSON.stringify([preview?.route?.kind ?? 'own', routeName(preview?.route ?? null), messageCount(preview)]);
+
+/**
+ * What Send now does, in words, after its name: the canvas's own chat, another session's canvas, or this
+ * chat's agent, which forwards the items. A hand-off sends one chat message for each task, and each one
+ * starts with the canvas's handle as the chat shows it.
+ *
+ * @param {any} preview the preview the dialog shows, or null while it is prepared
+ * @param {{ handle?: string | null, items: number }} options the canvas handle and the number of items
+ * @returns {string}
+ */
+export function sendNowWords(preview, { handle, items }) {
+    const name = `RPI canvas${handle ? ` ${handle}` : ''}`;
+    const route = preview?.route ?? null;
+    const message = messageCount(preview) > 1 ? 'one chat message for each task, each' : 'one chat message';
+    if (route?.kind === 'inbox') return ` gives the items to the canvas in ${routeName(route)}, which hands them to its agent as ${message} starting with “${name} in session”.`;
+    if (route?.kind === 'relay') return ` gives this chat's agent ${message} starting with “${name} has”, which asks it to forward them to ${routeName(route)}.`;
+    return ` gives ${items === 1 ? 'it' : 'them'} to the agent at its next step, even mid-task, as one chat message that starts with “${name}”.`;
+}
+
+/** The hint under the message box: where a note goes with each route, and what Queue does with it. */
+export function noteHint(preview) {
+    const route = preview?.route ?? null;
+    if (route?.kind === 'inbox') return `With Send now, it goes to the agent in ${routeName(route)} as a comment with your items. With Queue, it waits with your items as a comment.`;
+    if (route?.kind === 'relay') return `With Send now, it goes to this chat's agent as a comment with your items, which forwards them to ${routeName(route)}. With Queue, it waits with your items as a comment.`;
+    return 'With Send now, it shows in the chat above the line that names this canvas. With Queue, it waits with your items as a comment.';
+}
+
 /** A route as a short phrase that follows "they now go", for the announcement that it changed. */
 const routeShort = (route) => {
     if (route?.kind === 'inbox') return `to the agent in ${routeName(route)}, through its canvas`;
@@ -1136,14 +1168,14 @@ export function reviewSheet(ctx) {
         ...groups.map((group) => reviewGroup(ctx, group)),
         h('label', { class: 'field-label', for: 'send-note', text: 'Message to the agent (optional)' }),
         h('textarea', { id: 'send-note', class: 'note', rows: '3', 'aria-describedby': 'send-note-hint', oninput: (event) => ctx.act.setSendNote(event.target.value) }, send.note),
-        h('p', { class: 'meta', id: 'send-note-hint', text: 'With Send now, it shows in the chat above the line that names this canvas. With Queue, it waits with your items as a comment.' }),
+        h('p', { class: 'meta', id: 'send-note-hint', text: noteHint(send.preview) }),
         h('details', { class: 'send-exact' },
-            h('summary', { text: 'Exact message Send now delivers' }),
+            h('summary', { text: messageCount(send.preview) > 1 ? 'Exact messages Send now delivers' : 'Exact message Send now delivers' }),
             h('pre', { class: 'preview-text', id: 'send-preview', tabindex: '0', text: send.preview?.prompt ?? 'Preparing the message…' })),
         send.error ? h('div', { class: 'notice tone-danger', role: 'alert', id: 'send-error' }, h('p', { class: 'notice-title' }, icon('alert'), send.error)) : null,
         h('div', { class: 'send-route', id: 'send-route', hidden: routeNodes.length === 0 }, routeNodes),
-        h('ul', { class: 'send-modes', id: 'send-modes' },
-            h('li', null, icon('send'), h('span', null, h('strong', { text: 'Send now' }), ` gives ${them(pending.length)} to the agent at its next step, even mid-task, as one chat message that starts with “RPI canvas${handle ? ` ${handle}` : ''}”.`)),
+        h('ul', { class: 'send-modes', id: 'send-modes', dataset: { sendShape: sendShape(send.preview) } },
+            h('li', null, icon('send'), h('span', null, h('strong', { text: 'Send now' }), sendNowWords(send.preview, { handle, items: pending.length }))),
             h('li', null, icon('clock'), h('span', null, h('strong', { text: 'Queue' }), fresh
                 ? ` keeps ${fresh === pending.length ? them(fresh) : `the ${plural(fresh, 'item')} not queued yet`} here until the agent's next checkpoint: when it changes phase, finishes a task, asks you something, or ends its turn. You can take ${them(fresh)} back until then.`
                 : ' is done: everything here waits for the agent\'s next checkpoint. Send now gives it to the agent sooner.'))),

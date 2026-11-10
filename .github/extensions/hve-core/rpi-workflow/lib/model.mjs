@@ -1294,23 +1294,26 @@ export function composeInboxDelivery(session, ids, from) {
  * Composes the message a source canvas sends its own chat when the target session's canvas did not
  * take items in time. Its first line names the canvas, the count, the target session, and the task
  * and its state file. The second line asks the agent to forward the items with send_session_message.
- * The items follow, as the canvas formats them. Only items still held for the relay can be composed.
+ * The items follow, as the canvas formats them. Only items still held for the relay can be composed,
+ * unless `options.requireHold` is false: the preview composes the relay before the hold exists.
  *
  * @param {any} session the task document that holds the items
  * @param {string[]} ids the items to relay, each held for the relay
  * @param {{ handle: string, sessionId: string }} from the source canvas handle and the target session ID
+ * @param {{ requireHold?: boolean }} [options]
  * @returns {{ prompt: string, displayPrompt: string, ids: string[] }}
  */
-export function composeRelayDelivery(session, ids, from) {
+export function composeRelayDelivery(session, ids, from, options = {}) {
+    const requireHold = options.requireHold !== false;
     const items = ids.map((id) => byId(session.feedback, id));
-    if (items.length === 0 || items.some((item) => !item || item.state !== 'queued' || isDeliveryUncertain(item) || !item.handoff)) {
-        fail('invalid_state', 'Only items that are still held for a relay can be relayed.');
+    if (items.length === 0 || items.some((item) => !item || item.state !== 'queued' || isDeliveryUncertain(item) || (requireHold && !item.handoff))) {
+        fail('invalid_state', requireHold ? 'Only items that are still held for a relay can be relayed.' : 'Only queued items that are not uncertain can be relayed.');
     }
     const count = `${items.length} ${items.length === 1 ? 'item' : 'items'}`;
     const statePath = session.source?.statePath ?? 'unknown';
     const head = [
         `RPI canvas ${from.handle} has ${count} for session ${from.sessionId} (task ${session.task.id}, state ${statePath}).`,
-        "Forward them to that session with send_session_message: put the items below in the message as the user's words, and keep any note of your own in coordinator_instructions.",
+        "Forward them to that session with send_session_message: put the items below in the message as the user's words. If you coordinate that session, keep any note of your own in coordinator_instructions; otherwise add no note.",
     ];
     return {
         prompt: [...head, ...itemLines(session, items, 1)].join('\n'),

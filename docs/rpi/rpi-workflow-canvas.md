@@ -209,7 +209,7 @@ An item whose delivery may already have reached its chat shows **May have been s
 
 ### Provided Research and Plans
 
-The phase shows **Provided** when you or another session supplied its research or plan, unless the agent is working in that phase. Its **Source** section names the session the work came from, or the user. Research that the agent reused, or found already satisfied and skipped, still shows **Skipped**.
+The phase shows **Provided** when you or another session supplied its research or plan. While the agent works in that phase, it shows **In progress**; once the session stops there, it shows **Provided**. Its **Source** section names the session the work came from, or the user. Research that the agent reused, or found already satisfied and skipped, still shows **Skipped**.
 
 ### Limits
 

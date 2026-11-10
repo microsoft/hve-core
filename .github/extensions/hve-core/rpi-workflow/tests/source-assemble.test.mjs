@@ -156,8 +156,8 @@ describe('provided research and plans', () => {
     const copied = { status: 'provided', evidence: COPIED };
     const supplied = { status: 'provided', evidence: SUPPLIED };
     const artifacts = () => ({ research: parseResearch(RESEARCH), plan: parsePlan(PLAN), changes: parseChanges(CHANGES) });
-    /** The root task's state at an active phase, with the given research and plan dispositions when set. */
-    const stateWith = (activePhase, research, plan) => parseState({
+    /** The root task's state at an active phase, with the given research and plan dispositions when set, and any other state fields. */
+    const stateWith = (activePhase, research, plan, fields = {}) => parseState({
         ...ROOT_STATE,
         active_phase: activePhase,
         status: 'active',
@@ -167,12 +167,30 @@ describe('provided research and plans', () => {
             ...(research ? [{ decision: 'Research disposition', ...research }] : []),
             ...(plan ? [{ decision: 'Plan disposition', ...plan }] : []),
         ],
+        ...fields,
     });
     const assembled = (state, files = artifacts(), extra = {}) => assembleSession({ id: 'x', state, artifacts: files, statePath: PATHS.rootState, now: NOW, ...extra }).session;
     const statuses = (session) => Object.values(session.phases).map((phase) => phase.status);
 
     it('shows research and plan as Provided once the agent is past them', () => {
         assert.deepEqual(statuses(assembled(stateWith('Implement', copied, supplied))), ['provided', 'provided', 'active', 'upcoming', 'upcoming']);
+    });
+
+    it('keeps an active provided phase In progress while the session runs in it', () => {
+        assert.equal(assembled(stateWith('Research', copied, null), { research: parseResearch(RESEARCH) }).phases.research.status, 'active');
+        assert.equal(assembled(stateWith('Plan', null, supplied)).phases.plan.status, 'active');
+    });
+
+    it('shows an active provided phase as Provided once the session stops or pauses in it', () => {
+        for (const sessionStatus of ['stopped', 'paused']) {
+            assert.equal(assembled(stateWith('Research', copied, null, { session_status: sessionStatus }), { research: parseResearch(RESEARCH) }).phases.research.status, 'provided', sessionStatus);
+            assert.equal(assembled(stateWith('Plan', null, supplied, { session_status: sessionStatus })).phases.plan.status, 'provided', sessionStatus);
+        }
+    });
+
+    it('shows blocked ahead of Provided, whether the session runs or stopped', () => {
+        assert.equal(assembled(stateWith('Plan', null, supplied, { status: 'blocked', session_status: 'stopped' })).phases.plan.status, 'blocked');
+        assert.equal(assembled(stateWith('Research', copied, null, { status: 'blocked' }), { research: parseResearch(RESEARCH) }).phases.research.status, 'blocked');
     });
 
     it('keeps a provided phase active while the agent turns it into its own artifact', () => {

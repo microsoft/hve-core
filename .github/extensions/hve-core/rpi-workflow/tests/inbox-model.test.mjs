@@ -254,7 +254,7 @@ describe('relay message', () => {
         const message = composeRelayDelivery(held(), ['FB-001', 'FB-003'], FROM_CANVAS);
         const [first, second] = message.prompt.split('\n');
         assert.equal(first, `RPI canvas K7QF has 2 items for session ${HANDOFF.sessionId} (task report-export-csv, state workspace/rpi-sessions/2026-11-09/report/report-export-csv-state.json).`);
-        assert.equal(second, 'Forward them to that session with send_session_message: put the items below in the message as the user\'s words, and keep any note of your own in coordinator_instructions.');
+        assert.equal(second, 'Forward them to that session with send_session_message: put the items below in the message as the user\'s words. If you coordinate that session, keep any note of your own in coordinator_instructions; otherwise add no note.');
         assert.match(message.prompt, /1\. FB-001: Comment on F1/);
         assert.match(message.prompt, /2\. FB-003: Comment on F1/);
         assert.match(message.prompt, /Keep the header row\./);
@@ -272,5 +272,13 @@ describe('relay message', () => {
         assert.throws(() => composeRelayDelivery(held(), [], from), { code: 'invalid_state' });
         assert.throws(() => composeRelayDelivery(markDeliveryUncertain(held(), ['FB-001'], LATER).session, ['FB-001'], from), { code: 'invalid_state' });
         assert.throws(() => composeRelayDelivery(markDelivered(held(), ['FB-001'], 'send', LATER).session, ['FB-001'], from), { code: 'invalid_state' });
+    });
+
+    it('composes unheld queued items only when the preview asks, with the same text, and refuses the rest', () => {
+        const ids = ['FB-001', 'FB-003'];
+        assert.deepEqual(composeRelayDelivery(taskDoc(), ids, FROM_CANVAS, { requireHold: false }), composeRelayDelivery(held(), ids, FROM_CANVAS));
+        assert.throws(() => composeRelayDelivery(taskDoc(), ['FB-001'], FROM_CANVAS, { requireHold: true }), { code: 'invalid_state' });
+        assert.throws(() => composeRelayDelivery(markDeliveryUncertain(taskDoc(), ['FB-001'], LATER).session, ['FB-001'], FROM_CANVAS, { requireHold: false }), { code: 'invalid_state' });
+        assert.throws(() => composeRelayDelivery(markDelivered(taskDoc(), ['FB-001'], 'send', LATER).session, ['FB-001'], FROM_CANVAS, { requireHold: false }), { code: 'invalid_state' });
     });
 });

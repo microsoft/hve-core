@@ -563,11 +563,14 @@ describe('a send to another session', () => {
      * A canvas that shows the child's task, bound to the child's session and joined to the Project's
      * session. `childRunner` is the child's canvas process, and `source` is this canvas's own process
      * for the Project's session. `failOn` makes the first write of that store method fail, and
-     * `hooks.beforeInboxWrite`, when set, runs once before the source writes an inbox entry.
+     * `hooks.beforeInboxWrite`, when set, runs once before the source writes an inbox entry. `withParent`
+     * also stores the parent task's document, in the same session, and `joined` is the Copilot session
+     * this canvas joins, or null for none.
      */
-    async function crossSetup(name, { claimWindowMs, failOn = null } = {}) {
+    async function crossSetup(name, { claimWindowMs, failOn = null, withParent = false, joined = PROJECT } = {}) {
         const store = createStore({ root: path.join(tmp, name), pollMs: 20 });
         const child = await store.create({ ...childSession().session, id: storeIdFor(CHILD_TASK, FIXTURE_ROOT) });
+        const parent = withParent ? await store.create({ ...rootSession().session, id: storeIdFor(ROOT_TASK, FIXTURE_ROOT) }) : null;
         let failures = failOn ? 1 : 0;
         const flaky = Object.create(store);
         for (const method of ['updateOutbox', 'updateInbox']) {
@@ -604,7 +607,7 @@ describe('a send to another session', () => {
             getSessionId: () => child.id,
             getCanvas: () => ({ handle: 'K7QF', instanceId: 'rpi-workflow-demo' }),
             getSource: () => ({ kind: 'rpi', boundSession: CHILD, workspace: { root: FIXTURE_ROOT }, follow: { paused: false } }),
-            getJoinedSessionId: () => PROJECT,
+            getJoinedSessionId: () => joined,
             deliver: async (request) => {
                 chat.push(request);
                 return { messageId: `own-${chat.length}` };
@@ -615,7 +618,7 @@ describe('a send to another session', () => {
         });
         const url = new URL(await server.start());
         return {
-            store, server, url, child, chat, childChat, childRunner, source, hooks,
+            store, server, url, child, parent, chat, childChat, childRunner, source, hooks,
             async stop() {
                 await server.stop();
                 await childRunner.stop();
@@ -793,6 +796,8 @@ describe('a send to another session', () => {
         const a = await request(url, { method: 'POST', pathname: '/api/feedback', body: { kind: 'comment', text: 'First', target: { id: 'F1' } } });
         const preview = await request(url, { method: 'POST', pathname: '/api/delivery/preview', body: { ids: [a.json.item.id] } });
         assert.deepEqual([preview.json.route.kind, preview.json.route.sessionId], ['own', null]);
+        assert.match(preview.json.prompt, /^RPI canvas 3WF0 sent 1 item from the user about task /);
+        assert.equal(preview.json.messages, undefined, 'the own route is one chat message, as before');
         await server.stop();
         store.close();
     });
@@ -825,6 +830,9 @@ describe('a send to another session', () => {
             assert.equal(refused.json.error.code, 'preview_stale');
             assert.deepEqual(refused.json.error.preview.route, { kind: 'relay', sessionId: CHILD, sessionName: SESSION_NAME });
             assert.equal(refused.json.error.preview.digest, preview.json.digest, 'the list is the same; only the route moved');
+            const relayed = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items } });
+            assert.deepEqual([refused.json.error.preview.prompt, refused.json.error.preview.displayPrompt], [relayed.json.prompt, relayed.json.displayPrompt], 'the refusal shows the relay message');
+            assert.notEqual(refused.json.error.preview.prompt, preview.json.prompt, 'and not the inbox message the page had');
             const held = await itemIn(f.store, f.child.id, mine.id);
             assert.deepEqual([held.state, held.handoff, held.deliveringSince, held.route], ['queued', undefined, undefined, undefined]);
             assert.deepEqual([(await f.store.loadInbox(CHILD)).entries, (await f.store.loadOutbox(PROJECT)).entries, f.chat.length, f.childChat.length], [[], [], 0, 0]);
@@ -872,6 +880,154 @@ describe('a send to another session', () => {
             assert.equal(queued.status, 200, JSON.stringify(queued.json));
             assert.deepEqual(queued.json.queued, [{ taskId: CHILD_TASK, id: mine.id }]);
             assert.deepEqual([(await f.store.loadInbox(CHILD)).entries.length, f.chat.length], [0, 0]);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('previews the inbox message the target canvas sends into its chat, which is the message the chat gets', async () => {
+        const f = await crossSetup('cross-preview-inbox');
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const { preview, sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }] });
+            assert.equal(preview.json.route.kind, 'inbox');
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            await f.childRunner.checkInbox();
+            const [message] = f.childChat;
+            assert.deepEqual([preview.json.prompt, preview.json.displayPrompt], [message.prompt, message.displayPrompt]);
+            assert.deepEqual(preview.json.messages, [{ taskId: CHILD_TASK, prompt: message.prompt, displayPrompt: message.displayPrompt }]);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('previews the relay message this chat sends, which is the message the chat gets', async () => {
+        const f = await crossSetup('cross-preview-relay');
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const { preview, sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }] });
+            assert.equal(preview.json.route.kind, 'relay');
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            await until(async () => (await itemIn(f.store, f.child.id, mine.id)).state === 'sent' && (await f.store.loadOutbox(PROJECT)).entries.length === 0);
+            const [message] = f.chat;
+            assert.deepEqual([preview.json.prompt, preview.json.displayPrompt], [message.prompt, message.displayPrompt]);
+            assert.deepEqual(preview.json.messages, [{ taskId: CHILD_TASK, prompt: message.prompt, displayPrompt: message.displayPrompt }]);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('puts a note in the inbox preview as a comment that the message carries, stores nothing until sent, and keeps the digest', async () => {
+        const f = await crossSetup('cross-preview-note-inbox');
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const items = [{ taskId: CHILD_TASK, id: mine.id }];
+            const stored = (await f.store.load(f.child.id)).feedback.length;
+            const plain = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items } });
+            const noted = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items, note: 'Start with the header.' } });
+            assert.equal(noted.json.digest, plain.json.digest, 'typing a note does not stale a preview');
+            assert.equal((await f.store.load(f.child.id)).feedback.length, stored, 'the preview stores no note');
+            assert.match(noted.json.prompt, /Comment on the session\n {3}Start with the header\./);
+            const sent = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items, note: 'Start with the header.', digest: noted.json.digest } });
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            assert.equal(sent.json.handedOff[0].ids.length, 2);
+            await f.childRunner.checkInbox();
+            assert.deepEqual([f.childChat[0].prompt, f.childChat[0].displayPrompt], [noted.json.prompt, noted.json.displayPrompt]);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('puts a note in the relay preview as a comment that the relayed message carries', async () => {
+        const f = await crossSetup('cross-preview-note-relay');
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const { preview, sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }], note: 'Start with the header.' });
+            assert.equal(preview.json.route.kind, 'relay');
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            await until(async () => (await itemIn(f.store, f.child.id, mine.id)).state === 'sent' && (await f.store.loadOutbox(PROJECT)).entries.length === 0);
+            const [message] = f.chat;
+            assert.match(message.prompt, /Comment on the session\n {3}Start with the header\./);
+            assert.deepEqual([preview.json.prompt, preview.json.displayPrompt], [message.prompt, message.displayPrompt]);
+            assert.deepEqual(message.ids, sent.json.handedOff[0].ids);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('previews one message for each task under its heading, and each message is the one its canvas process sends', async () => {
+        const f = await crossSetup('cross-preview-two-tasks', { withParent: true });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const theirs = await addComment(f.store, f.parent.id, 'Check the legend too.');
+            await f.childRunner.heartbeat();
+            const { preview, sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }, { taskId: ROOT_TASK, id: theirs.id }] });
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            const [first, second] = preview.json.messages;
+            assert.deepEqual(preview.json.messages.map((message) => message.taskId), [CHILD_TASK, ROOT_TASK]);
+            assert.equal(preview.json.prompt, `Message 1 of 2, task ${CHILD_TASK}:\n${first.prompt}\n\nMessage 2 of 2, task ${ROOT_TASK}:\n${second.prompt}`);
+            assert.equal(preview.json.displayPrompt, `${first.displayPrompt} / ${second.displayPrompt}`);
+            await f.childRunner.checkInbox();
+            assert.deepEqual(f.childChat.map((message) => [message.prompt, message.displayPrompt]), [[first.prompt, first.displayPrompt], [second.prompt, second.displayPrompt]]);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('previews one relay message for each task, and this chat sends each of them in that order', async () => {
+        const f = await crossSetup('cross-preview-relay-two-tasks', { withParent: true });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const theirs = await addComment(f.store, f.parent.id, 'Check the legend too.');
+            const { preview, sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }, { taskId: ROOT_TASK, id: theirs.id }] });
+            assert.equal(preview.json.route.kind, 'relay');
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            await until(async () => (await itemIn(f.store, f.child.id, mine.id)).state === 'sent' && (await itemIn(f.store, f.parent.id, theirs.id)).state === 'sent' && (await f.store.loadOutbox(PROJECT)).entries.length === 0);
+            const [first, second] = preview.json.messages;
+            assert.deepEqual(f.chat.map((message) => [message.prompt, message.displayPrompt]), [[first.prompt, first.displayPrompt], [second.prompt, second.displayPrompt]]);
+            assert.equal(preview.json.prompt, `Message 1 of 2, task ${CHILD_TASK}:\n${first.prompt}\n\nMessage 2 of 2, task ${ROOT_TASK}:\n${second.prompt}`);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('gives the 409 for changed items the text of the route the preview named, and sends nothing', async () => {
+        const f = await crossSetup('cross-stale-items');
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const items = [{ taskId: CHILD_TASK, id: mine.id }];
+            const preview = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items } });
+            const edited = await request(f.url, { method: 'POST', pathname: '/api/feedback/edit', body: { taskId: CHILD_TASK, id: mine.id, text: 'Keep the header row and the footer.' } });
+            assert.equal(edited.status, 200, JSON.stringify(edited.json));
+            const stale = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items, digest: preview.json.digest, route: 'inbox' } });
+            assert.deepEqual([stale.status, stale.json.error.code], [409, 'preview_stale']);
+            const fresh = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items } });
+            assert.equal(stale.json.error.preview.route.kind, 'inbox');
+            assert.equal(stale.json.error.preview.prompt, fresh.json.prompt);
+            assert.match(stale.json.error.preview.prompt, /Comment on the session\n {3}Keep the header row and the footer\./);
+            assert.deepEqual([(await f.store.loadInbox(CHILD)).entries, (await f.store.loadOutbox(PROJECT)).entries, f.chat.length, f.childChat.length], [[], [], 0, 0]);
+            assert.equal((await itemIn(f.store, f.child.id, mine.id)).handoff, undefined, 'the item is not held');
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('keeps Queue working while the canvas has no Copilot session, and refuses Send now with the reason', async () => {
+        const f = await crossSetup('cross-preview-no-session', { joined: null });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const items = [{ taskId: CHILD_TASK, id: mine.id }];
+            const preview = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items } });
+            assert.equal(preview.status, 200, JSON.stringify(preview.json));
+            const sent = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items, digest: preview.json.digest, mode: 'send' } });
+            assert.deepEqual([sent.status, sent.json.error.code], [503, 'delivery_unavailable']);
+            assert.equal((await itemIn(f.store, f.child.id, mine.id)).handoff, undefined, 'nothing is held');
+            const queued = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items, digest: preview.json.digest, mode: 'queue' } });
+            assert.equal(queued.status, 200, JSON.stringify(queued.json));
+            assert.ok((await itemIn(f.store, f.child.id, mine.id)).queuedForAgentAt, 'Queue still marks the item for the agent');
         } finally {
             await f.stop();
         }

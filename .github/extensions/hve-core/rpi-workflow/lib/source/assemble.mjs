@@ -577,13 +577,16 @@ export function assembleSession(input) {
             default: return null;
         }
     };
+    const providedPhase = (phase) => (phase === 'research' && researchProvided) || (phase === 'plan' && planProvided);
+    // The agent's phase shows In progress while the session runs in it, and Provided once the session stops there.
     const phaseStatus = (phase, index) => {
         if (index === activeIndex) {
             if (lower(state.status) === 'blocked') return 'blocked';
+            if (providedPhase(phase) && !running) return 'provided';
             if (completed && (phase !== 'followup' || !running)) return 'done';
             return 'active';
         }
-        if ((phase === 'research' && researchProvided) || (phase === 'plan' && planProvided)) return 'provided';
+        if (providedPhase(phase)) return 'provided';
         if (phase === 'research' && researchReused) return 'skipped';
         if (phase === 'review' && reviewSkipped) return 'skipped';
         return documentStatus(phase, index) ?? (index < activeIndex ? 'done' : 'upcoming');
