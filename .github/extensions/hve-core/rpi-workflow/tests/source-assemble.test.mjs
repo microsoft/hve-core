@@ -224,8 +224,58 @@ describe('provided research and plans', () => {
     it('does not read a provided research as reused, even when its state path names another kind', () => {
         const session = assembled(stateWith('Plan', copied, null), { plan: parsePlan(PLAN) }, { mismatched: [{ key: 'research', path: PATHS.review, kind: 'review' }] });
         assert.equal(session.phases.research.status, 'provided');
-        assert.equal(session.sections['research-summary'], undefined, 'no reused-evidence summary');
+        assert.doesNotMatch(session.sections['research-summary']?.markdown ?? '', /reused existing evidence/, 'no reused-evidence summary');
         assert.match(session.sections['research-source'].markdown, /^Research came from session 3fa85f64\./);
+    });
+
+    describe('research that came with a provided plan', () => {
+        const WITH_PLAN_SESSION = `Came with the provided plan: Copied from session ${SOURCE_SESSION}; path ${PATHS.plan}; sha256 1a2b3c4d`;
+        const WITH_PLAN_USER = 'Came with the provided plan: Supplied by the user on 2026-11-09: offline trail plan in chat.';
+        /** A session whose research came with its plan: no research document, so the state keeps no research path. */
+        const withPlan = (activePhase, evidence, fields = {}) => stateWith(activePhase, { status: 'provided', evidence }, supplied, { artifact_paths: { plan: PATHS.plan }, ...fields });
+        const planOnly = { plan: parsePlan(PLAN) };
+
+        it('names the session the plan came from, with the evidence as recorded', () => {
+            const session = assembled(withPlan('Implement', WITH_PLAN_SESSION), planOnly);
+            assert.equal(session.sections['research-source'].markdown, `Research came with the plan from session 3fa85f64.\n\n${WITH_PLAN_SESSION}`);
+            assert.match(session.sections['research-summary'].markdown, /no research document of its own; its research came with the provided plan/, 'the Summary says why there is no research document');
+            assert.equal(session.sections['research-source'].title, 'Source');
+            assert.equal(session.phases.research.status, 'provided');
+            assert.equal(session.phases.research.artifact, null);
+        });
+
+        it('names the user when the plan was supplied by the user', () => {
+            const session = assembled(withPlan('Implement', WITH_PLAN_USER), planOnly);
+            assert.equal(session.sections['research-source'].markdown, `Research came with the plan the user supplied.\n\n${WITH_PLAN_USER}`);
+            assert.equal(session.phases.research.status, 'provided');
+        });
+
+        it('reads the came-with-the-plan note whatever its letter case', () => {
+            const lower = `came WITH the provided PLAN: Copied from session ${SOURCE_SESSION}; path ${PATHS.plan}`;
+            assert.match(assembled(withPlan('Implement', lower), planOnly).sections['research-source'].markdown, /^Research came with the plan from session 3fa85f64\./);
+        });
+
+        it('falls back to a plain came-with-the-plan sentence when the evidence names neither a session nor the user', () => {
+            assert.match(assembled(withPlan('Implement', 'Came with the provided plan: plan notes from chat.'), planOnly).sections['research-source'].markdown, /^Research came with the plan\.\n\n/);
+        });
+
+        it('keeps research that came with the plan In progress while the session runs in Research', () => {
+            const session = assembled(withPlan('Research', WITH_PLAN_SESSION), planOnly);
+            assert.equal(session.phases.research.status, 'active');
+            assert.ok(session.sections['research-source'], 'the Source section is still present');
+        });
+
+        it('shows research that came with the plan as Provided once the session stops in Research', () => {
+            assert.equal(assembled(withPlan('Research', WITH_PLAN_USER, { session_status: 'stopped' }), planOnly).phases.research.status, 'provided');
+        });
+
+        it('keeps reused and satisfied-and-skipped research Skipped, with no Source section', () => {
+            for (const [status, evidence] of [['reused', 'The review record'], ['satisfied-and-skipped', 'Existing research']]) {
+                const session = assembled(stateWith('Implement', { status, evidence }, supplied), planOnly);
+                assert.equal(session.phases.research.status, 'skipped', status);
+                assert.equal(session.sections['research-source'], undefined, status);
+            }
+        });
     });
 });
 

@@ -3,7 +3,7 @@ title: RPI Workflow Canvas
 description: Follow an RPI session phase by phase in a canvas beside the chat, answer the agent's decisions, send it your input, and follow a Project's child sessions
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-11-09
+ms.date: 2026-11-10
 ms.topic: how-to
 keywords:
   - rpi workflow canvas
@@ -209,7 +209,8 @@ An item whose delivery may already have reached its chat shows **May have been s
 
 ### Provided Research and Plans
 
-The phase shows **Provided** when you or another session supplied its research or plan. While the agent works in that phase, it shows **In progress**; once the session stops there, it shows **Provided**. Its **Source** section names the session the work came from, or the user. Research that the agent reused, or found already satisfied and skipped, still shows **Skipped**.
+The phase shows **Provided** when you or another session supplied its research or plan. Research that came with a provided plan also shows **Provided**, although it has no document of its own.
+While the agent works in that phase, it shows **In progress**; once the session stops there, it shows **Provided**. Its **Source** section names the session the work came from, or the user; for research that came with a plan, it says the research came with the plan. Research that the agent reused, or found already satisfied and skipped, still shows **Skipped**.
 
 ### Limits
 

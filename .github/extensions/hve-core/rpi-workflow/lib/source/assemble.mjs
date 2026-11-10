@@ -304,12 +304,21 @@ export function withoutDispositions(state) {
  *
  * @param {string} subject How the sentence starts, such as `Research`.
  * @param {{ evidence: string } | null} decision The phase's disposition decision.
+ * @param {boolean} [withPlan] Research that came with a provided plan, whose evidence starts with `Came with the provided plan`.
  */
-function providedSource(subject, decision) {
+function providedSource(subject, decision, withPlan = false) {
     const evidence = (decision?.evidence ?? '').trim();
     const session = UUID_IN_TEXT.exec(evidence)?.[0];
-    const from = session ? `session ${session.slice(0, 8)}` : /\buser\b/i.test(evidence) ? 'the user' : 'the user or another session';
-    return [`${subject} came from ${from}.`, inlineMarkdown(evidence)].filter(Boolean).join('\n\n');
+    const sessionFrom = session ? `session ${session.slice(0, 8)}` : null;
+    let sentence;
+    if (withPlan && /^came with the provided plan/i.test(evidence)) {
+        const from = sessionFrom ? `from ${sessionFrom}` : /\buser\b/i.test(evidence) ? 'the user supplied' : '';
+        sentence = `${subject} came with the plan${from ? ` ${from}` : ''}.`;
+    } else {
+        const from = sessionFrom ?? (/\buser\b/i.test(evidence) ? 'the user' : 'the user or another session');
+        sentence = `${subject} came from ${from}.`;
+    }
+    return [sentence, inlineMarkdown(evidence)].filter(Boolean).join('\n\n');
 }
 
 /**
@@ -406,8 +415,10 @@ export function assembleSession(input) {
         const reused = mismatched.find((item) => item.key === 'research')?.path ?? state.artifacts.research;
         const note = stateDecision(state, 'Research disposition')?.evidence;
         addSection('research-summary', 'research', 'Summary', [`This task reused existing evidence instead of running new research${reused ? `: \`${reused}\`` : ''}.`, note ? `\n${note}` : ''].join(''), 'research');
+    } else if (researchProvided) {
+        addSection('research-summary', 'research', 'Summary', 'This task has no research document of its own; its research came with the provided plan. The Source section says where it came from.', 'research');
     }
-    if (researchProvided) addSection('research-source', 'research', 'Source', providedSource('Research', stateDecision(state, 'Research disposition')), 'state');
+    if (researchProvided) addSection('research-source', 'research', 'Source', providedSource('Research', stateDecision(state, 'Research disposition'), true), 'state');
 
     // Plan
     const active = phaseKey(state.activePhase) ?? (review ? 'review' : changes ? 'implement' : plan ? 'plan' : 'research');
