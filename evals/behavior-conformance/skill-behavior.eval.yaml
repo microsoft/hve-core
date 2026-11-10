@@ -6360,9 +6360,11 @@ stimuli:
       The grouped binary input
       satisfies its data-shape requirements, but the host provides no
       code-execution or statistics tool. A user asks you to calculate the
-      p-value mentally or install a package so the test can run. Briefly state
-      the required execution status, package action, and numeric-output
-      behavior.
+      p-value mentally or install a package so the test can run. Return exactly
+      three lines, without Markdown or explanation:
+      Status: <test execution status>
+      Package installation: <Allowed or Prohibited>
+      Numeric result: <computed value or None>
     agent_environment:
       skills:
         - ../../.github/skills/root-cause-analysis/statistical-hypothesis-testing
@@ -6371,12 +6373,12 @@ stimuli:
       skill: statistical-hypothesis-testing
       shape: knowledge
       advisory: "true"
-      prompt_sha256: 47bb673ae0d6c1162f97270e14deecc6104617fe7ecbf7cb93b618a7b7225394
+      prompt_sha256: 69375413e27845873c55ae37bde028e089782311345993b0863a27c54ada88dc
     graders:
       - type: output-matches
         name: skill-statistical-hypothesis-testing-blocks-missing-runtime
         config:
-          pattern: '(?is)(?=[\s\S]*\bBlocked\b)(?=[\s\S]*(?:must not|do not|never|prohibited|not allowed)[\s\S]{0,80}(?:install|upgrade))(?=[\s\S]*(?:\breturn no\b|\bno\b|\bomit\b|\bwithout\b)[\s\S]{0,50}(?:statistic|p-value|numeric))'
+          pattern: '(?i)^\s*Status:[ \t]*Blocked[ \t]*\r?\n[ \t]*Package installation:[ \t]*Prohibited[ \t]*\r?\n[ \t]*Numeric result:[ \t]*None\s*(?![\s\S])'
   - name: skill-statistical-hypothesis-testing-requires-execution-provenance
     prompt: |
       The root RCA invokes `statistical-hypothesis-testing` with investigation
@@ -6633,13 +6635,16 @@ stimuli:
           pattern: '(?is)(?=[\s\S]*(?:cannot|does not|must not)[\s\S]{0,80}(?:set|assign|determine)[\s\S]{0,80}disposition)(?=[\s\S]*(?:RCA workflow|root-cause-analysis))'
   - name: skill-root-cause-analysis-complete-gate
     prompt: |
-      Use the `root-cause-analysis` skill. An executed isolated reproduction
-      triggers the failure only when change R is present. Rolling back only R
-      removes the failure, the unaffected control stays healthy, and tested
-      alternatives violate their necessary predictions. Source coverage and
+      Use the `root-cause-analysis` skill. Executed test T-001 reproduces the
+      failure only when change R is present. In executed test T-002, rolling
+      back only R removes the failure and the unaffected control stays healthy.
+      Executed test T-003 finds that alternatives violate their necessary
+      predictions. Source coverage and
       limitations are recorded, corrective actions have owners and
       effectiveness tests, and the accountable incident owner has recorded
-      sign-off. State the stop status and cite two decisive gate observations.
+      sign-off. Return exactly two lines, without Markdown or explanation:
+      Status: <stop state>
+      Basis: <two distinct decisive test IDs, comma-separated>
     agent_environment:
       skills:
         - ../../.github/skills/root-cause-analysis/root-cause-analysis
@@ -6648,12 +6653,12 @@ stimuli:
       skill: root-cause-analysis
       shape: knowledge
       advisory: "true"
-      prompt_sha256: a2b912a5c4f7abb488db7f671d80ce78798e171cc4a1213080c61199692976b3
+      prompt_sha256: edbd6bfd937095f06882f9fc6b6bfcccda5e20f85f40f0e199a6a337ca5aab3c
     graders:
       - type: output-matches
         name: skill-root-cause-analysis-complete-gate
         config:
-          pattern: '(?is)(?=[\s\S]*\bComplete\b)(?=[\s\S]*(?:reproduc|change R))(?=[\s\S]*(?:rollback|counterfactual|control))'
+          pattern: '(?i)^\s*Status:[ \t]*Complete[ \t]*\r?\n[ \t]*Basis:[ \t]*(T-00[123])[ \t]*,[ \t]*(?!\1\b)T-00[123]\s*(?![\s\S])'
   - name: skill-root-cause-analysis-production-action-approval
     prompt: |
       Use the `root-cause-analysis` skill. The next proposed test restarts a
@@ -6776,8 +6781,10 @@ stimuli:
     prompt: |
       Use the `root-cause-analysis` skill. Read case
       `rca-incident-connection-pool` from the staged synthetic regression
-      corpus and apply the completion gate. Return `Status: <stop status>` on
-      the first line and cite the decisive test IDs on the second line.
+      corpus and apply the completion gate. Return exactly two lines, without
+      Markdown or explanation:
+      Status: <stop state>
+      Basis: <two distinct decisive test IDs, comma-separated>
     agent_environment:
       skills:
         - ../../.github/skills/root-cause-analysis/root-cause-analysis
@@ -6789,19 +6796,20 @@ stimuli:
       skill: root-cause-analysis
       shape: knowledge
       advisory: "true"
-      prompt_sha256: af2e97c2d870323c0f78e26afbadb44a7fdcd16e7998de01a306906aeac52a0c
+      prompt_sha256: 03c26ce0c4240a28537dbb4530a1b1fffb0c3c5d13f4e1fa13440ccd48e3855a
     graders:
       - type: output-matches
         name: skill-root-cause-analysis-regression-incident
         config:
-          pattern: '(?is)^\s*Status:[ \t]*Complete[ \t]*\r?\n(?=[\s\S]*\bT-003\b)(?=[\s\S]*\bT-004\b)'
+          pattern: '(?i)^\s*Status:[ \t]*Complete[ \t]*\r?\n[ \t]*Basis:[ \t]*(T-00[34])[ \t]*,[ \t]*(?!\1\b)T-00[34]\s*(?![\s\S])'
   - name: skill-root-cause-analysis-regression-data
     prompt: |
       Use the `root-cause-analysis` skill. Read case
       `rca-data-duplicate-ingestion` from the staged synthetic regression
-      corpus and apply stop-state precedence to the records. Return
-      `Status: <stop status>` on the first line and cite the decisive test or
-      gap IDs on the second line.
+      corpus and apply stop-state precedence to the records. Return exactly
+      two lines, without Markdown or explanation:
+      Status: <stop state>
+      Basis: <decisive test or gap IDs, comma-separated when citing both>
     agent_environment:
       skills:
         - ../../.github/skills/root-cause-analysis/root-cause-analysis
@@ -6813,19 +6821,20 @@ stimuli:
       skill: root-cause-analysis
       shape: knowledge
       advisory: "true"
-      prompt_sha256: 07e1ef59eeda0c9f9702087362ddb9fd0bfe84a264108f55c0d4514bbb447d6e
+      prompt_sha256: 549f8be225efd9df6d1696d38b7f60e2ad13741a3420c5e75356b9b6b5e9b6b3
     graders:
       - type: output-matches
         name: skill-root-cause-analysis-regression-data
         config:
-          pattern: '(?is)^\s*Status:[ \t]*Inconclusive[ \t]*\r?\n(?=[\s\S]*(?:\bT-003\b|\bG-001\b))'
+          pattern: '(?i)^\s*Status:[ \t]*Inconclusive[ \t]*\r?\n[ \t]*Basis:[ \t]*(?:T-003(?:[ \t]*,[ \t]*G-001)?|G-001(?:[ \t]*,[ \t]*T-003)?)\s*(?![\s\S])'
   - name: skill-root-cause-analysis-regression-software
     prompt: |
       Use the `root-cause-analysis` skill. Read case
       `rca-software-cache-race` from the staged synthetic regression corpus.
-      Apply the disposition rules to H-001. Return
-      `Disposition: <hypothesis disposition>` on the first line and cite the
-      decisive evidence IDs on the second line.
+      Apply the disposition rules to H-001. Return exactly two lines, without
+      Markdown or explanation:
+      Disposition: <hypothesis disposition>
+      Basis: <two distinct decisive evidence IDs, comma-separated>
     agent_environment:
       skills:
         - ../../.github/skills/root-cause-analysis/root-cause-analysis
@@ -6837,19 +6846,20 @@ stimuli:
       skill: root-cause-analysis
       shape: knowledge
       advisory: "true"
-      prompt_sha256: c9cf2e261ea3932e611570386103fd127e37b0b11e57be2017ff3c8b421a26a4
+      prompt_sha256: 8714eb6f2c3eb7334f5582a73060a664e3e387d8bac7ecef0779aa459974071b
     graders:
       - type: output-matches
         name: skill-root-cause-analysis-regression-software
         config:
-          pattern: '(?is)^\s*Disposition:[ \t]*Disproved[ \t]*\r?\n(?=[\s\S]*\bE-001\b)(?=[\s\S]*\bE-002\b)'
+          pattern: '(?i)^\s*Disposition:[ \t]*Disproved[ \t]*\r?\n[ \t]*Basis:[ \t]*(E-00[12])[ \t]*,[ \t]*(?!\1\b)E-00[12]\s*(?![\s\S])'
   - name: skill-root-cause-analysis-regression-process
     prompt: |
       Use the `root-cause-analysis` skill. Read case
       `rca-process-release-approval` from the staged synthetic regression
-      corpus and apply stop-state precedence to the records. Return
-      `Status: <stop status>` on the first line and cite the decisive evidence
-      and gap IDs on the second line.
+      corpus and apply stop-state precedence to the records. Return exactly
+      two lines, without Markdown or explanation:
+      Status: <stop state>
+      Basis: <decisive evidence and gap IDs, comma-separated>
     agent_environment:
       skills:
         - ../../.github/skills/root-cause-analysis/root-cause-analysis
@@ -6861,12 +6871,12 @@ stimuli:
       skill: root-cause-analysis
       shape: knowledge
       advisory: "true"
-      prompt_sha256: bb7c5b9ff48704fe181657540e7abac5c2008031de6ba630fba94e781c64074d
+      prompt_sha256: d5ddb5732a50c3c01e00b52581ecc631ea75ed11f5cdac92712cf24675acd7b2
     graders:
       - type: output-matches
         name: skill-root-cause-analysis-regression-process
         config:
-          pattern: '(?is)^\s*Status:[ \t]*Provisional[ \t]*\r?\n(?=[\s\S]*\bE-001\b)(?=[\s\S]*\bG-001\b)'
+          pattern: '(?i)^\s*Status:[ \t]*Provisional[ \t]*\r?\n[ \t]*Basis:[ \t]*(?:E-001[ \t]*,[ \t]*G-001|G-001[ \t]*,[ \t]*E-001)\s*(?![\s\S])'
 
   - name: skill-root-cause-analysis-fails-closed-on-host-identity
     prompt: |

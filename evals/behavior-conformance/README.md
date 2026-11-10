@@ -2,7 +2,7 @@
 title: Behavior Conformance Suite
 description: 'Tier 3 conformance evaluations for instructions and skill behavior'
 author: HVE Core Team
-ms.date: 2026-11-05
+ms.date: 2026-11-10
 ---
 
 This directory hosts the behavior conformance suite. It is the only suite under `evals/` that ships in advisory mode by default: failures are reported in the pull request summary but do not block the build until each spec graduates per the graduation policy below.
@@ -40,6 +40,24 @@ It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, res
 unavailable-bridge, read-only-review, and review-pass ownership decisions plus direct
 `rpi-challenger`, `rpi-plan-critique`, pull-request preflight, and RCA evidence-routing,
 disposition-authority, completion, approval, resume, and synthetic regression contracts.
+
+### RCA structured-decision checks
+
+The four RCA synthetic regression cases, completion-gate stimulus, and missing-runtime
+stimulus require bounded decision fields rather than free-form explanations. Their
+full-response graders check the expected status or disposition, relevant record IDs
+where requested, and withheld numeric output and prohibited package installation when
+the statistical runtime is missing. They reject extra prose and contradictory suffixes
+while allowing case changes, horizontal whitespace, LF or CRLF line endings, and reordered
+basis IDs. The prompts specify the response format, not the expected decision.
+
+Offline regression tests exercise the actual YAML patterns with native JavaScript,
+including correct variants, incorrect decisions, irrelevant or duplicate IDs, missing
+fields, prompt echoes, unavailable-skill replies, and contradictory additions. Run them
+with `npm run test:ps -- -TestPath scripts/tests/evals/Test-RcaBehaviorGraders.Tests.ps1`.
+These checks measure structured classification and response-contract compliance, not
+arbitrary prose semantics or actual tool execution. They use no LLM judge. Historical
+evaluation snapshots are unchanged; future results use the revised prompt hashes.
 
 ### Git publishing evidence boundary
 
