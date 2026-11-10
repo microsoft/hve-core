@@ -643,8 +643,8 @@ export function table(caption, headers, rows, options = {}) {
             h('tbody', null, rows.map((cells) => h('tr', null, cells.map((cell) => h('td', null, cell)))))));
 }
 
-/** Matches the model's claim window: a send holds its items for up to 10 minutes. */
-const isSending = (ctx, item) => item.state === 'queued' && Boolean(item.deliveringSince) && ctx.now - Date.parse(item.deliveringSince) < 10 * 60 * 1000;
+/** Matches the model's holds: a send holds its items for up to 10 minutes, and a handoff to another session until it settles. */
+const isSending = (ctx, item) => item.state === 'queued' && (Boolean(item.handoff) || (Boolean(item.deliveringSince) && ctx.now - Date.parse(item.deliveringSince) < 10 * 60 * 1000));
 const SENDING = Object.freeze({ icon: 'send', label: 'Sending', tone: 'accent' });
 const QUEUED = Object.freeze({ icon: 'clock', label: 'Queued for the agent', tone: 'agent' });
 const HAS_IT = Object.freeze({ icon: 'sparkle', label: 'The agent has it', tone: 'agent' });

@@ -342,6 +342,9 @@ The extension keeps its data under `~/.copilot/extension-data/hve-core-rpi-workf
 * `sessions/<id>.previous.json` holds the session that the last replace discarded your changes from (`load_scenario` with `replace: true`), or an unreadable file it replaced. It stays until the next such replace.
 * `preferences.json` holds the theme and contrast choice.
 * `instances.json` remembers, for each conversation and canvas instance, what the instance shows (its state file and whether following is paused), so the instance returns there when the host reopens it. It keeps the 50 most recently updated instances. A canvas that is not connected leaves its entry as it was.
+* `presence/<session>.json` lists the canvas processes that are running for a Copilot session, each with its process ID, protocol version, and last refresh time. Each process refreshes its entry about every 30 seconds and drops entries it has not seen refreshed for two minutes. It holds no session content.
+* `inbox/<session>.json` holds the entries that other sessions' canvases use to hand items to a session. An entry names the task document and item IDs, the source canvas handle and session ID, and its state (waiting, claimed, or sending). The item text stays in the task document.
+* A canvas process that joins a session claims a waiting entry in its inbox and sends the items into the session's chat once. An entry whose send was not confirmed leaves its items marked as uncertain, and the canvas does not send them again.
 
 ## Security and Privacy
 
