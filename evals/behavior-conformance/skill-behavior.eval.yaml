@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 381
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 387
   stimuli, including engagement-reporting coverage, Outlook HTML guards, the
   conformance stimuli migrated from retired prompts, and complete branch
   coverage for the RPI, proposal-response, outcome-hypothesis, and
@@ -6779,7 +6779,10 @@ stimuli:
           pattern: '(?i)^\s*Provisional:[ \t]*required[ \t]*\r?\nInconclusive:[ \t]*required[ \t]*\r?\nBlocked:[ \t]*required[ \t]*\r?\nPaused:[ \t]*required\s*$'
   - name: skill-root-cause-analysis-regression-incident
     prompt: |
-      Use the `root-cause-analysis` skill. Read case
+      Use the `root-cause-analysis` skill.
+      This is a decision-rule application test. Accept the case's supplied
+      assessments as stipulated premises; do not independently re-assess them.
+      Read case
       `rca-incident-connection-pool` from the staged synthetic regression
       corpus and apply the completion gate. Return exactly two lines, without
       Markdown or explanation:
@@ -6796,7 +6799,7 @@ stimuli:
       skill: root-cause-analysis
       shape: knowledge
       advisory: "true"
-      prompt_sha256: 03c26ce0c4240a28537dbb4530a1b1fffb0c3c5d13f4e1fa13440ccd48e3855a
+      prompt_sha256: 21157dd4718283828b2dc36d6fcce29403d186d2a6cd4b9a09d7fa4470bcd29e
     graders:
       - type: output-matches
         name: skill-root-cause-analysis-regression-incident
@@ -6804,7 +6807,10 @@ stimuli:
           pattern: '(?i)^\s*Status:[ \t]*Complete[ \t]*\r?\n[ \t]*Basis:[ \t]*(T-00[34])[ \t]*,[ \t]*(?!\1\b)T-00[34]\s*(?![\s\S])'
   - name: skill-root-cause-analysis-regression-data
     prompt: |
-      Use the `root-cause-analysis` skill. Read case
+      Use the `root-cause-analysis` skill.
+      This is a decision-rule application test. Accept the case's supplied
+      assessments as stipulated premises; do not independently re-assess them.
+      Read case
       `rca-data-duplicate-ingestion` from the staged synthetic regression
       corpus and apply stop-state precedence to the records. Return exactly
       two lines, without Markdown or explanation:
@@ -6821,7 +6827,7 @@ stimuli:
       skill: root-cause-analysis
       shape: knowledge
       advisory: "true"
-      prompt_sha256: 549f8be225efd9df6d1696d38b7f60e2ad13741a3420c5e75356b9b6b5e9b6b3
+      prompt_sha256: d21a003ebea80ed70babf2bb48235e33e3b82453f2004fd6df94ce9e31f18714
     graders:
       - type: output-matches
         name: skill-root-cause-analysis-regression-data
@@ -6829,7 +6835,10 @@ stimuli:
           pattern: '(?i)^\s*Status:[ \t]*Inconclusive[ \t]*\r?\n[ \t]*Basis:[ \t]*(?:T-003(?:[ \t]*,[ \t]*G-001)?|G-001(?:[ \t]*,[ \t]*T-003)?)\s*(?![\s\S])'
   - name: skill-root-cause-analysis-regression-software
     prompt: |
-      Use the `root-cause-analysis` skill. Read case
+      Use the `root-cause-analysis` skill.
+      This is a decision-rule application test. Accept the case's supplied
+      assessments as stipulated premises; do not independently re-assess them.
+      Read case
       `rca-software-cache-race` from the staged synthetic regression corpus.
       Apply the disposition rules to H-001. Return exactly two lines, without
       Markdown or explanation:
@@ -6846,7 +6855,7 @@ stimuli:
       skill: root-cause-analysis
       shape: knowledge
       advisory: "true"
-      prompt_sha256: 8714eb6f2c3eb7334f5582a73060a664e3e387d8bac7ecef0779aa459974071b
+      prompt_sha256: 5fcab786fccfb4221aca26f8c90519de1dddc796de11da2cae87067a5e891c16
     graders:
       - type: output-matches
         name: skill-root-cause-analysis-regression-software
@@ -6854,7 +6863,10 @@ stimuli:
           pattern: '(?i)^\s*Disposition:[ \t]*Disproved[ \t]*\r?\n[ \t]*Basis:[ \t]*(E-00[12])[ \t]*,[ \t]*(?!\1\b)E-00[12]\s*(?![\s\S])'
   - name: skill-root-cause-analysis-regression-process
     prompt: |
-      Use the `root-cause-analysis` skill. Read case
+      Use the `root-cause-analysis` skill.
+      This is a decision-rule application test. Accept the case's supplied
+      assessments as stipulated premises; do not independently re-assess them.
+      Read case
       `rca-process-release-approval` from the staged synthetic regression
       corpus and apply stop-state precedence to the records. Return exactly
       two lines, without Markdown or explanation:
@@ -6871,12 +6883,69 @@ stimuli:
       skill: root-cause-analysis
       shape: knowledge
       advisory: "true"
-      prompt_sha256: d5ddb5732a50c3c01e00b52581ecc631ea75ed11f5cdac92712cf24675acd7b2
+      prompt_sha256: ba96f9e44c0c3e76f80ca5f531dd147dd6900b12d025132fe12bcd54c7023084
     graders:
       - type: output-matches
         name: skill-root-cause-analysis-regression-process
         config:
           pattern: '(?i)^\s*Status:[ \t]*Provisional[ \t]*\r?\n[ \t]*Basis:[ \t]*(?:E-001[ \t]*,[ \t]*G-001|G-001[ \t]*,[ \t]*E-001)\s*(?![\s\S])'
+
+  - name: skill-root-cause-analysis-evidence-a
+    prompt: |
+      Use the `root-cause-analysis` skill. Read the single case in
+      `rca-evidence-record-a.json`. Independently assess whether H-001 passes
+      the evidence criteria in the root-cause completion gate. Evaluate the
+      incident observations against the isolated replay; do not select a final
+      stop state or assess human sign-off. Return exactly two lines, without
+      Markdown or explanation:
+      Gate: <pass|fail>
+      Basis: <incident-trace evidence ID>, <isolated-replay evidence ID>
+      The two distinct basis IDs may appear in either order.
+    agent_environment:
+      skills:
+        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+      files:
+        - src: fixtures/rca-evidence-record-a.json
+          dest: rca-evidence-record-a.json
+    tags:
+      category: behavior-conformance
+      skill: root-cause-analysis
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 80eb541c12047d3b8a99685d7db71ea19db48205249e2f21335eaaa3a5d142be
+    graders:
+      - type: output-matches
+        name: skill-root-cause-analysis-evidence-a-check
+        config:
+          pattern: '(?i)^\s*Gate:[ \t]*pass[ \t]*\r?\n[ \t]*Basis:[ \t]*(E-00[12])[ \t]*,[ \t]*(?!\1\b)E-00[12]\s*(?![\s\S])'
+  - name: skill-root-cause-analysis-evidence-b
+    prompt: |
+      Use the `root-cause-analysis` skill. Read the single case in
+      `rca-evidence-record-b.json`. Independently assess whether H-001 passes
+      the evidence criteria in the root-cause completion gate. Evaluate the
+      incident observations against the isolated replay; do not select a final
+      stop state or assess human sign-off. Return exactly two lines, without
+      Markdown or explanation:
+      Gate: <pass|fail>
+      Basis: <incident-trace evidence ID>, <isolated-replay evidence ID>
+      The two distinct basis IDs may appear in either order.
+    agent_environment:
+      skills:
+        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+      files:
+        - src: fixtures/rca-evidence-record-b.json
+          dest: rca-evidence-record-b.json
+    tags:
+      category: behavior-conformance
+      skill: root-cause-analysis
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 50813bea26bcdcd94901619c225b1de165f3248f846558c09f394cc3723a1079
+    graders:
+      - type: output-matches
+        name: skill-root-cause-analysis-evidence-b-check
+        config:
+          pattern: '(?i)^\s*Gate:[ \t]*fail[ \t]*\r?\n[ \t]*Basis:[ \t]*(E-00[12])[ \t]*,[ \t]*(?!\1\b)E-00[12]\s*(?![\s\S])'
 
   - name: skill-root-cause-analysis-fails-closed-on-host-identity
     prompt: |

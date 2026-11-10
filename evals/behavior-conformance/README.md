@@ -35,7 +35,7 @@ Stimuli that only checked how a moved instruction attached by `applyTo` were rem
 * Additional: `docusaurus-edits`, `dt-coach-telemetry`, `experiment-designer`, and `skill-security-model`.
 * Language guidance: Rust test placement, naming, local HTTP mocks, and unit-test network isolation; Bicep sensitive-parameter and required-default conventions.
 
-The maintained `skill-behavior.eval.yaml` inventory contains 381 stimuli across 90 skill subjects.
+The maintained `skill-behavior.eval.yaml` inventory contains 387 stimuli across 90 skill subjects.
 It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge,
 unavailable-bridge, read-only-review, and review-pass ownership decisions plus direct
 `rpi-challenger`, `rpi-plan-critique`, pull-request preflight, and RCA evidence-routing,
@@ -43,9 +43,10 @@ disposition-authority, completion, approval, resume, and synthetic regression co
 
 ### RCA structured-decision checks
 
-The four RCA synthetic regression cases, completion-gate stimulus, and missing-runtime
-stimulus require bounded decision fields rather than free-form explanations. Their
-full-response graders check the expected status or disposition, relevant record IDs
+The four RCA decision-rule regression cases, two evidence-assessment variants,
+completion-gate stimulus, and missing-runtime stimulus require bounded decision fields
+rather than free-form explanations. Their full-response graders check the expected
+status, disposition, or gate decision, relevant record IDs
 where requested, and withheld numeric output and prohibited package installation when
 the statistical runtime is missing. They reject extra prose and contradictory suffixes
 while allowing case changes, horizontal whitespace, LF or CRLF line endings, and reordered
@@ -62,6 +63,48 @@ with `npm run test:ps -- -TestPath scripts/tests/evals/Test-RcaBehaviorGraders.T
 These checks measure structured classification and response-contract compliance, not
 arbitrary prose semantics or actual tool execution. They use no LLM judge. Historical
 evaluation snapshots are unchanged; future results use the revised prompt hashes.
+
+#### RCA regression input contracts
+
+The four stimuli named `skill-root-cause-analysis-regression-*` test decision-rule
+application, not independent evidence assessment. Their prompts explicitly accept
+the case author's supplied assessments as premises. In
+`fixtures/rca-regression-corpus.json`, `classification` describes the stipulated
+gap interpretation, `access_approval_or_integrity_blocker` states whether that gap
+blocks material testing, and `useful_authorized_test_remaining` states whether a
+further useful authorized test exists. These are scenario inputs, not claims that
+the model derived those assessments.
+
+The two `skill-root-cause-analysis-evidence-*` stimuli separately mount
+`fixtures/rca-evidence-record-a.json` or `fixtures/rca-evidence-record-b.json`.
+Neither receives the decision-rule corpus, its counterpart, or an answer key.
+Both assess the evidence criteria of the completion gate, not human sign-off or
+a final stop state. The fixtures differ only in the incident-trace observation:
+one agrees with the isolated reproduction, while the other records prompt
+connection release and no incident pool exhaustion despite the reproduced defect.
+The expected gate outcomes differ. Structured replies must cite both the incident
+and replay evidence records; the deterministic graders do not judge free-form reasoning.
+
+All three fixtures use `schema_version: 2` and a shared record structure:
+
+* `assessment_mode` is `decision-rule-application` or `evidence-assessment`.
+* `cases` is a nonempty array. Each case has `id`, `failure_type`, `question`,
+  `scope`, `sources`, `hypotheses`, `tests`, `evidence`, `gaps`, and `human_review`.
+* Source, hypothesis, test, evidence, and gap records use `S-nnn`, `H-nnn`,
+  `T-nnn`, `E-nnn`, and `G-nnn` IDs. Evidence references a declared source.
+  Hypotheses state a prediction; tests state execution status and a result.
+* Decision-rule gaps contain `id`, `description`, `classification`, and the two
+  Boolean premises above. The current classification vocabulary is
+  `non-blocking coverage limit` or `material unverified link`.
+* Evidence-assessment records contain observations and resolvable local JSON
+  Pointer locators. They contain no gap classifications, decision booleans,
+  hypothesis dispositions, or expected gate outcomes. Source coverage and
+  execution status remain factual scenario inputs.
+
+Offline tests enforce these contracts, fixture isolation, and the single-observation
+contrast. This pair adds bounded evidence-assessment coverage for one incident
+scenario, not broad raw-telemetry investigation or tool-execution coverage.
+Passing offline checks validates the fixtures and graders, not model behavior.
 
 ### Git publishing evidence boundary
 
