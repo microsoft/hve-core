@@ -21,6 +21,7 @@ import {
     LIMITS,
     markDelivered,
     ModelError,
+    PHASE_STATUSES,
     pendingSuggestion,
     phaseOf,
     recordActivity,
@@ -454,6 +455,14 @@ describe('decisions, tasks, and session', () => {
         assert.equal(s.phases.plan.status, 'active');
         assert.equal(s.phases.research.status, 'done');
         assert.equal(code(() => updateSession(base(), { activePhase: 'deploy' }, NOW)), 'invalid_input');
+    });
+
+    it('accepts Provided as a phase status and refuses a status it does not list', () => {
+        assert.deepEqual(PHASE_STATUSES, ['done', 'active', 'upcoming', 'paused', 'blocked', 'skipped', 'provided']);
+        const s = updateSession(base(), { phaseStatus: { research: 'provided' } }, NOW).session;
+        assert.equal(s.phases.research.status, 'provided');
+        assert.equal(validateSession(s), s);
+        assert.equal(code(() => updateSession(base(), { phaseStatus: { research: 'supplied' } }, NOW)), 'invalid_input');
     });
 
     it('loads a saved session that still holds checklists, and creates no checklist items', () => {

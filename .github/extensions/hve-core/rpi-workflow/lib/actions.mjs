@@ -70,7 +70,7 @@ export const ACTION_DEFINITIONS = Object.freeze([
                 sessionStatus: { type: 'string', enum: ['running', 'stopped'] },
                 mode: { type: 'string', enum: ['automatic', 'manual'] },
                 nextAction: str('Plain-language next action'),
-                phaseStatus: { type: 'object', additionalProperties: { type: 'string', enum: ['done', 'active', 'upcoming', 'paused', 'blocked', 'skipped'] } },
+                phaseStatus: { type: 'object', additionalProperties: { type: 'string', enum: ['done', 'active', 'upcoming', 'paused', 'blocked', 'skipped', 'provided'] } },
             },
             additionalProperties: false,
         },

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, confidenceMeta, h, icon, PRIORITY, riskTypeMeta, sr } from './dom.mjs';
+import { badge, confidenceMeta, h, icon, PHASE_STATUS, PRIORITY, riskTypeMeta, sr } from './dom.mjs';
 import { progressMark } from './diagram.mjs';
 import { ID_KINDS, LEGEND_GROUPS, LINK_ICONS } from './ids.mjs';
 
@@ -39,6 +39,10 @@ export function legendContent() {
                 h('dd', null, h('strong', { text: 'Priority' }), ' Of a risk or open question.'),
                 h('dt', null, h('span', { class: 'legend-badges' }, ['risk', 'open question', 'further research'].map((word) => badge(riskTypeMeta(word), { strong: true })))),
                 h('dd', null, h('strong', { text: 'Type' }), ' Of a row in Risks and open questions.'))),
+        section('legend-phase', 'Phase status',
+            h('dl', { class: 'legend-list' },
+                h('dt', null, h('span', { class: 'legend-badges' }, badge(PHASE_STATUS.provided))),
+                h('dd', null, `${PHASE_STATUS.provided.tip}. A provided phase's Source section says where its work came from. While the agent works in the phase, it shows In progress.`))),
         section('legend-comments', 'Comments and the canvas menu',
             h('ul', { class: 'legend-steps' },
                 h('li', { text: 'Hover a paragraph, list item, table row, or heading, and choose the speech bubble beside it to comment on exactly that part.' }),

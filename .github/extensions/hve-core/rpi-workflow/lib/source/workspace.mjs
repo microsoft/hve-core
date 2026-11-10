@@ -7,7 +7,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { buildTraces, ModelError } from '../model.mjs';
-import { assembleSession, lineageStatusOf, mergeImport, phaseKey } from './assemble.mjs';
+import { assembleSession, lineageStatusOf, mergeImport, phaseKey, withoutDispositions } from './assemble.mjs';
 import { titleOf, parseDocument } from './markdown.mjs';
 import { artifactKind, parseArtifact, parseState } from './parse.mjs';
 import { buildTree, humanizeSlug, linkKey, namesSession } from './tree.mjs';
@@ -780,7 +780,7 @@ function earlierDocuments({ state, artifacts, files, earlier, input, findingOffs
     })]));
     // A work's document of a kind is the last listed one with its name.
     const ofWork = (key, name) => listed[key].filter((doc) => doc.name === name && doc.parsed).at(-1) ?? null;
-    const stopped = { ...state, activePhase: 'Follow-up', sessionStatus: 'stopped', blockers: [] };
+    const stopped = withoutDispositions({ ...state, activePhase: 'Follow-up', sessionStatus: 'stopped', blockers: [] });
     const assemblies = new Map();
     const assembleWork = (doc) => {
         const parts = Object.fromEntries(ARTIFACT_KEYS.map((key) => [key, key === doc.key ? doc : ofWork(key, doc.name)]));

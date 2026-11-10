@@ -151,6 +151,7 @@ describe('handlers', () => {
         await call('record_activity', { text: 'Ran tests', kind: 'test' });
         assert.equal(await code(call('record_activity', { text: 'x', kind: 'dance' })), 'invalid_input');
         await call('update_session', { activePhase: 'review', phaseStatus: { implement: 'done' } });
+        assert.equal((await call('update_session', { phaseStatus: { research: 'provided' } })).phases.research, 'provided');
         assert.equal((await call('update_finding', { id: 'RV-010', severity: 'low', title: 'Typo', decision: 'accepted', rationale: 'Trivial' })).finding.decision, 'accepted');
         assert.equal((await call('update_section', { sectionId: 'changes-summary', markdown: 'Updated by the agent' })).section.revision, 2);
         assert.equal(await code(call('update_section', { sectionId: 'nope', markdown: 'x' })), 'not_found');

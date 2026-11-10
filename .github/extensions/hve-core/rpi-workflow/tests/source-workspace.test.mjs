@@ -417,6 +417,29 @@ describe('loading and importing a task', () => {
         assert.ok(!loaded.warnings.some((text) => /\b(?:CH|DS|AL|RV|RD)-\d{3}\b/.test(text)), loaded.warnings.join(' | '));
     });
 
+    it('keeps the current work\'s Provided research out of an earlier research document', async () => {
+        const provided = path.join(tmp, 'provided-earlier');
+        await writeFixtureWorkspace(provided);
+        const documents = await writeEarlierWork(provided, { research: EARLY_RESEARCH });
+        await writeJson(provided, PATHS.rootState, {
+            ...ROOT_STATE,
+            active_phase: 'Plan',
+            status: 'active',
+            confirmed_decisions: [
+                ...ROOT_STATE.confirmed_decisions.filter((item) => item.decision !== 'Research disposition'),
+                { decision: 'Research disposition', status: 'provided', evidence: `Copied from session 3fa85f64-5717-4562-b3fc-2c963f66afa6; path ${EARLY.research}; content hash 9f2c4e1a` },
+            ],
+            documents,
+        });
+        const loaded = await loadTask(await resolveWorkspace([provided]), PATHS.rootState, NOW);
+        const [earlier, current] = loaded.session.documents.research;
+        assert.equal(current.current, true);
+        assert.notEqual(earlier.snapshot.record.status, 'provided', 'an earlier document keeps its own status');
+        assert.equal(earlier.snapshot.sections['research-source'], undefined, 'and its own sections');
+        assert.equal(loaded.session.phases.research.status, 'provided');
+        assert.match(loaded.session.sections['research-source'].markdown, /^Research came from session 3fa85f64\./);
+    });
+
     it('reports an unreadable artifact as a warning and fails on an unreadable state', async () => {
         const broken = path.join(tmp, 'broken');
         await writeFixtureWorkspace(broken);
