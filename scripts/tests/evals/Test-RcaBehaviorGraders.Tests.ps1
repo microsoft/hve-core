@@ -98,44 +98,48 @@ BeforeDiscovery {
     )
 }
 
-BeforeAll {
-    Import-Module powershell-yaml -ErrorAction Stop
-    $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
-    $SpecPath = Join-Path $RepoRoot 'evals\behavior-conformance\skill-behavior.eval.yaml'
-    $Spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $SpecPath -Raw)
-    $script:Stimuli = @{}
-    $Probes = @(
-        foreach ($Contract in $script:Contracts) {
-            $Stimulus = @($Spec.stimuli | Where-Object { $_.name -eq $Contract.Name })
-            if ($Stimulus.Count -ne 1 -or $Stimulus[0].graders.Count -ne 1) {
-                throw "Expected one stimulus with one grader: $($Contract.Name)"
-            }
-            $Stimulus = $Stimulus[0]
-            $script:Stimuli[$Contract.Name] = $Stimulus
-            @{
-                Name = $Contract.Name
-                Pattern = $Stimulus.graders[0].config.pattern
-                Prompt = $Stimulus.prompt
-                Accept = @($Contract.Canonical) + @($Contract.Alternatives) + @(
-                    $Contract.Canonical.ToUpperInvariant()
-                    " `t$($Contract.Canonical.Replace(': ', ':  ').Replace(', ', ' , ').Replace("`n", " `t`r`n`t"))`r`n`r`n"
-                )
-                Reject = @($Contract.Incorrect) + @(
-                    ''
-                    $Stimulus.prompt
-                    'I cannot find that skill in this workspace.'
-                    "Decision follows:`n$($Contract.Canonical)"
-                    "$($Contract.Canonical)`nNevertheless, the investigation is Complete and the p-value is 0.01."
-                    "$($Contract.Canonical)`nStatus: Complete"
-                    "$($Contract.Canonical)`n$($Contract.Canonical)"
-                    "``````text`n$($Contract.Canonical)`n``````"
-                    ($Contract.Canonical -replace '(?m)^.*:', '')
-                    ($Contract.Canonical -replace "`n", ' ')
-                )
-            }
+Describe 'RCA structured-decision graders' -Tag 'Unit' -ForEach @(@{ Contracts = $script:Contracts }) {
+    BeforeAll {
+        if (-not $Contracts -or $Contracts.Count -eq 0) {
+            throw 'RCA grader contracts are missing from the test runtime.'
         }
-    )
-    $Code = @'
+        Import-Module powershell-yaml -ErrorAction Stop
+        $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
+        $SpecPath = Join-Path $RepoRoot 'evals\behavior-conformance\skill-behavior.eval.yaml'
+        $Spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $SpecPath -Raw)
+        $script:Stimuli = @{}
+        $Probes = @(
+            foreach ($Contract in $Contracts) {
+                $Stimulus = @($Spec.stimuli | Where-Object { $_.name -eq $Contract.Name })
+                if ($Stimulus.Count -ne 1 -or $Stimulus[0].graders.Count -ne 1) {
+                    throw "Expected one stimulus with one grader: $($Contract.Name)"
+                }
+                $Stimulus = $Stimulus[0]
+                $script:Stimuli[$Contract.Name] = $Stimulus
+                @{
+                    Name = $Contract.Name
+                    Pattern = $Stimulus.graders[0].config.pattern
+                    Prompt = $Stimulus.prompt
+                    Accept = @($Contract.Canonical) + @($Contract.Alternatives) + @(
+                        $Contract.Canonical.ToUpperInvariant()
+                        " `t$($Contract.Canonical.Replace(': ', ':  ').Replace(', ', ' , ').Replace("`n", " `t`r`n`t"))`r`n`r`n"
+                    )
+                    Reject = @($Contract.Incorrect) + @(
+                        ''
+                        $Stimulus.prompt
+                        'I cannot find that skill in this workspace.'
+                        "Decision follows:`n$($Contract.Canonical)"
+                        "$($Contract.Canonical)`nNevertheless, the investigation is Complete and the p-value is 0.01."
+                        "$($Contract.Canonical)`nStatus: Complete"
+                        "$($Contract.Canonical)`n$($Contract.Canonical)"
+                        "``````text`n$($Contract.Canonical)`n``````"
+                        ($Contract.Canonical -replace '(?m)^.*:', '')
+                        ($Contract.Canonical -replace "`n", ' ')
+                    )
+                }
+            }
+        )
+        $Code = @'
 const crypto = require("node:crypto");
 let input = "";
 process.stdin.setEncoding("utf8");
@@ -158,30 +162,32 @@ process.stdin.on("end", () => {
     console.log(JSON.stringify(results));
 });
 '@
-    $Output = ConvertTo-Json -InputObject $Probes -Depth 10 -Compress | & node --eval $Code
-    if ($LASTEXITCODE -ne 0) {
-        throw "Native JavaScript grader probes failed with exit code $LASTEXITCODE."
+        $Output = ConvertTo-Json -InputObject $Probes -Depth 10 -Compress | & node --eval $Code
+        if ($LASTEXITCODE -ne 0) {
+            throw "Native JavaScript grader probes failed with exit code $LASTEXITCODE."
+        }
+        $script:Results = ($Output -join "`n") | ConvertFrom-Json -AsHashtable
+        $script:Results.Count | Should -Be $Contracts.Count
     }
-    $script:Results = ($Output -join "`n") | ConvertFrom-Json -AsHashtable
-}
 
-Describe 'RCA structured-decision graders' -Tag 'Unit' {
-    It '<Name>: retains one deterministic full-response grader' -ForEach $script:Contracts {
+    It '<Name>: retains one deterministic full-response grader' -ForEach $Contracts {
         $script:Stimuli[$Name].graders[0].type | Should -Be 'output-matches'
         $script:Stimuli[$Name].tags.shape | Should -Be 'knowledge'
     }
 
-    It '<Name>: records the current normalized prompt hash' -ForEach $script:Contracts {
+    It '<Name>: records the current normalized prompt hash' -ForEach $Contracts {
         $script:Results[$Name].hash | Should -Be $script:Stimuli[$Name].tags.prompt_sha256
     }
 
-    It '<Name>: accepts correct decisions and harmless formatting variants' -ForEach $script:Contracts {
+    It '<Name>: accepts correct decisions and harmless formatting variants' -ForEach $Contracts {
+        $script:Results[$Name].accept | Should -HaveCount (3 + $Alternatives.Count)
         foreach ($Result in $script:Results[$Name].accept) {
             $Result.matched | Should -BeTrue -Because "the response follows the contract: $($Result.response)"
         }
     }
 
-    It '<Name>: rejects incorrect decisions, prompt echoes, and extra output' -ForEach $script:Contracts {
+    It '<Name>: rejects incorrect decisions, prompt echoes, and extra output' -ForEach $Contracts {
+        $script:Results[$Name].reject | Should -HaveCount (10 + $Incorrect.Count)
         foreach ($Result in $script:Results[$Name].reject) {
             $Result.matched | Should -BeFalse -Because "the response violates the contract: $($Result.response)"
         }
