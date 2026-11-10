@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, clear, decisionAlias, fullTime, h, icon, idTag, PHASE_META, PHASE_STATUS, plural, relTime, sr } from './dom.mjs';
-import { confirmPress, disclosure, filePreview, hasMarginHome, presentationControl, revealRow, reviewSheet, sendItems, sessionTree, steerPanel, waitingCount } from './components.mjs';
+import { confirmPress, disclosure, filePreview, hasMarginHome, presentationControl, revealRow, reviewSheet, sendItems, sessionTree, steerPanel, taskRef, waitingCount } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
 import { notConnectedView } from './connect-view.mjs';
@@ -808,12 +808,13 @@ const act = {
             ? `Showing the earlier ${noun} "${documentLabel(earlier)}". It is read-only here.`
             : current ? `Showing the current ${noun}, "${documentLabel(current)}".` : `Showing the current work, which has no ${noun} yet.`);
     },
-    /** Shows another task of this RPI session, by task ID or `{ statePath }`. */
+    /** Shows another task of this RPI session, by task ID or `{ statePath, session? }`; a session names a task another Copilot session holds. */
     async showTask(ref) {
         const before = state.data?.session.id;
         stopFollowing();
         try {
-            await api('/api/task', { ...(typeof ref === 'string' ? { taskId: ref } : { statePath: ref.statePath }), follow: false });
+            const target = typeof ref === 'string' ? { taskId: ref } : { statePath: ref.statePath, ...(ref.session ? { session: ref.session } : {}) };
+            await api('/api/task', { ...target, follow: false });
             await refresh();
             if (state.data.session.id !== before) focusQuietly($('taskTitle'));
         } catch (error) {
@@ -1328,7 +1329,9 @@ function renderHeader() {
     $('taskTitle').textContent = task.title;
     document.title = `RPI Workflow: ${task.title}`;
     const where = [task.repository, task.branch].filter(Boolean).join(' · ');
-    const parent = rpi && task.parent ? session.followUps.tree.tasks.find((item) => item.id === task.parent) ?? { id: task.parent, title: task.parent } : null;
+    // The parent is the shown task's continuation when the parent sits outside this folder or session; otherwise the parent in the tree.
+    const shownTask = session.followUps.tree.tasks.find((item) => item.shown);
+    const parent = rpi && shownTask?.continues ? shownTask.continues : rpi && task.parent ? session.followUps.tree.tasks.find((item) => item.id === task.parent) ?? { id: task.parent, title: task.parent } : null;
     const handle = state.data.canvas?.handle ?? null;
     const named = handle ? ` Messages this canvas sends to the agent start with “RPI canvas ${handle}”.` : '';
     // The badge names the canvas the way its chat messages do; it has its own slot, so it is never clipped.
@@ -1339,7 +1342,7 @@ function renderHeader() {
     clear($('taskMeta')).append(...[
         rpi ? h('code', { class: 'task-id', title: `Task ID: ${task.id}`, text: task.id }) : null,
         where ? h('span', { class: 'task-where', title: where, text: where }) : null,
-        parent ? h('span', { class: 'task-parent' }, 'Child of ', h('button', { type: 'button', class: 'link-btn', title: `Show the parent task: ${parent.title}`, dataset: { key: 'header-parent' }, 'aria-label': `Child of ${parent.title}: show the parent task`, onclick: () => act.showTask(parent.statePath ? { statePath: parent.statePath } : parent.id) }, parent.title)) : null,
+        parent ? h('span', { class: 'task-parent' }, 'Child of ', h('button', { type: 'button', class: 'link-btn', title: `Show the parent task: ${parent.title}${parent.sessionId ? ` in session ${parent.sessionName}` : ''}`, dataset: { key: 'header-parent' }, 'aria-label': `Child of ${parent.title}${parent.sessionId ? ` in session ${parent.sessionName}` : ''}: show the parent task`, onclick: () => act.showTask(parent.statePath ? taskRef(parent) : parent.id) }, parent.title)) : null,
         session.scenario?.sample ? h('span', { class: 'badge tone-muted sample-badge', title: 'Mock data for the canvas preview' }, icon('info'), 'Sample session') : null,
     ].filter(Boolean));
     renderSessionControls();
@@ -1356,7 +1359,7 @@ function renderSessionControls() {
     const { session } = state.data;
     const tree = session.followUps.tree;
     const name = tree.name ?? session.task.title;
-    const loops = tree.tasks.length;
+    const loops = tree.tasks.filter((task) => !task.sessionId).length;
     const btn = $('sessionBtn');
     btn.hidden = false;
     $('sessionLabel').textContent = `${name} · ${plural(loops, 'loop')}`;
@@ -1405,11 +1408,11 @@ function renderSessionMenu() {
             keyPrefix: 'menu',
             onShow: (task) => {
                 toggleSessionMenu(false);
-                act.showTask({ statePath: task.statePath });
+                act.showTask(taskRef(task));
             },
         }),
         ...(rpi ? [h('h3', { class: 'menu-subtitle', text: 'Other sessions' }), h('div', { id: 'sessionList' })] : []),
-        h('p', { class: 'menu-note', text: rpi ? 'Choosing a loop or session stops following the agent; choose Follow agent at the top to catch up with it.' : 'The sample has no other loops or sessions to show.' }));
+        h('p', { class: 'menu-note', text: rpi ? 'Choosing a loop, a task in another session, or a session stops following the agent; choose Follow agent at the top to catch up with it.' : 'The sample has no other loops or sessions to show.' }));
     if (rpi) renderSessionList();
     if (keepFocus) menu.querySelector(`[data-key="${CSS.escape(keepFocus)}"]`)?.focus({ preventScroll: true });
 }

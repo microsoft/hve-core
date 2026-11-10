@@ -2,7 +2,7 @@
 title: RPI Workflow Canvas
 description: Canvas extension for following and steering RPI sessions through research, planning, implementation, review, and follow-up
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-09
 ms.topic: reference
 keywords:
   - canvas
@@ -255,7 +255,9 @@ Inside an earlier document, an ID goes to that document first, then to its own w
 Every file must be a Markdown or JSON file inside `.copilot-tracking/`, reached without symbolic links, and at most 2 MB. A state file, whether given as input or named by another state file's link, must also sit in a session folder. The canvas refuses anything else and never writes these files.
 
 One session folder holds every task one conversation worked on. Each state file names its session (`session_name`), its parent's state file (`parent_task.state_path`), and its children's (`child_tasks`), and the canvas builds the session's tree from those links.
-A task whose parent sits in another session shows that parent as context. A link the canvas cannot follow, a child its parent does not list, and a state file left directly under a date folder each appear in the problems list above the phase; the canvas skips state files that are not in a session folder.
+A link can name another Copilot session with `session_id`. The canvas reads that task from the session's workspace, found from its local metadata, under the same rules as any other state file. It refuses a session ID that is not a valid one, a state path outside that workspace's `.copilot-tracking` folder, and a tracking folder that is a symbolic link.
+A task whose parent sits in another session shows that parent as context. A child in another session appears in the tree labeled with its session, phase, and decisions waiting; choosing it shows that session's task and stops following. The canvas never reads that session's other tasks, and `get_state` lists the linked child sessions with their decisions waiting.
+A link the canvas cannot follow, a child its parent does not list, and a state file left directly under a date folder each appear in the problems list above the phase; the canvas skips state files that are not in a session folder.
 
 While a page is open, the canvas checks the task's files and the session's state files about every 1.5 seconds. It imports a change once the file has stopped changing between two checks, so a half-written file is skipped. Edits by the agent appear within a few seconds. When a file cannot be read, the canvas keeps the last good version and lists the problem above each phase.
 
@@ -270,7 +272,7 @@ What you add stays in the canvas across these updates: feedback, suggested edits
 
 The files remain the record, and only the agent changes them. Answers, overrides, comments, and suggested edits reach the agent when you send them. The agent updates the files and reads each item back. The canvas refuses agent actions that would change file-owned content, such as `update_task` or `update_section`, with `source_managed` and names the file to change instead.
 
-The canvas follows the agent while the Live control shows Live; see [Following the Agent](#following-the-agent). Showing a loop or session yourself, from the session menu, Follow-up, or a child's link to its parent, stops following. The session menu also lists the workspace's other sessions, newest first, and shows a session's running loop, or its most recently changed one.
+The canvas follows the agent while the Live control shows Live; see [Following the Agent](#following-the-agent). Showing a loop, a task in another session, or a session yourself, from the session menu, Follow-up, or a child's link to its parent, stops following. The session menu also lists the workspace's other sessions, newest first, and shows a session's running loop, or its most recently changed one.
 
 Each task keeps its own drafts, open editor, and scroll position in the page, so switching back returns you to where you were. When an action fails, the failure stays visible in the note area at the bottom of the document until you dismiss it, and a comment that fails keeps your text with the reason beside it.
 When the page cannot render a task, it says why and offers Retry, and `get_state` reports the reason to the agent.

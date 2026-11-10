@@ -7,10 +7,10 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { buildTraces, ModelError } from '../model.mjs';
-import { assembleSession, lineageStatusOf, mergeImport } from './assemble.mjs';
+import { assembleSession, lineageStatusOf, mergeImport, phaseKey } from './assemble.mjs';
 import { titleOf, parseDocument } from './markdown.mjs';
 import { artifactKind, parseArtifact, parseState } from './parse.mjs';
-import { buildTree, humanizeSlug } from './tree.mjs';
+import { buildTree, humanizeSlug, linkKey, namesSession } from './tree.mjs';
 import { checkWorkspacePath, FileError, resolveWorkspaceFile } from '../workspace-files.mjs';
 
 /**
@@ -312,14 +312,108 @@ export async function listSessions(workspace) {
 }
 
 /**
+ * Reads the task a link names, in the workspace it names: its own session's when it names a
+ * Copilot session, else this workspace. A task of the folder is returned as `{ local: true }`;
+ * a task that cannot be read is `{ error }`. An entry carries the task's tree facts, and for a
+ * link that names a session, that session's label and workspace root.
+ *
+ * @param {{ root: string, tracking: string }} workspace
+ * @param {Set<string>} memberPaths state paths of the folder's own tasks
+ * @param {(sessionId: string) => Promise<{ root: string, tracking: string }>} workspaceOf
+ * @param {any} link
+ */
+async function readLinked(workspace, memberPaths, workspaceOf, link) {
+    try {
+        const target = namesSession(link) ? await workspaceOf(link.sessionId) : workspace;
+        const loaded = await loadLinkTarget(target, link);
+        if (namesSession(link) && target.root === workspace.root && memberPaths.has(loaded.path)) return { local: true };
+        const sessionId = namesSession(link) ? link.sessionId.toLowerCase() : null;
+        return {
+            id: loaded.state.taskId ?? loaded.path,
+            title: (await titleFor(target, loaded.state)) ?? loaded.path,
+            statePath: loaded.path,
+            session: sessionOf(loaded.path)?.key ?? '',
+            status: lineageStatusOf(loaded.state),
+            changedAt: loaded.mtimeMs,
+            phase: phaseKey(loaded.state.activePhase),
+            sessionId,
+            sessionName: sessionId ? loaded.state.sessionName ?? sessionId.slice(0, 8) : null,
+            root: sessionId ? target.root : null,
+        };
+    } catch (error) {
+        return { error: error instanceof Error ? error.message : 'unreadable' };
+    }
+}
+
+/**
+ * The state a link names in its workspace: its state path, or, for a link that names a session
+ * but no path, the newest state of its task ID.
+ *
+ * @param {{ root: string, tracking: string }} target
+ * @param {{ statePath: string | null, taskId: string | null, sessionId?: string | null }} link
+ */
+async function loadLinkTarget(target, link) {
+    if (link.statePath || !namesSession(link)) return loadState(target, link.statePath);
+    for (const entry of await listStates(target)) {
+        const loaded = await loadState(target, entry.path).catch(() => null);
+        if (loaded?.state.taskId === link.taskId) return loaded;
+    }
+    throw new SourceError('source_not_found', `No RPI session state for task ${link.taskId} was found in that session.`);
+}
+
+/**
+ * Reads the tasks the links of a folder's tasks reach outside it, keyed by `linkKey`: a parent in
+ * another folder of this workspace, and each link that names a Copilot session. A session-named
+ * link that reaches a task of this folder after all is listed in `localKeys` instead, so the tree
+ * treats it as the folder's own link.
+ *
+ * @param {{ root: string, tracking: string }} workspace
+ * @param {{ path: string, state: any }[]} members
+ * @param {((sessionId: string) => Promise<{ root: string, tracking: string }>) | undefined} resolveSession
+ */
+async function linkedTasksOf(workspace, members, resolveSession) {
+    const memberPaths = new Set(members.map((member) => member.path));
+    const workspaces = new Map();
+    const workspaceOf = (sessionId) => {
+        const key = sessionId.toLowerCase();
+        if (!workspaces.has(key)) {
+            workspaces.set(key, (async () => {
+                if (!resolveSession) throw new SourceError('session_invalid', `Copilot session ${key} cannot be read here.`);
+                return resolveSession(key);
+            })());
+        }
+        return workspaces.get(key);
+    };
+    const links = [];
+    for (const member of members) {
+        const parent = member.state.parent;
+        if (parent && (namesSession(parent) || (parent.statePath && !memberPaths.has(parent.statePath)))) links.push(parent);
+        for (const child of member.state.children) if (namesSession(child)) links.push(child);
+    }
+    const outside = new Map();
+    const localKeys = new Set();
+    for (const link of links) {
+        const key = linkKey(link);
+        if (outside.has(key) || localKeys.has(key)) continue;
+        const entry = await readLinked(workspace, memberPaths, workspaceOf, link);
+        if (entry.local) localKeys.add(key);
+        else outside.set(key, entry);
+    }
+    return { outside, localKeys };
+}
+
+/**
  * The session the task belongs to: its folder, name, and every task in it as a tree, with
- * a warning for each link that could not be followed.
+ * a warning for each link that could not be followed. A link that names another Copilot
+ * session reads its task from that session's workspace, found by `options.resolveSession`;
+ * the reader never reads another session's other tasks.
  *
  * @param {{ root: string, tracking: string }} workspace
  * @param {Awaited<ReturnType<typeof loadState>>} self
  * @param {Awaited<ReturnType<typeof scanStates>>} [scan]
+ * @param {{ resolveSession?: (sessionId: string) => Promise<{ root: string, tracking: string }> }} [options]
  */
-export async function sessionTreeOf(workspace, self, scan) {
+export async function sessionTreeOf(workspace, self, scan, options = {}) {
     const where = /** @type {{ key: string, date: string, folder: string }} */ (sessionOf(self.path));
     const { states } = scan ?? await scanStates(workspace);
     const warnings = [];
@@ -339,18 +433,10 @@ export async function sessionTreeOf(workspace, self, scan) {
     if (!members.some((member) => member.path === self.path)) {
         members.push({ path: self.path, mtimeMs: self.mtimeMs, state: self.state, title: await titleFor(workspace, self.state) ?? self.path, status: lineageStatusOf(self.state) });
     }
-    const outside = new Map();
-    for (const member of members) {
-        const target = member.state.parent?.statePath;
-        if (!target || outside.has(target) || members.some((item) => item.path === target)) continue;
-        try {
-            const parent = await loadState(workspace, target);
-            outside.set(target, { id: parent.state.taskId ?? parent.path, title: await titleFor(workspace, parent.state) ?? parent.path, statePath: parent.path, session: sessionOf(parent.path)?.key ?? '', status: lineageStatusOf(parent.state) });
-        } catch (error) {
-            outside.set(target, { error: error instanceof Error ? error.message : 'unreadable' });
-        }
-    }
-    const tree = buildTree({ members, shownPath: self.path, outside });
+    const { outside, localKeys } = await linkedTasksOf(workspace, members, options.resolveSession);
+    const localized = (link) => (link && namesSession(link) && localKeys.has(linkKey(link)) ? { ...link, sessionId: null } : link);
+    const treeMembers = members.map((member) => (localKeys.size === 0 ? member : { ...member, state: { ...member.state, parent: localized(member.state.parent), children: member.state.children.map(localized) } }));
+    const tree = buildTree({ members: treeMembers, shownPath: self.path, outside });
     const named = [...members].sort((a, b) => b.mtimeMs - a.mtimeMs).find((member) => member.state.sessionName);
     const first = tree.tasks.find((task) => task.depth === 0);
     const firstMember = first ? members.find((member) => member.path === first.statePath) : null;
@@ -615,8 +701,9 @@ function repeatedIdWarnings(session) {
  * @param {{ root: string, tracking: string }} workspace
  * @param {string} statePath
  * @param {string} now ISO timestamp
+ * @param {{ resolveSession?: (sessionId: string) => Promise<{ root: string, tracking: string }> }} [options] how a link that names a Copilot session reaches its workspace
  */
-export async function loadTask(workspace, statePath, now) {
+export async function loadTask(workspace, statePath, now, options = {}) {
     const self = await loadState(workspace, statePath);
     const files = { state: { path: self.path, mtimeMs: self.mtimeMs } };
     const artifacts = {};
@@ -654,7 +741,7 @@ export async function loadTask(workspace, statePath, now) {
         warnings.push('An earlier research document could not be read, so finding numbers after it may not match the files.');
     }
     const scan = await scanStates(workspace);
-    const tree = await sessionTreeOf(workspace, self, scan);
+    const tree = await sessionTreeOf(workspace, self, scan, options);
     const input = {
         id: storeIdFor(self.state.taskId, workspace.root),
         state: self.state,
@@ -811,6 +898,7 @@ export async function importIntoStore(store, loaded, now) {
  *   intervalMs?: number,
  *   now?: () => string,
  *   log?: (message: string) => void,
+ *   resolveSession?: (sessionId: string) => Promise<{ root: string, tracking: string }>,
  *   onImport?: (loaded: Awaited<ReturnType<typeof loadTask>>) => void | Promise<void>,
  * }} options
  */
@@ -828,7 +916,7 @@ export function createFollower(options) {
     let busy = null;
 
     async function load(signature) {
-        const loaded = await loadTask(workspace, statePath, now());
+        const loaded = await loadTask(workspace, statePath, now(), { resolveSession: options.resolveSession });
         watched = loaded.watched;
         documentId = loaded.session.id;
         const result = await importIntoStore(store, loaded, now());

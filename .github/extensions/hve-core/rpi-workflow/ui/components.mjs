@@ -1034,10 +1034,28 @@ export const TASK_STATUS = Object.freeze({
     stopped: { icon: 'pause', label: 'Stopped', tone: 'muted' },
 });
 
+/** The ref the page sends to show a task: its state path, and its Copilot session when another session holds it. */
+export const taskRef = (task) => ({ statePath: task.statePath, ...(task.sessionId ? { session: task.sessionId } : {}) });
+
+/** Where a task of another Copilot session is, in words for its Show control and its continuation line. */
+const sessionPhrase = (task) => (task.sessionId ? `in session ${task.sessionName ?? task.sessionId}` : 'from another session');
+
+/** The decisions a task in another session waits on: a count, none, or that no canvas has read it yet. */
+function decisionsBadge(linked) {
+    if (!linked || !Array.isArray(linked.decisionsWaiting)) {
+        return badge({ icon: 'info', label: 'Decisions not read yet', tone: 'muted' }, { title: 'Open this task in a canvas to read its decisions.' });
+    }
+    const count = linked.decisionsWaiting.length;
+    return count
+        ? badge({ icon: 'hand', label: `${plural(count, 'decision')} waiting`, tone: 'attention' })
+        : badge({ icon: 'check', label: 'No decisions waiting', tone: 'muted' });
+}
+
 /**
  * The session's tasks as nested lists, parent first, in the order the reader built them.
  * The shown task is marked; other tasks, and a parent in another session, offer Show when
- * the canvas reads real tracking files.
+ * the canvas reads real tracking files. A child task in another Copilot session is labeled with
+ * its session, phase, and decisions waiting, and its Show switches the canvas to it.
  *
  * @param {any} ctx
  * @param {{ label: string, keyPrefix: string, onShow?: (task: any) => void }} options
@@ -1045,10 +1063,11 @@ export const TASK_STATUS = Object.freeze({
 export function sessionTree(ctx, options) {
     const { tree } = ctx.data.session.followUps;
     const switchable = ctx.data.session.source?.kind === 'rpi';
+    const linkedSessions = ctx.data.linkedSessions ?? [];
     const root = h('ol', { class: 'session-tree', 'aria-label': options.label });
     const stack = [root];
     let last = null;
-    const show = (task) => (options.onShow ? options.onShow(task) : ctx.act.showTask({ statePath: task.statePath }));
+    const show = (task) => (options.onShow ? options.onShow(task) : ctx.act.showTask(taskRef(task)));
     const agentPath = ctx.data.follow?.agent?.statePath ?? null;
     for (const task of tree.tasks) {
         const depth = Math.max(0, Math.min(task.depth, stack.length));
@@ -1059,18 +1078,23 @@ export function sessionTree(ctx, options) {
             stack.push(nested);
         }
         const status = known(TASK_STATUS, task.status) ?? { icon: 'info', label: task.status ?? 'Unknown', tone: 'muted' };
-        last = h('li', { class: ['tree-task', task.shown ? 'is-shown' : null], dataset: { task: task.id } },
-            task.continues ? h('p', { class: 'tree-continues meta' }, `Continues ${task.continues.title} from another session `,
-                switchable ? button('Show', { iconName: 'arrow-right', attrs: { 'aria-label': `Show ${task.continues.title}, from another session`, 'data-key': `${options.keyPrefix}-continues-${task.id}` }, onClick: () => show(task.continues) }) : null) : null,
+        const linked = task.sessionId ? linkedSessions.find((item) => item.taskId === task.id && item.sessionId === task.sessionId) ?? null : null;
+        const where = task.sessionId ? sessionPhrase(task) : null;
+        last = h('li', { class: ['tree-task', task.shown ? 'is-shown' : null, task.sessionId ? 'is-linked' : null], dataset: { task: task.id } },
+            task.continues ? h('p', { class: 'tree-continues meta' }, `Continues ${task.continues.title} ${sessionPhrase(task.continues)} `,
+                switchable ? button('Show', { iconName: 'arrow-right', attrs: { 'aria-label': `Show ${task.continues.title}, ${sessionPhrase(task.continues)}`, 'data-key': `${options.keyPrefix}-continues-${task.id}` }, onClick: () => show(task.continues) }) : null) : null,
             h('div', { class: 'tree-card' },
                 badge(status),
                 h('strong', { class: 'tree-title', text: task.title }),
                 h('code', { class: 'tree-id', text: task.id }),
-                task.statePath && task.statePath === agentPath ? h('span', { class: 'badge tone-agent tree-agent', title: 'Where the agent works; Follow agent goes here' }, icon('sparkle'), 'Agent') : null,
+                task.sessionId ? badge({ icon: 'nodes', label: `In session ${task.sessionName ?? task.sessionId}`, tone: 'muted' }) : null,
+                task.sessionId ? h('span', { class: 'meta tree-phase', text: `Phase: ${PHASE_META[task.phase]?.label ?? 'not recorded'}` }) : null,
+                task.sessionId ? decisionsBadge(linked) : null,
+                task.statePath && !task.sessionId && task.statePath === agentPath ? h('span', { class: 'badge tone-agent tree-agent', title: 'Where the agent works; Follow agent goes here' }, icon('sparkle'), 'Agent') : null,
                 task.shown
                     ? h('span', { class: 'badge tone-accent tree-shown' }, icon('eye'), 'Shown')
                     : switchable && task.statePath
-                        ? button('Show', { iconName: 'arrow-right', attrs: { 'aria-label': `Show ${task.title}`, 'data-key': `${options.keyPrefix}-show-${task.id}` }, onClick: () => show(task) })
+                        ? button('Show', { iconName: 'arrow-right', attrs: { 'aria-label': where ? `Show ${task.title}, ${where}` : `Show ${task.title}`, 'data-key': `${options.keyPrefix}-${task.sessionId ? `linked-${task.sessionId}` : 'show'}-${task.id}` }, onClick: () => show(task) })
                         : null));
         stack[stack.length - 1].append(last);
     }
