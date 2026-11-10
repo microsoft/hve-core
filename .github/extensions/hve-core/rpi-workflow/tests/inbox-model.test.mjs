@@ -23,6 +23,7 @@ import {
     markPickedUp,
     queueForAgent,
     releaseDelivery,
+    releaseHandoff,
     releaseRelay,
     relayItemIds,
     takeBackFeedback,
@@ -143,6 +144,35 @@ describe('held items of a delivery', () => {
         assert.equal(itemOf(recorded, 'FB-001').state, 'sent');
         assert.equal(itemOf(recorded, 'FB-001').deliveryUncertainAt, undefined);
         assert.equal(itemOf(recorded, 'FB-001').messageId, 'message-9');
+    });
+});
+
+describe('settling a handoff', () => {
+    it('releases the items a handoff holds and dismisses its note, and leaves another handoff\'s holds alone', () => {
+        let session = claimDelivery(taskDoc(), ['FB-001', 'FB-002'], NOW, { handoff: HANDOFF, note: 'FB-002' }).session;
+        session = claimDelivery(session, ['FB-003'], NOW, { handoff: { ...HANDOFF, entryId: 'entry-2' } }).session;
+        assert.deepEqual([itemOf(session, 'FB-002').handoff.note, itemOf(session, 'FB-001').handoff], [true, HANDOFF], 'only the note is marked');
+        const settled = releaseHandoff(session, 'entry-1', LATER);
+        assert.deepEqual(settled.result, ['FB-001', 'FB-002']);
+        assert.deepEqual([itemOf(settled.session, 'FB-001').handoff, itemOf(settled.session, 'FB-001').deliveringSince], [undefined, undefined]);
+        assert.deepEqual([itemOf(settled.session, 'FB-002').state, isClaimed(itemOf(settled.session, 'FB-002'), LATER)], ['dismissed', false]);
+        assert.deepEqual(heldItemIds(settled.session, ['FB-003'], 'entry-2'), ['FB-003'], 'the other handoff keeps its hold');
+        assert.deepEqual(takeFeedback(settled.session, LATER).result.map((item) => item.id), ['FB-001'], 'the agent may collect the released item, but not the other handoff\'s');
+    });
+
+    it('changes nothing when no item is held by the handoff, so settling twice is harmless', () => {
+        const session = claimDelivery(taskDoc(), ['FB-001'], NOW, { handoff: HANDOFF }).session;
+        const settled = releaseHandoff(session, 'entry-1', LATER);
+        const again = releaseHandoff(settled.session, 'entry-1', LATER);
+        assert.deepEqual(again.result, []);
+        assert.equal(again.session, settled.session);
+        const plain = taskDoc();
+        assert.equal(releaseHandoff(plain, 'entry-1', LATER).session, plain);
+    });
+
+    it('refuses a note that is not one of the items handed off', () => {
+        assert.throws(() => claimDelivery(taskDoc(), ['FB-001'], NOW, { handoff: HANDOFF, note: 'FB-002' }), { code: 'invalid_input' });
+        assert.throws(() => claimDelivery(taskDoc(), ['FB-001'], NOW, { note: 'FB-001' }), { code: 'invalid_input' });
     });
 });
 

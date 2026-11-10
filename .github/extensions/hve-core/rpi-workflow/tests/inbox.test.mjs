@@ -119,13 +119,14 @@ async function seed(store, { itemIds = ['FB-001', 'FB-002'], holds = [{ ids: ite
 /**
  * Stores the source task document with the items held for `entry-1` (the handoff to SESSION), the
  * outbox entry that records that handoff for SOURCE, and optionally the target's inbox entry and a
- * relay claim on the items taken at `claim.at`.
+ * relay claim on the items taken at `claim.at`. `state` sets the outbox entry's state when given;
+ * `note` names the held item that is the handoff's note.
  */
-async function seedRelay(store, { holds = ['FB-001', 'FB-002'], relayAfter = NOW, claim = null, inbox = null } = {}) {
-    let doc = claimDelivery(taskDoc(), holds, NOW, { handoff: { sessionId: SESSION, entryId: 'entry-1', relayAfter } }).session;
+async function seedRelay(store, { holds = ['FB-001', 'FB-002'], relayAfter = NOW, claim = null, inbox = null, state, note = null } = {}) {
+    let doc = claimDelivery(taskDoc(), holds, NOW, { handoff: { sessionId: SESSION, entryId: 'entry-1', relayAfter }, note }).session;
     if (claim) doc = claimRelay(doc, 'entry-1', claim, claim.at, { policy: 'take' }).session;
     await store.create(doc);
-    await store.updateOutbox(SOURCE, (entries) => ({ entries: [...entries, { id: 'entry-1', taskDoc: TASK_DOC, target: SESSION, handle: FROM.handle, relayAfter, createdAt: NOW }], result: null }));
+    await store.updateOutbox(SOURCE, (entries) => ({ entries: [...entries, { id: 'entry-1', taskDoc: TASK_DOC, target: SESSION, handle: FROM.handle, relayAfter, createdAt: NOW, ...(state === undefined ? {} : { state }) }], result: null }));
     if (inbox) {
         await store.updateInbox(SESSION, (entries) => ({ entries: [...entries, { id: 'entry-1', taskDoc: TASK_DOC, itemIds: holds, from: { sessionId: SOURCE, handle: FROM.handle }, createdAt: NOW, state: inbox.state, owner: inbox.owner }], result: null }));
     }
@@ -822,6 +823,76 @@ describe('outbox relay', () => {
         const runner = runnerFor(store, fakeClock(), { sessionId: SOURCE, deliver: relayOnce(sends) });
         await runner.wakeOutbox();
         assert.deepEqual(idsOf(sends), [['FB-001', 'FB-002']]);
+        store.close();
+    });
+
+    it('never relays a pending hand-off, and leaves it held until its claim window has passed', async () => {
+        const store = createStore({ root: path.join(scratch, 'pending-window') });
+        await seedRelay(store, { relayAfter: NOW, state: 'pending' });
+        const sends = [];
+        const clock = fakeClock();
+        const runner = runnerFor(store, clock, { sessionId: SOURCE, deliver: relayOnce(sends) });
+        await runner.start();
+        await clock.advance(CLAIM_STALE_MS);
+        assert.deepEqual(sends, [], 'a pending hand-off is not relayed, even though its relay time has passed');
+        assert.deepEqual((await store.loadOutbox(SOURCE)).entries.map((entry) => entry.state), ['pending']);
+        assert.equal(itemOf(await store.load(TASK_DOC), 'FB-001').handoff.entryId, 'entry-1', 'its items stay held');
+        await clock.advance(2_000);
+        assert.deepEqual(sends, []);
+        assert.deepEqual((await store.loadOutbox(SOURCE)).entries, [], 'the entry is settled');
+        const doc = await store.load(TASK_DOC);
+        assert.deepEqual(['FB-001', 'FB-002'].map((id) => [itemOf(doc, id).handoff, itemOf(doc, id).deliveringSince]), [[undefined, undefined], [undefined, undefined]], 'the runner releases the items');
+        assert.deepEqual(takeFeedback(doc, iso(clock.now())).result.map((item) => item.id), ['FB-001', 'FB-002', 'FB-003'], 'the agent may collect them again');
+        await runner.stop();
+        store.close();
+    });
+
+    it('releases the items and dismisses the note of a pending hand-off that never reached its target', async () => {
+        const store = createStore({ root: path.join(scratch, 'pending-note') });
+        await seedRelay(store, { relayAfter: NOW, state: 'pending', note: 'FB-002' });
+        const sends = [];
+        const clock = fakeClock();
+        const runner = runnerFor(store, clock, { sessionId: SOURCE, deliver: relayOnce(sends) });
+        await runner.start();
+        await clock.advance(CLAIM_STALE_MS + 2_000);
+        assert.deepEqual(sends, []);
+        const doc = await store.load(TASK_DOC);
+        assert.deepEqual([itemOf(doc, 'FB-001').state, itemOf(doc, 'FB-001').handoff], ['queued', undefined]);
+        assert.equal(itemOf(doc, 'FB-002').state, 'dismissed', 'the note is dismissed');
+        assert.deepEqual((await store.loadOutbox(SOURCE)).entries, []);
+        await runner.stop();
+        store.close();
+    });
+
+    it('commits a pending hand-off whose target entry is waiting once its claim window has passed, then relays it', async () => {
+        const store = createStore({ root: path.join(scratch, 'pending-commits') });
+        await seedRelay(store, { relayAfter: NOW, state: 'pending', inbox: { state: 'waiting', owner: null } });
+        const sends = [];
+        const clock = fakeClock();
+        const runner = runnerFor(store, clock, { sessionId: SOURCE, deliver: relayOnce(sends) });
+        await runner.start();
+        await clock.advance(CLAIM_STALE_MS + 2_000);
+        assert.deepEqual((await store.loadOutbox(SOURCE)).entries.map((entry) => entry.state), ['committed'], 'the target entry exists, so the hand-off commits');
+        assert.deepEqual(sends, []);
+        await clock.advance(2_000);
+        assert.deepEqual(sends.map((request) => request.ids), [['FB-001', 'FB-002']], 'the committed hand-off is relayed once the target has not claimed it');
+        assert.deepEqual([(await store.loadInbox(SESSION)).entries, (await store.loadOutbox(SOURCE)).entries], [[], []]);
+        const doc = await store.load(TASK_DOC);
+        assert.deepEqual(['FB-001', 'FB-002'].map((id) => [itemOf(doc, id).state, itemOf(doc, id).route]), [['sent', 'relay'], ['sent', 'relay']]);
+        await runner.stop();
+        store.close();
+    });
+
+    it('forgets a pending hand-off whose task document is gone, and sends nothing', async () => {
+        const store = createStore({ root: path.join(scratch, 'pending-gone') });
+        await store.updateOutbox(SOURCE, (entries) => ({ entries: [...entries, { id: 'entry-1', taskDoc: 'rpi-gone-0123456789', target: SESSION, handle: FROM.handle, relayAfter: NOW, createdAt: NOW, state: 'pending' }], result: null }));
+        const sends = [];
+        const clock = fakeClock();
+        const runner = runnerFor(store, clock, { sessionId: SOURCE, deliver: relayOnce(sends) });
+        await runner.start();
+        await clock.advance(CLAIM_STALE_MS + 2_000);
+        assert.deepEqual([sends, (await store.loadOutbox(SOURCE)).entries], [[], []]);
+        await runner.stop();
         store.close();
     });
 });
