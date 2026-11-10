@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, clear, decisionAlias, fullTime, h, icon, idTag, PHASE_META, PHASE_STATUS, phaseTabText, plural, relTime, sr } from './dom.mjs';
-import { confirmPress, deliveryNotices, deliveryRequest, disclosure, filePreview, handAnnouncement, hasMarginHome, presentationControl, revealRow, reviewSheet, ROUTE_CHANGED_NOTE, routeBlock, sendItems, sendShape, sessionMenuNodes, staleAnnouncement, steerPanel, taskRef, uncertainAnnouncement, waitingCount } from './components.mjs';
+import { confirmPress, deliveryNotices, deliveryRequest, disclosure, failedPanel, filePreview, handAnnouncement, hasMarginHome, panelOutcome, presentationControl, revealRow, reviewSheet, ROUTE_CHANGED_NOTE, routeBlock, sendItems, sendShape, sessionMenuNodes, staleAnnouncement, steerPanel, taskRef, uncertainAnnouncement, waitingCount } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
 import { notConnectedView } from './connect-view.mjs';
@@ -141,20 +141,6 @@ function noteMoved(moved) {
     state.notes = [...state.notes.filter((note) => note.kind !== 'moved'), { id: `note-${++noteSeq}`, kind: 'moved', tone: 'accent', icon: 'arrow-right', text }].slice(-MAX_NOTES);
     renderStatus();
     announce(`Moved to ${moved.title}, the loop the agent works in.`);
-}
-
-/** The note for a child's canvas that did not open. */
-const failedPanel = (title, reason) => ({ tone: 'danger', icon: 'alert', text: `Opening a canvas for ${title} failed: ${String(reason).replace(/\.$/, '')}.` });
-
-/** What Open in new panel's result says, in words: the note's tone and icon, and its text. */
-function panelOutcome(result, title) {
-    switch (result.outcome) {
-        case 'opened': return { tone: 'accent', icon: 'panel', text: `Opened a canvas for ${title} in a new panel.` };
-        case 'focused': return { tone: 'accent', icon: 'panel', text: `Focused the canvas for ${title}, which was already open in a panel.` };
-        case 'asked': return { tone: 'accent', icon: 'message', text: `Asked the agent to open a canvas for ${title}. Look for the line in the chat.` };
-        case 'wait': return { tone: 'attention', icon: 'info', text: `The agent was just asked to open a canvas for ${title}. Wait ${plural(Math.max(1, Math.ceil(result.retryAfterMs / 1000)), 'second')}, then try again.` };
-        default: return failedPanel(title, result.reason ?? 'the request was not sent');
-    }
 }
 
 /** Says what Open in new panel did: in the session menu while it is open, otherwise as a status note. */

@@ -545,6 +545,15 @@ describe('session tree', () => {
         assert.equal(view.outline(ctx).find((item) => item.id === 'session-loops').count, 2, 'the outline counts this session\'s loops only');
     });
 
+    it('shows a child task\'s phase and status from its linked entry, as the menu does, over the tree\'s record', async () => {
+        const { root } = await followUp({ linkedSessions: [{ ...waiting[0], phase: 'implement', status: 'completed' }] });
+        const linked = itemFor(root, 'map-api');
+        assert.match(textOf(linked), /Phase: Implement/);
+        assert.match(textOf(linked), /Completed/);
+        assert.doesNotMatch(textOf(linked), /Phase: Plan/);
+        assert.doesNotMatch(textOf(linked), /Running/);
+    });
+
     it('says when a child\'s decisions are not read yet, and when none wait', async () => {
         const unread = await followUp({ linkedSessions: [{ ...waiting[0], decisionsWaiting: null }] });
         assert.match(textOf(itemFor(unread.root, 'map-api')), /Decisions not read yet/);
@@ -584,6 +593,18 @@ describe('session tree', () => {
         assert.match(textOf(line), /Continues Base from another session/);
         elements(line).find((node) => node.localName === 'button').listeners.click[0]({});
         assert.deepEqual(calls, [{ statePath: PROJECT_PATH }]);
+    });
+});
+
+describe('panel outcomes', () => {
+    it('names the child in a wait only when the agent was asked about that child', async () => {
+        const { panelOutcome } = await import('../ui/components.mjs');
+        const same = panelOutcome({ outcome: 'wait', retryAfterMs: 20000, sameChild: true }, 'Map API');
+        assert.equal(same.text, 'The agent was just asked to open a canvas for Map API. Wait 20 seconds, then try again.');
+        assert.equal(same.tone, 'attention');
+        const other = panelOutcome({ outcome: 'wait', retryAfterMs: 20000, sameChild: false }, 'Map tiles');
+        assert.equal(other.text, 'The agent was just asked to open a canvas for another child session. Wait 20 seconds, then try again.');
+        assert.doesNotMatch(other.text, /Map tiles/);
     });
 });
 

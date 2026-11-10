@@ -13,7 +13,7 @@ import { agentEditSection, CLAIM_STALE_MS, claimDelivery, createFeedback, markDe
 import { buildScenario } from '../lib/scenario.mjs';
 import { clientInfoFrom, createCanvasServer as newServer, MAX_BODY, renderShell } from '../lib/server.mjs';
 import { createInboxRunner, INBOX_VERSION, PRESENCE_TTL_MS } from '../lib/inbox.mjs';
-import { CANVAS_ID, createPanelOpener } from '../lib/panels.mjs';
+import { CANVAS_ID, createPanelOpener, panelInstanceId } from '../lib/panels.mjs';
 import { storeIdFor } from '../lib/source/workspace.mjs';
 import { createStore } from '../lib/store.mjs';
 import { stopTracked, track } from './helpers/cleanup.mjs';
@@ -1401,12 +1401,13 @@ describe('opening a child session in a new panel', () => {
      * canvas opens panels through `rpc` as the joined session does, or has no opener when `opener` is false.
      * Its clock is the test's, so presence and the ask interval can be checked.
      */
-    async function panelSetup(name, { rpc, deliver, opener = true } = {}) {
+    async function panelSetup(name, { rpc, deliver, opener = true, extraChildren = [] } = {}) {
         const store = createStore({ root: path.join(tmp, name), pollMs: 20 });
         const shown = rootSession().session;
         shown.followUps.tree.tasks = [
             ...shown.followUps.tree.tasks.filter((task) => task.shown),
             { id: CHILD_TASK, title: 'Offline trail maps review fixes', status: 'completed', depth: 1, statePath: PATHS.childState, parent: PATHS.rootState, shown: false, continues: null, sessionId: CHILD, sessionName: 'Offline trail maps', root: FIXTURE_ROOT, phase: 'followup' },
+            ...extraChildren,
         ];
         const session = await store.create({ ...shown, id: storeIdFor(ROOT_TASK, FIXTURE_ROOT) });
         const sent = [];
@@ -1488,11 +1489,30 @@ describe('opening a child session in a new panel', () => {
         const { server, url, store, sent, advance } = await panelSetup('panel-wait', { rpc: {} });
         assert.deepEqual((await askPanel(url)).json, { outcome: 'asked', retryAfterMs: 30000 });
         advance(10000);
-        assert.deepEqual((await askPanel(url)).json, { outcome: 'wait', retryAfterMs: 20000 });
+        assert.deepEqual((await askPanel(url)).json, { outcome: 'wait', retryAfterMs: 20000, sameChild: true });
         assert.equal(sent.length, 1, 'the agent is asked once in the interval');
         advance(20000);
         assert.deepEqual((await askPanel(url)).json, { outcome: 'asked', retryAfterMs: 30000 });
         assert.equal(sent.length, 2);
+        await server.stop();
+        store.close();
+    });
+
+    it('keeps one wait for every child: a wait for a different child names that it is not the child asked about', async () => {
+        const OTHER_CHILD = 'd5e6f7a8-1b2c-4d3e-8f4a-5b6c7d8e9f0a';
+        const TILES = '.copilot-tracking/rpi-sessions/2026-01-15/trail-maps/map-tiles-state.json';
+        const extra = { id: 'map-tiles', title: 'Map tiles', status: 'running', depth: 1, statePath: TILES, parent: PATHS.rootState, shown: false, continues: null, sessionId: OTHER_CHILD, sessionName: 'Map tiles session', root: FIXTURE_ROOT, phase: 'implement' };
+        const { server, url, store, sent, advance } = await panelSetup('panel-two-children', { rpc: {}, extraChildren: [extra] });
+        const tiles = { session: OTHER_CHILD, statePath: TILES };
+        assert.deepEqual((await askPanel(url)).json, { outcome: 'asked', retryAfterMs: 30000 }, 'the first child is asked');
+        advance(5000);
+        assert.deepEqual((await askPanel(url, tiles)).json, { outcome: 'wait', retryAfterMs: 25000, sameChild: false }, 'the second child waits on the same clock');
+        assert.deepEqual((await askPanel(url)).json, { outcome: 'wait', retryAfterMs: 25000, sameChild: true }, 'the first child is still the one asked about');
+        assert.equal(sent.length, 1, 'the agent is not asked twice in the interval');
+        advance(25000);
+        assert.deepEqual((await askPanel(url, tiles)).json, { outcome: 'asked', retryAfterMs: 30000 });
+        assert.equal(sent.length, 2);
+        assert.ok(sent[1].prompt.includes(`instanceId "${panelInstanceId(OTHER_CHILD, 'map-tiles')}"`), sent[1].prompt);
         await server.stop();
         store.close();
     });

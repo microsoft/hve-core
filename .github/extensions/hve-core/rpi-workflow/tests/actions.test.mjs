@@ -15,7 +15,7 @@ import { buildScenario, SCENARIO_ID } from '../lib/scenario.mjs';
 import { createSourceController } from '../lib/sources.mjs';
 import { importIntoStore, loadTask, resolveWorkspace, storeIdFor } from '../lib/source/workspace.mjs';
 import { createStore } from '../lib/store.mjs';
-import { CHILD_TASK, PATHS, ROOT_STATE, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
+import { CHILD_STATE, CHILD_TASK, PATHS, ROOT_STATE, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
 import { scratchFolder } from './helpers/scratch.mjs';
 
 class FakeCanvasError extends Error {
@@ -348,5 +348,29 @@ describe('linked sessions in get_state', () => {
         const { handlers } = await coordinator();
         const [linked] = (await handlers.get_state({ instanceId: 'linked', input: {} })).linkedSessions;
         assert.ok(!linked.decisionsWaiting.some((item) => item.title === 'Other workspace decision'));
+    });
+
+    it('lists a child\'s phase and status as its state file records them now, after the coordinator\'s tree was read', async () => {
+        const { handlers } = await coordinator();
+        const childFile = path.join(childRoot, PATHS.childState);
+        try {
+            await fs.writeFile(childFile, JSON.stringify({ ...CHILD_STATE, active_phase: 'Implement', status: 'active', session_status: 'running' }));
+            const [linked] = (await handlers.get_state({ instanceId: 'linked', input: {} })).linkedSessions;
+            assert.deepEqual([linked.phase, linked.status], ['implement', 'running']);
+        } finally {
+            await fs.writeFile(childFile, JSON.stringify(CHILD_STATE));
+        }
+    });
+
+    it('keeps the tree\'s record of a child whose state file cannot be read', async () => {
+        const { handlers } = await coordinator();
+        const childFile = path.join(childRoot, PATHS.childState);
+        try {
+            await fs.writeFile(childFile, '{ not json');
+            const [linked] = (await handlers.get_state({ instanceId: 'linked', input: {} })).linkedSessions;
+            assert.deepEqual([linked.phase, linked.status], ['followup', 'completed']);
+        } finally {
+            await fs.writeFile(childFile, JSON.stringify(CHILD_STATE));
+        }
     });
 });

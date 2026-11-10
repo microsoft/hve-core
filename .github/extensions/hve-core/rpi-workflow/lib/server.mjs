@@ -256,8 +256,8 @@ export function createCanvasServer(deps) {
     let others = new Set();
     /** When Ask the agent last sent, so a double press does not send twice. */
     let lastConnectRequest = 0;
-    /** When the canvas last asked its agent to open a child's canvas; the open-panel fallback waits on its own clock. */
-    let lastPanelAsk = 0;
+    /** The child the canvas last asked its agent to open a canvas for, and when; every child's open-panel fallback waits on this one clock. */
+    let lastPanelAsk = null;
     /** False while the canvas shows no session, until the agent connects it. */
     const connected = () => deps.getSource?.()?.kind !== 'none';
     const notConnectedError = () => new HttpError(409, 'not_connected', 'This canvas is not connected to an RPI session. Ask the agent to connect it.');
@@ -727,25 +727,26 @@ export function createCanvasServer(deps) {
      * The fallback when a child session's canvas cannot open from here: the canvas's own chat gets one
      * fixed line, at most once in each interval, asking the agent to open the canvas with the host's
      * canvas tool. The result says whether the agent was asked, how long to wait, or why it was not sent.
+     * A wait says whether the earlier ask was for this same child, so the page names only that child.
      *
      * @param {{ session: string, statePath: string, taskId: string }} child a child session of the shown task
      */
     async function askForPanel(child) {
         const at = Date.parse(now());
-        if (lastPanelAsk && at - lastPanelAsk < CONNECT_REQUEST_INTERVAL_MS) {
-            return { outcome: 'wait', retryAfterMs: CONNECT_REQUEST_INTERVAL_MS - (at - lastPanelAsk) };
+        const instanceId = panelInstanceId(child.session, child.taskId);
+        if (lastPanelAsk && at - lastPanelAsk.at < CONNECT_REQUEST_INTERVAL_MS) {
+            return { outcome: 'wait', retryAfterMs: CONNECT_REQUEST_INTERVAL_MS - (at - lastPanelAsk.at), sameChild: lastPanelAsk.instanceId === instanceId };
         }
         const canvas = getCanvas();
         const displayPrompt = panelRequestText(canvas?.handle, child.session, child.statePath);
         const provider = deps.getExtensionId?.() ?? null;
         const input = JSON.stringify({ session: child.session, state: child.statePath });
-        const instanceId = panelInstanceId(child.session, child.taskId);
         const prompt = `${displayPrompt}\n\nOpen it with the open_canvas tool: canvasId "${CANVAS_ID}", instanceId "${instanceId}", input ${input}${provider ? `, extensionId "${provider}"` : ''}. It opens in a new panel of this conversation, or focuses the panel already open. Then tell the user it is open, or why it could not be opened.`;
-        lastPanelAsk = at;
+        lastPanelAsk = { at, instanceId };
         try {
             await deliver({ prompt, displayPrompt, ids: [] });
         } catch (error) {
-            lastPanelAsk = 0;
+            lastPanelAsk = null;
             return { outcome: 'failed', reason: error instanceof Error ? error.message : 'The message could not be sent.' };
         }
         return { outcome: 'asked', retryAfterMs: CONNECT_REQUEST_INTERVAL_MS };

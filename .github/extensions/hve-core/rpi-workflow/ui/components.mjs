@@ -1297,8 +1297,10 @@ export function sessionTree(ctx, options) {
             last.append(nested);
             stack.push(nested);
         }
-        const status = known(TASK_STATUS, task.status) ?? { icon: 'info', label: task.status ?? 'Unknown', tone: 'muted' };
         const linked = task.sessionId ? linkedSessions.find((item) => item.taskId === task.id && item.sessionId === task.sessionId) ?? null : null;
+        // A child task's phase and status are the ones its state file records now, as the child list shows them.
+        const current = linked ?? task;
+        const status = known(TASK_STATUS, current.status) ?? { icon: 'info', label: current.status ?? 'Unknown', tone: 'muted' };
         const where = task.sessionId ? sessionPhrase(task) : null;
         last = h('li', { class: ['tree-task', task.shown ? 'is-shown' : null, task.sessionId ? 'is-linked' : null], dataset: { task: task.id } },
             task.continues ? h('p', { class: 'tree-continues meta' }, `Continues ${task.continues.title} ${sessionPhrase(task.continues)} `,
@@ -1308,7 +1310,7 @@ export function sessionTree(ctx, options) {
                 h('strong', { class: 'tree-title', text: task.title }),
                 h('code', { class: 'tree-id', text: task.id }),
                 task.sessionId ? badge({ icon: 'nodes', label: `In session ${task.sessionName ?? task.sessionId}`, tone: 'muted' }) : null,
-                task.sessionId ? h('span', { class: 'meta tree-phase', text: `Phase: ${PHASE_META[task.phase]?.label ?? 'not recorded'}` }) : null,
+                task.sessionId ? h('span', { class: 'meta tree-phase', text: `Phase: ${PHASE_META[current.phase]?.label ?? 'not recorded'}` }) : null,
                 task.sessionId ? decisionsBadge(linked) : null,
                 task.statePath && !task.sessionId && task.statePath === agentPath ? h('span', { class: 'badge tone-agent tree-agent', title: 'Where the agent works; Follow agent goes here' }, icon('sparkle'), 'Agent') : null,
                 task.shown
@@ -1329,6 +1331,26 @@ function liveBadge(linked) {
     return linked.live
         ? badge({ icon: 'live', label: 'Canvas running', tone: 'success' })
         : badge({ icon: 'live-off', label: 'No canvas running', tone: 'muted' });
+}
+
+/** The note for a child's canvas that did not open. */
+export const failedPanel = (title, reason) => ({ tone: 'danger', icon: 'alert', text: `Opening a canvas for ${title} failed: ${String(reason).replace(/\.$/, '')}.` });
+
+/**
+ * What Open in new panel's result says, in words: the note's tone and icon, and its text. A wait names
+ * the child only when the agent was asked about that same child; otherwise it names no child.
+ *
+ * @param {{ outcome: string, retryAfterMs?: number, sameChild?: boolean, reason?: string }} result
+ * @param {string} title the child the user chose
+ */
+export function panelOutcome(result, title) {
+    switch (result.outcome) {
+        case 'opened': return { tone: 'accent', icon: 'panel', text: `Opened a canvas for ${title} in a new panel.` };
+        case 'focused': return { tone: 'accent', icon: 'panel', text: `Focused the canvas for ${title}, which was already open in a panel.` };
+        case 'asked': return { tone: 'accent', icon: 'message', text: `Asked the agent to open a canvas for ${title}. Look for the line in the chat.` };
+        case 'wait': return { tone: 'attention', icon: 'info', text: `The agent was just asked to open a canvas for ${result.sameChild ? title : 'another child session'}. Wait ${plural(Math.max(1, Math.ceil(result.retryAfterMs / 1000)), 'second')}, then try again.` };
+        default: return failedPanel(title, result.reason ?? 'the request was not sent');
+    }
 }
 
 /**
