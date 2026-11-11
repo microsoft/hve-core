@@ -2,7 +2,8 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { appendFileSync, existsSync, mkdirSync, realpathSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { pathToFileURL } from "node:url";
@@ -29,8 +30,27 @@ function writeJson(path, value) {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+function initializeWorkspace(root) {
+  const env = { ...process.env };
+  for (const name of ["GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR"]) {
+    delete env[name];
+  }
+  const git = (args) => execFileSync("git", ["-C", root, ...args], {
+    env, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"],
+  }).trim();
+  mkdirSync(root, { recursive: true });
+  git(["init", "--quiet", "--template="]);
+  if (realpathSync(git(["rev-parse", "--show-toplevel"])) !== realpathSync(root)) {
+    throw new Error("RCA fixture must have its own repository root");
+  }
+}
+
 export function prepareFixture(root, scenario, now = new Date()) {
   assertScenario(scenario);
+  if (existsSync(join(root, ARTIFACT_ROOT))) {
+    throw new Error("RCA fixture artifacts already exist; use a fresh workspace");
+  }
+  initializeWorkspace(root);
   const approval = {
     id: "A-001",
     principal: "fixture-requester",
@@ -57,8 +77,20 @@ export function prepareFixture(root, scenario, now = new Date()) {
     establishesProductionAuthorization: false,
     scenario,
     hostMode: "generic",
+    workspaceRoot: ".",
     investigation: "RCA-MCP-001",
     artifactStorage: ARTIFACT_ROOT,
+    sessionDecision: {
+      principal: "fixture-requester",
+      channel: "simulated-session-request",
+      locator: `${ASSET_ROOT}/host-context.json#/sessionDecision`,
+      selectedModel: "host-selected",
+      choice: "continue",
+      pricing: "Unavailable; no monetary or AI-credit estimate is claimed",
+      budget: { trials: 1, retries: 0, timeoutSeconds: 600, maximumQueryCalls: 1 },
+      grantsEvidenceCollection: false,
+      enforcement: "Harness timeout and retry limits; query calls are audited, not prevented",
+    },
     approval,
   });
   writeJson(join(root, ARTIFACT_ROOT, "approval-ledger.json"), { records: [approval] });

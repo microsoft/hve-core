@@ -2,7 +2,7 @@
 title: Behavior Conformance Suite
 description: 'Tier 3 conformance evaluations for instructions and skill behavior'
 author: HVE Core Team
-ms.date: 2026-11-10
+ms.date: 2026-11-11
 ---
 
 This directory hosts the behavior conformance suite. It is the only suite under `evals/` that ships in advisory mode by default: failures are reported in the pull request summary but do not block the build until each spec graduates per the graduation policy below.
@@ -130,7 +130,24 @@ reject additional or failed attempts. Unknown queries, extra parameters, tools,
 and scenarios fail explicitly. The server uses only Node built-ins, deterministic
 responses, and local files; it has no external data, service, or credential access.
 Each case has two equally weighted deterministic graders, so either grader failing
-falls below the suite's 0.6 threshold.
+falls below the suite's 0.6 threshold for that case. The suite mean can still pass
+with failed cases. For an all-checks acceptance run of these four cases, select
+them and use `--threshold 1 --require-pass`; inspect each case's grader results.
+
+Preparation requires Git and initializes each trial as an independent repository
+root, including when its workspace is nested inside the source checkout. Fixture
+paths remain workspace-relative so prepared-workspace copies do not point back
+to another trial. The prompts identify the trial workspace as the simulation's
+codebase root; a checkpoint in an ancestor directory cannot satisfy its audit.
+Preparation rejects existing investigation artifacts without deleting them. Use
+a fresh workspace directory for a new run instead of reusing preserved results.
+
+The fixed-profile prompts and host audit record a completed model/cost choice:
+continue with the host-selected model for one trial, no retries, at most 600
+seconds, and at most one synthetic query. Pricing is unavailable, so no monetary
+or AI-credit estimate is claimed. This session choice is separate from collection
+consent. Negative cases stop at the next collection-authorization decision rather
+than requesting a final RCA report.
 
 Preparation creates a separate simulated host audit and approval ledger. Positive
 cases receive one exact fixture approval with a one-hour expiry; negative cases
@@ -149,7 +166,10 @@ Run the offline protocol and artifact-audit tests with
 `npm run test:node -- evals/behavior-conformance/fixtures/rca-mcp-double/server.test.mjs`.
 These tests exercise actual stdio initialization, tool discovery and invocation,
 invalid requests, attempted-call recording, and positive and negative artifact
-audits. They do not execute the agent or establish model conformance. The redaction
+audits. They also check nested Git roots, copied-workspace relocation, inherited
+Git-directory overrides, stale-workspace refusal, and rejection of ancestor
+checkpoints. They do not
+execute the agent or establish model conformance. The redaction
 audit covers investigation artifacts and the final reply, not every intermediate
 assistant message or arbitrary workspace file.
 

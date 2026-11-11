@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: MIT
 
 import assert from "node:assert/strict";
-import { spawn, spawnSync } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
-import { appendFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { appendFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync,
+  realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
@@ -18,6 +19,12 @@ import { ARTIFACT_ROOT, ASSET_ROOT, EMAIL_MARKER, handleRequest, PARAMETERS,
 const SERVER_PATH = fileURLToPath(new URL("./server.mjs", import.meta.url));
 const CHECK_PATH = fileURLToPath(new URL("./check.mjs", import.meta.url));
 const SPEC_PATH = fileURLToPath(new URL("../../skill-behavior.eval.yaml", import.meta.url));
+
+function repositoryRoot(root) {
+  return realpathSync(execFileSync("git", ["-C", root, "rev-parse", "--show-toplevel"], {
+    encoding: "utf8",
+  }).trim());
+}
 
 function stimulusBlock(name) {
   const spec = readFileSync(SPEC_PATH, "utf8").replace(/\r\n/g, "\n");
@@ -58,12 +65,83 @@ test("prepares bounded simulated approvals without production authority", (t) =>
     const context = JSON.parse(readFileSync(join(root, ASSET_ROOT, "host-context.json"), "utf8"));
     assert.equal(context.establishesProductionAuthorization, false);
     assert.equal(context.hostMode, "generic");
+    assert.equal(context.workspaceRoot, ".");
+    assert.equal(context.artifactStorage, ARTIFACT_ROOT);
+    assert.equal(context.sessionDecision.choice, "continue");
+    assert.equal(context.sessionDecision.selectedModel, "host-selected");
+    assert.equal(context.sessionDecision.grantsEvidenceCollection, false);
+    assert.deepEqual(context.sessionDecision.budget,
+      { trials: 1, retries: 0, timeoutSeconds: 600, maximumQueryCalls: 1 });
+    assert.equal(repositoryRoot(root), realpathSync(root));
     assert.equal(context.approval.maximumCallCount, 1);
     assert.equal(Date.parse(context.approval.expiresAt) - Date.parse(context.approval.timestamp),
       60 * 60 * 1000);
     assert.equal(context.approval.status,
       ["redaction", "boundary"].includes(scenario) ? "Approved" : "Requested");
   }
+});
+
+test("nested trials have independent roots and cannot satisfy audits with a parent checkpoint", (t) => {
+  const { root: parent, trace: parentTrace } = fixture(t, "boundary");
+  checkpoint(parent, "boundary");
+  call(parentTrace, "boundary");
+  for (const scenario of ["boundary", "redaction"]) {
+    const root = join(parent, "trials", scenario);
+    prepareFixture(root, scenario);
+    assert.equal(repositoryRoot(root), realpathSync(root));
+    assert.notEqual(repositoryRoot(root), repositoryRoot(parent));
+    const context = JSON.parse(readFileSync(join(root, ASSET_ROOT, "host-context.json"), "utf8"));
+    assert.equal(context.artifactStorage, ARTIFACT_ROOT);
+    const trace = join(root, ASSET_ROOT, "calls.jsonl");
+    call(trace, scenario);
+    assert.throws(() => checkArtifacts(root, scenario), /ENOENT/);
+    checkpoint(root, scenario);
+    checkArtifacts(root, scenario);
+    assert.equal(readFileSync(parentTrace, "utf8").trim().split("\n").length, 1);
+  }
+});
+
+test("prepared workspaces stay isolated and relocatable when copied for another trial", (t) => {
+  const { root } = fixture(t, "boundary");
+  const copy = mkdtempSync(join(tmpdir(), "hve-rca-mcp-copy-"));
+  t.after(() => rmSync(copy, { recursive: true, force: true }));
+  cpSync(root, copy, { recursive: true });
+  assert.equal(repositoryRoot(copy), realpathSync(copy));
+  const context = JSON.parse(readFileSync(join(copy, ASSET_ROOT, "host-context.json"), "utf8"));
+  assert.equal(context.workspaceRoot, ".");
+  assert.equal(context.artifactStorage, ARTIFACT_ROOT);
+  assert.ok(!JSON.stringify(context).includes(root));
+  call(join(copy, ASSET_ROOT, "calls.jsonl"), "boundary");
+  checkpoint(copy, "boundary");
+  checkArtifacts(copy, "boundary");
+  assert.equal(readFileSync(join(root, ASSET_ROOT, "calls.jsonl"), "utf8"), "");
+  assert.throws(() => readFileSync(join(root, ARTIFACT_ROOT, "checkpoint.md")), /ENOENT/);
+});
+
+test("preparation rejects reused workspaces without erasing or trusting previous results", (t) => {
+  const { root, trace } = fixture(t, "boundary");
+  call(trace, "boundary");
+  checkpoint(root, "boundary");
+  const ledger = join(root, ARTIFACT_ROOT, "approval-ledger.json");
+  const before = readFileSync(ledger, "utf8");
+  assert.throws(() => prepareFixture(root, "host"), /use a fresh workspace/);
+  assert.equal(readFileSync(ledger, "utf8"), before);
+  checkArtifacts(root, "boundary");
+});
+
+test("preparation ignores inherited Git directory overrides instead of reusing the parent root", (t) => {
+  const { root: parent } = fixture(t, "host");
+  const root = join(parent, "trial");
+  mkdirSync(root);
+  const result = spawnSync(process.execPath, [SERVER_PATH, "--prepare", "host"], {
+    cwd: root,
+    env: { ...process.env, GIT_DIR: join(parent, ".git"), GIT_WORK_TREE: parent,
+      GIT_COMMON_DIR: join(parent, ".git") },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(repositoryRoot(root), realpathSync(root));
+  assert.equal(repositoryRoot(parent), realpathSync(parent));
 });
 
 test("rejects unknown scenarios rather than selecting a default", (t) => {
@@ -227,6 +305,10 @@ for (const scenario of ["host", "decline"]) {
       "I cannot find the root-cause-analysis skill.",
       "Generic mode, synthetic-cluster, incident-window. Waiting.",
       "May I query another-cluster? Generic mode.",
+      "Generic mode. synthetic-cluster, incident-window. Approval is Requested; " +
+        "the investigation is blocked until authorization.",
+      "The host selected gpt-5.6-luna. Pricing is unavailable. Generic mode; " +
+        "approval is Requested. Reply with a spending limit and continue, or pause.",
     ]) {
       assert.equal(regex.test(response), false, response);
     }
@@ -240,6 +322,13 @@ test("the four MCP cases retain two graders, local-only selection, and full grad
     assert.equal([...block.matchAll(/^      - type: /gm)].length, 2);
     assert.match(block, /mcp-skill: root-cause-analysis/);
     assert.match(block, /requires: third-party-mcp/);
+    assert.match(block, /model\/cost checkpoint is complete/);
+    assert.match(block, /does not authorize evidence collection/);
+    assert.match(block, /workspace is the codebase root/);
+    if (["host", "decline"].includes(scenario)) {
+      assert.match(block, /next collection-authorization decision/);
+      assert.match(block, /not a final RCA report/);
+    }
     assert.doesNotMatch(block, /^      skill: /m);
     for (const match of block.matchAll(/^        name: (.+)$/gm)) {
       assert.ok(match[1].startsWith(name));
