@@ -705,15 +705,15 @@ As the final user-facing message of the workflow, present a completion summary t
 
 | 📦 Artifact             | Path                                                                           | Status |
 |-------------------------|--------------------------------------------------------------------------------|--------|
-| Consolidated SSSC plan  | `.copilot-tracking/sssc-plans/{project-slug}/sssc-plan.md`                     | ✅      |
-| Supply chain assessment | `.copilot-tracking/sssc-plans/{project-slug}/supply-chain-assessment.md`       | ✅      |
-| Standards mapping       | `.copilot-tracking/sssc-plans/{project-slug}/standards-mapping.md`             | ✅      |
-| Gap analysis            | `.copilot-tracking/sssc-plans/{project-slug}/gap-analysis.md`                  | ✅      |
-| Backlog (neutral)       | `.copilot-tracking/sssc-plans/{project-slug}/sssc-backlog.md`                  | ✅      |
-| ADO handoff             | `.copilot-tracking/workitems/backlog/{project-slug}-sssc/work-items.md`        | ✅      |
-| GitHub handoff          | `.copilot-tracking/github-issues/discovery/{project-slug}-sssc/issues-plan.md` | ✅      |
-| Signed manifest         | `.copilot-tracking/sssc-plans/{project-slug}/sssc-manifest.json`               | ✅      |
-| Session state           | `.copilot-tracking/sssc-plans/{project-slug}/state.json`                       | ✅      |
+| Consolidated SSSC plan  | `.copilot-tracking/sssc-plans/{project-slug}/sssc-plan.md`                     | ✅     |
+| Supply chain assessment | `.copilot-tracking/sssc-plans/{project-slug}/supply-chain-assessment.md`       | ✅     |
+| Standards mapping       | `.copilot-tracking/sssc-plans/{project-slug}/standards-mapping.md`             | ✅     |
+| Gap analysis            | `.copilot-tracking/sssc-plans/{project-slug}/gap-analysis.md`                  | ✅     |
+| Backlog (neutral)       | `.copilot-tracking/sssc-plans/{project-slug}/sssc-backlog.md`                  | ✅     |
+| ADO handoff             | `.copilot-tracking/workitems/backlog/{project-slug}-sssc/work-items.md`        | ✅     |
+| GitHub handoff          | `.copilot-tracking/github-issues/discovery/{project-slug}-sssc/issues-plan.md` | ✅     |
+| Signed manifest         | `.copilot-tracking/sssc-plans/{project-slug}/sssc-manifest.json`               | ✅     |
+| Session state           | `.copilot-tracking/sssc-plans/{project-slug}/state.json`                       | ✅     |
 
 Follow the table with a `📊 Posture` one-line recap (current → projected Scorecard score, SLSA Build level, Best Practices Badge readiness) and the total backlog item count by risk level. Then present the `⚡ Ready for Backlog Creation` next steps:
 

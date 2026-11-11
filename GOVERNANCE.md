@@ -2,7 +2,7 @@
 title: Governance
 description: Project governance model, roles, decision-making processes, and contribution authority for HVE Core
 author: HVE Core Team
-ms.date: 2026-08-31
+ms.date: 2026-11-10
 ms.topic: reference
 keywords:
   - governance
@@ -30,12 +30,12 @@ The following matrix summarizes capabilities by role:
 
 | Capability             | Maintainer | Triage | Contributor |
 |:-----------------------|:----------:|:------:|:-----------:|
-| Code review            |     ✅      |   ✅    |      ✅      |
-| Merge pull requests    |     ✅      |   ❌    |      ❌      |
-| Release management     |     ✅      |   ❌    |      ❌      |
-| Architecture decisions |     ✅      | Advise |   Propose   |
-| Issue triage           |     ✅      |   ✅    |      ❌      |
-| Label management       |     ✅      |   ✅    |      ❌      |
+| Code review            |     ✅     |   ✅   |     ✅      |
+| Merge pull requests    |     ✅     |   ❌   |     ❌      |
+| Release management     |     ✅     |   ❌   |     ❌      |
+| Architecture decisions |     ✅     | Advise |   Propose   |
+| Issue triage           |     ✅     |   ✅   |     ❌      |
+| Label management       |     ✅     |   ✅   |     ❌      |
 
 ### Maintainers
 
