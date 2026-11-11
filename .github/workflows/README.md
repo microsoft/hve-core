@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-11-06
+ms.date: 2026-11-10
 ms.topic: reference
 keywords:
   - github actions
@@ -846,8 +846,8 @@ This architecture ensures:
 
 Workflow Execution Matrix:
 
-| Event                                | Workflows That Run                                       | CodeQL Included                                          |
-|--------------------------------------|----------------------------------------------------------|----------------------------------------------------------|
+| Event                                | Workflows That Run                                       | CodeQL Included                                           |
+|--------------------------------------|----------------------------------------------------------|-----------------------------------------------------------|
 | Open PR to main/develop              | `pr-validation.yml`                                      | ✅ Yes                                                    |
 | Push to PR branch                    | `pr-validation.yml`                                      | ✅ Yes                                                    |
 | Merge to main                        | `release-prerelease-prepare.yml`, `security-scan.yml`    | ✅ Yes (via `security-scan.yml` -> `codeql-analysis.yml`) |

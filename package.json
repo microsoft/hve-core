@@ -138,7 +138,7 @@
     "audit-ci": "7.1.0",
     "cspell": "10.4.0",
     "markdown-link-check": "3.15.0",
-    "markdown-table-formatter": "1.7.0",
+    "markdown-table-formatter": "2.1.0",
     "markdownlint-cli2": "0.24.0",
     "markdownlint-cli2-formatter-default": "0.0.6",
     "markdownlint-cli2-formatter-json": "0.0.10",

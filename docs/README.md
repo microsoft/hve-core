@@ -3,7 +3,7 @@ title: HVE Core Documentation
 description: Documentation hub for HVE Core, a prompt engineering framework that brings AI-powered agents, instructions, and skills to your GitHub Copilot workflow
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-06
+ms.date: 2026-11-10
 ms.topic: overview
 keywords:
   - hve core
@@ -22,7 +22,7 @@ Most people should start with the plugin. [Installing HVE Core](getting-started/
 
 | Route                                                                            | What you get                                          | Choose it when                                    |
 |----------------------------------------------------------------------------------|-------------------------------------------------------|---------------------------------------------------|
-| [Plugin](getting-started/install.md#install-the-plugin) ⭐                        | Every agent, skill, and instruction, following `main` | You want the full set in VS Code or Copilot CLI   |
+| [Plugin](getting-started/install.md#install-the-plugin) ⭐                       | Every agent, skill, and instruction, following `main` | You want the full set in VS Code or Copilot CLI   |
 | [VS Code extension](getting-started/install.md#use-the-vs-code-extension)        | Agents and skills from the VS Code Marketplace        | You manage editor tools through the Marketplace   |
 | [Repository copy](getting-started/install.md#copy-hve-core-into-your-repository) | Copies of every component, owned by your repository   | Your repository should own and customize HVE Core |
 

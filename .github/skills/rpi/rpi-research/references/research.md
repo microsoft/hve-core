@@ -77,7 +77,7 @@ Use one evidence state for each material item:
 |----------------------------------|-------------------|--------------------------------------------------------------------------|
 | Unverified hypothesis/conjecture | 💡                | A working explanation or prediction now affects research routing         |
 | Partially supported claim        | 🔎                | Available evidence is suggestive but does not yet settle the claim       |
-| Evidence-backed finding          | ✅                 | Sufficient cited evidence supports the finding for the current purpose   |
+| Evidence-backed finding          | ✅                | Sufficient cited evidence supports the finding for the current purpose   |
 | Weakened/disproved claim         | ⚠️                | Evidence materially challenges or invalidates the earlier claim          |
 | Unresolved possibility           | 🔎                | A material possibility remains open because evidence is missing or mixed |
 
