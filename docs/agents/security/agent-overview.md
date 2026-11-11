@@ -11,7 +11,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-10-15
+ms.date: 2026-11-10
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -101,7 +101,7 @@ The agent follows strict question rules during each phase:
 | Guardrail                 | Description                                                                                                                                                                                                                                                                                                                                                                                                                    |
 |---------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | 3-5 questions per turn    | Enough to make progress without overwhelming the user                                                                                                                                                                                                                                                                                                                                                                          |
-| Emoji checklists          | Questions use ❓ for pending, ✅ for answered, and ❌ for blocked items                                                                                                                                                                                                                                                                                                                                                           |
+| Emoji checklists          | Questions use ❓ for pending, ✅ for answered, and ❌ for blocked items                                                                                                                                                                                                                                                                                                                                                        |
 | Hard gates                | Phases 1, 4, and 6 set `gate` to `hard`. The agent stops for explicit approval and records the time in `phaseGates.phaseN.confirmedAt`                                                                                                                                                                                                                                                                                         |
 | Summary-and-advance gates | Phases 2, 3, and 5 set `gate` to `summary-and-advance`. The agent surfaces a brief phase summary and proceeds unless the user objects, and records no confirmation time. Rules 6 and 7 of the planner Question Sequence Logic still require an explicit confirmation before every phase advance, and `phase-reference.md` annotates the phase 2 and 3 transitions the same way, so neither has been qualified for these phases |
 

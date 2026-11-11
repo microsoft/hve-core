@@ -3,7 +3,7 @@ title: Peer Directory Clone Installation
 description: Clone HVE Core next to your project and install it in VS Code as a plugin from source
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-10
 ms.topic: how-to
 keywords:
   - peer directory
@@ -145,13 +145,13 @@ Peer directory clone doesn't work in devcontainers because the container can't a
 
 | Aspect           | Status                                            |
 |------------------|---------------------------------------------------|
-| Devcontainers    | ❌  Not supported                                  |
-| Codespaces       | ❌  Not supported                                  |
+| Devcontainers    | ❌  Not supported                                 |
+| Codespaces       | ❌  Not supported                                 |
 | Team sharing     | ⚠️  Each developer clones and installs separately |
-| Project settings | ✅  None needed                                    |
+| Project settings | ✅  None needed                                   |
 | Version pinning  | ⚠️  Manual (use git checkout)                     |
-| Setup complexity | ✅  Simple (clone, then install from source)       |
-| Update process   | ✅  git pull, then reload the window               |
+| Setup complexity | ✅  Simple (clone, then install from source)      |
+| Update process   | ✅  git pull, then reload the window              |
 
 ## Next Steps
 
