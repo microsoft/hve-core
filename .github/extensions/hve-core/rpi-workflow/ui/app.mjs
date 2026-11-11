@@ -82,8 +82,6 @@ const state = {
         drawer: null,
         /** The Not connected screen: Ask the agent's progress and whether its help is open. */
         connect: { asking: false, askedAt: 0, retryAfterMs: 30000, error: null, helpOpen: false },
-        /** What the last Open in new panel said, shown in the session menu while it is open. */
-        panelNote: null,
     },
 };
 
@@ -143,14 +141,9 @@ function noteMoved(moved) {
     announce(`Moved to ${moved.title}, the loop the agent works in.`);
 }
 
-/** Says what Open in new panel did: in the session menu while it is open, otherwise as a status note. */
+/** Says what an open-panel request did, as a status note. */
 function reportPanel(note) {
     announce(note.text);
-    if (!$('sessionMenu').hidden) {
-        state.ui.panelNote = note;
-        renderSessionMenu();
-        return;
-    }
     state.notes = [...state.notes.filter((item) => item.kind !== 'panel'), { id: `note-${++noteSeq}`, kind: 'panel', tone: note.tone, icon: note.icon, text: note.text }].slice(-MAX_NOTES);
     renderStatus();
 }
@@ -833,13 +826,12 @@ const act = {
             ? `Showing the earlier ${noun} "${documentLabel(earlier)}". It is read-only here.`
             : current ? `Showing the current ${noun}, "${documentLabel(current)}".` : `Showing the current work, which has no ${noun} yet.`);
     },
-    /** Shows another task of this RPI session, by task ID or `{ statePath, session? }`; a session names a task another Copilot session holds. */
+    /** Shows another task of this RPI session, by task ID or `{ statePath }`. */
     async showTask(ref) {
         const before = state.data?.session.id;
         stopFollowing();
         try {
-            const target = typeof ref === 'string' ? { taskId: ref } : { statePath: ref.statePath, ...(ref.session ? { session: ref.session } : {}) };
-            await api('/api/task', { ...target, follow: false });
+            await api('/api/task', { ...(typeof ref === 'string' ? { taskId: ref } : { statePath: ref.statePath }), follow: false });
             await refresh();
             if (state.data.session.id !== before) focusQuietly($('taskTitle'));
         } catch (error) {
@@ -858,10 +850,10 @@ const act = {
             reportFailure(`Could not show that session: ${error.message}`);
         }
     },
-    /** Opens a child session's canvas in a new panel, or asks the agent to; says what happened and leaves focus where it is. */
+    /** Opens a session's canvas in a new panel, or asks the agent to; says what happened and leaves focus where it is. */
     async openPanel(ref) {
         try {
-            reportPanel(panelOutcome(await api('/api/open-panel', { session: ref.session, statePath: ref.statePath }), ref.title));
+            reportPanel(panelOutcome(await api('/api/open-panel', { session: ref.session }), ref.title));
         } catch (error) {
             reportPanel(failedPanel(ref.title, error.message));
         }
@@ -1374,9 +1366,9 @@ function renderHeader() {
     $('taskTitle').textContent = task.title;
     document.title = `RPI Workflow: ${task.title}`;
     const where = [task.repository, task.branch].filter(Boolean).join(' · ');
-    // The parent is the shown task's continuation when the parent sits outside this folder or session; otherwise the parent in the tree.
-    const shownTask = session.followUps.tree.tasks.find((item) => item.shown);
-    const parent = rpi && shownTask?.continues ? shownTask.continues : rpi && task.parent ? session.followUps.tree.tasks.find((item) => item.id === task.parent) ?? { id: task.parent, title: task.parent } : null;
+    const shownTask = rpi ? session.followUps.tree.tasks.find((item) => item.shown) : null;
+    // A parent in another session folder of this workspace reaches the header through the shown task's `continues`.
+    const parent = rpi && task.parent ? session.followUps.tree.tasks.find((item) => item.id === task.parent) ?? (shownTask?.continues?.id === task.parent ? shownTask.continues : null) ?? { id: task.parent, title: task.parent } : null;
     const handle = state.data.canvas?.handle ?? null;
     const named = handle ? ` Messages this canvas sends to the agent start with “RPI canvas ${handle}”.` : '';
     // The badge names the canvas the way its chat messages do; it has its own slot, so it is never clipped.
@@ -1387,7 +1379,8 @@ function renderHeader() {
     clear($('taskMeta')).append(...[
         rpi ? h('code', { class: 'task-id', title: `Task ID: ${task.id}`, text: task.id }) : null,
         where ? h('span', { class: 'task-where', title: where, text: where }) : null,
-        parent ? h('span', { class: 'task-parent' }, 'Child of ', h('button', { type: 'button', class: 'link-btn', title: `Show the parent task: ${parent.title}${parent.sessionId ? ` in session ${parent.sessionName}` : ''}`, dataset: { key: 'header-parent' }, 'aria-label': `Child of ${parent.title}${parent.sessionId ? ` in session ${parent.sessionName}` : ''}: show the parent task`, onclick: () => act.showTask(parent.statePath ? taskRef(parent) : parent.id) }, parent.title)) : null,
+        // A parent the canvas cannot read is named but not offered.
+        parent ? h('span', { class: 'task-parent' }, 'Child of ', parent.statePath ? h('button', { type: 'button', class: 'link-btn', title: `Show the parent task: ${parent.title}`, dataset: { key: 'header-parent' }, 'aria-label': `Child of ${parent.title}: show the parent task`, onclick: () => act.showTask({ statePath: parent.statePath }) }, parent.title) : parent.title) : null,
         session.scenario?.sample ? h('span', { class: 'badge tone-muted sample-badge', title: 'Mock data for the canvas preview' }, icon('info'), 'Sample session') : null,
     ].filter(Boolean));
     renderSessionControls();
@@ -1404,7 +1397,7 @@ function renderSessionControls() {
     const { session } = state.data;
     const tree = session.followUps.tree;
     const name = tree.name ?? session.task.title;
-    const loops = tree.tasks.filter((task) => !task.sessionId).length;
+    const loops = tree.tasks.length;
     const btn = $('sessionBtn');
     btn.hidden = false;
     $('sessionLabel').textContent = `${name} · ${plural(loops, 'loop')}`;
@@ -1412,13 +1405,12 @@ function renderSessionControls() {
     btn.title = `Session “${name}”: ${plural(loops, 'loop')}${tree.key ? ` in ${tree.key}` : ''}`;
 }
 
-/** Opens or closes the session menu: this session's loops, its child sessions, then the workspace's other sessions. */
+/** Opens or closes the session menu: this session's loops, then the workspace's other sessions. */
 function toggleSessionMenu(open) {
     const menu = $('sessionMenu');
     const show = open ?? menu.hidden;
     if (show && !state.data) return;
     menu.hidden = !show;
-    state.ui.panelNote = null;
     $('sessionBtn').setAttribute('aria-expanded', String(show));
     if (!show) return;
     renderSessionMenu();
@@ -1444,7 +1436,6 @@ function renderSessionMenu() {
     const keepFocus = menu.contains(document.activeElement) ? document.activeElement.dataset.key ?? null : null;
     menu.replaceChildren(...sessionMenuNodes(context(), {
         following: state.following !== false,
-        note: state.ui.panelNote,
         onShow: (task) => {
             toggleSessionMenu(false);
             act.showTask(taskRef(task));

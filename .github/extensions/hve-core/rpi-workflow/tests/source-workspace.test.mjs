@@ -564,30 +564,6 @@ describe('following the files', () => {
         store.close();
     });
 
-    it('watches only the shown task\'s files, so a linked task in another session never moves an import', async (t) => {
-        const OTHER = '8c9d0e1f-2a3b-4c4d-8e5f-6a7b8c9d0e1f';
-        const dir = path.join(tmp, 'follow-linked');
-        const elsewhere = path.join(tmp, 'follow-linked-elsewhere');
-        const sessions = path.join(tmp, 'follow-linked-sessions');
-        await writeFixtureWorkspace(dir);
-        await writeFixtureWorkspace(elsewhere);
-        await fs.rm(path.join(dir, PATHS.childState));
-        await writeJson(dir, PATHS.rootState, { ...ROOT_STATE, child_tasks: [{ task_id: CHILD_TASK, task_slug: CHILD_TASK, state_path: PATHS.childState, session_id: OTHER }] });
-        await fs.mkdir(path.join(sessions, OTHER), { recursive: true });
-        await fs.writeFile(path.join(sessions, OTHER, 'workspace.yaml'), `cwd: ${elsewhere}\n`);
-        const store = createStore({ root: path.join(tmp, 'follow-linked-store') });
-        t.after(() => store.close());
-        const follower = createFollower({ store, workspace: await resolveWorkspace([dir]), statePath: PATHS.rootState, intervalMs: 10000, resolveSession: (id) => resolveSessionWorkspace(id, { root: sessions }) });
-        await follower.importNow();
-        const doc = await store.load(follower.documentId);
-        assert.deepEqual(doc.followUps.tree.tasks.map((task) => [task.id, task.sessionId]), [[ROOT_TASK, null], [CHILD_TASK, OTHER]]);
-        const revision = doc.revision;
-        await writeJson(elsewhere, PATHS.childState, { ...CHILD_STATE, status: 'active' });
-        assert.equal(await follower.tick(), false, 'the linked task\'s file is not watched');
-        assert.equal(await follower.tick(), false);
-        assert.equal((await store.load(follower.documentId)).revision, revision);
-    });
-
     it('starts and stops polling', async () => {
         const store = createStore({ root: path.join(tmp, 'follow-timer-store') });
         const follower = createFollower({ store, workspace, statePath: PATHS.rootState, intervalMs: 5 });
