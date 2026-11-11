@@ -19,6 +19,7 @@ problem framing and Design Thinking method boundaries.
 Guide the facilitator to use AI Discovery Cards during the **Solution Space (Ideation phase)** after problem framing is established.
 
 Introduce the cards when the participants:
+
 * Have completed problem framing (validated persona, user needs, insights, and How Might We questions) and are ready to explore solution possibilities.
 * Needs AI-specific inspiration or prompts to spark agentic and AI solution ideas without jumping prematurely into technical architecture or implementation.
 * Wants to broaden brainstorming during concept development, prototyping ideation, or a workshop practice exercise.
