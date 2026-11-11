@@ -20,7 +20,7 @@ PowerShell tooling for synchronizing root `plugin.json` with the complete distri
 
 ## Source to Manifest Pipeline
 
-1. Author artifacts in `.github/` (agents, prompts, instructions, skills, canvas extensions)
+1. Author artifacts in `.github/` (agents, instructions, skills, canvas extensions). HVE Core no longer accepts prompt files; see [Contributing Slash Commands](../../docs/contributing/prompts.md).
 2. Stage new files with `git add`, then run `npm run plugin:sync` to derive root `plugin.json`
 3. Run `npm run plugin:validate` for non-mutating manifest validation
 4. Prepare or package the single extension separately when VSIX output is in scope
@@ -30,7 +30,7 @@ PowerShell tooling for synchronizing root `plugin.json` with the complete distri
 The script discovers these git-tracked paths beneath `.github` and emits repository-relative `.github/...` component paths:
 
 * `agents/<package>/**/*.agent.md`
-* `prompts/<package>/**/*.prompt.md`
+* `prompts/<package>/**/*.prompt.md`, mapped to `commands`, which stays empty because HVE Core no longer accepts prompt files
 * `instructions/<package>/**/*.instructions.md`
 * `skills/<package>/<skill>/SKILL.md`, unless the top-level license has a noncommercial qualifier
 * `extensions/<package>/<extension>/extension.mjs`, declared as the package folder `.github/extensions/<package>` in the `extensions` field
@@ -61,7 +61,7 @@ Check mode writes nothing and exits nonzero on manifest or locator drift.
 
 ## Locator Validation
 
-Check mode requires `.github/plugin/marketplace.json` to contain exactly one `hve-core` entry whose relative source is `.github`. It verifies parity for every retained manifest metadata field, source containment, manifest existence, component coverage, and the absence of recipe fields such as `agents`, `commands`, `rules`, `skills`, `extensions`, `hooks`, or `x-hve` on the locator entry.
+Check mode requires `.github/plugin/marketplace.json` to contain exactly one `hve-core` entry whose relative, contained source holds `plugin.json`; that source is `.`, the repository root. It verifies parity for every retained manifest metadata field, source containment, manifest existence, component coverage, and the absence of recipe fields such as `agents`, `commands`, `rules`, `skills`, `extensions`, `hooks`, or `x-hve` on the locator entry.
 
 The Copilot CLI registration `microsoft/hve-core` tracks `main`; there are no release-channel plugin registrations. The catalog always locates the plugin root relative to the registered repository ref.
 
