@@ -18,16 +18,15 @@ export function outline(ctx) {
     return [
         { id: 'followup-summary', label: 'Summary' },
         { id: 'followups', label: 'Ranked follow-ups', count: ctx.data.session.followUps.items.length },
-        { id: 'session-loops', label: 'Loops in this session', count: ctx.data.session.followUps.tree.tasks.filter((task) => !task.sessionId).length },
+        { id: 'session-loops', label: 'Loops in this session', count: ctx.data.session.followUps.tree.tasks.length },
     ];
 }
 
 function sessionLoops(ctx) {
     const { tree } = ctx.data.session.followUps;
     const name = tree.name ? `“${tree.name}”` : 'This session';
-    const linked = tree.tasks.some((task) => task.sessionId) ? ' Tasks in other sessions appear under their parent, labeled with their session, phase, and decisions waiting.' : '';
     return [
-        h('p', { class: 'meta', text: `${name} holds every loop this conversation worked on, parent first.${tree.key ? ` Its state files are in ${tree.key}.` : ''}${linked}` }),
+        h('p', { class: 'meta', text: `${name} holds every loop this conversation worked on, parent first.${tree.key ? ` Its state files are in ${tree.key}.` : ''}` }),
         sessionTree(ctx, { label: `Loops in ${tree.name ?? 'this session'}, parent first`, keyPrefix: 'followup' }),
     ];
 }

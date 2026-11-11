@@ -13,7 +13,7 @@ import { createInstanceRegistry } from './lib/lifecycle.mjs';
 import { ModelError, PHASE_LABELS } from './lib/model.mjs';
 import { SCENARIO_ID, STAGES } from './lib/scenario.mjs';
 import { createCanvasServer } from './lib/server.mjs';
-import { resolveSessionStateRoot } from './lib/source/sessions.mjs';
+import { resolveSessionStateRoot, resolveSessionWorkspace } from './lib/source/sessions.mjs';
 import { createSourceController, NOT_CONNECTED_WHY, openPlan, validateOpenInput } from './lib/sources.mjs';
 import { createStore } from './lib/store.mjs';
 
@@ -26,10 +26,11 @@ function log(message, level = 'info') {
 
 const makeError = (code, message) => new CanvasError(code, message);
 const store = createStore({ log: (message) => log(message, 'warning') });
+const sessionRoot = () => resolveSessionStateRoot({ workspacePath: joined?.workspacePath }).root;
 const sources = createSourceController({
     store,
     log: (message) => log(message, 'warning'),
-    sessionRoot: () => resolveSessionStateRoot({ workspacePath: joined?.workspacePath }).root,
+    sessionRoot,
     ownSessionId: () => joined?.sessionId ?? null,
 });
 const pickups = createPickupTracker({ store, log: (message) => log(message, 'warning') });
@@ -80,7 +81,8 @@ const registry = createInstanceRegistry({
             deliver: createDelivery({ getSession: () => joined }),
             pickups,
             wakeOutbox: () => inbox?.wakeOutbox(),
-            // The provider that opened this instance opens its child panels too.
+            resolveSession: (sessionId) => resolveSessionWorkspace(sessionId, { root: sessionRoot() }),
+            // The provider that opened this instance opens its canvas panels too.
             getExtensionId: () => record.extensionId ?? null,
             openPanel: createPanelOpener({ rpc: () => joined?.rpc, extensionId: () => record.extensionId, canvasId: CANVAS_ID }),
             log,
@@ -159,7 +161,7 @@ const canvas = createCanvas({
         const ready = /** @type {{ sessionId: string, source: any, session: any, note: string }} */ (prepared);
         // The conversation keys the instance's memory.
         instance.hostSessionId = hostSessionId;
-        // The provider the host opened this instance through, which its child panels reuse.
+        // The provider the host opened this instance through, which its panels reuse.
         instance.extensionId = providerOf(ctx);
         sources.attach(instance, ready);
         return openResult(instance, ready.source, ready.session, ready.note);

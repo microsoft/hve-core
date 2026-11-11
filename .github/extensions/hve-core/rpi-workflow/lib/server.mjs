@@ -27,8 +27,8 @@ import {
     takeBackFeedback,
     transitionFeedback,
 } from './model.mjs';
-import { loadLinkedSessions, linkedTasksOf, loadSessionDocs } from './session-docs.mjs';
-import { isSessionId } from './source/sessions.mjs';
+import { loadSessionDocs } from './session-docs.mjs';
+import { isSessionId, resolveSessionWorkspace } from './source/sessions.mjs';
 import { agentTask } from './source/tree.mjs';
 import { CLAIM_WINDOW_MS, commitHandOff, hasLiveProcess } from './inbox.mjs';
 import { CANVAS_ID, panelInstanceId } from './panels.mjs';
@@ -117,15 +117,13 @@ export function connectRequestText(handle) {
 }
 
 /**
- * The request a canvas sends its own chat when a child session's canvas cannot open from there. Its
- * session and state path come from the shown task's links, never from the page.
+ * The request a canvas sends its own chat when it cannot open a session's canvas in a new panel itself.
  *
  * @param {string | null | undefined} handle
  * @param {string} session
- * @param {string} statePath
  */
-export function panelRequestText(handle, session, statePath) {
-    return `${handle ? `RPI canvas ${handle}` : 'RPI canvas'}: open an RPI Workflow canvas for session ${session} with state ${statePath}.`;
+export function panelRequestText(handle, session) {
+    return `${handle ? `RPI canvas ${handle}` : 'RPI canvas'}: open an RPI Workflow canvas for session ${session}.`;
 }
 
 /** Error that maps to a JSON error response. */
@@ -208,7 +206,7 @@ export function clientInfoFrom(body) {
  *   log?: (message: string, level?: string) => void,
  *   now?: () => string,
  *   getSource?: () => { kind?: string, reason?: string, detail?: string | null, boundSession?: string | null, workspace?: { root: string } | null, follow?: { paused: boolean }, follower?: { start: () => void, stop: () => void } } | undefined,
- *   switchTask?: (ref: { taskId?: string, statePath?: string, session?: string }, options?: { paused?: boolean }) => Promise<{ sessionId: string }>,
+ *   switchTask?: (ref: { taskId?: string, statePath?: string }, options?: { paused?: boolean }) => Promise<{ sessionId: string }>,
  *   switchSession?: (key: string, options?: { paused?: boolean }) => Promise<{ sessionId: string }>,
  *   resumeFollowing?: () => Promise<{ sessionId: string }>,
  *   pauseFollowing?: () => Promise<{ sessionId: string }>,
@@ -217,9 +215,10 @@ export function clientInfoFrom(body) {
  *   markRetryMs?: number,
  *   claimWindowMs?: number,
  *   wakeOutbox?: () => unknown,
- *   openPanel?: (request: { session: string, statePath: string, taskId: string }) => Promise<{ outcome: 'opened' | 'focused', instanceId: string }>,
+ *   resolveSession?: (sessionId: string) => Promise<{ root: string, tracking: string }>,
+ *   openPanel?: (request: { session: string }) => Promise<{ outcome: 'opened' | 'focused', instanceId: string }>,
  *   getExtensionId?: () => string | null | undefined,
- * }} deps
+ * }} deps `resolveSession` reads a local Copilot session's workspace, which open-panel requires before it asks for a panel.
  */
 export function createCanvasServer(deps) {
     const { store, getSessionId } = deps;
@@ -241,6 +240,7 @@ export function createCanvasServer(deps) {
     const deliver = deps.deliver ?? (async () => {
         throw new ModelError('delivery_unavailable', 'This canvas is not connected to a Copilot session.');
     });
+    const resolveSession = deps.resolveSession ?? ((sessionId) => resolveSessionWorkspace(sessionId));
     const log = deps.log ?? (() => {});
     const now = deps.now ?? (() => new Date().toISOString());
     /** @type {http.Server | null} */
@@ -256,7 +256,7 @@ export function createCanvasServer(deps) {
     let others = new Set();
     /** When Ask the agent last sent, so a double press does not send twice. */
     let lastConnectRequest = 0;
-    /** The child the canvas last asked its agent to open a canvas for, and when; every child's open-panel fallback waits on this one clock. */
+    /** The session the canvas last asked its agent to open a canvas for, and when; every open-panel fallback waits on this one clock. */
     let lastPanelAsk = null;
     /** False while the canvas shows no session, until the agent connects it. */
     const connected = () => deps.getSource?.()?.kind !== 'none';
@@ -393,7 +393,6 @@ export function createCanvasServer(deps) {
             editor: getEditor() && deps.getSource?.()?.kind === 'rpi' ? { name: getEditor().name } : null,
             follow: source?.kind === 'rpi' ? { paused: Boolean(source.follow?.paused), agent: agentLoop(source.tasks) } : null,
             otherTasks: docs.slice(1).map((doc) => ({ taskId: doc.taskId, title: doc.task?.title ?? doc.session.task.title, status: doc.task?.status ?? null, statePath: doc.task?.statePath ?? null, ...feedbackOverview(doc.session, at, { viewer: ownSessionId() }) })),
-            linkedSessions: await loadLinkedSessions(store, session, { at: Date.parse(at) }),
             delivery: deliveryTargetOf(session),
             ownSessionId: ownSessionId(),
         };
@@ -724,25 +723,25 @@ export function createCanvasServer(deps) {
     }
 
     /**
-     * The fallback when a child session's canvas cannot open from here: the canvas's own chat gets one
+     * The fallback when a session's canvas cannot open from here: the canvas's own chat gets one
      * fixed line, at most once in each interval, asking the agent to open the canvas with the host's
      * canvas tool. The result says whether the agent was asked, how long to wait, or why it was not sent.
-     * A wait says whether the earlier ask was for this same child, so the page names only that child.
+     * A wait says whether the earlier ask was for this same session, so the page names only that session.
      *
-     * @param {{ session: string, statePath: string, taskId: string }} child a child session of the shown task
+     * @param {string} session the lowercase Copilot session ID whose canvas is asked for
      */
-    async function askForPanel(child) {
+    async function askForPanel(session) {
         const at = Date.parse(now());
-        const instanceId = panelInstanceId(child.session, child.taskId);
         if (lastPanelAsk && at - lastPanelAsk.at < CONNECT_REQUEST_INTERVAL_MS) {
-            return { outcome: 'wait', retryAfterMs: CONNECT_REQUEST_INTERVAL_MS - (at - lastPanelAsk.at), sameChild: lastPanelAsk.instanceId === instanceId };
+            return { outcome: 'wait', retryAfterMs: CONNECT_REQUEST_INTERVAL_MS - (at - lastPanelAsk.at), sameSession: lastPanelAsk.session === session };
         }
+        const instanceId = panelInstanceId(session);
         const canvas = getCanvas();
-        const displayPrompt = panelRequestText(canvas?.handle, child.session, child.statePath);
+        const displayPrompt = panelRequestText(canvas?.handle, session);
         const provider = deps.getExtensionId?.() ?? null;
-        const input = JSON.stringify({ session: child.session, state: child.statePath });
+        const input = JSON.stringify({ session });
         const prompt = `${displayPrompt}\n\nOpen it with the open_canvas tool: canvasId "${CANVAS_ID}", instanceId "${instanceId}", input ${input}${provider ? `, extensionId "${provider}"` : ''}. It opens in a new panel of this conversation, or focuses the panel already open. Then tell the user it is open, or why it could not be opened.`;
-        lastPanelAsk = { at, instanceId };
+        lastPanelAsk = { at, session };
         try {
             await deliver({ prompt, displayPrompt, ids: [] });
         } catch (error) {
@@ -921,11 +920,7 @@ export function createCanvasServer(deps) {
             if (!deps.switchTask) {
                 throw new HttpError(404, 'not_found', 'This canvas cannot switch tasks.');
             }
-            if (body?.session !== undefined && body.session !== null && !isSessionId(body.session)) {
-                throw new HttpError(400, 'invalid_input', 'session must be a Copilot session ID (a UUID).');
-            }
-            const linked = typeof body?.session === 'string' ? { session: body.session } : {};
-            const ref = { ...(typeof body?.statePath === 'string' ? { statePath: body.statePath } : { taskId: typeof body?.taskId === 'string' ? body.taskId : '' }), ...linked };
+            const ref = typeof body?.statePath === 'string' ? { statePath: body.statePath } : { taskId: typeof body?.taskId === 'string' ? body.taskId : '' };
             // A switch the reader chose stops following when the page asks, even onto a running loop.
             const result = await deps.switchTask(ref, { paused: body?.follow === false });
             return { sessionId: result.sessionId };
@@ -990,23 +985,25 @@ export function createCanvasServer(deps) {
             return { sent: true, retryAfterMs: CONNECT_REQUEST_INTERVAL_MS };
         },
 
-        // Opens a child session's canvas in a new panel of this conversation. The request must name a child of the
-        // shown task; the host opens or focuses the panel, or the agent is asked to when the host cannot.
+        // Opens a Copilot session's RPI canvas in a new panel of this conversation. The session must be a local
+        // session whose workspace resolves; the host opens or focuses the panel, or the agent is asked to when the host cannot.
         'POST /api/open-panel': async (body) => {
-            const session = await shownSession();
-            const wanted = typeof body?.session === 'string' ? body.session.toLowerCase() : '';
-            const child = linkedTasksOf(session).find((task) => task.sessionId.toLowerCase() === wanted && task.statePath === body?.statePath);
-            if (!child) throw new HttpError(404, 'not_found', 'That session is not a child session of this task.');
-            const request = { session: child.sessionId.toLowerCase(), statePath: child.statePath, taskId: child.id };
+            if (!isSessionId(body?.session)) throw new HttpError(400, 'invalid_input', 'session must be a Copilot session ID (a UUID).');
+            const session = body.session.toLowerCase();
+            try {
+                await resolveSession(session);
+            } catch (error) {
+                throw new HttpError(404, 'not_found', error instanceof Error ? error.message : `Copilot session ${session} cannot be read.`);
+            }
             if (deps.openPanel) {
                 try {
-                    const opened = await deps.openPanel(request);
+                    const opened = await deps.openPanel({ session });
                     return { outcome: opened.outcome, instanceId: opened.instanceId };
                 } catch (error) {
                     log(`Could not open a canvas panel: ${error instanceof Error ? error.message : 'error'}`, 'warning');
                 }
             }
-            return askForPanel(request);
+            return askForPanel(session);
         },
 
         'POST /api/source': async (body) => {

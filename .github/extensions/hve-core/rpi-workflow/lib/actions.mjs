@@ -20,7 +20,7 @@ import {
     upsertDecision,
 } from './model.mjs';
 import { buildScenario, SCENARIO_ID, STAGES } from './scenario.mjs';
-import { loadLinkedSessions, loadSessionDocs } from './session-docs.mjs';
+import { loadSessionDocs } from './session-docs.mjs';
 import { isSessionId } from './source/sessions.mjs';
 import { sourceSummary } from './sources.mjs';
 
@@ -37,7 +37,7 @@ const WITHOUT_SESSION = new Set(['get_state', 'show_task', 'load_scenario', 'set
 export const ACTION_DEFINITIONS = Object.freeze([
     {
         name: 'get_state',
-        description: 'Summarize the RPI session shown in this canvas: the canvas handle and instance ID that its messages name, phase, decisions needing the user, agent decisions, pending and interpreted feedback for the shown task and for the other tasks in its session (otherTasks), the session tree and whether the canvas follows its running loop, linkedSessions: the tasks of other Copilot sessions that this session links to, with each one\'s session ID, phase and status as its state file records them now (the tree\'s last record when that file cannot be read), decisions waiting for the user (null when no canvas has read that task yet), and live, true when a canvas process of that session is running; progress, appearance, what the page reported about its environment, and chatEvents: how many chat user-message events the canvas has seen, which is how it learns that you picked up a message it sent.',
+        description: 'Summarize the RPI session shown in this canvas: the canvas handle and instance ID that its messages name, phase, decisions needing the user, agent decisions, pending and interpreted feedback for the shown task and for the other tasks in its session (otherTasks), the session tree and whether the canvas follows its running loop, progress, appearance, what the page reported about its environment, and chatEvents: how many chat user-message events the canvas has seen, which is how it learns that you picked up a message it sent.',
         inputSchema: { type: 'object', properties: { detail: { type: 'string', enum: ['summary', 'full'], description: 'summary (default) or full session data' } }, additionalProperties: false },
     },
     {
@@ -374,8 +374,7 @@ export function createActionHandlers(deps) {
             }
             const base = { ...common, source: sourceSummary(instance, session) };
             const otherTasks = await otherTasksOf(instance);
-            const linkedSessions = await loadLinkedSessions(store, session);
-            return input.detail === 'full' ? { ...base, session, otherTasks, linkedSessions } : { ...base, ...summarize(session), otherTasks, linkedSessions };
+            return input.detail === 'full' ? { ...base, session, otherTasks } : { ...base, ...summarize(session), otherTasks };
         }),
 
         load_scenario: (ctx) => guard(async () => {

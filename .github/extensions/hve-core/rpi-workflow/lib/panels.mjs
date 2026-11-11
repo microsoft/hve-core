@@ -5,21 +5,19 @@
 export const CANVAS_ID = 'hve-core-rpi-workflow';
 
 /**
- * The instance ID of a child session's canvas: `rpi-`, the first eight characters of the session ID,
- * and the task ID. Only lowercase letters, digits, and hyphens remain, and the ID is at most 80
- * characters, so the same child and task always name the same panel.
+ * The instance ID of a session's canvas in a new panel: `rpi-` and the first eight characters of the
+ * session ID, lowercase. The same session always names the same panel.
  *
  * @param {string} sessionId
- * @param {string} taskId
  * @returns {string}
  */
-export function panelInstanceId(sessionId, taskId) {
-    return `rpi-${String(sessionId).slice(0, 8)}-${String(taskId)}`.toLowerCase().replace(/[^a-z0-9-]/g, '-').slice(0, 80);
+export function panelInstanceId(sessionId) {
+    return `rpi-${String(sessionId).slice(0, 8).toLowerCase()}`;
 }
 
 /**
  * The provider that the host opened a canvas instance through, from the open request. The instance's
- * child panels open through the same provider, so the host opens the same extension.
+ * panels open through the same provider, so the host opens the same extension.
  *
  * @param {{ extensionId?: unknown } | null | undefined} request the host's open request
  * @returns {string | null}
@@ -47,22 +45,22 @@ async function isOpen(canvas, instanceId) {
 }
 
 /**
- * Opens a child session's RPI canvas in a new panel of the joined session, or reports it focused when
+ * Opens a session's RPI canvas in a new panel of the joined session, or reports it focused when
  * the host already lists that instance open. The provider is the one that opened this canvas, read at
  * each open. Throws when the host has no canvas API, when no provider is known, or when the host refuses.
  *
  * @param {{ rpc: () => any, extensionId: () => string | null | undefined, canvasId: string }} deps
- * @returns {(request: { session: string, statePath: string, taskId: string }) => Promise<{ outcome: 'opened' | 'focused', instanceId: string }>}
+ * @returns {(request: { session: string }) => Promise<{ outcome: 'opened' | 'focused', instanceId: string }>}
  */
 export function createPanelOpener(deps) {
-    return async function openPanel({ session, statePath, taskId }) {
+    return async function openPanel({ session }) {
         const canvas = deps.rpc()?.canvas;
         if (typeof canvas?.open !== 'function') throw new Error('This host cannot open canvas panels.');
         const extensionId = deps.extensionId();
         if (!extensionId) throw new Error('This canvas does not know its provider, so it cannot open a panel.');
-        const instanceId = panelInstanceId(session, taskId);
+        const instanceId = panelInstanceId(session);
         const focus = await isOpen(canvas, instanceId);
-        await canvas.open({ extensionId, canvasId: deps.canvasId, instanceId, input: { session, state: statePath } });
+        await canvas.open({ extensionId, canvasId: deps.canvasId, instanceId, input: { session } });
         return { outcome: focus ? 'focused' : 'opened', instanceId };
     };
 }

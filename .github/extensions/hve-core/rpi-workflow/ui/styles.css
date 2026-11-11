@@ -1633,57 +1633,6 @@ details > summary:hover {
   font: var(--rw-t-meta);
 }
 
-/* A child session is a dashed card, like a child task in the session tree, so the difference does not depend on color. */
-.child-sessions {
-  display: grid;
-  gap: 6px;
-}
-
-.child-session-list {
-  display: grid;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.child-session-card {
-  display: grid;
-  gap: 4px;
-  padding: 8px 10px;
-  border: 1px dashed var(--rw-border-muted);
-  border-radius: var(--rw-radius-lg);
-  background: var(--rw-bg);
-}
-
-.child-session-title {
-  font: 600 13px/20px var(--rw-font);
-  overflow-wrap: anywhere;
-}
-
-.child-session-card .meta {
-  overflow-wrap: anywhere;
-}
-
-.child-session-facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 6px;
-}
-
-.child-session-card .btn-row {
-  margin-top: 2px;
-}
-
-.child-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin: 0;
-  font: var(--rw-t-ui);
-  overflow-wrap: anywhere;
-}
-
 /* Workspace */
 
 .workspace {
@@ -4857,11 +4806,6 @@ circle.diagram-mark-glyph {
   background: var(--rw-bg-selected);
 }
 
-/* A task in another session has a dashed card, so the difference does not depend on color. */
-.tree-task.is-linked > .tree-card {
-  border-style: dashed;
-}
-
 .tree-title {
   min-width: 0;
   font: 600 13px/20px var(--rw-font);
@@ -4878,11 +4822,6 @@ circle.diagram-mark-glyph {
 .tree-card > .btn,
 .tree-card > .tree-shown {
   margin-left: auto;
-}
-
-/* Open in new panel follows Show on the same line, so only the first of the pair takes the free space. */
-.tree-card > .btn + .btn {
-  margin-left: 0;
 }
 
 .tree-continues {
