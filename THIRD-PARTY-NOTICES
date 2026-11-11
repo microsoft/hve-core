@@ -181,6 +181,20 @@ The MIT license text is retained at
 
 ---
 
+OWASP Threat Dragon v2.6.2 JSON schema
+License: Apache License 2.0
+Source: <https://github.com/OWASP/threat-dragon>
+Upstream revision: 8c0edb2295a1587684324646c8507fd56ba9a197
+Upstream file: td.vue/src/assets/schema/threat-dragon-v2.schema.json
+Usage: Redistributed without modification for local Threat Dragon model validation.
+Local file: .github/skills/project-planning/security-planning/assets/threat-dragon/threat-dragon-v2.6.2.schema.json
+SHA-256: 9567284B86199DBC33276DEB68E2FF92A4C23C8DE2C50AF4F7927719C950489D
+The upstream licence, local attribution notice, and provenance record are retained
+beside the schema as LICENSE.threat-dragon-apache-2.0.txt,
+THIRD-PARTY-NOTICE.txt, and threat-dragon-v2.6.2.provenance.json.
+
+---
+
 tm7-cli sample threat model (test fixture)
 License: MIT License
 Source: <https://github.com/gholliday/tm7-cli>

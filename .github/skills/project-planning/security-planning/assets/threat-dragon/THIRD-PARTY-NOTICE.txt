@@ -1,0 +1,29 @@
+OWASP Threat Dragon v2.6.2 JSON Schema
+
+This distribution includes an unmodified copy of:
+
+  td.vue/src/assets/schema/threat-dragon-v2.schema.json
+
+from the OWASP Threat Dragon project:
+
+  https://github.com/OWASP/threat-dragon
+
+The copy is pinned to release v2.6.2 and commit:
+
+  8c0edb2295a1587684324646c8507fd56ba9a197
+
+Upstream git blob SHA:
+
+  c8fab1c855bf8e08da24892b8cb153695a19c17c
+
+SHA-256:
+
+  9567284B86199DBC33276DEB68E2FF92A4C23C8DE2C50AF4F7927719C950489D
+
+The schema is licensed under the Apache License, Version 2.0.
+The full upstream license text is provided in:
+
+  LICENSE.threat-dragon-apache-2.0.txt
+
+OWASP and Threat Dragon are trademarks or project names of their respective
+owners. Inclusion of the schema does not imply endorsement.

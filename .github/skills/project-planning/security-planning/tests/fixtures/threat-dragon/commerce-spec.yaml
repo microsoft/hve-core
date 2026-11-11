@@ -1,0 +1,189 @@
+project_metadata:
+  name: Threat Dragon fixture commerce
+  version: 1.0
+  summary: Representative commerce service used to exercise Threat Dragon export
+  owner: Platform security
+
+mode: pre-populated-comprehensive
+template_profile: sdl_core_generic
+
+representations:
+  context_diagrams:
+    - id: ctx-commerce
+      name: Commerce context
+      description: Customers and the payment provider reach the web tier
+      elements:
+        - id: ext-customer
+        - id: proc-web
+        - id: ext-payments
+      flows:
+        - id: flow-browse
+        - id: flow-pay
+      trust_zone_ids:
+        - tz-internet
+        - tz-platform
+  functional_scenarios:
+    - id: func-orders
+      name: Order persistence
+      description: The web tier reads and writes orders
+      elements:
+        - id: proc-web
+        - id: ds-orders
+      flows:
+        - id: flow-orders
+      trust_zone_ids:
+        - tz-platform
+        - tz-data
+
+components:
+  - id: ext-customer
+    name: Customer
+    kind: external_interactor
+    trust_zone_id: tz-internet
+    description: Public shopper using a browser
+  - id: proc-web
+    name: Web application
+    kind: process
+    trust_zone_id: tz-platform
+    description: Commerce web tier
+  - id: ds-orders
+    name: Order store
+    kind: data_store
+    trust_zone_id: tz-data
+    description: Persistent order records
+  - id: ext-payments
+    name: Payment provider
+    kind: external_interactor
+    trust_zone_id: tz-internet
+    description: Third-party card processor
+    out_of_scope: true
+    out_of_scope_reason: Operated and assessed by the payment provider
+
+trust_zones:
+  - id: tz-internet
+    name: Internet
+    description: Untrusted public network
+  - id: tz-platform
+    name: Commerce platform
+    description: Hosted commerce platform
+  - id: tz-data
+    name: Data tier
+    description: Restricted data tier inside the platform
+    parent_trust_zone_id: tz-platform
+
+data_flows:
+  - id: flow-browse
+    source_ref: ext-customer
+    target_ref: proc-web
+    ordinal: 1
+    label: Browse and order
+    transport: HTTPS
+    encryption: TLS 1.3
+    notes: Customer requests and responses
+    bidirectional: true
+    public_network: true
+    encrypted: true
+  - id: flow-pay
+    source_ref: proc-web
+    target_ref: ext-payments
+    ordinal: 2
+    label: Authorize payment
+    transport: HTTPS
+    encryption: TLS 1.3
+    notes: Card authorization request
+    bidirectional: false
+    public_network: true
+    encrypted: true
+  - id: flow-orders
+    source_ref: proc-web
+    target_ref: ds-orders
+    ordinal: 3
+    label: Read and write orders
+    transport: TLS
+    encryption: TLS 1.2
+    notes: Order persistence
+    bidirectional: true
+    public_network: false
+    encrypted: true
+
+threats:
+  - id: T-100
+    target_ref: flow-browse
+    interaction_ref: flow-browse
+    category: tampering
+    title: Request tampering
+    description: Request parameters may be modified in transit
+    state: Partially Mitigated
+    severity: high
+    likelihood: medium
+    impact: high
+    risk: high
+    citations:
+      stride: [T]
+      nist: [SI-10]
+      mitre: []
+    mitigation_ids: [mit-validate]
+  - id: T-101
+    target_ref: ds-orders
+    interaction_ref: flow-orders
+    category: information-disclosure
+    title: Order metadata observation
+    description: Operational metadata may reveal low-value context
+    state: Mitigated
+    likelihood: low
+    impact: low
+    risk: informational
+    citations:
+      stride: [I]
+      nist: [SC-28]
+      mitre: []
+    mitigation_ids: [mit-encrypt]
+  - id: T-102
+    target_ref: proc-web
+    interaction_ref: flow-orders
+    category: denial-of-service
+    title: Order processing exhaustion
+    description: Storage exhaustion may stop order processing
+    state: Accepted with Documentation
+    citations:
+      stride: [D]
+      nist: [SC-5]
+      mitre: []
+  - id: T-103
+    target_ref: proc-web
+    interaction_ref: flow-browse
+    category: spoofing
+    title: Session impersonation
+    description: A stolen session could impersonate a customer
+    state: Open
+    severity: critical
+    citations:
+      stride: [S]
+      nist: [IA-2]
+      mitre: [CAPEC-593]
+    mitigation_ids: [mit-validate, mit-encrypt]
+
+mitigations:
+  - id: mit-validate
+    name: Input and session validation
+    description: Validate input and bind sessions to the authenticated customer
+  - id: mit-encrypt
+    name: Encryption at rest and in transit
+    description: Encrypt order data at rest and require TLS in transit
+
+export_options:
+  threat_dragon:
+    elements:
+      ext-customer:
+        provides_authentication: false
+      proc-web:
+        is_web_application: true
+        handles_card_payment: true
+        handles_goods_or_services: true
+        privilege_level: application
+      ds-orders:
+        is_a_log: false
+        is_encrypted: true
+        is_signed: false
+        stores_credentials: false
+        stores_inventory: true

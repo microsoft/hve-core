@@ -1,20 +1,21 @@
 ---
 title: Security Planning Skill Security Model
-description: STRIDE threat model for the TM7 generation and native feedback runtime that parses untrusted specs, template XML, local screenshots, UI Automation traces, and overlay evidence with human-review gates
+description: STRIDE threat model for the TM7 and Threat Dragon generation and native feedback runtime that parses untrusted specs, template XML, Threat Dragon JSON, local screenshots, UI Automation traces, and overlay evidence with human-review gates
 author: microsoft/hve-core
 ms.topic: reference
-ms.date: 2026-08-05
+ms.date: 2026-10-06
 estimated_reading_time: 8
 keywords:
   - security
   - STRIDE
   - threat model
   - tm7
+  - threat dragon
   - security-planning
 ---
 # Security Planning Skill Security Model
 
-This document records the STRIDE threat model for the TM7 generation and native feedback runtime in the security-planning skill. The runtime now includes the generator, the native Microsoft Threat Modeling Tool validator, local UI Automation interaction, screenshot capture, evidence persistence, and overlay replay. The model is organized by trust bucket around the executable surfaces that the runtime directly touches: TMT process automation and UI Automation (B1), local screenshot and evidence capture (B2), and overlay and evidence path handling (B3). Each bucket enumerates all six STRIDE categories with the mitigations that address them. Assets and adversaries are enumerated first, and enterprise readiness gaps appear at the end. The runtime writes redacted evidence bundles under a local evidence root with `manifest.json`, `status.json`, `action.log`, and per-run screenshots/UIA/summaries folders, writes iteration-scoped candidate models and `overlay.yaml` files under `iterations/00-baseline` and `iterations/01` through `iterations/03`, emits pending overlay outputs for human review, and never rewrites the canonical baseline or auto-promotes overlays to `approved`.
+This document records the STRIDE threat model for the TM7 generation and native feedback runtime in the security-planning skill. The runtime now includes the TM7 and Threat Dragon generators, the Threat Dragon model validator, the native Microsoft Threat Modeling Tool validator, local UI Automation interaction, screenshot capture, evidence persistence, and overlay replay. The model is organized by trust bucket around the executable surfaces that the runtime directly touches: TMT process automation and UI Automation (B1), local screenshot and evidence capture (B2), and overlay and evidence path handling (B3). Each bucket enumerates all six STRIDE categories with the mitigations that address them. Assets and adversaries are enumerated first, and enterprise readiness gaps appear at the end. The runtime writes redacted evidence bundles under a local evidence root with `manifest.json`, `status.json`, `action.log`, and per-run screenshots/UIA/summaries folders, writes iteration-scoped candidate models and `overlay.yaml` files under `iterations/00-baseline` and `iterations/01` through `iterations/03`, emits pending overlay outputs for human review, and never rewrites the canonical baseline or auto-promotes overlays to `approved`.
 
 > **See also: repo-wide STRIDE model.** This skill participates in the repository-wide threat model at [docs/security/security-model.md](../../../../docs/security/security-model.md) and is registered in its [Skill Security Models](../../../../docs/security/security-model.md#skill-security-models) section.
 
@@ -52,7 +53,9 @@ The highest-risk behavior is running a local executable against a threat-model a
 2. `scripts/validate_tm7_with_tmt.py`: discovers the local TMT executable, enforces the pinned version, launches the native UI, runs validation and feedback-loop modes, and writes redacted evidence bundles.
 3. `scripts/tm7_visual_feedback.py`: evaluates geometry metrics, derives overlay candidates, ranks them deterministically, and evaluates convergence and semantic regression.
 4. `assets/schemas/`: defines the overlay and evidence-manifest contracts that constrain replay and evidence output.
-5. Generated evidence and overlays: `manifest.json`, `status.json`, iteration bundles, screenshots, UIA snapshots, and pending overlay output written for human review.
+5. `scripts/generate_threat_dragon.py`: reuses the generator's spec loading, validation, and layout to emit an OWASP Threat Dragon v2.6.2 JSON model, validates it in a sibling temporary file, and atomically replaces the caller-selected output.
+6. `scripts/validate_threat_dragon.py`: reads a generated or hand-supplied Threat Dragon model through a bounded read and checks it against the vendored v2.6.2 schema in `assets/threat-dragon/` and semantic graph rules, without modifying it.
+7. Generated evidence and overlays: `manifest.json`, `status.json`, iteration bundles, screenshots, UIA snapshots, and pending overlay output written for human review.
 
 ### Data Flow
 
@@ -62,6 +65,7 @@ flowchart TD
         SPEC["Threat-model spec"]
         OVERLAY["Overlay input"]
         MODEL["Existing TM7 model"]
+        TD_MODEL["Threat Dragon model"]
     end
     subgraph RUNTIME["TM7 generation and feedback runtime"]
         GEN["Generator"]
@@ -69,6 +73,9 @@ flowchart TD
         UIA["UI Automation capture"]
         EVIDENCE["Redacted evidence bundle"]
         OVERLAYOUT["Pending overlay output"]
+        TD_GEN["Threat Dragon generator"]
+        TD_VAL["Threat Dragon validator"]
+        TD_OUT["Threat Dragon JSON output"]
     end
     SPEC --> GEN
     OVERLAY --> GEN
@@ -77,6 +84,10 @@ flowchart TD
     VALIDATE --> UIA
     UIA --> EVIDENCE
     EVIDENCE --> OVERLAYOUT
+    SPEC --> TD_GEN
+    TD_GEN --> TD_VAL
+    TD_MODEL --> TD_VAL
+    TD_VAL --> TD_OUT
 ```
 
 ## Trust Boundaries
@@ -206,6 +217,7 @@ flowchart TD
 ### Tampering
 
 * The runtime validates overlay schema, required fingerprints, and path confinement before replay. It rejects overlays that do not match the current spec, generator profile, or surface identity fingerprint and keeps emitted overlays in `approval_state: pending` until a human review action promotes them outside the loop.
+* The Threat Dragon generator writes to a sibling temporary file, validates it, and only then replaces the output with `os.replace`, so a failed or interrupted run leaves an existing model intact and a symlinked destination is swapped rather than written through.
 
 ### Repudiation
 
@@ -218,6 +230,7 @@ flowchart TD
 ### Denial of Service
 
 * The runtime constrains overlay paths to local output directories and rejects absolute or traversal paths in overlay references.
+* The Threat Dragon validator reads a model only when it fits the 64 MiB model ceiling, implements every schema keyword it relies on in-module, fails closed on any other keyword, and reports parse and read failures as exit code 2 rather than an unhandled traceback.
 
 ### Elevation of Privilege
 
@@ -230,6 +243,7 @@ flowchart TD
 | Overlay or manifest tampering changes the replay contract or the evidence metadata                                     | Medium     | Medium | Medium        | Mitigated (strict schema, required complete invalidation fingerprints, path confinement, pending approval) (G-TAM-3) |
 | A path traversal or output-escape bug writes evidence or overlay content outside the intended local evidence directory | Low        | Medium | Low           | Mitigated (path validation and confinement) (G-EOP-1)                                                                |
 | Visual scores or pending overlays are treated as equivalent to a semantic approval                                     | Medium     | High   | Medium        | Mitigated (semantic regression checks, no automatic promotion, human review gate) (G-REP-1)                          |
+| A crafted Threat Dragon model exhausts memory or crashes the validator                                                 | Low        | Low    | Low           | Mitigated (bounded read, in-module schema check, fail-closed errors)                                                 |
 
 ## Enterprise Readiness Gaps
 

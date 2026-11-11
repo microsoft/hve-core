@@ -1,0 +1,15 @@
+{
+  "sourceRepository": "OWASP/threat-dragon",
+  "releaseTag": "v2.6.2",
+  "commit": "8c0edb2295a1587684324646c8507fd56ba9a197",
+  "sourcePath": "td.vue/src/assets/schema/threat-dragon-v2.schema.json",
+  "rawUrl": "https://raw.githubusercontent.com/OWASP/threat-dragon/8c0edb2295a1587684324646c8507fd56ba9a197/td.vue/src/assets/schema/threat-dragon-v2.schema.json",
+  "gitBlobSha": "c8fab1c855bf8e08da24892b8cb153695a19c17c",
+  "sha256": "9567284B86199DBC33276DEB68E2FF92A4C23C8DE2C50AF4F7927719C950489D",
+  "sizeBytes": 18703,
+  "license": "Apache-2.0",
+  "retrievedOn": "2026-10-01",
+  "compatibilityTarget": "Threat Dragon v2.6.2",
+  "licenseFile": "LICENSE.threat-dragon-apache-2.0.txt",
+  "noticeFile": "THIRD-PARTY-NOTICE.txt"
+}
