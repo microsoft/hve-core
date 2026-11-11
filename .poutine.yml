@@ -33,6 +33,16 @@ skip:
       - .github/workflows/backlog-groom.lock.yml
     job:
       - activation
+  # Same gh-aw activation pattern under comment triggers: the sparse .github
+  # checkout pins the base SHA or default-branch SHA, never the PR head.
+  # Upstream: https://github.com/boostsecurityio/poutine/issues/457
+  # Tracking: https://github.com/microsoft/hve-core/issues/3137
+  # Expires: 2026-12-31
+  - rule: untrusted_checkout_exec
+    path:
+      - .github/workflows/pr-review.lock.yml
+    job:
+      - activation
   # The generated workflow explicitly defaults to no token scopes. Poutine
   # treats the empty map as absent; explicit job grants are checked separately.
   - rule: default_permissions_on_risky_events
