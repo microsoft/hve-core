@@ -13,7 +13,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-09-28
+ms.date: 2026-11-10
 ms.topic: reference
 estimated_reading_time: 8
 ---
@@ -140,10 +140,10 @@ The agent follows a four-step protocol for each capability:
 
 | Icon | Meaning        |
 |------|----------------|
-| ✅    | Present        |
+| ✅   | Present        |
 | ⚠️   | Partial        |
-| ❌    | Missing        |
-| ➖    | Not applicable |
+| ❌   | Missing        |
+| ➖   | Not applicable |
 
 ### State Transitions
 

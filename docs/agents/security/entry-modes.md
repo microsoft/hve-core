@@ -12,7 +12,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-11-10
 ms.topic: how-to
 estimated_reading_time: 5
 ---
@@ -43,10 +43,10 @@ Start security planning from our PRD for the contoso-api project.
 
 | Situation                                                           | Fit |
 |---------------------------------------------------------------------|-----|
-| PRD or BRD artifacts exist under `prd-sessions/` or `brd-sessions/` | ✅   |
-| Product requirements are well-documented                            | ✅   |
-| Early-stage project without formal docs                             | ❌   |
-| Quick exploration of the agent's workflow                           | ❌   |
+| PRD or BRD artifacts exist under `prd-sessions/` or `brd-sessions/` | ✅  |
+| Product requirements are well-documented                            | ✅  |
+| Early-stage project without formal docs                             | ❌  |
+| Quick exploration of the agent's workflow                           | ❌  |
 
 ## Capture Mode
 
@@ -73,10 +73,10 @@ If the user provides existing security notes or context in the initial message, 
 
 | Situation                                        | Fit |
 |--------------------------------------------------|-----|
-| No PRD or BRD artifacts available                | ✅   |
-| Team wants to explore the workflow interactively | ✅   |
-| Existing informal notes to incorporate           | ✅   |
-| Well-documented project with formal artifacts    | ❌   |
+| No PRD or BRD artifacts available                | ✅  |
+| Team wants to explore the workflow interactively | ✅  |
+| Existing informal notes to incorporate           | ✅  |
+| Well-documented project with formal artifacts    | ❌  |
 
 ## Comparing the Two Modes
 
