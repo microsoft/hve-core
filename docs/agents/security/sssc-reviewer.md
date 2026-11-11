@@ -15,7 +15,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-08-26
+ms.date: 2026-11-10
 ms.topic: concept
 estimated_reading_time: 7
 ---
@@ -30,11 +30,11 @@ It also owns HVE Core's [VEX assessment capability](vex-capability.md) for triag
 
 HVE Core includes three complementary security agents. Pick the one matched to your goal.
 
-| Use this             | When you want to…                                                                                                             |
-|----------------------|-------------------------------------------------------------------------------------------------------------------------------|
-| 🔎 SSSC Reviewer     | Run an automated, evidence-verified posture review of the current codebase (or a PR diff, or a plan) and get a written report |
+| Use this            | When you want to…                                                                                                             |
+|---------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| 🔎 SSSC Reviewer    | Run an automated, evidence-verified posture review of the current codebase (or a PR diff, or a plan) and get a written report |
 | 🛡️ Security Planner | Walk a structured six-phase threat-modeling interview that produces backlog items across seven operational buckets            |
-| 🔗 SSSC Planner      | Hold a conversational supply-chain planning session that maps OpenSSF Scorecard, SLSA, Sigstore, and SBOM gaps to a backlog   |
+| 🔗 SSSC Planner     | Hold a conversational supply-chain planning session that maps OpenSSF Scorecard, SLSA, Sigstore, and SBOM gaps to a backlog   |
 
 In short: reach for the **SSSC Reviewer** when you need an assessment report now, the **Security Planner** for broad threat modeling and backlog generation, and the **SSSC Planner** when you want a guided, conversational supply-chain plan with handoff-ready work items.
 

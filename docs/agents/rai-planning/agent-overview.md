@@ -13,7 +13,7 @@ tags:
   - architecture
   - reference
 author: Microsoft
-ms.date: 2026-11-07
+ms.date: 2026-11-10
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -119,9 +119,9 @@ The agent asks up to 7 focused questions per turn, using emoji checklists to tra
 
 | Marker | Meaning                                            |
 |--------|----------------------------------------------------|
-| ❓      | Pending: question not yet answered                 |
-| ✅      | Complete: answer received and recorded             |
-| ❌      | Blocked or skipped: user indicated "skip" or "n/a" |
+| ❓     | Pending: question not yet answered                 |
+| ✅     | Complete: answer received and recorded             |
+| ❌     | Blocked or skipped: user indicated "skip" or "n/a" |
 
 Each turn begins by showing the current phase checklist status. When all questions for a phase reach ✅ or ❌, the agent summarizes findings. At hard gates (Phases 2, 3, and 6) it then asks for explicit confirmation before advancing; at summary-and-advance gates (Phases 1, 4, and 5) it advances unless the user objects.
 
