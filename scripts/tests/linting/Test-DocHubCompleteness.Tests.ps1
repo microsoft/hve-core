@@ -444,7 +444,7 @@ Describe 'Invoke-DocHubCompletenessCore' -Tag 'Unit' {
             -ReadmeContent "# Instructions`n`nOnly bash listed.`n"
 
         { Invoke-DocHubCompletenessCore -RepoRoot $repo -OutputPath $script:Output } | Should -Throw
-        Assert-MockCalled Write-CIAnnotation -ParameterFilter { $Level -eq 'Error' }
+        Should -Invoke Write-CIAnnotation -ParameterFilter { $Level -eq 'Error' } -Times 1
     }
 
     It 'Sets CI outputs for count and passed status' {
@@ -455,8 +455,8 @@ Describe 'Invoke-DocHubCompletenessCore' -Tag 'Unit' {
 
         Invoke-DocHubCompletenessCore -RepoRoot $repo -OutputPath $script:Output
 
-        Assert-MockCalled Set-CIOutput -ParameterFilter { $Name -eq 'count' }
-        Assert-MockCalled Set-CIOutput -ParameterFilter { $Name -eq 'passed' }
+        Should -Invoke Set-CIOutput -ParameterFilter { $Name -eq 'count' } -Times 1
+        Should -Invoke Set-CIOutput -ParameterFilter { $Name -eq 'passed' } -Times 1
     }
 
     It 'Sets failure env var when artifacts are missing' {
@@ -466,7 +466,7 @@ Describe 'Invoke-DocHubCompletenessCore' -Tag 'Unit' {
             -ReadmeContent "# Instructions`n`nOnly bash listed.`n"
 
         { Invoke-DocHubCompletenessCore -RepoRoot $repo -OutputPath $script:Output } | Should -Throw
-        Assert-MockCalled Set-CIEnv -ParameterFilter { $Name -eq 'DOC_HUB_COMPLETENESS_FAILED' }
+        Should -Invoke Set-CIEnv -ParameterFilter { $Name -eq 'DOC_HUB_COMPLETENESS_FAILED' } -Times 1
     }
 }
 
