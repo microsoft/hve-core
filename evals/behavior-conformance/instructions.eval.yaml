@@ -1794,3 +1794,56 @@ stimuli:
         name: typescript-doc-comments-exempt-declarations
         config:
           pattern: '(?m)(?=[\s\S]*^[^\w\n]*E\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*F\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*G\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*H\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*I\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)'
+
+  - name: instruction-pull-request-template-mappings
+    prompt: |
+      Follow `.github/instructions/pull-request.instructions.md` to decide each
+      independent case for a pull request description under `.copilot-tracking/pr/`.
+      A: The branch changes only `.github/skills/hve-core/pull-request/SKILL.md`.
+      Which Type of Change applies?
+      B: The branch changes only
+      `evals/behavior-conformance/skill-behavior.eval.yaml`. Which Type of Change
+      applies?
+      C: `npm run spell-check` ran and passed. What happens to its Required Local
+      Checks item?
+      D: Only targeted checks ran. What happens to the `npm run validate:local`
+      item?
+      E: What happens to the sensitive-information statement under Security
+      Considerations?
+      Choose one value for each label:
+      `A:` `copilot-instructions` | `copilot-skill`
+      `B:` `eval-spec` | `script-automation`
+      `C:` `leave-unchecked` | `check-it`
+      `D:` `check-it` | `leave-unchecked`
+      `E:` `leave-unchecked` | `check-it`
+      Return exactly five labeled lines without bullets or explanation.
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/pull-request.instructions.md
+          dest: .github/instructions/pull-request.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: pull-request
+      advisory: "true"
+      prompt_sha256: 539875a3a3c2d48a9c665a91f40a806512752e7b03dd2bb7f6b3fee39e089555
+    graders:
+      - type: output-matches
+        name: instruction-pull-request-template-mappings-a
+        config:
+          pattern: '(?im)^[^\w\n]*A[^\w\n]*copilot-skill[^\w\n]*$'
+      - type: output-matches
+        name: instruction-pull-request-template-mappings-b
+        config:
+          pattern: '(?im)^[^\w\n]*B[^\w\n]*eval-spec[^\w\n]*$'
+      - type: output-matches
+        name: instruction-pull-request-template-mappings-c
+        config:
+          pattern: '(?im)^[^\w\n]*C[^\w\n]*check-it[^\w\n]*$'
+      - type: output-matches
+        name: instruction-pull-request-template-mappings-d
+        config:
+          pattern: '(?im)^[^\w\n]*D[^\w\n]*leave-unchecked[^\w\n]*$'
+      - type: output-matches
+        name: instruction-pull-request-template-mappings-e
+        config:
+          pattern: '(?im)^[^\w\n]*E[^\w\n]*leave-unchecked[^\w\n]*$'

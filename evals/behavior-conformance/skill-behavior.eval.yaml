@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 338
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 342
   stimuli, including engagement-reporting coverage, Outlook HTML guards, the
   conformance stimuli migrated from retired prompts, and complete branch
   coverage for the RPI, proposal-response, and
@@ -9035,3 +9035,200 @@ stimuli:
         name: skill-untrusted-content-boundary-authority-repo-config
         config:
           pattern: '(?is)\b(?:trusted\s+)?(?:repository|repo)\s+(?:configuration|config|settings)\b|\b(?:configuration|config|settings)\s+(?:in|of|from)\s+the\s+(?:repository|repo)\b'
+
+  - name: skill-pull-request-publishing-decisions
+    prompt: |
+      Use the `pull-request` skill to decide each independent case.
+      A: The user says "push this and open a pull request".
+      B: The user runs `/pull-request` with no arguments or other words. Which
+      action does the skill infer?
+      C: A clear create request would also push two other branches with rewritten
+      commits that the request didn't name.
+      D: A required local check fails before anything is published.
+      E: An update reads a pull request body in which a person checked some boxes.
+      Choose one value for each label:
+      `A:` `ask-one-question` | `publish-without-asking`
+      `B:` `prepare` | `create`
+      `C:` `push-all-without-asking` | `ask-one-question`
+      `D:` `publish-with-a-note` | `stop-revise`
+      `E:` `keep-human-boxes` | `regenerate-every-box`
+      Return exactly five labeled lines without bullets or explanation.
+    agent_environment:
+      skills:
+        - ../../.github/skills/hve-core/pull-request
+      files:
+        - src: ../../.github/skills/hve-core/pull-request
+          dest: .github/skills/hve-core/pull-request
+    tags:
+      category: behavior-conformance
+      skill: pull-request
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 086fb9e9d60bb8a92380c03d8eeb535552149d22d5e792ef054c7cbbf5769719
+    graders:
+      - type: output-matches
+        name: skill-pull-request-publishing-decisions-a
+        config:
+          pattern: '(?im)^[^\w\n]*A[^\w\n]*publish-without-asking[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-publishing-decisions-b
+        config:
+          pattern: '(?im)^[^\w\n]*B[^\w\n]*prepare[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-publishing-decisions-c
+        config:
+          pattern: '(?im)^[^\w\n]*C[^\w\n]*ask-one-question[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-publishing-decisions-d
+        config:
+          pattern: '(?im)^[^\w\n]*D[^\w\n]*stop-revise[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-publishing-decisions-e
+        config:
+          pattern: '(?im)^[^\w\n]*E[^\w\n]*keep-human-boxes[^\w\n]*$'
+
+  - name: skill-pull-request-stack-commands
+    prompt: |
+      Use the `pull-request` skill and its stacked pull request reference to decide
+      each independent case.
+      A: In a stack, the checked-out branch is the third of four open branches. None
+      has a pull request, and the user asks to create one for the checked-out
+      branch.
+      B: In a stack where every branch has a pull request, the user asks to update
+      them after new local commits.
+      C: In a stack, the user asks to sync the pull requests with their base.
+      D: Stack detection runs `gh stack view --json`, which exits 2 with stderr
+      "failed to load stack state".
+      E: In a stack, right before a push, `git cherry` prints a `+` line for a
+      branch that has diverged from its GitHub copy.
+      Choose one value for each label:
+      `A:` `gh-stack-submit-auto` | `gh-stack-link`
+      `B:` `gh-stack-push` | `gh-stack-submit`
+      `C:` `gh-pr-update-branch` | `gh-stack-sync`
+      `D:` `stop-and-report` | `use-ordinary-flow`
+      `E:` `push-with-lease` | `stop-and-confirm`
+      Return exactly five labeled lines without bullets or explanation.
+    agent_environment:
+      skills:
+        - ../../.github/skills/hve-core/pull-request
+      files:
+        - src: ../../.github/skills/hve-core/pull-request
+          dest: .github/skills/hve-core/pull-request
+    tags:
+      category: behavior-conformance
+      skill: pull-request
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 13a5f50c81f2a2cf27f49783975d21080a8f1e17a2f8e5f5730f8c8bc6f20b43
+    graders:
+      - type: output-matches
+        name: skill-pull-request-stack-commands-a
+        config:
+          pattern: '(?im)^[^\w\n]*A[^\w\n]*gh-stack-link[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-stack-commands-b
+        config:
+          pattern: '(?im)^[^\w\n]*B[^\w\n]*gh-stack-push[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-stack-commands-c
+        config:
+          pattern: '(?im)^[^\w\n]*C[^\w\n]*gh-stack-sync[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-stack-commands-d
+        config:
+          pattern: '(?im)^[^\w\n]*D[^\w\n]*stop-and-report[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-stack-commands-e
+        config:
+          pattern: '(?im)^[^\w\n]*E[^\w\n]*stop-and-confirm[^\w\n]*$'
+
+  - name: skill-pull-request-sync-and-routing
+    prompt: |
+      Use the `pull-request` skill to decide each independent case.
+      A: Outside a stack, the user asks for `action=sync`. The branch has an open
+      pull request, every local commit is already on GitHub, and the branch is
+      behind its GitHub copy.
+      B: When `action=sync` runs, what happens to writing the description and
+      running local checks?
+      C: The push remote is on Azure DevOps, and the user asks for `action=update`.
+      D: The push remote is on Azure DevOps, and the user asks for `action=create`.
+      Choose one value for each label:
+      `A:` `stop-blocked` | `run-update-branch`
+      `B:` `skip-both` | `run-both`
+      `C:` `update-through-azure-devops` | `report-unsupported`
+      `D:` `follow-backlog-management` | `use-gh-pr-create`
+      Return exactly four labeled lines without bullets or explanation.
+    agent_environment:
+      skills:
+        - ../../.github/skills/hve-core/pull-request
+      files:
+        - src: ../../.github/skills/hve-core/pull-request
+          dest: .github/skills/hve-core/pull-request
+    tags:
+      category: behavior-conformance
+      skill: pull-request
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 1e1825d36fbd2230a17e5714b495cc998869104a964b2f3d891d6403f0c8422d
+    graders:
+      - type: output-matches
+        name: skill-pull-request-sync-and-routing-a
+        config:
+          pattern: '(?im)^[^\w\n]*A[^\w\n]*run-update-branch[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-sync-and-routing-b
+        config:
+          pattern: '(?im)^[^\w\n]*B[^\w\n]*skip-both[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-sync-and-routing-c
+        config:
+          pattern: '(?im)^[^\w\n]*C[^\w\n]*report-unsupported[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-sync-and-routing-d
+        config:
+          pattern: '(?im)^[^\w\n]*D[^\w\n]*follow-backlog-management[^\w\n]*$'
+
+  - name: skill-pull-request-checks-and-repairs
+    prompt: |
+      Use the `pull-request` skill to decide each independent case.
+      A: A workflow that matches the changed files calls a `ci:*` wrapper, and no
+      equivalent local command exists.
+      B: The user asks to fix a reported lint failure. Other files in the working
+      tree hold earlier, unrelated edits.
+      C: The template has a box saying hosted CI passed, and only local checks ran.
+      D: A repair commit changed the diff after the description was written.
+      Choose one value for each label:
+      `A:` `skip-it-entirely` | `run-its-safe-child-checks`
+      `B:` `commit-only-the-fix` | `commit-all-changes`
+      `C:` `leave-unchecked` | `check-it`
+      `D:` `keep-the-first-draft` | `update-title-body-and-results`
+      Return exactly four labeled lines without bullets or explanation.
+    agent_environment:
+      skills:
+        - ../../.github/skills/hve-core/pull-request
+      files:
+        - src: ../../.github/skills/hve-core/pull-request
+          dest: .github/skills/hve-core/pull-request
+    tags:
+      category: behavior-conformance
+      skill: pull-request
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 03f606b76a3a6c5f0e4f376995231cabd8025edb01d7192bcade5305f170251e
+    graders:
+      - type: output-matches
+        name: skill-pull-request-checks-and-repairs-a
+        config:
+          pattern: '(?im)^[^\w\n]*A[^\w\n]*run-its-safe-child-checks[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-checks-and-repairs-b
+        config:
+          pattern: '(?im)^[^\w\n]*B[^\w\n]*commit-only-the-fix[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-checks-and-repairs-c
+        config:
+          pattern: '(?im)^[^\w\n]*C[^\w\n]*leave-unchecked[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-checks-and-repairs-d
+        config:
+          pattern: '(?im)^[^\w\n]*D[^\w\n]*update-title-body-and-results[^\w\n]*$'
