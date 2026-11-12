@@ -1,0 +1,2544 @@
+{
+  "schemaVersion": "1.0.0",
+  "snapshotDate": "2026-11-04",
+  "status": "recorded-evaluation-debug-profile-human-review-pending",
+  "run": {
+    "runId": "pr-3136-adhoc-v9-schema-debug-20261104-01",
+    "protocol": "ad-hoc-v9",
+    "profile": "debug",
+    "reportOutput": "schema",
+    "modelIdentifier": "gpt-5.6-luna",
+    "immutableModelBuild": "not-exposed-by-host",
+    "reasoningEffort": "medium",
+    "contextTier": "default",
+    "executionSurface": "installed Copilot headless runtime with host-mediated evidence",
+    "cliVersion": "GitHub Copilot CLI 1.0.101.",
+    "nodeVersion": "v26.13.0",
+    "repositoryCommitAtStart": "8bfa86bf1cc5bf6edf123d677e5e98c8753c7d64",
+    "evaluatedUncommittedChanges": true,
+    "inputFingerprint": "297f6fc5017d6af946a6300e0194d225558b86ffc3c810039f7b51ebd082fe36",
+    "packageLockSha256": "a6c3e45925185565233fb45fcdcb7613ae1a802378dbdb574bbc900b1ca9caf3",
+    "readerBundleIdentity": "hyparquet@1.31.5:fdd28364b0dde800dea00979cbd3ddee26a053bb0d15b17820e0f865b9ab8178",
+    "startedAt": "2026-11-04T18:16:56.612Z",
+    "completedRounds": [
+      1,
+      2,
+      3
+    ],
+    "conditions": [
+      "with-skill",
+      "without-skill"
+    ],
+    "retries": "none",
+    "productionAuthorization": false,
+    "independentSessions": 30
+  },
+  "dataset": {
+    "name": "phamquiluan/RCAEval",
+    "url": "https://huggingface.co/datasets/phamquiluan/RCAEval",
+    "revision": "afeacb11bcc94dadfd1c8f483ee4377b2b8b614e",
+    "license": "MIT",
+    "transformationVersion": "2.0.0",
+    "preparedInputReuse": {
+      "sourceRunId": "pr-3136-adhoc-v8-debug-20261103-01",
+      "changedManifestField": "runId",
+      "verifiedCopiedFiles": 48
+    }
+  },
+  "sourceArtifactHashes": {
+    "run-manifest.json": "3b67c49fa9403aadce9b09d8a43d7e40bf0d625124b05886518b37e299f6c5e2",
+    "evaluation-summary.json": "1d9de8da920f880e7fcd56dc676b2c72cb5a6198881ea70bc5b0d34067d7d9e9",
+    "inputs/scorer-only/preparation-manifest.json": "b092315a5046f9b2f7f3452b906947c132e4666bb9799d770594d6161b45e421",
+    "completed-run-observations.json": "72bf0de499fbd551026c31aa2c96afeafe6c5c7e32f4ee4cd9d4e732d13bf2ab"
+  },
+  "cases": [
+    {
+      "caseId": "case-01",
+      "sourcePath": "re1ob_adservice_cpu_1",
+      "heldOutService": "adservice",
+      "heldOutFault": "cpu",
+      "compatibleMechanism": "Abnormal CPU consumption or saturation in the held-out service.",
+      "metricColumnsSha256": "17248089abe87d59437ba5369636cf94e46064ed8ca67c293c94f6d4e5f16058",
+      "modalities": [
+        {
+          "modality": "metrics",
+          "rowCount": 4201,
+          "sha256": "79cd8f5002bdbaf526fb01eff5c29096cfbed99f1061c8e2f22206e7a7e56a8f"
+        }
+      ],
+      "sourceFiles": [
+        {
+          "sourcePath": "re1ob_adservice_cpu_1/inject_time.txt",
+          "objectId": "6a57189142bd8e3a693bc7972bd8cb104ef1830e",
+          "sha256": "392017698b9b1df43c5b9a5e96dfb9c19676348d67d2ee6a4ad2061abe729112",
+          "size": 10
+        },
+        {
+          "sourcePath": "re1ob_adservice_cpu_1/metrics.parquet",
+          "objectId": "b63e39684bb89cfd8bd34b18ac6f478ea4e564a3",
+          "sha256": "464dcc215afe145d37f8b107ea291df7ffc0691756d375c54ddc1c09d0a2ac74",
+          "size": 368024
+        }
+      ]
+    },
+    {
+      "caseId": "case-02",
+      "sourcePath": "re2ob_checkoutservice_delay_1",
+      "heldOutService": "checkoutservice",
+      "heldOutFault": "delay",
+      "compatibleMechanism": "Injected processing or request delay in the held-out service.",
+      "metricColumnsSha256": "71fc8486d3cd572e4edb196b4ce1d7b20086585f30c827273ad3067c09550239",
+      "modalities": [
+        {
+          "modality": "metrics",
+          "rowCount": 1441,
+          "sha256": "80eafdb2edd95d3342ae879cca5c88d7308fdf9d3b50d2dd604796439052dc38"
+        },
+        {
+          "modality": "logs",
+          "rowCount": 177868,
+          "sha256": "390c956679f33eedab915c37ac2fb57cb449d20802882b73a53468e11210b0f7"
+        },
+        {
+          "modality": "traces",
+          "rowCount": 405229,
+          "sha256": "e1eb5fadf67d632f85c01013d868cd7974aab4f56df85b2bffab82b9e571418a"
+        }
+      ],
+      "sourceFiles": [
+        {
+          "sourcePath": "re2ob_checkoutservice_delay_1/inject_time.txt",
+          "objectId": "ac78589b4127ea2c4c889cf19032f30c1091d1d8",
+          "sha256": "5b8132d68105c187d8aad124f7af4a8bdee399082a1fbf35f2f58aa9d1229d55",
+          "size": 10
+        },
+        {
+          "sourcePath": "re2ob_checkoutservice_delay_1/logs.parquet",
+          "objectId": "05c2845cbb3ed38222bfa01d397db97fada4f65f",
+          "sha256": "f3645724f7c021ba532deea938049a575b75d265e1e0535038f5ea5fbb854b16",
+          "size": 350672
+        },
+        {
+          "sourcePath": "re2ob_checkoutservice_delay_1/metrics.parquet",
+          "objectId": "635011e97d4e8b49dcc3051d510cef32f0005d28",
+          "sha256": "3a428e2e4792c6ceecd1e47c770477887b7c14c175347ac52b28011595d23088",
+          "size": 161729
+        },
+        {
+          "sourcePath": "re2ob_checkoutservice_delay_1/traces.parquet",
+          "objectId": "eaee3b2265d2bd9da5abad06681d62aa3c23f9cb",
+          "sha256": "a86818c7ab72aa360c3d81aafd9c4dc6a4da0ef75204cbf3a0c70d07a1fd44da",
+          "size": 10233639
+        }
+      ]
+    },
+    {
+      "caseId": "case-03",
+      "sourcePath": "re3ob_cartservice_f1_1",
+      "heldOutService": "cartservice",
+      "heldOutFault": "f1",
+      "compatibleMechanism": "A code-level condition compatible with the held-out f1 fault.",
+      "metricColumnsSha256": "20d6207ccb9ad29fd97e9d9ca4ff09f938672e7afd486d6c2cb3b83c41bbcbff",
+      "modalities": [
+        {
+          "modality": "metrics",
+          "rowCount": 1441,
+          "sha256": "4ad6503ddff80c1c2fde4a20dcc1550336714395b105b46b9ab532beaa52fd33"
+        },
+        {
+          "modality": "logs",
+          "rowCount": 65025,
+          "sha256": "7f1d3fc4ec07dc87eb2aa29914235e8ca19912c665ff8748887f4cd3adcdad1d"
+        },
+        {
+          "modality": "traces",
+          "rowCount": 148799,
+          "sha256": "457991ba9725e2296f527977148050ba5c38e7481e8bf8e6a80d34acbce6d47f"
+        }
+      ],
+      "sourceFiles": [
+        {
+          "sourcePath": "re3ob_cartservice_f1_1/inject_time.txt",
+          "objectId": "28bfb5984a5d336ecfb0a43e922fd84d7dff9854",
+          "sha256": "3acf7c7b4c1388a39a895006b4963c0ae10f60eba4efc6590f5728e60d5a0567",
+          "size": 10
+        },
+        {
+          "sourcePath": "re3ob_cartservice_f1_1/logs.parquet",
+          "objectId": "62da67ab134a7e8573b93787f9e7c78d6a437b5d",
+          "sha256": "daba5217f71f5a595e28cf9d5a3bda414d6e0cfaf19aa754a24aad9c14677a63",
+          "size": 117073
+        },
+        {
+          "sourcePath": "re3ob_cartservice_f1_1/metrics.parquet",
+          "objectId": "985ed8580ff822ae85fd8c310987e514000445c1",
+          "sha256": "f48dbce429636dfabb33f5695f0992d91c92b97c4b3031cfe0606a37bf49221c",
+          "size": 148622
+        },
+        {
+          "sourcePath": "re3ob_cartservice_f1_1/traces.parquet",
+          "objectId": "25f14a6bb719f9632016a027563d7f2b7f43ac8e",
+          "sha256": "13bb4dfddce23145579f9189e125d72463b5045348dfb6f6cf247b21b4f43cfa",
+          "size": 4094874
+        }
+      ]
+    },
+    {
+      "caseId": "case-04",
+      "sourcePath": "re1tt_ts-travel-service_mem_3",
+      "heldOutService": "ts-travel-service",
+      "heldOutFault": "mem",
+      "compatibleMechanism": "A code-level condition compatible with the held-out mem fault.",
+      "metricColumnsSha256": "f15b7a37f24d599dc103c792b94bfe52d4d103fdfd58ebbb4504d4b0405e3480",
+      "modalities": [
+        {
+          "modality": "metrics",
+          "rowCount": 961,
+          "sha256": "839843bc67a3e3a17d44acaea9322b4e8631d0d90575d748d5f527258cd68210"
+        }
+      ],
+      "sourceFiles": [
+        {
+          "sourcePath": "re1tt_ts-travel-service_mem_3/inject_time.txt",
+          "objectId": "7e85a2ab759cb9de6145286cbddb6b7aecdf684f",
+          "sha256": "3a41e8ea116be3bf35575551c244637d5f8218bb35f4345c04b67bff2c487347",
+          "size": 10
+        },
+        {
+          "sourcePath": "re1tt_ts-travel-service_mem_3/metrics.parquet",
+          "objectId": "288f70d5ba51606c0d95f7daa05b5de09f812b6a",
+          "sha256": "c2c3f202aa9334877325e55388876f92117cac7c4defa0e19706b86f9f75a20b",
+          "size": 525731
+        }
+      ]
+    },
+    {
+      "caseId": "case-05",
+      "sourcePath": "re3tt_ts-auth-service_f2_4",
+      "heldOutService": "ts-auth-service",
+      "heldOutFault": "f2",
+      "compatibleMechanism": "A code-level condition compatible with the held-out f2 fault.",
+      "metricColumnsSha256": "144bd26662ddbcbb62541b0e146932f5b3cb912ed67c97842b5fa356ceb6ed4d",
+      "modalities": [
+        {
+          "modality": "metrics",
+          "rowCount": 1801,
+          "sha256": "df5dc3d5b1c30c8be7f3c651166f4dcc7530b4c0320df5d9e206c8af8b0c20eb"
+        },
+        {
+          "modality": "logs",
+          "rowCount": 17640,
+          "sha256": "40926bec85450a8a43bea6cee5888ed43185cf6ff19622069c646c102e7043ce"
+        },
+        {
+          "modality": "traces",
+          "rowCount": 37936,
+          "sha256": "2557d8970f49f57edbc689e38723238256e4fd3a27ac12da40e55a8cecdfe381"
+        }
+      ],
+      "sourceFiles": [
+        {
+          "sourcePath": "re3tt_ts-auth-service_f2_4/inject_time.txt",
+          "objectId": "deaff518168a14c4c6ff081cd169588a4dd0a0a4",
+          "sha256": "f5acb2ceebd33a50d61c5d5fce9dff58f730b8f4eb4ffe3b12f435688253c075",
+          "size": 10
+        },
+        {
+          "sourcePath": "re3tt_ts-auth-service_f2_4/logs.parquet",
+          "objectId": "454c87f01918ebcf4843d7760f34c7235f817657",
+          "sha256": "3305db7b2332b7a85a4526002883c774c5a67e921eb32dcdd74744c27ae94743",
+          "size": 188890
+        },
+        {
+          "sourcePath": "re3tt_ts-auth-service_f2_4/metrics.parquet",
+          "objectId": "c4ed2d4b560ba10aa95bfeb7186a4faa3836d658",
+          "sha256": "5fbb13acf53b8bc73cd30b7fdb1054f1e55fb4f7a3209bbc1992a83a03aaeba8",
+          "size": 731695
+        },
+        {
+          "sourcePath": "re3tt_ts-auth-service_f2_4/traces.parquet",
+          "objectId": "96295c965d6d3e553a97b061c362ac248025f783",
+          "sha256": "06dd9fe84aa894a6c536fb15fa6f4e5a7c8e9f1dd895f784fa5dc8fc773e5240",
+          "size": 1214819
+        }
+      ]
+    }
+  ],
+  "totals": [
+    {
+      "condition": "with-skill",
+      "scheduledSessions": 15,
+      "attemptedSessions": 15,
+      "integrityValid": 15,
+      "technicalFailures": 0,
+      "candidateServiceMatches": 15,
+      "candidateServiceMatchRate": 1,
+      "findingServiceMatches": 8,
+      "readyForHumanSignOff": 8,
+      "notEstablished": 7,
+      "premiumRequests": 75,
+      "totalNanoAiu": 66562765000,
+      "formatRejections": 0,
+      "queryRejections": 0,
+      "sessionArtifactReplacements": 900,
+      "finalOnlySchemas": 15
+    },
+    {
+      "condition": "without-skill",
+      "scheduledSessions": 15,
+      "attemptedSessions": 15,
+      "integrityValid": 15,
+      "technicalFailures": 0,
+      "candidateServiceMatches": 11,
+      "candidateServiceMatchRate": 0.7333333333333333,
+      "findingServiceMatches": null,
+      "readyForHumanSignOff": null,
+      "notEstablished": null,
+      "premiumRequests": 68,
+      "totalNanoAiu": 42911051000,
+      "formatRejections": 0,
+      "queryRejections": 0,
+      "sessionArtifactReplacements": 816,
+      "finalOnlySchemas": 15
+    }
+  ],
+  "rounds": [
+    {
+      "round": 1,
+      "conditions": [
+        {
+          "condition": "with-skill",
+          "sessions": 5,
+          "integrityValid": 5,
+          "candidateServiceMatches": 5,
+          "formatRejections": 0,
+          "premiumRequests": 25,
+          "totalNanoAiu": 23151508000
+        },
+        {
+          "condition": "without-skill",
+          "sessions": 5,
+          "integrityValid": 5,
+          "candidateServiceMatches": 5,
+          "formatRejections": 0,
+          "premiumRequests": 22,
+          "totalNanoAiu": 14337436000
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "conditions": [
+        {
+          "condition": "with-skill",
+          "sessions": 5,
+          "integrityValid": 5,
+          "candidateServiceMatches": 5,
+          "formatRejections": 0,
+          "premiumRequests": 23,
+          "totalNanoAiu": 23515511000
+        },
+        {
+          "condition": "without-skill",
+          "sessions": 5,
+          "integrityValid": 5,
+          "candidateServiceMatches": 4,
+          "formatRejections": 0,
+          "premiumRequests": 22,
+          "totalNanoAiu": 13953664000
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "conditions": [
+        {
+          "condition": "with-skill",
+          "sessions": 5,
+          "integrityValid": 5,
+          "candidateServiceMatches": 5,
+          "formatRejections": 0,
+          "premiumRequests": 27,
+          "totalNanoAiu": 19895746000
+        },
+        {
+          "condition": "without-skill",
+          "sessions": 5,
+          "integrityValid": 5,
+          "candidateServiceMatches": 2,
+          "formatRejections": 0,
+          "premiumRequests": 24,
+          "totalNanoAiu": 14619951000
+        }
+      ]
+    }
+  ],
+  "pairing": {
+    "validPairs": 15,
+    "skilledOnlyServiceMatches": 4,
+    "baselineOnlyServiceMatches": 0,
+    "serviceMatchDifferencePercentagePoints": 26.666666666666668,
+    "interpretation": "Descriptive repeated-case difference, not a significance or causal-effect estimate."
+  },
+  "reportPrivacy": {
+    "transformation": "local-report-hmac-sha256-v1",
+    "reports": [
+      {
+        "report": "DEBUG-REVIEW.md",
+        "status": "pass",
+        "replacements": 0,
+        "withheldLines": 0
+      },
+      {
+        "report": "DEBUG-EVIDENCE.md",
+        "status": "pass",
+        "replacements": 0,
+        "withheldLines": 0
+      },
+      {
+        "report": "DEBUG-UPDATE.md",
+        "status": "pass",
+        "replacements": 0,
+        "withheldLines": 0
+      }
+    ]
+  },
+  "trials": [
+    {
+      "condition": "with-skill",
+      "caseId": "case-01",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "ready-for-human-sign-off",
+        "service": "adservice",
+        "serviceScore": "match",
+        "mechanismScore": "match",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "adservice",
+        "serviceScore": "match",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 6,
+      "totalNanoAiu": 3180003000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 72,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "not-needed",
+      "reportBoundary": {
+        "modelTurns": 6,
+        "schemaTurns": [
+          6
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "db39e5237bf667f292997d524a730fcada5e975fccfd8ce10e2e2ca2aeadd88b"
+      },
+      "hashes": {
+        "resultSha256": "711ba8997450a56f0549d015ed4eb648b28b0ebbd5ff4e32bc44d8eb18ae19f7",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "83de56aa2b04f378235434e641797d0683bfa8b27b9cac6727d06773df12bdce",
+        "promptSha256": "bf3e95ef4eae8c81ac1d56f954b0639f06e2bbf974934cb6720132af3e463031",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "c48b94ae974f8004652331d6f87ca87acb2b5101b06b6749c2579bdd2cf02817",
+        "turn2PromptSha256": "8949c2e640815aeed8261fed7a9f3e02e7c327b404175b18317e65aa966baddf",
+        "turn3PromptSha256": "259be61a03dbbdb6cb024b7f51640cfe43fab1c4346d5830d4c7b0ecaefc760a",
+        "turn4PromptSha256": "ccd865acc3a2d9b5ff939dc2ddce54c8db199a59b4e3978fa6ba7366a17da2a1",
+        "turn5PromptSha256": "e53cebf3c87d81dab8fef3aef4fcc2018d6a0ba06532c05e098b5b16ede95b1c",
+        "turn6PromptSha256": "f3d974db44c5f1cbc8dba4e62d869f7ccd8d207a883c0c2ffe2aae227ed19454",
+        "sessionArtifactFileSha256": "83de56aa2b04f378235434e641797d0683bfa8b27b9cac6727d06773df12bdce",
+        "trialResultFileSha256": "63673e776d538da888939e9906e82b0f670a6a10f0fe1cf15eb43eb0bb8546b4"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-02",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "checkoutservice",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 5,
+      "totalNanoAiu": 5403265000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 60,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 5,
+        "schemaTurns": [
+          5
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "4802be0245593c6509850be3a7214ac67a93582429b92c27c2b5542cfc1fb6dc"
+      },
+      "hashes": {
+        "resultSha256": "cf9f5e5b6e7eed702282c907ef9ea421afce8154ccbc92d800a5ee8884233ce4",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "4b7a3474ee9e079e35304ca272516346c548ece9a2199f59b6fb190e6eec8fb4",
+        "promptSha256": "5e1a32e330a84e86fb31405fb4d7c2a47ec384411d403e98aa14bb442d0f104b",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "097c2761e9dccd5cd03e60bc9477ec26ff6559e087ab03139e1f2ecffa5c08ae",
+        "turn2PromptSha256": "058b0249801898a193eff4de0f67ecd2bb59079f4fcd4ab61931200b99417607",
+        "turn3PromptSha256": "6f572ba4e810341b0014f67c8d35bbc001a3c32aed7898dcf7a3f4cde2f070c4",
+        "turn4PromptSha256": "8fdd779ab4e6182b9b4ad0fc0390fff93a7fbea882507b09a0c677cbd1856e4e",
+        "turn5PromptSha256": "edb67c011122c2a9d99a2294b6ad7851b7ae884549d545851564c3b4cf5d17c1",
+        "sessionArtifactFileSha256": "4b7a3474ee9e079e35304ca272516346c548ece9a2199f59b6fb190e6eec8fb4",
+        "trialResultFileSha256": "10e0fe76ba95629867626c8a15100133bc8a0b5de550dffa506e23601ac49d76"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-03",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "ready-for-human-sign-off",
+        "service": "cartservice",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "cartservice",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 4,
+      "totalNanoAiu": 4191068000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 48,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 4,
+        "schemaTurns": [
+          4
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "dc68648c28af38f901e7a0f1344ec7300d3e1ab8a852eb33a18726eea6dc58ef"
+      },
+      "hashes": {
+        "resultSha256": "2dddede97c96213d8124ef39346870b70577d12cca0d421839b5fdfa609f70e6",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "ffce6fab599bf9a41001d087c3216b87cf29bbb05e5e45cd0e7fa1be5bbe6582",
+        "promptSha256": "0ccd6e24652a3ac646580c1854202fd2078dda869a90b6f9fc018d9dd5ffc459",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "8a79077604b566c8bdcd260578be242f87feb244a63306d9761c58c8201d1ff5",
+        "turn2PromptSha256": "040f3c41fff30d338af87159ec2bf85b770bd7de7962ab558ce0bd2026eb41b3",
+        "turn3PromptSha256": "db9c372d93959d2c1453568584a6223f17b2b62b15f2b10bd96ee92bced3b4a1",
+        "turn4PromptSha256": "647188ae5856816e43ada8c17ec0c7dba70714c611b03bfce5d80e68bed30f28",
+        "sessionArtifactFileSha256": "ffce6fab599bf9a41001d087c3216b87cf29bbb05e5e45cd0e7fa1be5bbe6582",
+        "trialResultFileSha256": "bcde31fed789fb8be79babd42c3bfa113fa70183133e5b1e7e39a9be7694026f"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-04",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "ts-travel-service",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 4,
+      "totalNanoAiu": 2735227000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 48,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 4,
+        "schemaTurns": [
+          4
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "db2f8713465c61ee65402d854d225f9e71d0edbe4b01af4e6e6746a0b8369e7b"
+      },
+      "hashes": {
+        "resultSha256": "784c25509facb014091664345a2f289d6c7fffc539c8b941ac857db080c4c6a5",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "33bf5189bdd575a12253135a7b78d3ac25e876d375db52bcea4a7836d2d87890",
+        "promptSha256": "bca82d98eb7b6fb3134bd04ed46dcc6bce9038ca77cdd859b8dcad9c7adff10d",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "8711d07e3e039996cdf656e725808ef3238c0cb4f35c491ea13463a796c5411d",
+        "turn2PromptSha256": "3493d63140d0387842660b40354091bd9172326dcb488805f31a8d6e24283a37",
+        "turn3PromptSha256": "c0f0fd81d99748b239f5e468f1684482f8822d3edc8c908b153674a31eb559d8",
+        "turn4PromptSha256": "dd644ba99d1bf5c56a54b5a56b833cafe6579867d7cb70cf1237b8b7c09a041f",
+        "sessionArtifactFileSha256": "33bf5189bdd575a12253135a7b78d3ac25e876d375db52bcea4a7836d2d87890",
+        "trialResultFileSha256": "365625602899f795ef15569b68ca27e2f84904b06d45c87fb29c5302b51f2ea6"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-05",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "ts-auth-service",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 6,
+      "totalNanoAiu": 7641945000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 72,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 6,
+        "schemaTurns": [
+          6
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "dfe5af8365bf2972e11b0491e3604da993c766c23ae783184e4f2a50270550cb"
+      },
+      "hashes": {
+        "resultSha256": "3ef2720854f53ed5fffa32e1dbd1cb0b54eb1b89efe564f720dffc66dea9ae19",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "35c1cf4b1277e1dc81e34184cefd22125533ca64d0e3cbb5fee26768ec65a955",
+        "promptSha256": "2711772c7f05293170cd8a940dd16d6aef0c8562d51b785de27fbab877376237",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "e88243d2ebf003139331a56f321444e9276f68a7193dc50ac805f0e514b050f4",
+        "turn2PromptSha256": "ff1823be799ed63005bc363c9aaf7e35bdf2077e86a9513a2e9d4fdd6475efea",
+        "turn3PromptSha256": "0574163699ab54b78454d94079c46018d7567888127dd2fb03f52f69cfb797eb",
+        "turn4PromptSha256": "5d99430be2e163f945d828cec7872a73c348d8fdb50090499bffadaa0ae8d276",
+        "turn5PromptSha256": "37e64a370c8dc25cab47af993c429c7f324fc441a7ed3849c68b04cbf70ad2af",
+        "turn6PromptSha256": "aeadba84a036c395121475a525335b54be45d3b12a7a79b4f1ab73e6ffaba41f",
+        "sessionArtifactFileSha256": "35c1cf4b1277e1dc81e34184cefd22125533ca64d0e3cbb5fee26768ec65a955",
+        "trialResultFileSha256": "4941061b0297f11536c20397d9d6b0ba7a864133b8d6c44e9f542cd8d2099485"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-01",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "adservice",
+        "serviceScore": "match",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 4,
+      "totalNanoAiu": 1204058000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 48,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 4,
+        "schemaTurns": [
+          4
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "be25065f961de6d4b697648f8e61f3d2ae3c4e0ff111c371578222a72962b6c5"
+      },
+      "hashes": {
+        "resultSha256": "adb70e5c9d1e11f79807c385107c98de2465a2db52574b2d96b176b2a4f8cb04",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "2d7b01f33aa22eb2dd01abb8a0130919354b16699935d6ccb2e586787eb57af4",
+        "promptSha256": "9393fb086985e3db0b7f8eb7abffbadd0521fe35297b242c288b35beb37a563f",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "76f9898470ba007dfa67f9d750316d78ff897da8a72d8c376f79c9cc47de9923",
+        "turn2PromptSha256": "9e01b557554e442326eb5792b3a445ef5bdcc85a14187e0e727e13b865ccf7e9",
+        "turn3PromptSha256": "ec26d57d40fd1541690af09e1bd9dea3ad5a813fff4384ebb6e83f605ca5503d",
+        "turn4PromptSha256": "a50b60581f7a61fb8d02d830814630c52e5a49ef5ad0bf3a4a58ceaf3cbe94e4",
+        "sessionArtifactFileSha256": "2d7b01f33aa22eb2dd01abb8a0130919354b16699935d6ccb2e586787eb57af4",
+        "trialResultFileSha256": "0f8da307bc12fd1b03c15c783b5c58815f292da05835867d518ad96d9b1dab70"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-02",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "checkoutservice",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 5,
+      "totalNanoAiu": 3894536000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 60,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 5,
+        "schemaTurns": [
+          5
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "2b48e5aac385e7c82e9d03c1377daa8db320e289d5981af9d16be933a38d8816"
+      },
+      "hashes": {
+        "resultSha256": "734c42bb3280ec4174eff54791ece21306d2a57f79e0055b252210608c2422d1",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "934538ab6d48bcfcbc9b07b07839b0c71bfcea0d033baa2c4ba996ad70e5b5d2",
+        "promptSha256": "ab623f4cfe3466958f382b1506987b4cc8f58650096cfa492d80675af10570a2",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "791ba466e60a09cbc04ba8d10ed31c884a06862d2f08fc042a95062f03eb68ec",
+        "turn2PromptSha256": "fd729481f50cd79713d468d152fd8f2f0c1955637e07b0746757e69fdc8d2639",
+        "turn3PromptSha256": "8937d75b4ca134873e3312edee708a8196ca40b12b86bdd3dabc8dd2deddc49a",
+        "turn4PromptSha256": "3f44cef2fc9d331c8af79231dfde43fca6e00db3b049e32881232f825cec1311",
+        "turn5PromptSha256": "905a9c0c1ece161752ea2dd66559c9b6edb12ec33ed7b7abf282597b05ba8bb0",
+        "sessionArtifactFileSha256": "934538ab6d48bcfcbc9b07b07839b0c71bfcea0d033baa2c4ba996ad70e5b5d2",
+        "trialResultFileSha256": "53991e7ec6bde8016b42b9db744c3be72d4b19600bd64135269d0fb275d6fb5a"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-03",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "cartservice.cartstore.RedisCartStore.AddItemAsync",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 5,
+      "totalNanoAiu": 3411014000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 60,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 5,
+        "schemaTurns": [
+          5
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "eeb99af553283c6b2c7654da8b5ae9cf970cb809bf06fb118d2e1947ba866e42"
+      },
+      "hashes": {
+        "resultSha256": "20b5bf78badecbd22315534b9e3f08670960b10be5370e21b0265de7d0e8ea6a",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "1f49dc68991c073064fd185531e9e8bf52087db14a545ec8b24837f58637ebc3",
+        "promptSha256": "acfdb7575548c72a6f2ca4dba48315f1d7dbd19e51ae0b1963daa31faec5a16c",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "fb46d30943f6727cbb172a4b2332f80b7d4614a9c75683e8d45e14b67a62da5b",
+        "turn2PromptSha256": "c8dda17a615383e5801d8b3ff0c3c935f69775e71144129ccceee7c542cfb86e",
+        "turn3PromptSha256": "f25a2905c7f8cf2405f86ec75b0bcaadee0418e80c3cc7ee9fb36f82efd1f157",
+        "turn4PromptSha256": "d42acc9ffe7da8e25436c20743d25dd0de846cfff70dd5748a663a3cb73b201e",
+        "turn5PromptSha256": "e367a8b407612b542a3af084cdd338be19d6cee85034fc52899b7d12f46018b1",
+        "sessionArtifactFileSha256": "1f49dc68991c073064fd185531e9e8bf52087db14a545ec8b24837f58637ebc3",
+        "trialResultFileSha256": "06a0132d180eab25d39f44030d622d4779420bd407fc9e45d2929d10506f001a"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-04",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "ts-travel-service",
+        "serviceScore": "match",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 4,
+      "totalNanoAiu": 1498074000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 48,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 4,
+        "schemaTurns": [
+          4
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "ec493c7f2d40ac3dc46ff322cb5751abaa9ab6a39be40108a9cba9537e1d0e18"
+      },
+      "hashes": {
+        "resultSha256": "39721691463b49b89616d0960d7d42ce99ce6e2979215e21f087f218ade12a32",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "31a963fa5e6ab1aced0f0821c196fd312dc8a1d7ba5e7946d65a5d9f3297db5c",
+        "promptSha256": "ba65ff4855862c4546e5f37a4c466187c007ccb5f084d24561e8580f0570d5d9",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "e5493e3db84fec1ef607ae64dfdca5e6779a158b1ad73f72b57a6628b723388e",
+        "turn2PromptSha256": "dddaaaab77e96dabadfc31fb703f71dea3b81940f348439b9564c477a8e1f3fd",
+        "turn3PromptSha256": "742772251158cec7989edba1b7363948b4d947ab0374c7834fb88821166611af",
+        "turn4PromptSha256": "49938b1b94fde89189ece7870bb21bc71b1645a2d51106dac04ff89d600972a3",
+        "sessionArtifactFileSha256": "31a963fa5e6ab1aced0f0821c196fd312dc8a1d7ba5e7946d65a5d9f3297db5c",
+        "trialResultFileSha256": "7f8c7cebb0f92d7b4c548854a8389c481ded17e79981082ee5eb4c5753dc75b1"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-05",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "ts-auth-service",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 4,
+      "totalNanoAiu": 4329754000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 48,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 4,
+        "schemaTurns": [
+          4
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "b72c859272893e6dd9b207b090cc271445049b7810ab4f4edca35a41229d2922"
+      },
+      "hashes": {
+        "resultSha256": "f35cdd56f7af79c6df792418152b83d5fbf7ba8afdb1ddf55601df8cc4a1e034",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "7bd36fd7f4beb69555da79bea50757cc25503a831f14b36500b8ba3a176527ca",
+        "promptSha256": "9837960967d292e10ebaea252f1ca47b2e765428eb956233b83949ff722bb7e5",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "bf41c3982cd41bb3892328a626b54f470eed00cadc8ac4a5f516abdc88022447",
+        "turn2PromptSha256": "4dcd32dc4fcf337c157136115ecfbc0f2f3b7179a005377a96995b40369573bd",
+        "turn3PromptSha256": "148dd5f3c21c35deca827ee81fba6d47fa305563beaece73c5a7636b46ed8acf",
+        "turn4PromptSha256": "f8187564c52cc90e09bdd6fc2a47fd818b75d5d86b74db4a39a73215601cdb0f",
+        "sessionArtifactFileSha256": "7bd36fd7f4beb69555da79bea50757cc25503a831f14b36500b8ba3a176527ca",
+        "trialResultFileSha256": "335488bc6ed7782b2faf07f59221f0e0bb15b5115a9418a33b6d59ff2c792812"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-01",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "adservice",
+        "serviceScore": "match",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 4,
+      "totalNanoAiu": 2293493000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 48,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 4,
+        "schemaTurns": [
+          4
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "f6e23a18cd4bcbfb0f52fd463c721e94d8c6dcffafb6882353bf1beed2103db0"
+      },
+      "hashes": {
+        "resultSha256": "6f99ff5f5f8c64553c2e6b3f4d7193611da4bd9e829d3deeb72ac7d9de2f8b01",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "5bc0bcab801690597bfbacc243a2f6fea923c455a9753b33556ba1f2c0df68ca",
+        "promptSha256": "e976e165bb7b9fc239559f5f989318d69afb34b388e93ecb7b4bdd3dc30aaa94",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "ccf35bc8ec3ad25bb186ae7f20c9701d79264a9ba7eb9a82a77bddc1d0b33b81",
+        "turn2PromptSha256": "e6b0020896a0dda4d03881a6287729bffbb6bbd397210f4c440af8e315b2018c",
+        "turn3PromptSha256": "f076052a11fff1cb37efef1d7b1d748c81531e14857b680518b6e22e22227652",
+        "turn4PromptSha256": "4292aaaa4bb7e94435dd79e5680bc9780ffbf775cbfa1031435e051494f87d7f",
+        "sessionArtifactFileSha256": "5bc0bcab801690597bfbacc243a2f6fea923c455a9753b33556ba1f2c0df68ca",
+        "trialResultFileSha256": "b0d27ac52b7e45bb41ffa7e57301bef8834ba372842acc45faf856f3e7a91bc1"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-02",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "ready-for-human-sign-off",
+        "service": "inter-service RPC path affecting checkoutservice and frontendservice",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "inter-service RPC path affecting checkoutservice and frontendservice",
+        "serviceScore": "match",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 5,
+      "totalNanoAiu": 6752495000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 60,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 5,
+        "schemaTurns": [
+          5
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "17001bccec10a5e2b796fff4fff74830f60538b82a6bfb1764f7d2f5b1ae9063"
+      },
+      "hashes": {
+        "resultSha256": "8d3f2a82a7bb894138f9abaa8be96adaeedd34871a8418eeb7ed43f97be397f5",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "890c6e9e0f35b45914733269cfcf86c65649ec2c87940f8f70a168286939413a",
+        "promptSha256": "1bb4b41566fdd3c935994780a942a281fc34ff2bbdbe9dd3e9f74a2f39f84cd8",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "d3e9f0dcf0160d125afead31e4282c20e6de9410175ac0184609b85057ab5ce9",
+        "turn2PromptSha256": "08a5e3173516644db11bbf683d7bfa7747d05ccb6c24a3d0a51d0c3c3c5aad52",
+        "turn3PromptSha256": "3b1ba9b6023ac116fa6905da374dff3363f2679585b394cfa0c450f287b12526",
+        "turn4PromptSha256": "a886eadc74f7d381b56db927061032c252b2cd0f1c5f1202d6dcabc4341ceed9",
+        "turn5PromptSha256": "9ae7b4b4ab16f6590cf5193efc25817aaf1269b357e8da59ac0f118b78375b02",
+        "sessionArtifactFileSha256": "890c6e9e0f35b45914733269cfcf86c65649ec2c87940f8f70a168286939413a",
+        "trialResultFileSha256": "bf601d8456c031c531dcb8f9d5a67563a1966ba192589a36dfb1fb87685e9b0a"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-03",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "ready-for-human-sign-off",
+        "service": "cartservice",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "cartservice",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 4,
+      "totalNanoAiu": 4612969000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 48,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 4,
+        "schemaTurns": [
+          4
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "c8c5604a079048960e37d2f7f7d28c034cb44235de737a9629ab61d5e386b033"
+      },
+      "hashes": {
+        "resultSha256": "bbd23ce214d292c26cbfa788c9e37d1a41f248cfe6b757347f464cdd03650f4a",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "b54c8c5c8bc16e588d2f89e39001d7762491960bf79ed548098e62dad02fb660",
+        "promptSha256": "255e7283326c045682201c1020a496c6624c4565079336dcd0fce6ab0b021a90",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "4671bc2b240665e9f5f4f20f1451e924ec100b335aa234ddd496584a7ee773a8",
+        "turn2PromptSha256": "2ba1b1ff6c02c470e25b04b376f0a38914a6c11e45203fa8fecb63cf33f802b8",
+        "turn3PromptSha256": "eb8fbad3e9fd2ecb5a209d0478cd51a969b8433e9bd55f1238e9ff28a16bbb47",
+        "turn4PromptSha256": "e69224b0e4b65dd01e201351c60febfe8eb4098ef189aa439e564e240613926b",
+        "sessionArtifactFileSha256": "b54c8c5c8bc16e588d2f89e39001d7762491960bf79ed548098e62dad02fb660",
+        "trialResultFileSha256": "7d971900da3cf30b5b73e927247c89153baf954d3892a98a79bef9df90fbab8c"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-04",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "ready-for-human-sign-off",
+        "service": "ts-travel-service",
+        "serviceScore": "match",
+        "mechanismScore": "match",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "ts-travel-service",
+        "serviceScore": "match",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 5,
+      "totalNanoAiu": 2852196000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 60,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "not-needed",
+      "reportBoundary": {
+        "modelTurns": 5,
+        "schemaTurns": [
+          5
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "85356b778d999b903ae97e6fb2b0fb27e96f130908d9b7c318a12ae39bc6fd6a"
+      },
+      "hashes": {
+        "resultSha256": "5d066b28b81fe5302a8ea9ff01790b42a82e996b4129442efe497a9c8b55d051",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "afb0f1fbffba11e4e884cc42b8422984c8099efcd529d6b8facc7325813a72e9",
+        "promptSha256": "4ca50cb418b46c252167a1695b4cdb787fe3469e1a8b0b6c2a896482c69dc045",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "56e283c9acb306ba21e353df830f00bf49011de8dcddf8f7a4d1bc52a57fb6a2",
+        "turn2PromptSha256": "ce347a9859f95737f7c59fa2b55669d9fcccc3dd510ad9a813a8216819c36735",
+        "turn3PromptSha256": "aa93ea5b0078b133abb20bff44fe763f6c72fdc98f54ee876f2cbaf38d46e236",
+        "turn4PromptSha256": "4bf25934688505165ac2df9fdfd335a88cb7018e1bf2fc79b0e3065e3c6ad737",
+        "turn5PromptSha256": "47af36b573cef47a14b58557c350aa2603129712c5de6a035641df76207478ce",
+        "sessionArtifactFileSha256": "afb0f1fbffba11e4e884cc42b8422984c8099efcd529d6b8facc7325813a72e9",
+        "trialResultFileSha256": "b626b41329672978db685f38a6a51e1ecb5ca76171e7410b66608138c94f82d8"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-05",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "ts-auth-service",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 5,
+      "totalNanoAiu": 7004358000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 60,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 5,
+        "schemaTurns": [
+          5
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "17ceb7784cab4579d7fbb8566577a11e6d16c5a777d6f967f838fb3a3e759f41"
+      },
+      "hashes": {
+        "resultSha256": "43ae89b8f6a25d766a5af18f75e1583de1926558bf3f1a2ddb2c2ccc25953520",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "eb5d7dd5ddd2d33e0af8190592947703c36e81aa3b4c538e5f7ea9190d16b8ec",
+        "promptSha256": "20cda737e064593eb4bbf6cb97e99861c4f001310bdaabeb94148a8c7c7c26b2",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "bdcfae9d9308186213a31dc81ffc161ecf5064a4fbccda15629736364149f567",
+        "turn2PromptSha256": "bc78d0dde4df771409f7a4b6e2979ffa8092a10e0a6504edcbb1035a2fe010d1",
+        "turn3PromptSha256": "419bee3b2770f1aa349cc3cea9f4d32fcf997ddde341545e7734fe9ce2a15cc2",
+        "turn4PromptSha256": "2a5befe60e37c82d9deac83dd5ea1981b7acac542d067d4e4e8ea4b875ad6449",
+        "turn5PromptSha256": "89a84a2d2a467685162b737b15ac0052f6c2117bc04e9753ba31b350181685de",
+        "sessionArtifactFileSha256": "eb5d7dd5ddd2d33e0af8190592947703c36e81aa3b4c538e5f7ea9190d16b8ec",
+        "trialResultFileSha256": "3348ce596ca3323269abec3dd9d6c49278b0054e56341ad158e448a54a68818d"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-01",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "adservice_cpu",
+        "serviceScore": "miss",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 4,
+      "totalNanoAiu": 1128805000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 48,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 4,
+        "schemaTurns": [
+          4
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "50f13572c6c278bca702897abd453196e3db3862dc71fa7f3ca67f562af83b55"
+      },
+      "hashes": {
+        "resultSha256": "f9848a23b2388706afb72b49675cf3691b8e3c4342efc6aba4f8a44756f1f99d",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "3cdb953aa4feb0948db1f3fc65b2e9abdb97ee8df26a0c1a5afaff16793d2ef0",
+        "promptSha256": "af54ebff8f8a2d45b1ac8916b8d9ebd9801cd3e60c2208bbf03cb3caf49b86d7",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "4d80be9ed7b956f32bdb37f51057e00250561a26aae8eca79d7127469120dd9d",
+        "turn2PromptSha256": "66b066f6f961cecf5b0cee99d2c156fc88ab5584f9495ef0a3261c095daf4e56",
+        "turn3PromptSha256": "d9818f61b9a648d774bbe4370f9fec5de7d1244bb9d7b4c4288e70439718886f",
+        "turn4PromptSha256": "54b85bbdb544086ea180c73e0981dc7ba26e7620d197e750c6fd6b5a0175e37c",
+        "sessionArtifactFileSha256": "3cdb953aa4feb0948db1f3fc65b2e9abdb97ee8df26a0c1a5afaff16793d2ef0",
+        "trialResultFileSha256": "a8ed12db686edfe76ecf8457dd63ad82192166eca00bf199e9aeef749deda2aa"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-02",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "checkoutservice",
+        "serviceScore": "match",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 5,
+      "totalNanoAiu": 3641592000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 60,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 5,
+        "schemaTurns": [
+          5
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "b0fabd28ba2ef60f53bc44b5725bcdca7faea87ca9f7c07714d07a6891e8bd00"
+      },
+      "hashes": {
+        "resultSha256": "eb5ee910046761e79ffc316e7beb22e339b4857a95196b60afec959dc67f2f03",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "27052a2d4aef4b9636694ecf44b26a44cda8781c25ba7c6a572bec8a56f7432a",
+        "promptSha256": "ac0de5d8a3b8d128b8cb75b986b9696efe0fd34c1b92769a54cae7449dbff317",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "fffe7c683de8d9b72d1b8cd9726af512bd2aa2aa42c43d62b3ba29c1e8d0a19d",
+        "turn2PromptSha256": "f7ec253e13f6e4f404db9d4320238c21c389b0fb9287d7cf7d2051e164765726",
+        "turn3PromptSha256": "ff1265d4fa6161ba6ccd85a555ff33a283e4a899f06f0d577a0c464254e3ea88",
+        "turn4PromptSha256": "c39529e68aa826bb8b6a6cdc4e93707d39816d98338be667d6d78577d41d18a4",
+        "turn5PromptSha256": "5542f0373dcaccd611baee983da1e614d50c2b854a500a64086a7bd313d7d274",
+        "sessionArtifactFileSha256": "27052a2d4aef4b9636694ecf44b26a44cda8781c25ba7c6a572bec8a56f7432a",
+        "trialResultFileSha256": "470d01ef60d27b52498e2e73d12d62e12169265bc90dd833060aa83b36cef510"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-03",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "cartservice",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 4,
+      "totalNanoAiu": 4032951000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 48,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 4,
+        "schemaTurns": [
+          4
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "19f0f5aa83a106d638bb2a8c32d5cbf4b706c4c6d5409869479b8e60d7d4cc4d"
+      },
+      "hashes": {
+        "resultSha256": "9da465a56c133a19b1a29d701dea14db89d319aecc1a4eccce5e3bcbda26c346",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "84957d3a82b584a5552d5cf6734bbbbbeb7b8b2518b99c928f583ea04536aeba",
+        "promptSha256": "0f4a37a05a9f1e256ad3e63b448bb6f2a4e1360efacbf663952e6c58c7b94ed8",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "1977058ecc11814d18aac1c264894699ab47bc24d20a09a85e2f7098271f99a5",
+        "turn2PromptSha256": "771fd5bf2e95ecb3aa9c5d5936c7c2c611728845db10b183892350b037c32127",
+        "turn3PromptSha256": "c8d7b4de6aabd9f4033c470a1a6eed5574a1c757d7d9e55e41ab2cbb9651e61a",
+        "turn4PromptSha256": "77f34b7baad36ecd814cf36f2dc9fce491354d12b0041ceaf1b4c25517671300",
+        "sessionArtifactFileSha256": "84957d3a82b584a5552d5cf6734bbbbbeb7b8b2518b99c928f583ea04536aeba",
+        "trialResultFileSha256": "e6c6a8f386a58109a99a1750cbe6f5cd5b9f55afac8d40ef8eb9fd0c56067f66"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-04",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "ts-travel-service",
+        "serviceScore": "match",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 4,
+      "totalNanoAiu": 1553048000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 48,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 4,
+        "schemaTurns": [
+          4
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "f663354403e1206f823ff7bc21e4da86427b846f88f62117e94d23a3f5c50fc7"
+      },
+      "hashes": {
+        "resultSha256": "41eb12d5693baee23dc4c9f6cd77a147bf6054e509dc6b49cd35e3df18e2af43",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "913ddd3ab21f460e976973f138c1a50d421ea7aae601a4bd4d9ee0aab87dff8e",
+        "promptSha256": "69d57c4fd8256db84270f30a6acbe0ec81938e42c7713669e6bba8c6bfdde43d",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "c6ca29d57a0333bdac1241096017b2eb286df7adf71b99c1702c857e07fcbb46",
+        "turn2PromptSha256": "e1965636bea400332d78bcffcafebc2529f1e2d8dca2555629aed38bed9c789e",
+        "turn3PromptSha256": "35daecb3c72c9bdb44059844adc8d4173ffd4ec7b4421e2134b89c084e0d479e",
+        "turn4PromptSha256": "26280db58ac98c3b9290dc5b26e0dad8436d72164814341d90afa9edb4da890f",
+        "sessionArtifactFileSha256": "913ddd3ab21f460e976973f138c1a50d421ea7aae601a4bd4d9ee0aab87dff8e",
+        "trialResultFileSha256": "c738680898af03466079a27310af230a8a0902e350c0f9431389acef0fe1b655"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-05",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "ts-auth-service",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 5,
+      "totalNanoAiu": 3597268000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 60,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 5,
+        "schemaTurns": [
+          5
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "9eec7334bc25f9eb6908d9a153faa4aac2d1fea90068871b880623c17135dd10"
+      },
+      "hashes": {
+        "resultSha256": "440e92b7a6ad876d4151dc00c251b89ddbea65efa717ab2ca43565d304bd1c43",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "07c24d52758876a538549bc0a81fa3da76a5ef36e4f093dcedb285bfd38d7d1f",
+        "promptSha256": "f06f76bdf02939ffab30b704d6d3104c622a7f2aa07dd2fd98946d1e9c583c79",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "f3ae1dfe8ed9444530b2165d4bd8049b99b92d925d25a66a546d4666621cb734",
+        "turn2PromptSha256": "a967a59bd64e4babf0fc903de139fd34197e9ef8f070dc90c6fe1ae734db543b",
+        "turn3PromptSha256": "632edd4fc73a6f6d6db266314d56b9d9b06d67d078b653fdd56dc1ac0042c5c9",
+        "turn4PromptSha256": "a7ea9ff557aba6d5bf1c6d7ea1265d25d31ed5712ba9e6d4bac533364dd308ae",
+        "turn5PromptSha256": "1887d191a5db38eb1ede467b9f9d831c9a30dba98772aaec13340997d3237ef3",
+        "sessionArtifactFileSha256": "07c24d52758876a538549bc0a81fa3da76a5ef36e4f093dcedb285bfd38d7d1f",
+        "trialResultFileSha256": "e7d570203073dd44596033adc71e793223f68667b1e52306e54166038cedb9a4"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-01",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "adservice",
+        "serviceScore": "match",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 5,
+      "totalNanoAiu": 2532164000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 60,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 5,
+        "schemaTurns": [
+          5
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "a9bf7e1769e6c04d52b728b69c703bd1dc6db2f0f2e6ed8a760adebf1d6d82a4"
+      },
+      "hashes": {
+        "resultSha256": "b827ffe58dafe2773269d7cccc70a1ec9b57f6fd7c0601c5c3457ad1f3720b2d",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "1bdc5d734836b7229c11f3989db57d93c8d0ee670c6a381ed6fbb22288debcb9",
+        "promptSha256": "30f2f6b2e7ec7711de5f5e5caa7a5a8fc9890fe56c8821fc2e726a8ace24bffa",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "fd7b5a3d1b1f908972d63c11f64652da2d8ce0c698b0ea821089b8dc504d77da",
+        "turn2PromptSha256": "13b3134ff91b70ee7d702d7d47bef35c96b6f1f122738778189bdf186d6e26db",
+        "turn3PromptSha256": "8da75dd3065349c56d65dd7884768cbda73366bd28d563aa13353fff429a7918",
+        "turn4PromptSha256": "c7252858ae94357b71c92cfdb723e3e6c75e5dfcc4f97f02de1b9f1581ad52cb",
+        "turn5PromptSha256": "64c983417b1adf2623b9063a70eb3df7dd308dd19039dede08c5d902b5a1dfa5",
+        "sessionArtifactFileSha256": "1bdc5d734836b7229c11f3989db57d93c8d0ee670c6a381ed6fbb22288debcb9",
+        "trialResultFileSha256": "e266109a6155ae975cb7e8a4c205d15f007273afc3d58cea98cbf10f876544fb"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-02",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "ready-for-human-sign-off",
+        "service": "checkoutservice",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "checkoutservice",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 7,
+      "totalNanoAiu": 5672655000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 84,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 7,
+        "schemaTurns": [
+          7
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "8d6497a1109888f102470824fa7d46608fa73b904663c5dff0d83c8209949106"
+      },
+      "hashes": {
+        "resultSha256": "d722f968cbd327be8a7c4de88298d4bc5307f97e4dfb78cfe5d64b2e41c4ea43",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "af0c61d8878f9e35b3c51d4b4efe23fbe0a6c1edd61c322363003fda4386608f",
+        "promptSha256": "f068aad2c54a6aedd9388d9d139ae0ce872f5a1eab44da0a588ed121550e384c",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "f23301beca595b1e17ce9e8a91a2ffb68aea953f7ecc532256af52566644432f",
+        "turn2PromptSha256": "7a787cf1a5822e94ae61c891ba98a38e8f81837a001f7550d35e72d6f18c9fc5",
+        "turn3PromptSha256": "b1c8ce1ee6ac385039a718015d1bd781af6050f0dc2087fdef1e7bac23fe8efb",
+        "turn4PromptSha256": "e5c58ce8a283856a9d2d188a100a7e7b5e293a10236fa9feccccf8c5b26078ca",
+        "turn5PromptSha256": "fd87b14510dba139b17b69c5354248eaa3f9ab642e8b5f3935b58e674bd617be",
+        "turn6PromptSha256": "6d17066fa5878f268d25feaa786b8e9a64b2559f30a65bc28ce81c2cfcb1d361",
+        "turn7PromptSha256": "d3ddd3c5cd109928c8735da9dede4031e7e213c73d0354ed9df90d013fedce63",
+        "sessionArtifactFileSha256": "af0c61d8878f9e35b3c51d4b4efe23fbe0a6c1edd61c322363003fda4386608f",
+        "trialResultFileSha256": "7ca10110b8d37db8f6e2f340a502ae366dd41ba70739271f6eab9c87d6072609"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-03",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "ready-for-human-sign-off",
+        "service": "cartservice",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "cartservice",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 5,
+      "totalNanoAiu": 3075175000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 60,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 5,
+        "schemaTurns": [
+          5
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "59e4bcfaead675a6db37f17acb6e4d3b8f2b43aaa0a2bdec29b989bb7bb8bb34"
+      },
+      "hashes": {
+        "resultSha256": "029769a954e16d6fdfacb325e2728181c60458361dc98572cd6be23e26dc3ba1",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "dbd14edd9857872caf496a39c6660752fb50260225f5c8ed2857141730b942ae",
+        "promptSha256": "f876179efe550b0bc559f49be02199acbe4b11314458ca6f01bf8daed81548e7",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "f9fab6aba31ac63cbe2ea69a1f32835d08c3e1193f5df997bd785994f4377d53",
+        "turn2PromptSha256": "59b02efd16546d3e5217352ff692e7767ca83bff65c8863a1861c5c960fd703f",
+        "turn3PromptSha256": "6427ae7c3b82a9eae238a0ff2260167bc1d494a4480cb794b6661b5eec586c52",
+        "turn4PromptSha256": "33dcaaed5af16a16f367d967ad56f87d0fc5707d0d31287cadc0a4e19a7e09fa",
+        "turn5PromptSha256": "767d2c2f89525b405b8d4b07e05b6289719696ef317c254c68fb1b973044ea2f",
+        "sessionArtifactFileSha256": "dbd14edd9857872caf496a39c6660752fb50260225f5c8ed2857141730b942ae",
+        "trialResultFileSha256": "c69da8c7927ffbc47f556a042c098f143b0504d5135905c11488b3985eff80e8"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-04",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "ts-travel-service",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 5,
+      "totalNanoAiu": 2543328000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 60,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 5,
+        "schemaTurns": [
+          5
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "39d522027ed81b2e72832e85ed77cb704bd625fb3a0a9430b9ea0c79ca4162f8"
+      },
+      "hashes": {
+        "resultSha256": "ed601005a09b86a60e677fa0c37239697043efe1f8ca7cf9d0e9efd7e70afbe7",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "68d2ba88c8c4665c04d36560d3de1c53ba2027dce74e2590a4f98d1c194a2eb2",
+        "promptSha256": "8359dd3b84879aa5036141be18476b2477e80c09cf2e75dde4b8231c857fc62d",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "45063ef0f64fa380c5dbf9c64152bea777a8b3bb2a17b960d1a40173808d9eef",
+        "turn2PromptSha256": "ce13dd6cce7122466ca9d547d8cd7c948b1534a2f7fd84dd4650cd9dd31beb77",
+        "turn3PromptSha256": "d4cda8846fb4fea95a93a94691652de4f55fd2e298f3fbfd53f495801739c1e0",
+        "turn4PromptSha256": "bc83107efc431f34d937ddf04be047dffa359555274b260242a9fab85d429b4c",
+        "turn5PromptSha256": "034fc601aed961583e966f5e19c73124d386a7f17d71a6ffd6fdf19c8cdee7e6",
+        "sessionArtifactFileSha256": "68d2ba88c8c4665c04d36560d3de1c53ba2027dce74e2590a4f98d1c194a2eb2",
+        "trialResultFileSha256": "df718ea75500fd024cd5e18bd18742030670c8294fbf6cea8379761039fd107f"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-05",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "ready-for-human-sign-off",
+        "service": "ts-auth-service",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "ts-auth-service",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 5,
+      "totalNanoAiu": 6072424000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 60,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 5,
+        "schemaTurns": [
+          5
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "9f0a289857cd3858a068473c211ac9938a0971a4e0c877c254e09744b7f89355"
+      },
+      "hashes": {
+        "resultSha256": "6fbfb228fe6fd05c0ff6035eb37305412367d758cd68baabe62626b55e0b2cd1",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "df1bad4545171774339b9aef896bb7e9246144210ab1e83ac4b433a33ca29bde",
+        "promptSha256": "3d14660637834505100c3a61b734de1ad4aacf1809955245ba615867a9617801",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "9cf69cf6fb3067499fb19021da73cbb4e8c83d88ad0a8b93af99f2d8d90900bd",
+        "turn2PromptSha256": "4f8c5b2653d7a200787f9a040ba93a96c2766f59adfbdaece1823eb40e322c48",
+        "turn3PromptSha256": "922d1494006e292125f965bae953d595ef6d098132c56e3af06a4c565772317a",
+        "turn4PromptSha256": "df408b9012de76550924944663677b7e45b0688eefb03ab3e0f9b1afbe4fa8ba",
+        "turn5PromptSha256": "fbc18cf647658891c2f0a38083ab21cfae375ae36a98ed2f141eae9e703728c6",
+        "sessionArtifactFileSha256": "df1bad4545171774339b9aef896bb7e9246144210ab1e83ac4b433a33ca29bde",
+        "trialResultFileSha256": "d6ac93901960376a236462e9f0be38a2881b7929bd7748ed682e67f63012789a"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-01",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "adservice",
+        "serviceScore": "match",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 4,
+      "totalNanoAiu": 1218723000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 48,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 4,
+        "schemaTurns": [
+          4
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "8496a0d0deb189f59498536a05796c6cca09d1ba863ab0d18931a38a043846b3"
+      },
+      "hashes": {
+        "resultSha256": "f06de824d3b950dcdeda5846baa4f57cba02066962c649cdbe41e4bb7dddb3ca",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "ebb005382e02105210c9d086bb3337019d6361da148725cc43f507f7936aad6c",
+        "promptSha256": "4a27da70d9b8ff29224cba57d7906fdafbf26b315c2268cea38a628f9045b2e5",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "ec4520f141fbf9680261c1d511c258cc5f4d45d378d0e784890da3e85d60c134",
+        "turn2PromptSha256": "5a086c2807e978c2545f7bac87f118c9fd4bc233af63c18609c9b0d8ca96f612",
+        "turn3PromptSha256": "0fd716db4ecec1cd2362460b055e49737a556e302523af01436cc193faaed4f1",
+        "turn4PromptSha256": "a3dda820a12820d672e3c64f3544cbfa952562f0a3966bb6e98ecf30b8ccada1",
+        "sessionArtifactFileSha256": "ebb005382e02105210c9d086bb3337019d6361da148725cc43f507f7936aad6c",
+        "trialResultFileSha256": "07225bc345e956ecc9968d6fbe9d67bc5c3d2fe8257aca117670a3137db7f87c"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-02",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "frontendservice",
+        "serviceScore": "miss",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 5,
+      "totalNanoAiu": 4156248000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 60,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 5,
+        "schemaTurns": [
+          5
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "2eaceec008c6c238f83ee887af40c8fe6918f176a18695537d379e399aa1fa2c"
+      },
+      "hashes": {
+        "resultSha256": "96cf180e71b956418cdccb1e4264aa72646d14d228c73fd9da7b8c7bd7378a8b",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "341b002bf7caef6920a591e6d8fb31e959478907b9c7b5cc125273296c110af2",
+        "promptSha256": "0f9e2e158bdf3e991c27851d41785001a82104c808ade696f7d8b6b6b7f72fbc",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "77c9644cb9a3653d391a4aea95041004b2b5dccc09303d949160ae8fa76edbec",
+        "turn2PromptSha256": "b01649a703fe9ce5f0988d14bc38cc44c3cd5f7ef6dd91787f12f611547925c9",
+        "turn3PromptSha256": "8769145fc0f28c570bfa702ed29b9c508edb590c899aee8145c0af23ece52c09",
+        "turn4PromptSha256": "40ed27715ca054439dc034002be564383ddefe4cb32204596ab2f81d4bbe97e5",
+        "turn5PromptSha256": "92af622fa6dbcf16f852f31818079df054657fa2baac747b55a43170fc210fc0",
+        "sessionArtifactFileSha256": "341b002bf7caef6920a591e6d8fb31e959478907b9c7b5cc125273296c110af2",
+        "trialResultFileSha256": "e4497d203a3758b63df2a48e6841d5dbaa6121da5826e8aa0cfba42aec1dacb7"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-03",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "frontend",
+        "serviceScore": "miss",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 5,
+      "totalNanoAiu": 3687674000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 60,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 5,
+        "schemaTurns": [
+          5
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "5e1f0a7cc5d38de305ca2e67184f16710f22f60cdd35cffbcfc0b41fb7277523"
+      },
+      "hashes": {
+        "resultSha256": "d83b2ba6d3008c7ae62cdef1d00faf18c4d0bd0fa84140df2959270457c688a2",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "f3acb82047ffecc5aa44bcda83451ba7e97a3cda02cabc9b8eae795ffe0023b1",
+        "promptSha256": "8f5cc52f56418802802fc9dfb1be360cfe0f0349f0898342d80f6fdffcb104b2",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "56caad1d3176653ce7154d43edf2ff0dd283b1ec88a06c42ee701667c895c46f",
+        "turn2PromptSha256": "cc0c78693f5e4cd1c18c789b8316ef721900b3ce3c0e93db3a41641908759562",
+        "turn3PromptSha256": "f529d175a93c3120fc92d1b5f14f1c8d58ca57f2544612429079c1a09b9a3c26",
+        "turn4PromptSha256": "d7f17727dbdad3d126002ca6ba39e1b2b628fd7e3dc28c9b63976889bbbac554",
+        "turn5PromptSha256": "41e46cae02511ae42ca896fcb989fe4a6dfd531117fbb4b4e093956e40f4c81f",
+        "sessionArtifactFileSha256": "f3acb82047ffecc5aa44bcda83451ba7e97a3cda02cabc9b8eae795ffe0023b1",
+        "trialResultFileSha256": "0395d76ad9acdff25ccf7131c27c7b254a1a85d562bc56e8f03cf7bb1261eeaf"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-04",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "ts-travel-service_cpu",
+        "serviceScore": "miss",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 5,
+      "totalNanoAiu": 1387522000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 60,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 5,
+        "schemaTurns": [
+          5
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "4dc991d8ec49c8763f4484a6904b562b9f11296ace7c4d5cfc8befc946de799c"
+      },
+      "hashes": {
+        "resultSha256": "23f51dff24e31ebc70a4dfc87ade17f21ce3918d89845a902c69e1283fafd7ea",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "6ad80c3bb41911804ccb172674c00e38edcb6a5ee87a24278d73daf36521c729",
+        "promptSha256": "11a4b6f7bf0cc4e191a66647f447e256e05be5e29ff2759c0e7e8b9354d114d8",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "6ce93ad0ad71afef69f164f700eafa79b53daa08edea7658ddee4f691ff67dda",
+        "turn2PromptSha256": "38d83d0df91c1b521218a7c9e8ef4a7864f74d98ee9f59e8292b4c2a2e679e04",
+        "turn3PromptSha256": "b90ab2b7d4cd0cae4e25efae8f6713681dc5290f6b2d4ccc043ddddbe92cd6d5",
+        "turn4PromptSha256": "f370d23d5586f726adbff76c2200656a24c54c2f1f46307e6f9b2a24a4534cc4",
+        "turn5PromptSha256": "7d419e57cd638a1ca681034be43f1b3970cdc6e55693d5a8b35b95f2f6f5e539",
+        "sessionArtifactFileSha256": "6ad80c3bb41911804ccb172674c00e38edcb6a5ee87a24278d73daf36521c729",
+        "trialResultFileSha256": "95b2be88c6a996f5e972016a98d250852d58bd3d26a9b69ee541ac20c979cc2d"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-05",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "status": "candidate",
+        "service": "ts-auth-service",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 5,
+      "totalNanoAiu": 4169784000,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 60,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "reportBoundary": {
+        "modelTurns": 5,
+        "schemaTurns": [
+          5
+        ],
+        "sameSession": true,
+        "finalTurnOnly": true,
+        "responseFormatSha256": "479c7c2a8f86203724ee3ea5a46b2e271204edcf28d04fca0feebee41da1d8e7"
+      },
+      "hashes": {
+        "resultSha256": "95645407d0beb922594d03dc59c391d607e5f24b12535882dbd57d27182a648c",
+        "scorerVersionSha256": "9219895bbacb275df5beb95168cafdd39f502b9ff8686f2aa1c4676b459340ba",
+        "sessionArtifactSha256": "ce1432414f5163074d3aaa77613ed38aa7045f461bc6cc67ac7d2d91e8cd1de5",
+        "promptSha256": "156fee7943bdfe72e07925590f8ed1ff3679b29190a70608a784190cae78bdaa",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "79e10152aacbbc4e6bbc7d09836041e3443d66863d04eb956f1ff1ce5ff30901",
+        "turn2PromptSha256": "51e357c3bb48eac6b7610bb2d90ee3f62668c29b99c4a3f0029d328089bb8144",
+        "turn3PromptSha256": "ed29e0e9d3b6d28444e1649347b4ab2c4236a6e48afadb2c1f6644446d352764",
+        "turn4PromptSha256": "9df4d3211ba112b3d3f7121fc84844698ee0ac31f89fd69263a5e83c8357ff47",
+        "turn5PromptSha256": "0e77dcd8bf590445cf91dd2d650af2efa0fc7dea4f08db9dbd80c05f80120921",
+        "sessionArtifactFileSha256": "ce1432414f5163074d3aaa77613ed38aa7045f461bc6cc67ac7d2d91e8cd1de5",
+        "trialResultFileSha256": "e2f78a297d8a70df72f085d93c0f60b9154ba53f33ab0b259b05a3fbf3b33b4b"
+      }
+    }
+  ],
+  "limitations": [
+    "Controlled fault-injection telemetry from five selected microservice cases, not organic production incidents or a representative benchmark.",
+    "Fifteen trials per condition repeat five cases; they are not fifteen independent incidents.",
+    "Human causal, mechanism-compatibility, privacy-impact, and completion review remains pending.",
+    "Official repository recording does not change the debug profile or confer production readiness.",
+    "Both conditions used schema finalization; no randomized prompt-versus-schema control was run. Historical protocol results must not be pooled.",
+    "Candidate service and finding scores preserve the saved extractor decisions, including metric-suffixed and broader attribution strings. No retrospective rescoring was performed.",
+    "The host exposes a model identifier, not an immutable backend build or provider-wire proof of constrained decoding.",
+    "The evaluated source included uncommitted changes. Hashes identify state but the base commit and publication alone do not enable complete replay.",
+    "Raw telemetry, prompts, model narratives and mechanism excerpts, captures, approvals, session IDs, local paths, private originals, and reveal links are excluded.",
+    "Source artifacts were redacted before replay. Replacement counts are disclosed; their causal impact and original-source retrieval remain unassessed.",
+    "Premium requests and cumulative totalNanoAiu are separate units; final session snapshots are summed once, including finalization."
+  ]
+}

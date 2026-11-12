@@ -1,0 +1,86 @@
+{
+  "schema_version": 2,
+  "assessment_mode": "evidence-assessment",
+  "cases": [
+    {
+      "id": "rca-checkout-pool",
+      "failure_type": "incident",
+      "question": "Did the R42 cancellation handler omit connection release and cause the checkout timeouts?",
+      "scope": {
+        "affected": "R42 checkout instances during the captured ten-minute incident",
+        "unaffected": "R41 checkout instances receiving the same traffic during that interval",
+        "window": "2026-09-14T18:00:00Z/2026-09-14T18:10:00Z"
+      },
+      "sources": [
+        {
+          "id": "S-001",
+          "description": "Complete request, connection-lifecycle, pool, and database trace export for both releases; measurements are included in E-001."
+        },
+        {
+          "id": "S-002",
+          "description": "Authorized isolated replay of the captured traffic against both releases with the same database; measurements are included in E-002."
+        },
+        {
+          "id": "S-003",
+          "description": "Cancellation-handler code diff and authorized replay with only the connection-release callback changed; measurements are included in E-003."
+        }
+      ],
+      "hypotheses": [
+        {
+          "id": "H-001",
+          "statement": "The R42 cancellation handler omits connection release, exhausting the pool and causing the incident timeouts.",
+          "necessary_prediction": "Cancelled R42 requests retain connections before pool exhaustion and request timeouts.",
+          "disproof_criterion": "Complete incident traces show cancelled R42 requests release connections before the timeouts without pool exhaustion."
+        },
+        {
+          "id": "H-002",
+          "statement": "Database execution slowed both releases and caused the incident timeouts.",
+          "necessary_prediction": "Database execution latency rises before the timeouts on both releases.",
+          "disproof_criterion": "Database execution latency stays at its pre-incident level on both releases."
+        }
+      ],
+      "tests": [
+        {
+          "id": "T-001",
+          "status": "Executed",
+          "result": "Exported every request and connection lifecycle in the declared window for R41 and R42; recorded measurements in E-001."
+        },
+        {
+          "id": "T-002",
+          "status": "Executed",
+          "result": "Replayed the captured traffic in an isolated environment against R41 and R42 with identical database, pool size, and request timing; recorded measurements in E-002."
+        },
+        {
+          "id": "T-003",
+          "status": "Executed",
+          "result": "Changed only the R42 cancellation callback to release its connection and repeated the same replay; recorded code and measurements in E-003."
+        }
+      ],
+      "evidence": [
+        {
+          "id": "E-001",
+          "source": "S-001",
+          "locator": "#/cases/0/evidence/0/observation",
+          "observation": "Trace coverage: every request and connection, no dropped spans. R42: all 40 cancelled requests release their connections within 2 ms; peak occupancy 10 of 50 throughout the window; 40 checkout timeouts occur at 18:02:05Z. R41: each cancelled request releases its connection within 2 ms; peak occupancy 10 of 50; zero timeouts. Database execution p95 stays at 8 ms on both releases, matching the pre-incident interval."
+        },
+        {
+          "id": "E-002",
+          "source": "S-002",
+          "locator": "#/cases/0/evidence/1/observation",
+          "observation": "Replay: 1,000 identical requests per release, including 40 cancellations. R42: 40 cancellation paths exit without releasing a connection; occupancy reaches 50 of 50 before 40 checkout timeouts. R41: all cancellation paths release their connections; peak occupancy 10 of 50; zero timeouts. Database execution p95 is 8 ms for each release."
+        },
+        {
+          "id": "E-003",
+          "source": "S-003",
+          "locator": "#/cases/0/evidence/2/observation",
+          "observation": "The R42 callback exits on cancellation without calling connection.release(); the R41 callback calls it before exit. Adding that call to R42, with no other code or configuration changes, yields 40 release events for 40 cancellations, peak occupancy 10 of 50, and zero timeouts across the same 1,000 replay requests."
+        }
+      ],
+      "gaps": [],
+      "human_review": {
+        "reviewer_role": "accountable incident owner",
+        "sign_off": "not recorded"
+      }
+    }
+  ]
+}
