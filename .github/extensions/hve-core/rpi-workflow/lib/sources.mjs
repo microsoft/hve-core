@@ -11,17 +11,39 @@ import { lineageStatusOf } from './source/assemble.mjs';
 export const DEFAULT_STAGE = 'implement';
 const TASK_REF_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
 const STATE_PATH_MAX = 400;
-const OPEN_KEYS = Object.freeze(['scenario', 'stage', 'task', 'state', 'session']);
+const OPEN_KEYS = Object.freeze(['scenario', 'stage', 'task', 'state', 'session', 'sessions']);
+/** The most Copilot sessions a canvas lists in its picker. */
+export const MAX_SESSIONS = 50;
+
+/**
+ * The Copilot sessions a picker lists, as session IDs: deduplicated and lowercased, in the order given.
+ * Refuses a value that is not a list of session IDs, and a list longer than MAX_SESSIONS.
+ *
+ * @param {unknown} value
+ * @param {(code: string, message: string) => Error} makeError
+ * @returns {string[]}
+ */
+export function sessionListOf(value, makeError) {
+    if (!Array.isArray(value) || !value.every((item) => isSessionId(item))) {
+        throw makeError('invalid_input', 'sessions must be a list of Copilot session IDs (UUIDs).');
+    }
+    if (value.length > MAX_SESSIONS) {
+        throw makeError('invalid_input', `sessions lists at most ${MAX_SESSIONS} Copilot sessions.`);
+    }
+    return [...new Set(value.map((id) => id.toLowerCase()))];
+}
 
 /**
  * Validates canvas open input: `state` opens the task whose state file it names, `task`
  * opens an RPI task by ID or `current`, `session` names the local Copilot session whose
  * workspace holds the task (`state` is then relative to it, and alone it shows `current`),
- * and `scenario` and `stage` open the sample. Returns the input, or an empty object when none was given.
+ * `scenario` and `stage` open the sample, and `sessions` lists the Copilot sessions the picker shows
+ * first, which combines with any other input. Returns the input with `sessions` normalized, or an
+ * empty object when none was given.
  *
  * @param {unknown} input
  * @param {(code: string, message: string) => Error} makeError
- * @returns {{ task?: string, state?: string, session?: string, scenario?: string, stage?: string }}
+ * @returns {{ task?: string, state?: string, session?: string, sessions?: string[], scenario?: string, stage?: string }}
  */
 export function validateOpenInput(input, makeError) {
     if (input === undefined || input === null) {
@@ -60,7 +82,22 @@ export function validateOpenInput(input, makeError) {
     if ((value.task !== undefined || value.state !== undefined) && (value.stage !== undefined || value.scenario !== undefined)) {
         throw makeError('invalid_input', 'task and state open an RPI task from the workspace; stage and scenario apply only to the sample.');
     }
+    if (value.sessions !== undefined) {
+        return /** @type {any} */ ({ ...value, sessions: sessionListOf(value.sessions, makeError) });
+    }
     return /** @type {any} */ (value);
+}
+
+/**
+ * Splits validated open input into what the canvas shows and the picker's sessions. The sessions apply on every
+ * open, so they are never the input that a reopen or an open of a canvas that is already open replaces.
+ *
+ * @param {ReturnType<typeof validateOpenInput>} input
+ * @returns {{ target: Record<string, unknown>, sessions: string[] | undefined }}
+ */
+export function splitOpenInput(input) {
+    const { sessions, ...target } = /** @type {Record<string, unknown> & { sessions?: string[] }} */ (input);
+    return { target, sessions };
 }
 
 /**

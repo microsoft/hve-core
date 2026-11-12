@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { button, h, icon } from './dom.mjs';
+import { copilotSessionsPicker } from './components.mjs';
 import { externalLink } from './markdown.mjs';
 
 const REPOSITORY = 'https://github.com/microsoft/hve-core';
@@ -49,16 +50,17 @@ export function bugReportUrl(details) {
 }
 
 /**
- * The Not connected screen. It says what the canvas shows and that the chat agent connects it,
- * offers Ask the agent (when the host can take messages) and Copy request, puts the sample on
- * a button, and keeps help for when it keeps happening in a disclosure.
+ * The Not connected screen. It says what the canvas shows and that the chat agent connects it, lists the
+ * local sessions whose RPI work it can show, offers Ask the agent (when the host can take messages) and Copy
+ * request, puts the sample on a button, and keeps help for when it keeps happening in a disclosure.
  *
  * @param {{
  *   reason: string, detail: string | null, request: string, canAsk: boolean,
  *   handle: string | null, editor: string | null, now: number,
  *   ui: { asking: boolean, askedAt: number, retryAfterMs: number, error: string | null, helpOpen: boolean },
- * }} model
- * @param {{ ask: () => void, copyRequest: () => void, copyDetails: (text: string) => void, showSample: () => void, toggleHelp: (open: boolean) => void }} act
+ *   picker?: { loading: boolean, error: string | null, list: { sessions: any[], skipped: number } | null, shown: string | null, showError: string | null, note: { tone: string, icon: string, text: string } | null },
+ * }} model `picker` is the session picker's state; without it the screen shows no picker.
+ * @param {{ ask: () => void, copyRequest: () => void, copyDetails: (text: string) => void, showSample: () => void, toggleHelp: (open: boolean) => void, picker?: { onShow: (entry: any) => void, onOpen: (ref: { session: string, title: string }) => void, onRefresh: () => void } }} act
  */
 export function notConnectedView(model, act) {
     const asked = model.ui.askedAt > 0 && model.now - model.ui.askedAt < model.ui.retryAfterMs;
@@ -70,6 +72,9 @@ export function notConnectedView(model, act) {
         h('div', { class: 'connect-icon' }, icon('plug')),
         h('h2', { id: 'connectTitle', class: 'connect-title', text: 'Not connected to an RPI session' }),
         h('p', { class: 'connect-lead', text: 'This canvas shows the research, plan, implementation, and review of the RPI session your chat works on. The chat agent connects it when it opens the canvas, so you should rarely see this page.' }),
+        model.picker && act.picker
+            ? h('div', { class: 'connect-step connect-sessions' }, copilotSessionsPicker(model.picker, { idPrefix: 'connect', title: 'Show a session\'s RPI work', headingClass: 'connect-step-title', ...act.picker }))
+            : null,
         h('div', { class: 'connect-step' },
             h('h3', { class: 'connect-step-title', text: 'Ask the agent to connect it' }),
             h('p', { class: 'connect-hint', text: model.canAsk ? 'Ask the agent sends this request to the chat. You can also copy it and paste it there yourself.' : 'Copy this request and paste it in the chat.' }),

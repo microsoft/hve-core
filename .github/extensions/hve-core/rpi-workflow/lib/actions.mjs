@@ -22,7 +22,7 @@ import {
 import { buildScenario, SCENARIO_ID, STAGES } from './scenario.mjs';
 import { loadSessionDocs } from './session-docs.mjs';
 import { isSessionId } from './source/sessions.mjs';
-import { sourceSummary } from './sources.mjs';
+import { sessionListOf, sourceSummary } from './sources.mjs';
 
 const str = (description, extra = {}) => ({ type: 'string', description, ...extra });
 const ids = (description) => ({ type: 'array', items: { type: 'string' }, description });
@@ -30,8 +30,8 @@ const PHASE = { type: 'string', enum: [...PHASES], description: 'research, plan,
 
 /** What the agent does with a canvas that shows no RPI session. */
 export const NOT_CONNECTED_NEXT_STEP = 'Connect the canvas with show_task, giving { "state": "<this conversation\'s RPI state file>" } or { "task": "current" }.';
-/** Actions that work on a canvas that shows no session: they read it, connect it, or change its look. */
-const WITHOUT_SESSION = new Set(['get_state', 'show_task', 'load_scenario', 'set_appearance']);
+/** Actions that work on a canvas that shows no session: they read it, connect it, list its picker, or change its look. */
+const WITHOUT_SESSION = new Set(['get_state', 'show_task', 'load_scenario', 'set_sessions', 'set_appearance']);
 
 /** Agent-facing action declarations. Handlers live in createActionHandlers. */
 export const ACTION_DEFINITIONS = Object.freeze([
@@ -56,6 +56,18 @@ export const ACTION_DEFINITIONS = Object.freeze([
                 task: str('"current", a task ID such as rpi-workflow-canvas, or "sample"; with session, a task of that session\'s workspace'),
                 stage: { type: 'string', enum: [...STAGES], description: 'Sample stage, when task is "sample"' },
             },
+            additionalProperties: false,
+        },
+    },
+    {
+        name: 'set_sessions',
+        description: 'Set the Copilot sessions this conversation started, which the canvas lists first in its picker on the Not connected screen and in the session menu. Each row offers Show here and Open in new panel. Replaces the whole list; an empty list clears it. Up to 50 session IDs, kept until the canvas closes.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                sessions: { type: 'array', items: { type: 'string' }, maxItems: 50, description: 'Copilot session IDs (UUIDs) of the sessions this conversation started, in the order to list them; an empty list clears them' },
+            },
+            required: ['sessions'],
             additionalProperties: false,
         },
     },
@@ -195,6 +207,7 @@ export const ACTION_DEFINITIONS = Object.freeze([
 /** Groups used by validation to exercise every area of the action vocabulary. */
 export const ACTION_GROUPS = Object.freeze({
     state: ['get_state', 'load_scenario', 'show_task'],
+    sessions: ['set_sessions'],
     session: ['update_session'],
     decisionsAndFeedback: ['upsert_decision', 'take_feedback', 'record_interpretation'],
     implementation: ['update_task', 'record_change', 'record_discovery', 'record_activity'],
@@ -430,6 +443,16 @@ export function createActionHandlers(deps) {
             }
             const prepared = await deps.switchSource(instance, request, { workingDirectory: ctx?.session?.workingDirectory });
             return { ...summarize(prepared.session), source: sourceSummary(instance, prepared.session) };
+        }),
+
+        // Replaces the sessions the picker lists first. An open picker fetches the list again on the page's reload.
+        set_sessions: (ctx) => guard(async () => {
+            const instance = instanceOf(ctx);
+            const input = inputOf(ctx);
+            const sessions = sessionListOf(input.sessions, makeError);
+            instance.sessions = sessions;
+            instance.server.notifyReload?.({ sessions: true });
+            return { sessions: sessions.length };
         }),
 
         update_session: managed('update_session', mutation((s, input, now) => updateSession(s, input, now), (_r, s) => summarize(s))),

@@ -14,10 +14,12 @@ import { buildScenario } from '../lib/scenario.mjs';
 import { clientInfoFrom, createCanvasServer as newServer, MAX_BODY, renderShell } from '../lib/server.mjs';
 import { createInboxRunner } from '../lib/inbox.mjs';
 import { CANVAS_ID, createPanelOpener, panelInstanceId } from '../lib/panels.mjs';
+import { createSourceController } from '../lib/sources.mjs';
 import { storeIdFor } from '../lib/source/workspace.mjs';
 import { createStore } from '../lib/store.mjs';
 import { stopTracked, track } from './helpers/cleanup.mjs';
-import { CHILD_TASK, childSession, FIXTURE_ROOT, ROOT_TASK, rootSession } from './helpers/rpi-fixture.mjs';
+import { scratchFolder } from './helpers/scratch.mjs';
+import { CHILD_TASK, childSession, FIXTURE_ROOT, PATHS, ROOT_TASK, rootSession, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
 
 /** A canvas server that stops after the test even when an assertion fails. */
 const createCanvasServer = (deps) => track(newServer(deps));
@@ -1357,6 +1359,170 @@ describe('a canvas that shows no session', () => {
         const state = await request(url, { pathname: '/api/state' });
         assert.deepEqual([state.json.connected, state.json.session.scenario.sample], [undefined, true]);
         assert.equal((await request(url, { method: 'POST', pathname: '/api/connect-request', body: {} })).status, 409);
+        await server.stop();
+        store.close();
+    });
+});
+
+describe('the picker and panels of a canvas that shows no session', () => {
+    const OWN = '0c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f';
+    const SESSION = 'c4d5e6f7-0a1b-4c2d-9e3f-4a5b6c7d8e9f';
+    const UNKNOWN = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
+    const NO_TRACKING = 'b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e';
+    const NO_RPI = 'e6f7a8b9-0c1d-4e2f-8a3b-4c5d6e7f8a9b';
+    const BROKEN = 'f7a8b9c0-1d2e-4f3a-9b4c-5d6e7f8a9b0c';
+    const LISTED = [{ sessionId: SESSION, name: 'Offline trail maps', repository: 'microsoft/trails', branch: 'main', mine: true, own: false, live: false, task: { taskId: ROOT_TASK, title: 'Offline trail maps', phase: 'followup', status: 'completed', statePath: PATHS.rootState }, problem: null }];
+    const notConnectedSource = { kind: 'none', reason: 'no-input', detail: null };
+
+    /** A canvas that shows no session; `deps` adds or replaces the picker's and the panel's dependencies. */
+    async function unconnected(name, deps = {}) {
+        const store = createStore({ root: path.join(tmp, name), pollMs: 20 });
+        const server = createCanvasServer({
+            store,
+            getSessionId: () => '',
+            getCanvas: () => ({ handle: '3WF0', instanceId: 'rpi-workflow-demo' }),
+            getSource: () => notConnectedSource,
+            deliver: async () => {},
+            ...deps,
+        });
+        const url = new URL(await server.start());
+        return { store, server, url };
+    }
+
+    it('lists the Copilot sessions while the canvas is not connected, and reads them only on request', async () => {
+        const calls = [];
+        const { server, url, store } = await unconnected('picker-list', {
+            listCopilotSessions: async () => {
+                calls.push('list');
+                return { sessions: LISTED, skipped: 2 };
+            },
+        });
+        assert.equal((await request(url, { pathname: '/api/state' })).json.connected, false);
+        assert.deepEqual(calls, [], 'the state read lists no sessions');
+        const listed = await request(url, { pathname: '/api/copilot-sessions' });
+        assert.deepEqual([listed.status, listed.json], [200, { sessions: LISTED, skipped: 2 }]);
+        assert.deepEqual(calls, ['list']);
+        await server.stop();
+        store.close();
+    });
+
+    it('answers a listing or a show that the canvas cannot make with not found, and refuses a body that is not a session ID', async () => {
+        const { server, url, store } = await unconnected('picker-absent');
+        assert.equal((await request(url, { pathname: '/api/copilot-sessions' })).status, 404);
+        assert.equal((await request(url, { method: 'POST', pathname: '/api/show-session', body: { session: SESSION } })).status, 404);
+        for (const body of [{}, { session: 'not-a-session' }, { session: 42 }, { session: `${SESSION}/..` }]) {
+            const refused = await request(url, { method: 'POST', pathname: '/api/show-session', body });
+            assert.deepEqual([refused.status, refused.json.error.code], [400, 'invalid_input'], JSON.stringify(body));
+        }
+        await server.stop();
+        store.close();
+    });
+
+    it('shows a session from its ID in any letter case, and answers each session error with its code and message', async () => {
+        const shown = [];
+        const failures = new Map([
+            [UNKNOWN, [404, 'session_not_found', new ModelError('session_not_found', `No Copilot session ${UNKNOWN} was found.`)]],
+            [NO_TRACKING, [409, 'session_no_tracking', new ModelError('session_no_tracking', `Copilot session ${NO_TRACKING} has no .copilot-tracking folder.`)]],
+            [NO_RPI, [404, 'source_not_found', new ModelError('source_not_found', 'No RPI session state was found.')]],
+            [BROKEN, [500, 'internal_error', new Error('disk failure')]],
+        ]);
+        const { server, url, store } = await unconnected('picker-show', {
+            showSession: async (session) => {
+                shown.push(session);
+                if (failures.has(session)) throw failures.get(session)[2];
+                return { sessionId: session };
+            },
+        });
+        const ok = await request(url, { method: 'POST', pathname: '/api/show-session', body: { session: SESSION.toUpperCase() } });
+        assert.deepEqual([ok.status, ok.json], [200, { sessionId: SESSION }]);
+        assert.deepEqual(shown, [SESSION], 'the session is passed in lowercase');
+        for (const [session, [status, code, error]] of failures) {
+            const failed = await request(url, { method: 'POST', pathname: '/api/show-session', body: { session } });
+            assert.deepEqual([failed.status, failed.json.error.code], [status, code], session);
+            if (error instanceof ModelError) assert.equal(failed.json.error.message, error.message);
+        }
+        await server.stop();
+        store.close();
+    });
+
+    it('binds the canvas to the session\'s current task as show_task does, and names the session the page shows', async () => {
+        const scratch = await scratchFolder('picker-bind');
+        try {
+            const stateRoot = path.join(scratch, 'session-state');
+            const repo = await writeFixtureWorkspace(path.join(scratch, 'trails'));
+            await fs.mkdir(path.join(stateRoot, SESSION), { recursive: true });
+            await fs.writeFile(path.join(stateRoot, SESSION, 'workspace.yaml'), `cwd: ${repo}\ngit_root: ${repo}\n`);
+            const store = createStore({ root: path.join(tmp, 'picker-bind-store'), pollMs: 20 });
+            const sources = createSourceController({ store, sessionRoot: () => stateRoot, ownSessionId: () => OWN, intervalMs: 60000 });
+            const record = { instanceId: 'rpi-workflow-demo', sessionId: '', source: notConnectedSource, server: null };
+            const server = createCanvasServer({
+                store,
+                getSessionId: () => record.sessionId,
+                getCanvas: () => ({ handle: '3WF0', instanceId: 'rpi-workflow-demo' }),
+                getSource: () => record.source,
+                getJoinedSessionId: () => OWN,
+                deliver: async () => {},
+                listCopilotSessions: async () => ({ sessions: [], skipped: 0 }),
+                showSession: (session) => sources.show(record, { session }, { candidates: [] }),
+            });
+            record.server = server;
+            const url = new URL(await server.start());
+            const shown = await request(url, { method: 'POST', pathname: '/api/show-session', body: { session: SESSION } });
+            assert.deepEqual(shown.json, { sessionId: record.sessionId }, 'the page refreshes from the document it now shows');
+            assert.deepEqual([record.source.kind, record.source.boundSession, record.source.taskId], ['rpi', SESSION, ROOT_TASK]);
+            const state = await request(url, { pathname: '/api/state' });
+            assert.deepEqual([state.json.shownSession, state.json.session.task.id], [SESSION, ROOT_TASK]);
+            await sources.settled(record);
+            const remembered = await store.loadInstance('rpi-workflow-demo');
+            assert.deepEqual([remembered.kind, remembered.state, remembered.session], ['rpi', PATHS.rootState, SESSION], 'the instance returns to the session when the host reopens it');
+            await server.stop();
+            store.close();
+        } finally {
+            await fs.rm(scratch, { recursive: true, force: true });
+        }
+    });
+
+    it('opens a session\'s canvas in a new panel while the canvas shows no session', async () => {
+        const opened = [];
+        const { server, url, store } = await unconnected('picker-panel', {
+            resolveSession: async (session) => {
+                if (session !== SESSION) throw new Error(`No Copilot session ${session} was found.`);
+                return { root: FIXTURE_ROOT, tracking: path.join(FIXTURE_ROOT, '.copilot-tracking') };
+            },
+            openPanel: async ({ session }) => {
+                opened.push(session);
+                return { outcome: 'opened', instanceId: panelInstanceId(session) };
+            },
+        });
+        const panel = await request(url, { method: 'POST', pathname: '/api/open-panel', body: { session: SESSION } });
+        assert.deepEqual([panel.status, panel.json], [200, { outcome: 'opened', instanceId: panelInstanceId(SESSION) }]);
+        assert.deepEqual(opened, [SESSION]);
+        await server.stop();
+        store.close();
+    });
+
+    it('tells the page that the picker\'s sessions changed, through a reload event that carries the flag', async () => {
+        const { server, url, store } = await unconnected('picker-reload');
+        const frame = await new Promise((resolve, reject) => {
+            let text = '';
+            let notified = false;
+            const req = http.get({ host: '127.0.0.1', port: url.port, path: `/api/events?k=${url.searchParams.get('k')}` }, (res) => {
+                res.setEncoding('utf8');
+                res.on('data', (chunk) => {
+                    text += chunk;
+                    if (!notified && text.includes('event: revision')) {
+                        notified = true;
+                        server.notifyReload({ sessions: true });
+                    }
+                    if (text.includes('event: reload')) {
+                        req.destroy();
+                        resolve(text.slice(text.indexOf('event: reload')));
+                    }
+                });
+            });
+            req.on('error', (error) => (error.code === 'ECONNRESET' ? null : reject(error)));
+        });
+        assert.match(frame, /^event: reload\ndata: \{"at":"[^"]+","sessions":true\}/);
         await server.stop();
         store.close();
     });

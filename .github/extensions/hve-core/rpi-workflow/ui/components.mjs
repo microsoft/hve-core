@@ -1316,13 +1316,99 @@ export function panelOutcome(result, title) {
     }
 }
 
+/** Why a session the conversation started has no RPI work to show, in words. */
+const PROBLEM_WORDS = Object.freeze({
+    'no-rpi': 'No RPI work yet',
+    'not-found': 'Not on this machine',
+    'no-workspace': 'Records no workspace folder',
+    'no-tracking': 'Its workspace has no .copilot-tracking folder',
+});
+
+/** A session's name in the picker: its name, or the first eight characters of its ID. */
+export const sessionLabel = (entry) => entry.name ?? `Session ${entry.sessionId.slice(0, 8)}`;
+
 /**
- * The session menu's content, in order: the session's name and follow state, its loops as a tree, and
- * a heading and an empty list the page fills with the workspace's other sessions, then the menu's note.
- * The sample has no other sessions, so it has neither.
+ * One row of the picker. A session with no RPI work says why and offers no controls. Otherwise the row has
+ * Show here, unless the canvas already shows the session, and Open in new panel; both name the session.
+ *
+ * @param {any} entry
+ * @param {boolean} shown the canvas shows this session
+ * @param {{ idPrefix: string, onShow: (entry: any) => void, onOpen: (ref: { session: string, title: string }) => void }} options
+ */
+function sessionRow(entry, shown, options) {
+    const name = sessionLabel(entry);
+    const where = [entry.repository, entry.branch].filter(Boolean).join(' · ');
+    const you = entry.own ? badge({ icon: 'message', label: 'This chat', tone: 'accent' }) : null;
+    const title = h('strong', { class: 'copilot-session-title', text: name });
+    const place = where ? h('p', { class: 'meta', text: where }) : null;
+    if (!entry.task) {
+        return h('li', { class: 'copilot-session', dataset: { session: entry.sessionId } },
+            h('div', { class: 'copilot-session-card' },
+                title,
+                place,
+                h('p', { class: 'meta copilot-reason' }, icon('info'), h('span', { text: PROBLEM_WORDS[entry.problem] ?? PROBLEM_WORDS['no-rpi'] })),
+                you ? h('div', { class: 'copilot-session-facts' }, you) : null));
+    }
+    const phase = PHASE_META[entry.task.phase]?.label ?? 'Phase not recorded';
+    const status = known(TASK_STATUS, entry.task.status)?.label ?? entry.task.status;
+    const id = entry.sessionId;
+    return h('li', { class: 'copilot-session', dataset: { session: id } },
+        h('div', { class: 'copilot-session-card' },
+            title,
+            place,
+            h('p', { class: 'meta copilot-task', text: [entry.task.title, phase, status].join(' · ') }),
+            h('div', { class: 'copilot-session-facts' },
+                you,
+                shown ? badge({ icon: 'eye', label: 'Shown', tone: 'accent' }) : null,
+                entry.live ? badge({ icon: 'live', label: 'Canvas running', tone: 'success' }) : badge({ icon: 'live-off', label: 'No canvas running', tone: 'muted' })),
+            h('div', { class: 'btn-row' },
+                shown ? null : button('Show here', { iconName: 'arrow-right', onClick: () => options.onShow(entry), attrs: { 'aria-label': `Show here: ${name}`, 'data-key': `${options.idPrefix}-show-${id}` } }),
+                button('Open in new panel', { iconName: 'panel', onClick: () => options.onOpen({ session: id, title: name }), attrs: { 'aria-label': `Open in new panel: ${name}`, 'data-key': `${options.idPrefix}-open-${id}` } }))));
+}
+
+/**
+ * The RPI sessions this conversation can show, as a group. It lists the sessions the conversation started
+ * first, then the other local sessions with RPI work. Each row names the session, its repository and branch,
+ * its task with phase and status in words, whether its canvas runs, and whether it is this chat or the one the
+ * canvas shows. Refresh fetches the list again. `model.note` is the outcome of the last Open in new panel and
+ * `model.showError` the failure of the last Show here; both show at the foot of the group.
+ *
+ * @param {{
+ *   loading: boolean, error: string | null, list: { sessions: any[], skipped: number } | null,
+ *   shown: string | null, showError: string | null, note: { tone: string, icon: string, text: string } | null,
+ * }} model
+ * @param {{ idPrefix: string, title: string, headingClass: string, onShow: (entry: any) => void, onOpen: (ref: { session: string, title: string }) => void, onRefresh: () => void }} options
+ */
+export function copilotSessionsPicker(model, options) {
+    const { idPrefix, title, headingClass } = options;
+    const titleId = `${idPrefix}-copilot-title`;
+    const sessions = model.list?.sessions ?? [];
+    const group = (key, heading, entries) => [
+        h('h4', { id: `${idPrefix}-${key}`, class: 'copilot-list-title', text: heading }),
+        h('ul', { class: 'copilot-session-list', 'aria-labelledby': `${idPrefix}-${key}` }, entries.map((entry) => sessionRow(entry, entry.sessionId === model.shown, options))),
+    ];
+    const started = sessions.filter((entry) => entry.mine);
+    const others = sessions.filter((entry) => !entry.mine);
+    return h('div', { class: 'copilot-sessions', role: 'group', 'aria-labelledby': titleId },
+        h('div', { class: 'copilot-head' },
+            h('h3', { id: titleId, class: headingClass, text: title }),
+            button('Refresh', { iconName: 'loop', onClick: options.onRefresh, attrs: { 'data-key': `${idPrefix}-sessions-refresh`, 'aria-disabled': model.loading ? 'true' : undefined } })),
+        model.loading ? h('p', { class: 'meta copilot-status', text: 'Looking for sessions…' }) : null,
+        model.error ? h('p', { class: 'field-error' }, icon('alert'), h('span', { text: `Sessions could not be listed: ${model.error}` })) : null,
+        model.list && !model.loading && sessions.length === 0 ? h('p', { class: 'meta', text: 'No sessions with RPI work were found on this machine.' }) : null,
+        started.length ? group('started', 'Sessions this chat started', started) : null,
+        others.length ? group('others', 'Other sessions with RPI work', others) : null,
+        model.showError ? h('p', { class: 'field-error', role: 'alert' }, icon('alert'), h('span', { text: model.showError })) : null,
+        model.note ? h('p', { class: ['copilot-note', 'notice', `tone-${model.note.tone}`] }, icon(model.note.icon, { className: 'status-note-icon' }), h('span', { text: model.note.text })) : null);
+}
+
+/**
+ * The session menu's content, in order: the session's name and follow state, its loops as a tree, the
+ * Copilot sessions group when the page passes its picker, then the workspace's other sessions for a real
+ * session, and the menu's note. A real session's other sessions come from the page.
  *
  * @param {any} ctx
- * @param {{ following: boolean, onShow?: (task: any) => void }} options
+ * @param {{ following: boolean, onShow?: (task: any) => void, picker?: { model: any, onShow: (entry: any) => void, onOpen: (ref: any) => void, onRefresh: () => void } }} options
  */
 export function sessionMenuNodes(ctx, options) {
     const { session } = ctx.data;
@@ -1334,8 +1420,9 @@ export function sessionMenuNodes(ctx, options) {
         h('p', { class: 'meta session-menu-where', text: where }),
         h('h3', { class: 'menu-subtitle', text: 'Loops in this session' }),
         sessionTree(ctx, { label: `Loops in ${tree.name ?? 'this session'}, parent first`, keyPrefix: 'menu', onShow: options.onShow }),
+        options.picker ? copilotSessionsPicker(options.picker.model, { idPrefix: 'menu', title: 'Copilot sessions', headingClass: 'menu-subtitle', onShow: options.picker.onShow, onOpen: options.picker.onOpen, onRefresh: options.picker.onRefresh }) : null,
         ...(rpi ? [h('h3', { class: 'menu-subtitle', text: 'Other sessions' }), h('div', { id: 'sessionList' })] : []),
-        h('p', { class: 'menu-note', text: rpi ? 'Choosing a loop or session stops following the agent; choose Follow agent at the top to catch up with it.' : 'The sample has no other loops or sessions to show.' }),
+        h('p', { class: 'menu-note', text: rpi ? 'Choosing a loop, or a session under Other sessions, stops following the agent; choose Follow agent at the top to catch up with it.' : 'The sample has no other loops to show. Choose a session above to show its RPI work instead.' }),
     ].filter(Boolean);
 }
 
