@@ -44,11 +44,22 @@ Material ambiguity still requires input in either mode.
   interactive UI, markup, user-facing content, or accessibility documentation;
   add security for changed trust boundaries, auth, secrets, parsing, networking,
   persistence, or confirmed Security Plan Drift context.
-* `full` selects all five perspectives. A perspective with no relevant surface
-  returns a reasoned not-applicable result, not fabricated findings.
+* `full` selects functional, standards, accessibility, security, and readiness.
+  A perspective with no relevant surface returns a reasoned not-applicable
+  result, not fabricated findings.
 * `custom` uses the caller's selected perspectives. Clarify an ambiguous choice.
 * A host's explicit `basic` profile selects functional and standards; preserve a
   more specific host-supplied perspective set.
+
+Four added reviewers run only when someone asks for one: `privacy`,
+`performance`, `supply-chain`, and `responsible-ai`. A `custom` profile, a
+request, or the canvas's Add buttons can add one. When the change touches an
+added reviewer's surface, suggest it instead of running it. Record your reviewer
+choices with the helper's `context` command as `reviewers`:
+
+* Each perspective you selected, with why it runs.
+* Each added reviewer you suggest, with the evidence that it may matter.
+* Any perspective you ruled out for a specific reason, as `not-needed`.
 
 Before selecting perspectives, find and confirm any Security Plan Drift baseline
 as [references/integrations.md](references/integrations.md) describes, so a
@@ -76,11 +87,12 @@ required. The core owns the depth expectations shared with workers.
    and links that point from the part that acts, with an active-verb label and
    an anchor or an uncertainty. Write both with the helper's `context` command;
    the core contract defines their fields and limits.
-2. Record scope and work assignments in the parent state. Opening an area or
-   having no findings does not complete it. Give acceptance-criteria coverage
-   one owner: functional for behavior, readiness for deliverable-only criteria.
-   When neither is selected, assess the criteria inline or record them as
-   unassessed. Missing story definitions remain unassessed.
+2. Record scope, reviewer choices, and work assignments in the parent state.
+   Opening an area or having no findings does not complete it. Give
+   acceptance-criteria coverage one owner: functional for behavior, readiness
+   for deliverable-only criteria. When neither is selected, assess the criteria
+   inline or record them as unassessed. Missing story definitions remain
+   unassessed.
 3. Use inline review when the evidence fits one direct pass or the trace is
    tightly coupled. Activate the matching perspective skills and produce the
    same result records. For substantial independent work, dispatch every
@@ -102,21 +114,23 @@ required. The core owns the depth expectations shared with workers.
 
 ## Workers
 
-| Responsibility                | Skill                       | Subagent                  |
-|-------------------------------|-----------------------------|---------------------------|
-| Correctness                   | `code-review-functional`    | Code Review Functional    |
-| Project conventions           | `code-review-standards`     | Code Review Standards     |
-| Accessibility                 | `code-review-accessibility` | Code Review Accessibility |
-| Security consequences         | `code-review-security`      | Code Review Security      |
-| Deliverable and documentation | `code-review-readiness`     | Code Review Readiness     |
-| Area overview                 | `code-review-context`       | Code Review Orientation   |
-| Factual explanation           | `code-review-context`       | Code Review Explainer     |
-| Bounded investigation         | `code-review-investigation` | Code Review Walkback      |
+| Responsibility                                     | Skill                       | Subagent                  |
+|----------------------------------------------------|-----------------------------|---------------------------|
+| Correctness                                        | `code-review-functional`    | Code Review Functional    |
+| Project conventions                                | `code-review-standards`     | Code Review Standards     |
+| Accessibility                                      | `code-review-accessibility` | Code Review Accessibility |
+| Security consequences                              | `code-review-security`      | Code Review Security      |
+| Deliverable and documentation                      | `code-review-readiness`     | Code Review Readiness     |
+| Privacy, performance, supply chain, responsible AI | `code-review-specialist`    | Code Review Specialist    |
+| Area overview                                      | `code-review-context`       | Code Review Orientation   |
+| Factual explanation                                | `code-review-context`       | Code Review Explainer     |
+| Bounded investigation                              | `code-review-investigation` | Code Review Walkback      |
 
 Every dispatch supplies the resolved review root, review/snapshot IDs, state and
 snapshot paths, work ID, assigned areas/files/hunks, depth and rationale,
 applicable criteria, available validation, explicit question when relevant, and
-the exact result path. Include the core write boundary and no nested dispatch.
+the exact result path. A Code Review Specialist dispatch also names its lens,
+the work item's perspective. Include the core write boundary and no nested dispatch.
 Workers get no parent custom instructions. Consume their result, execution,
 coverage, and limitations; validate before marking work complete.
 
@@ -133,13 +147,23 @@ and plugin providers apply. Never invent a provider identifier.
 
 At dispatch/completion boundaries, before a material decision, and before
 closeout, use `take_feedback` with `checkpoint: true`. Collect explicitly sent
-items once by review/item ID; drafts remain private. Apply each item within the
-review's authority, then call `record_interpretation` with what changed.
+items once by review/item ID; drafts and dismissed items never reach you.
+Apply each item within the review's authority, then call `record_interpretation`
+with what changed.
 An investigation can run alongside unrelated review work. A simple explanation
 uses existing evidence inline.
 
+An `add-reviewer` item names one perspective. Schedule it with the review's
+existing scope, record it in `reviewers` as `selected` with a reason that says
+what it will look at in this change, dispatch its worker for every area, and
+read back what changed. The canvas marks the reviewer as added at the user's
+request. If the review had completed, say that its outcome is withdrawn until
+the new reviewer finishes, and render the report again once it does. If the
+perspective already runs or is unknown, read back why nothing changed.
+
 Use `get_state` to check source warnings and pending feedback, `focus_item` to
-show an area/reason/file/hunk/finding/comment, and `show_review` to reconnect an existing
+show an area/reason/file/hunk/finding/comment or a reviewer (`perspective`), and
+`show_review` to reconnect an existing
 panel. A missing or failed canvas does not block the report/chat workflow:
 disclose the exact limitation and keep the same evidence and decisions.
 

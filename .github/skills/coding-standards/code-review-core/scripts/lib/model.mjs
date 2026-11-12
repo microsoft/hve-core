@@ -9,7 +9,10 @@ export class ReviewError extends Error {
     }
 }
 
-export const PERSPECTIVES = ['functional', 'standards', 'accessibility', 'security', 'readiness', 'context', 'investigation'];
+/** Perspectives whose work counts as review coverage; added reviewers run only when requested. */
+export const REVIEW_PERSPECTIVES = ['functional', 'standards', 'accessibility', 'security', 'readiness', 'privacy', 'performance', 'supply-chain', 'responsible-ai'];
+export const PERSPECTIVES = [...REVIEW_PERSPECTIVES, 'context', 'investigation'];
+export const REVIEWER_DECISIONS = ['selected', 'suggested', 'not-needed'];
 export const WORK_STATES = ['pending', 'in_progress', 'completed', 'blocked', 'unavailable', 'skipped', 'stale'];
 export const SEVERITIES = ['Critical', 'High', 'Medium', 'Low'];
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
@@ -120,6 +123,20 @@ function reasons(value, snapshot) {
     }
     check([...split].every((fileId) => !whole.has(fileId)), 'A file a reason claims whole cannot have hunks claimed by a reason.');
     unique(value, 'reasons');
+}
+
+/** Why each considered reviewer runs, is suggested, or is not needed. Work items stay the record of what runs. */
+function reviewerChoices(value) {
+    array(value, 'reviewers');
+    check(value.length >= 1 && value.length <= REVIEW_PERSPECTIVES.length, `Record between 1 and ${REVIEW_PERSPECTIVES.length} reviewers, or null to remove them.`);
+    for (const entry of value) {
+        object(entry, ['perspective', 'decision', 'reason'], 'reviewer');
+        enumeration(entry.perspective, REVIEW_PERSPECTIVES, 'reviewer perspective');
+        enumeration(entry.decision, REVIEWER_DECISIONS, 'reviewer decision');
+        bounded(entry.reason, 'reviewer reason', 200);
+        check(!/[\n\r\u2028\u2029]/.test(entry.reason), 'reviewer reason must be one line.');
+    }
+    check(new Set(value.map((entry) => entry.perspective)).size === value.length, 'Record each reviewer once.');
 }
 
 /** A change map of boxes, parts, and links checked against the snapshot and the recorded reasons. */
@@ -413,7 +430,7 @@ export function outcome(state) {
 
 export function validateState(state, snapshot) {
     validateSnapshot(snapshot);
-    object(state, ['schemaVersion', 'reviewId', 'snapshotId', 'revision', 'status', 'snapshotPath', 'areas', 'workItems', 'findings', 'limitations', 'artifacts', 'outcome'], 'state', ['scope', 'context', 'reasons', 'changeMap']);
+    object(state, ['schemaVersion', 'reviewId', 'snapshotId', 'revision', 'status', 'snapshotPath', 'areas', 'workItems', 'findings', 'limitations', 'artifacts', 'outcome'], 'state', ['scope', 'context', 'reasons', 'changeMap', 'reviewers']);
     version(state);
     check(state.reviewId === snapshot.reviewId && state.snapshotId === snapshot.snapshotId, 'State and snapshot identities differ.');
     integer(state.revision, 'revision');
@@ -466,6 +483,7 @@ export function validateState(state, snapshot) {
     }
     if (own(state, 'reasons')) reasons(state.reasons, snapshot);
     if (own(state, 'changeMap')) changeMap(state.changeMap, snapshot, new Set((state.reasons ?? []).map((reason) => reason.id)));
+    if (own(state, 'reviewers')) reviewerChoices(state.reviewers);
     check(state.status === execution(state), 'State status disagrees with evidence.');
     check(state.outcome === outcome(state), 'Review outcome disagrees with coverage or finding dispositions.');
     return state;

@@ -111,7 +111,7 @@ export async function assessFindings(location, revision, request) {
 }
 
 export async function updateContext(location, revision, request) {
-    object(request, [], 'context update', ['areas', 'context', 'limitations', 'reasons', 'changeMap']);
+    object(request, [], 'context update', ['areas', 'context', 'limitations', 'reasons', 'changeMap', 'reviewers']);
     return updateState(location, revision, (state, snapshot) => {
         for (const area of request.areas ?? []) {
             object(area, ['id', 'summary', 'before', 'after', 'impact'], 'area description');
@@ -120,8 +120,8 @@ export async function updateContext(location, revision, request) {
             Object.assign(existing, area);
         }
         if (request.context) state.context = { ...state.context, ...request.context };
-        // Reasons and the change map replace whole; null removes them.
-        for (const key of ['reasons', 'changeMap']) {
+        // Reasons, the change map, and reviewer choices replace whole; null removes them.
+        for (const key of ['reasons', 'changeMap', 'reviewers']) {
             if (!Object.hasOwn(request, key)) continue;
             if (request[key] === null) delete state[key];
             else state[key] = request[key];
@@ -158,6 +158,7 @@ export async function renderReport(location, revision) {
             `Review: ${state.reviewId}. Snapshot: ${state.snapshotId}.`,
             `Execution: ${state.status}. Outcome: ${state.outcome ?? 'not available'}.`,
             `Target: ${snapshot.target.kind}; base ${snapshot.target.base ?? 'not applicable'}; head ${snapshot.target.head ?? 'not applicable'}.`,
+            ...(state.reviewers ?? []).map((entry) => `Reviewer ${entry.perspective}: ${entry.decision}. ${markdownText(entry.reason)}`),
             ...state.areas.map((area) => `${markdownText(area.title)}: ${areaStatus(state, area.id)}.`),
             ...state.workItems.map((work) => `${work.id} (${work.perspective}): ${work.status}. ${markdownText(work.summary)}`),
         ].join('\n\n');

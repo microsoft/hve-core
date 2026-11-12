@@ -259,3 +259,49 @@ describe('reasons and the change map', () => {
         }
     });
 });
+
+describe('added reviewers and reviewer choices', () => {
+    it('runs an added reviewer as required work that reopens a completed review until it finishes', () => {
+        const { state, snapshot, result } = setup();
+        let next = mergeResult(state, snapshot, result, 'one');
+        next = mergeResult(next, snapshot, { ...result, workItemId: 'standards' }, 'two');
+        assert.equal(next.outcome, 'approve');
+        next.workItems.push(newWork(snapshot, next.areas[0], 'privacy', 'privacy-3'));
+        finalizeState(next, snapshot);
+        assert.equal(next.workItems.at(-1).required, true);
+        assert.equal(areaStatus(next, 'area-one'), 'in_progress');
+        assert.deepEqual([next.status, next.outcome], ['in_progress', null]);
+        next = mergeResult(next, snapshot, { ...result, workItemId: 'privacy-3', coverage: { fileIds: [], hunkIds: [], notApplicable: 'No personal data is handled here.' } }, 'three');
+        assert.deepEqual([next.status, next.outcome], ['completed', 'approve']);
+    });
+
+    it('accepts reviewer choices that do not affect status and rejects malformed ones', () => {
+        const valid = () => [
+            { perspective: 'functional', decision: 'selected', reason: 'Every review checks behavior.' },
+            { perspective: 'supply-chain', decision: 'suggested', reason: 'The change edits a lockfile.' },
+            { perspective: 'privacy', decision: 'not-needed', reason: 'No personal data is handled.' },
+        ];
+        const { state, snapshot } = setup();
+        state.reviewers = valid();
+        assert.doesNotThrow(() => finalizeState(state, snapshot));
+        assert.deepEqual([state.status, state.outcome], ['in_progress', null]);
+        const cases = [
+            [(entries) => { entries[0].perspective = 'telemetry'; }, /reviewer perspective must be one of/],
+            [(entries) => { entries[0].perspective = 'context'; }, /reviewer perspective must be one of/],
+            [(entries) => { entries[1].perspective = 'functional'; }, /Record each reviewer once/],
+            [(entries) => { entries[0].decision = 'maybe'; }, /reviewer decision must be one of/],
+            [(entries) => { entries[0].reason = ''; }, /reviewer reason must be text/],
+            [(entries) => { entries[0].reason = 'x'.repeat(201); }, /reviewer reason must be at most 200 characters/],
+            [(entries) => { entries[0].reason = 'Every review\nchecks behavior.'; }, /reviewer reason must be one line/],
+            [(entries) => { entries.length = 0; }, /between 1 and 9 reviewers/],
+            [(entries) => { entries[0].owner = 'agent'; }, /unsupported field/],
+        ];
+        for (const [mutate, expected] of cases) {
+            const { state: next, snapshot: captured } = setup();
+            const entries = valid();
+            mutate(entries);
+            next.reviewers = entries;
+            assert.throws(() => validateState(next, captured), expected);
+        }
+    });
+});

@@ -121,11 +121,25 @@ parts; After shows the unchanged, changed, and new ones. Because parts name
 reasons, a `context` call that removes or renumbers a reason the map names
 fails unless the same call sends the updated map.
 
+A third optional record, `reviewers`, explains the review itself. It lists each
+review perspective the parent considered, once, with a `decision` and a
+one-line `reason` of at most 200 characters:
+
+* `selected`: the review runs it.
+* `suggested`: the change touches its surface, but it runs only if someone adds it.
+* `not-needed`: considered and left out.
+
+Work items stay the record of what runs. A reviewer added later keeps its
+earlier decision until the parent rewrites the record. Like reasons and the
+change map, the record does not count as coverage.
+
 A work item has `id`, `snapshotId`, `perspective`, `areaIds`, `fileIds`,
 `hunkIds`, `required`, `status`, `outputPath`, `coverage`, `resultKey`,
-`summary`, and `observations`. Perspectives are `functional`, `standards`,
-`accessibility`, `security`, `readiness`, `context`, and `investigation`.
-Context and investigation do not replace required review coverage.
+`summary`, and `observations`. Review perspectives are `functional`,
+`standards`, `accessibility`, `security`, and `readiness`, plus four added
+reviewers that run only when requested: `privacy`, `performance`,
+`supply-chain`, and `responsible-ai`. Two more perspectives, `context` and
+`investigation`, support the review and do not replace required review coverage.
 Execution states are `pending`, `in_progress`, `completed`, `blocked`,
 `unavailable`, `skipped`, and `stale`.
 
@@ -220,20 +234,23 @@ diff uses `supplied: { base, head, files }`, where each file has `status`,
 `oldPath`, `newPath`, and unified `patch`. It is not recaptured.
 
 `schedule` takes `perspectives`, `scope`, and optional initial `areas`. It
-appends independent work items. `work` takes `workItemId`, `status`, and
+appends independent work items. To add a reviewer later, call `schedule` again
+with the same scope and the new perspective. The new work is required, so a
+completed review returns to in progress and its outcome clears until that work
+completes. `work` takes `workItemId`, `status`, and
 `reason`; only validated results complete work. `merge` takes `workItemId`
 and reads that assignment's result. `decide` takes `decisions` with finding
 ID, disposition, reason, and optional re-rated `severity` backed by the parent's
 decision evidence. `assess` adds parent-verified domain finding candidates under
 an existing `workItemId` using `findings`; they still require dispositions and
 do not change worker coverage. `context` accepts area descriptions, optional
-domain `context`, limitations, `reasons`, and `changeMap`. Each of the last two
-replaces its earlier record whole, and `null` removes it. These are parent
+domain `context`, limitations, `reasons`, `changeMap`, and `reviewers`. Each of
+the last three replaces its earlier record whole, and `null` removes it. These are parent
 operations.
 
 Use `capture` again with the current root and revision only when evidence
-changes. It archives the old state and resets coverage, reasons, and the change
-map, leaving feedback, reports, and prior snapshots in place. `status` resumes
+changes. It archives the old state and resets coverage, reasons, the change
+map, and reviewer choices, leaving feedback, reports, and prior snapshots in place. `status` resumes
 without recapture.
 Revision conflicts require a reload; report conflicts require human-edit
 reconciliation. An abandoned lock requires operator recovery after confirming
