@@ -32,7 +32,7 @@ Use this skill when a branch is ready for a pull request. It writes a short desc
 
 The skill publishes only when you ask. A clear request such as `action=create`, `action=update`, `action=sync`, or "push this and open a pull request" runs without a confirmation prompt. When the request is unclear, the skill writes the description and asks one question that lists each branch it would push, the title, the target branch, and the draft state.
 
-`action=prepare` never publishes. A failed local check, sensitive text the skill can't remove, or a branch that has diverged from its copy on GitHub stops the run before anything is published. A branch that is only behind its GitHub copy also stops a create or update, while a sync brings it up to date.
+`action=prepare` never publishes. A failed local check or sensitive text the skill can't remove stops the run before anything is published. Outside a stack, a branch that has diverged from its copy on GitHub also stops the run, and a branch that is only behind it stops a create or update, while a sync brings it up to date.
 
 When you ask it to fix a failed check, the skill reruns the affected checks and commits only that fix under the repository's commit conventions. Your other working-tree changes stay unstaged.
 

@@ -21,7 +21,7 @@ Stack Detection already ran `gh stack view --json`. It returns `trunk`, the stac
 
 ## Scope and descriptions
 
-* `create` covers the checked-out branch and every open branch below it that has no pull request. Branches above it stay untouched unless the user asks for the whole stack.
+* `create` covers the checked-out branch and every open branch below it that has no pull request, and opens none above it unless the user asks for the whole stack. A sync or push it needs first still covers every open branch (see Publish).
 * `update` covers the checked-out branch's description unless the user asks for the whole stack. Its push still covers every open branch (see Publish).
 * `prepare` describes the branches a create would cover.
 * Collect each branch in scope with `--head <branch> --base refs/heads/<parent>`, or `--base <trunk>` for the lowest open branch (`-Head` and `-Base` in PowerShell).
