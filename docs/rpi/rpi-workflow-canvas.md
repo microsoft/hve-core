@@ -1,9 +1,9 @@
 ---
 title: RPI Workflow Canvas
-description: Follow an RPI session phase by phase in a canvas beside the chat, answer the agent's decisions, send it your input, and follow a Project's child sessions
+description: Follow an RPI session phase by phase in a canvas beside the chat, answer the agent's decisions, send it your input, and show a Project's sessions from the session picker
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-11-10
+ms.date: 2026-11-11
 ms.topic: how-to
 keywords:
   - rpi workflow canvas
@@ -14,9 +14,9 @@ keywords:
   - feedback
   - review and send
   - github copilot
-  - child sessions
+  - session picker
   - copilot project
-estimated_reading_time: 14
+estimated_reading_time: 15
 ---
 
 The RPI Workflow canvas shows the session the RPI Agent is working on, one phase at a time, in a panel beside the chat. You read the research and the plan as the agent writes them, answer the decisions it asks you about, watch tasks move during implementation, and work through review findings and follow-ups. Anything you add waits in the canvas until you send it, and the agent reads each item back so you can see how it understood you.
@@ -46,7 +46,7 @@ Run `/rpi` (or let the model discover the `rpi` skill) or select **RPI Agent** a
 
 You can also ask the agent to open the RPI Workflow canvas, or open it from the host's canvas list. In VS Code, that is **Add Context (+) > Canvas...** in the chat input or **New Chat (+) > Canvas** in the Chat view; in the Agents window, it is **Add Tab (+) > Canvas**.
 
-A canvas opened from a list doesn't know your session yet, so it shows Not connected:
+A canvas opened from a list doesn't know your session yet, so it shows Not connected, with your local sessions that have RPI work listed above the request:
 
 ![Screenshot of the Not connected page with Ask the agent, Copy request, and Show the sample session.](../docusaurus/static/img/rpi-workflow-canvas/not-connected.webp)
 
@@ -101,7 +101,7 @@ Answers, overrides, comments, and suggestions wait under **Your feedback** until
 
 **Send now** gives the items to the agent at its next step, even in the middle of a task, as one chat message. The chat shows a line such as "RPI canvas XWK0 sent 2 items: 1 answer and 1 comment." **Queue** keeps them in the canvas until the agent's next checkpoint: when it changes phase, finishes a task, asks you something, or ends its turn. Until then, you can take a queued item back.
 
-Before you send, you can edit or discard any item, add a message for the agent, and open the exact text Send now will deliver. Items for a child session of a Project take a different route. See [Follow Child Sessions from a Project](#follow-child-sessions-from-a-project).
+Before you send, you can edit or discard any item, add a message for the agent, and open the exact text Send now will deliver. Items for another session's task take a different route. See [Follow a Project's Sessions](#follow-a-projects-sessions).
 
 When the RPI Agent asks you a question in the chat, it also offers **Answered in the canvas**. Choose it after answering in the canvas, and the agent collects your answers before it goes on.
 
@@ -172,38 +172,38 @@ Follow-up ranks the work that remains. Required items keep the session open, and
 
 When one session takes on a new request, the new work gets its own research, plan, changes record, and review. A **Document** switcher in the context bar then lists each phase's earlier documents by title and time. An earlier document opens read-only, with a button back to the current one.
 
-## Follow Child Sessions from a Project
+## Follow a Project's Sessions
 
-A Project can split RPI work across child sessions, and each child runs its own loop. Without the canvas, you would switch sessions to read each child's plan and answer its decisions. From the Project's session, you can show any child's task in this canvas and send input to that child's agent.
+A Project coordinates its sessions, and each session runs RPI on its own when its work needs it. From the Project's session, you can show the RPI work of any local session and send input to that session's agent. Without the canvas, you would switch sessions to read each one's plan and answer its decisions.
 
-### Find the Children
+### Find a Session
 
-The session button in the header opens the session menu. When the session has child sessions in other Copilot sessions, the menu shows a **Child sessions** group. Each child lists its task, its session's name, its phase, its status, the decisions waiting for you, and whether its canvas runs, shown as **Canvas running** or **No canvas running**.
-Until a canvas has read a child's task, its decisions show as **Decisions not read yet**. Under **Loops in this session**, each child also appears as a card with its session name, phase, and decisions.
+When the canvas has no session to show, it opens on the Not connected page, with the session picker above the request. The picker lists the local sessions with RPI work on your machine. Sessions that share a checkout appear once. Sessions the Project's agent passed come first, under **Sessions this chat started**, in the order it gave them. Other sessions with RPI work follow, under **Other sessions with RPI work**.
 
-### Open a Child Only When You Want
+The Project's agent passes its sessions with the `sessions` input when it opens the canvas, or later with the `set_sessions` action. Each list holds up to 50 session IDs. The same list appears in the session menu, under **Copilot sessions**, so you can switch sessions from a canvas that already shows one.
 
-The canvas never opens a child's canvas by itself. To open one, choose a button on the child:
+Each row names its session and shows its repository, its branch, and its current task with the task's phase and status. **Canvas running** or **No canvas running** shows whether the canvas extension runs for that session, panel open or not; when it runs, Send now reaches that session's agent directly. **Shown** marks the session this canvas shows. A session the Project's agent passed that has no RPI work says why, for example **No RPI work yet**.
 
-* Choose **Show here** to show the child's task in this canvas. Following the agent stops, as it does for any session you show.
-* Choose **Open in new panel** to open the child's canvas in a new panel of this conversation. If that panel is already open, the canvas focuses it, and this canvas stays as it is.
+### Show or Open a Session
 
-The card under **Loops in this session** has the same two buttons, labeled **Show** and **Open in new panel**.
+Choose **Show here** to bind this canvas to that session. The canvas shows the session's current task, which is the running task or else the most recently changed one, and it keeps following the agent. The session this canvas shows has no **Show here** button.
 
-If the host cannot open the panel, the canvas asks the Project's agent, in the chat, to open it. It asks at most once every 30 seconds. The page reports the result: the panel opened, an open panel was focused, the agent was asked, the canvas must wait before asking again, or the request failed and says why.
+Choose **Open in new panel** to open that session's canvas in a new panel of this conversation. Each session has one panel, so choosing the button again focuses it. This canvas stays as it is.
+
+If the host cannot open the panel, the canvas asks the agent, in the chat, to open it with the line `RPI canvas <handle>: open an RPI Workflow canvas for session <session ID>.` The page then says the agent was asked. The canvas asks at most once every 30 seconds, and a request made sooner than that gets a wait notice instead.
 
 ### Where Your Input Goes
 
-Input for a child's task waits in **Review and send** like any other item. Before you send, the review names the route that Send now takes. Direct delivery does not involve the Project's agent. A relayed item reaches that agent as a chat message, which it forwards:
+Input for another session's task waits in **Review and send** like any other item. Before you send, the review names the route that Send now takes. Items for a task in another session go to that session, through its canvas or through this chat's agent. Direct delivery does not involve this chat's agent. A relayed item reaches the session as a chat message, which this chat's agent forwards:
 
-| Route the review names             | Where the items go                                                                                                                        |
-|------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
-| The child's canvas is running      | Straight to the child's agent through its canvas. If that canvas does not take them within 20 seconds, the Project's agent forwards them. |
-| No canvas is running for the child | The Project's agent forwards them to the child.                                                                                           |
+| Route the review names            | Where the items go                                                                                                                        |
+|-----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| The session's canvas is running   | Straight to that session's agent through its canvas. If the canvas does not take them within 20 seconds, this chat's agent forwards them. |
+| No canvas running for the session | This chat's agent forwards them to the session.                                                                                           |
 
-If the route changes while the review is open, the review says so and asks you to check it again. Queue sends nothing. The items wait in the child's task until its agent collects them.
+If the route changes while the review is open, the review says so and asks you to check it again. Queue sends nothing. The items wait in the session's task until its agent collects them.
 
-After you send, each item shows whether it went direct or was relayed, and through which chat. Until the Project's agent takes relayed items, a notice at the bottom of the document begins with "Relayed to" and names the child's session. You can dismiss that notice.
+After you send, each item shows whether it went direct or was relayed, and through which chat. Until this chat's agent takes relayed items, a notice at the bottom of the document begins with "Relayed to" and names the session. You can dismiss that notice.
 
 An item whose delivery may already have reached its chat shows **May have been sent**, and a notice names the chat to check. The canvas never sends that item again. Check that chat, then discard the item.
 
@@ -214,13 +214,14 @@ While the agent works in that phase, it shows **In progress**; once the session 
 
 ### Limits
 
-* Cloud sessions are not supported. A child in a cloud session has no local workspace, so the canvas cannot read it or follow a link to it. Create the children you want to follow as local sessions.
-* A child session that runs an older hve-core build does not announce a running canvas or take inbox items, so its items go through the Project's agent.
+* Cloud sessions are not listed. A cloud session has no local workspace, so the picker never shows it, and the canvas cannot read its tasks or show its decisions. Run the sessions you want to follow as local sessions.
+* Sessions that share one checkout share its RPI tasks, so the picker lists that checkout once, under its most recently updated session. A session this chat started is always listed, and other sessions in its checkout are left out.
+* A session that runs an older hve-core build does not announce a running canvas or take inbox items, so its items go through this chat's agent.
 * During a rollout, an older copy of the provider keeps a task's feedback in its legacy store document. Until every copy updates, feedback can split across two documents.
-* Forwarding needs a chat whose agent has the `send_session_message` tool, such as a GitHub Copilot app Project. Without that tool, the agent cannot pass relayed items to the child.
+* Forwarding needs a chat whose agent has the `send_session_message` tool, such as a GitHub Copilot app Project. Without that tool, the agent cannot pass relayed items to the session.
 * Opening a panel depends on the host's experimental canvas open and list calls. When the host cannot open a panel, the canvas asks the agent instead.
 
-The [canvas README](https://github.com/microsoft/hve-core/blob/main/.github/extensions/hve-core/rpi-workflow/README.md) lists the storage and security rules for these features. The [project coordination reference](https://github.com/microsoft/hve-core/blob/main/.github/skills/rpi/rpi/references/project-coordination.md) describes how the Project's agent starts, hands off, and resumes its children.
+The [canvas README](https://github.com/microsoft/hve-core/blob/main/.github/extensions/hve-core/rpi-workflow/README.md) lists the storage and security rules for these features.
 
 ## Themes, Accessibility, and Keyboard
 
@@ -261,7 +262,7 @@ Single-key shortcuts pause while you type, and the shortcut list has a switch th
 | No canvas menu, or the RPI Workflow canvas is not listed | Check `chat.canvases.enabled`, start a new session with the Copilot harness, and send a message. Install the hve-core plugin; the VS Code extension does not carry canvases. |
 | The RPI Agent did not open the canvas                    | Ask the agent to open the RPI Workflow canvas. If it never opens the canvas by itself, update the hve-core plugin, because an older RPI Agent may not.                       |
 | The host reports multiple matching canvas providers      | Ask the agent to retry lookup or opening with a host-reported `extensionId`, such as `project:rpi-workflow` when offered, and reuse that provider when reopening.            |
-| The canvas says Not connected                            | Choose **Ask the agent** or **Copy request**.                                                                                                                                |
+| The canvas says Not connected                            | Pick a session in the session picker, or choose **Ask the agent** or **Copy request**.                                                                                       |
 | The canvas stopped moving with the agent                 | Following stopped when you chose another phase or started typing. Press **Follow agent** or `f`.                                                                             |
 | Review and send says it cannot send                      | The host does not accept messages from extensions. Use **Queue**, and the agent collects your items at its next checkpoint.                                                  |
 | An item stays at Sent                                    | Some hosts do not report pickups. The read-back still arrives.                                                                                                               |
