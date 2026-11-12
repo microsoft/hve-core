@@ -4,14 +4,18 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { areaStatus, check, id, object, text } from '../../../../skills/coding-standards/code-review-core/scripts/lib/model.mjs';
+import { areaStatus, check, id, object, REVIEW_PERSPECTIVES, text } from '../../../../skills/coding-standards/code-review-core/scripts/lib/model.mjs';
 import { exists, loadReview, readJson, readText, reviewRoot, withLock, writeJson } from '../../../../skills/coding-standards/code-review-core/scripts/lib/storage.mjs';
 
 export { ReviewError } from '../../../../skills/coding-standards/code-review-core/scripts/lib/model.mjs';
 export const CANVAS_ID = 'hve-core-code-review';
-export const FEEDBACK_KINDS = ['review-next', 'explain', 'investigate', 'dispute', 'comment', 'draft'];
-export const TARGET_KINDS = ['review', 'area', 'reason', 'file', 'hunk', 'finding', 'comment'];
+export const FEEDBACK_KINDS = ['review-next', 'explain', 'investigate', 'dispute', 'comment', 'draft', 'add-reviewer'];
+export const TARGET_KINDS = ['review', 'area', 'reason', 'file', 'hunk', 'finding', 'comment', 'perspective'];
+export const FEEDBACK_STATES = ['draft', 'queued', 'sent', 'interpreted', 'dismissed'];
+/** States you can dismiss from. Sent items are the agent's until it reads them back. */
+export const DISMISSIBLE = ['draft', 'queued', 'interpreted'];
 export const MAX_FEEDBACK_TEXT = 16000;
+const OPEN_STATES = ['draft', 'queued', 'sent'];
 
 export async function openReview(workspace, input) {
     object(input, ['state'], 'canvas input');
@@ -24,24 +28,36 @@ export async function openReview(workspace, input) {
     return source;
 }
 
-export function validateTarget(target, source, allowStale = false) {
+/** True when a target names an item the current review still holds. */
+export function targetPresent(target, source) {
+    if (target.snapshotId !== source.state.snapshotId) return false;
+    const candidates = {
+        review: () => [source.state.reviewId],
+        area: () => source.state.areas.map((area) => area.id),
+        reason: () => (source.state.reasons ?? []).map((reason) => reason.id),
+        file: () => source.snapshot.files.map((file) => file.id),
+        hunk: () => source.snapshot.files.flatMap((file) => file.hunks.map((hunk) => hunk.id)),
+        finding: () => source.state.findings.map((finding) => finding.id),
+        comment: () => source.snapshot.discussion.items.map((item) => item.id),
+        perspective: () => REVIEW_PERSPECTIVES,
+    };
+    return candidates[target.kind]().includes(target.id);
+}
+
+/**
+ * Checks a target's shape. A current target must name an item the review holds now. A stored one
+ * (`stored`) may name an earlier snapshot or an item the agent has since removed, such as a
+ * renumbered reason, so saved feedback still loads.
+ */
+export function validateTarget(target, source, stored = false) {
     object(target, ['kind', 'id', 'snapshotId'], 'feedback target');
     check(TARGET_KINDS.includes(target.kind), 'Unknown focus target kind.', 'invalid_input');
     text(target.id, 'target ID');
     check(target.id.length <= 512, 'Target ID is too long.', 'invalid_input');
     id(target.snapshotId, 'target snapshot');
-    if (allowStale && target.snapshotId !== source.state.snapshotId) return target;
+    if (stored) return target;
     check(target.snapshotId === source.state.snapshotId, 'The target belongs to an older snapshot; select current evidence.', 'stale_target');
-    const candidates = {
-        review: [source.state.reviewId],
-        area: source.state.areas.map((area) => area.id),
-        reason: (source.state.reasons ?? []).map((reason) => reason.id),
-        file: source.snapshot.files.map((file) => file.id),
-        hunk: source.snapshot.files.flatMap((file) => file.hunks.map((hunk) => hunk.id)),
-        finding: source.state.findings.map((finding) => finding.id),
-        comment: source.snapshot.discussion.items.map((item) => item.id),
-    };
-    check(candidates[target.kind].includes(target.id), 'Target is not present in the current review.', 'not_found');
+    check(targetPresent(target, source), 'Target is not present in the current review.', 'not_found');
     return target;
 }
 
@@ -57,15 +73,18 @@ export function validateFeedback(value, source) {
     check(Array.isArray(value.items), 'Feedback items must be an array.');
     const known = new Set();
     for (const item of value.items) {
-        object(item, ['id', 'kind', 'target', 'text', 'status', 'delivery', 'interpretation', 'updatedAt'], 'feedback item');
+        object(item, ['id', 'kind', 'target', 'text', 'status', 'delivery', 'interpretation', 'updatedAt'], 'feedback item', ['dismissedFrom']);
         id(item.id);
         check(!known.has(item.id), 'Duplicate feedback ID.');
         known.add(item.id);
         check(FEEDBACK_KINDS.includes(item.kind), 'Unknown feedback kind.');
         validateTarget(item.target, source, true);
-        text(item.text, 'feedback text', item.status === 'draft');
+        if (item.kind === 'add-reviewer') check(item.target.kind === 'perspective', 'An add-reviewer request names a reviewer.');
+        check(FEEDBACK_STATES.includes(item.status), 'Unknown feedback state.');
+        if (item.status === 'dismissed') check(DISMISSIBLE.includes(item.dismissedFrom), 'Dismissed feedback records the state it left.');
+        else check(!Object.hasOwn(item, 'dismissedFrom'), 'Only dismissed feedback records the state it left.');
+        text(item.text, 'feedback text', item.status === 'draft' || item.dismissedFrom === 'draft');
         check(item.text.length <= MAX_FEEDBACK_TEXT, 'Feedback text is too long.');
-        check(['draft', 'queued', 'sent', 'interpreted'].includes(item.status), 'Unknown feedback state.');
         if (item.delivery !== null) {
             object(item.delivery, ['status', 'messageId', 'error'], 'delivery');
             check(['pending', 'submitted', 'collected', 'failed'].includes(item.delivery.status), 'Unknown delivery state.');
@@ -79,7 +98,7 @@ export function validateFeedback(value, source) {
             check(typeof item.interpretation.applied === 'boolean', 'applied must be boolean.');
         }
         check(typeof item.updatedAt === 'string' && Number.isFinite(Date.parse(item.updatedAt)), 'Invalid feedback time.');
-        if (item.status === 'interpreted') check(item.interpretation?.applied, 'Interpreted feedback requires an applied read-back.');
+        if (item.status === 'interpreted' || item.dismissedFrom === 'interpreted') check(item.interpretation?.applied, 'Interpreted feedback requires an applied read-back.');
     }
     for (const key of ['bookmarks', 'seen']) {
         check(Array.isArray(value[key]), `${key} must be an array.`);
@@ -109,7 +128,7 @@ export function view(source) {
         areas: state.areas.map((area) => ({ ...area, status: areaStatus(state, area.id), work: state.workItems.filter((work) => work.areaIds.includes(area.id)) })),
         workItems: state.workItems, files: snapshot.files, findings: state.findings, discussion: snapshot.discussion, metadata: snapshot.metadata ?? null,
         limitations: [...state.limitations, ...snapshot.omissions.map((summary, index) => ({ id: `omission-${index}`, summary, blocking: false }))],
-        context: state.context ?? null, artifacts: state.artifacts, reasons: state.reasons ?? null, changeMap: state.changeMap ?? null,
+        context: state.context ?? null, artifacts: state.artifacts, reasons: state.reasons ?? null, changeMap: state.changeMap ?? null, reviewers: state.reviewers ?? null,
     };
 }
 
@@ -176,8 +195,14 @@ async function changeFeedback(source, revision, action) {
 export async function editFeedback(source, request) {
     object(request, ['revision', 'kind', 'target', 'text'], 'feedback edit', ['id']);
     return changeFeedback(source, request.revision, (feedback) => {
+        check(request.target?.snapshotId !== source.state.snapshotId || targetPresent(request.target, source),
+            'This feedback points at something no longer in this review. Choose Whole review, or dismiss it.', 'not_found');
         validateTarget(request.target, source);
         check(FEEDBACK_KINDS.includes(request.kind), 'Unknown feedback kind.', 'invalid_input');
+        if (request.kind === 'add-reviewer') {
+            check(request.target.kind === 'perspective', 'Choose the reviewer to add.', 'invalid_input');
+            checkReviewerRequest(feedback, source, request.target.id, request.id ?? null);
+        }
         text(request.text, 'feedback text', true);
         check(request.text.length <= MAX_FEEDBACK_TEXT, 'Feedback exceeds the text limit.', 'invalid_input');
         const existing = request.id ? feedback.items.find((item) => item.id === request.id) : null;
@@ -188,6 +213,21 @@ export async function editFeedback(source, request) {
     });
 }
 
+/** Checks that an item can be queued: current evidence and, for an add request, a reviewer not already running or requested. */
+function checkQueueable(feedback, source, item) {
+    check(item.target.snapshotId === source.state.snapshotId, 'This item belongs to an older snapshot. Point it at current evidence first.', 'stale_target');
+    check(targetPresent(item.target, source), 'This item points at something no longer in this review. Edit it to point at the whole review, or dismiss it.', 'not_found');
+    if (item.kind === 'add-reviewer') checkReviewerRequest(feedback, source, item.target.id, item.id);
+}
+
+/** Refuses a reviewer that already has work or an open request, so a click never adds one twice. */
+function checkReviewerRequest(feedback, source, perspective, exceptId = null) {
+    check(REVIEW_PERSPECTIVES.includes(perspective), 'Unknown reviewer.', 'invalid_input');
+    check(!source.state.workItems.some((work) => work.perspective === perspective && work.status !== 'stale'), 'That reviewer already reviews this change.', 'invalid_transition');
+    check(!feedback.items.some((item) => item.id !== exceptId && item.kind === 'add-reviewer' && item.target.id === perspective && OPEN_STATES.includes(item.status)),
+        'That reviewer is already requested.', 'invalid_transition');
+}
+
 export async function queueFeedback(source, request) {
     object(request, ['revision', 'ids'], 'feedback queue');
     check(Array.isArray(request.ids) && request.ids.length > 0, 'Select feedback to queue.', 'invalid_input');
@@ -195,11 +235,73 @@ export async function queueFeedback(source, request) {
         for (const itemId of request.ids) {
             const item = feedback.items.find((entry) => entry.id === itemId);
             check(item?.status === 'draft', 'Only drafts can be queued.', 'invalid_transition');
-            validateTarget(item.target, source);
+            checkQueueable(feedback, source, item);
             text(item.text, 'queued feedback');
             item.status = 'queued';
             item.updatedAt = new Date().toISOString();
         }
+    });
+}
+
+/** Queues a request to add one reviewer in a single write, so the duplicate check and the queueing cannot separate. */
+export async function requestReviewer(source, request) {
+    object(request, ['revision', 'perspective'], 'reviewer request', ['text']);
+    return changeFeedback(source, request.revision, (feedback) => {
+        checkReviewerRequest(feedback, source, request.perspective);
+        const body = request.text ?? `Add the ${request.perspective} reviewer to this review.`;
+        text(body, 'reviewer request');
+        check(body.length <= MAX_FEEDBACK_TEXT, 'Feedback exceeds the text limit.', 'invalid_input');
+        feedback.items.push({
+            id: `fb-${randomUUID()}`, kind: 'add-reviewer', target: { kind: 'perspective', id: request.perspective, snapshotId: source.state.snapshotId },
+            text: body, status: 'queued', delivery: null, interpretation: null, updatedAt: new Date().toISOString(),
+        });
+    });
+}
+
+function changeItems(source, request, verb, apply) {
+    object(request, ['revision', 'ids'], `feedback ${verb}`);
+    check(Array.isArray(request.ids) && request.ids.length > 0, `Select feedback to ${verb}.`, 'invalid_input');
+    return changeFeedback(source, request.revision, (feedback) => {
+        for (const itemId of request.ids) {
+            const item = feedback.items.find((entry) => entry.id === itemId);
+            check(item, 'That feedback no longer exists. Reload to see the current list.', 'not_found');
+            apply(item, feedback);
+            item.updatedAt = new Date().toISOString();
+        }
+    });
+}
+
+/** Moves drafts, unsent items, and read-backs out of view. The agent never collects a dismissed item. */
+export function dismissFeedback(source, request) {
+    return changeItems(source, request, 'dismiss', (item) => {
+        check(DISMISSIBLE.includes(item.status), 'Only drafts, unsent items, and read-backs can be dismissed. The agent already has sent items.', 'invalid_transition');
+        item.dismissedFrom = item.status;
+        item.status = 'dismissed';
+    });
+}
+
+/** Undoes a dismissal. An unsent item that can no longer be queued comes back as a draft. */
+export function restoreFeedback(source, request) {
+    return changeItems(source, request, 'restore', (item, feedback) => {
+        check(item.status === 'dismissed', 'Only dismissed feedback can be restored.', 'invalid_transition');
+        let next = item.dismissedFrom;
+        if (next === 'queued') {
+            try {
+                checkQueueable(feedback, source, item);
+            } catch {
+                next = 'draft';
+            }
+        }
+        item.status = next;
+        delete item.dismissedFrom;
+    });
+}
+
+/** Takes unsent items back to drafts so they can be edited. */
+export function unqueueFeedback(source, request) {
+    return changeItems(source, request, 'take back', (item) => {
+        check(item.status === 'queued', 'Only unsent items can be taken back.', 'invalid_transition');
+        item.status = 'draft';
     });
 }
 

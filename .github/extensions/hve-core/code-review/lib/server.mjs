@@ -5,7 +5,13 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { check, object } from '../../../../skills/coding-standards/code-review-core/scripts/lib/model.mjs';
-import { editFeedback, evidenceFor, markTarget, queueFeedback, refresh, reportFor, sendFeedback, signature } from './model.mjs';
+import { dismissFeedback, editFeedback, evidenceFor, markTarget, queueFeedback, refresh, reportFor, requestReviewer, restoreFeedback, sendFeedback, signature, unqueueFeedback } from './model.mjs';
+
+/** Feedback commands the page may send; `send` also needs the host's delivery function. */
+const FEEDBACK_ACTIONS = {
+    save: editFeedback, queue: queueFeedback, mark: markTarget, 'request-reviewer': requestReviewer,
+    dismiss: dismissFeedback, restore: restoreFeedback, unqueue: unqueueFeedback,
+};
 
 export const MAX_BODY = 64 * 1024;
 export const CSP = "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'";
@@ -175,13 +181,13 @@ export function createCanvasServer(record, { deliver, log = (message) => process
             } else if (target.pathname === '/api/feedback' && request.method === 'POST') {
                 const body = await bodyOf(request);
                 object(body, ['action', 'input'], 'feedback command');
-                if (body.action === 'save') result = await editFeedback(record.source, body.input);
-                else if (body.action === 'queue') result = await queueFeedback(record.source, body.input);
-                else if (body.action === 'mark') result = await markTarget(record.source, body.input);
-                else if (body.action === 'send') {
+                if (body.action === 'send') {
                     object(body.input, ['revision'], 'send request');
                     result = await sendFeedback(record.source, body.input.revision, deliver);
-                } else check(false, 'Unknown feedback operation.', 'invalid_input');
+                } else {
+                    check(Object.hasOwn(FEEDBACK_ACTIONS, body.action), 'Unknown feedback operation.', 'invalid_input');
+                    result = await FEEDBACK_ACTIONS[body.action](record.source, body.input);
+                }
                 notify();
             } else check(false, 'Unknown route or method.', 'not_found');
             response.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });

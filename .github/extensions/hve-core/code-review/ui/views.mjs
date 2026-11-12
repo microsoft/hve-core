@@ -57,14 +57,30 @@ export const TARGET_KIND = {
     pr: 'Pull request', branch: 'Branch comparison', local: 'Local changes', commit: 'Commit', selected: 'Selected code',
 };
 
-export const PERSPECTIVE = {
-    functional: 'Functional', standards: 'Standards', accessibility: 'Accessibility', security: 'Security',
-    readiness: 'Readiness', context: 'Context', investigation: 'Investigation',
-};
+/**
+ * Every review perspective with its label, group, the worker that runs it, and that worker's skill.
+ * Core reviewers run in most reviews; non-functional ones run when the profile, a signal, or a
+ * request adds them. A test checks the agents and skills against the code-review skill's Workers table.
+ */
+export const REVIEWERS = Object.freeze([
+    { perspective: 'functional', label: 'Functional', group: 'core', agent: 'Code Review Functional', skill: 'code-review-functional', summary: 'Correctness and regressions in changed behavior' },
+    { perspective: 'standards', label: 'Standards', group: 'core', agent: 'Code Review Standards', skill: 'code-review-standards', summary: 'Project conventions and domain skills' },
+    { perspective: 'readiness', label: 'Readiness', group: 'core', agent: 'Code Review Readiness', skill: 'code-review-readiness', summary: 'Docs, tests, and pull request details' },
+    { perspective: 'security', label: 'Security', group: 'non-functional', agent: 'Code Review Security', skill: 'code-review-security', summary: 'Trust boundaries, secrets, and exploitable changes' },
+    { perspective: 'accessibility', label: 'Accessibility', group: 'non-functional', agent: 'Code Review Accessibility', skill: 'code-review-accessibility', summary: 'Barriers in interaction, markup, and content' },
+    { perspective: 'privacy', label: 'Privacy', group: 'non-functional', agent: 'Code Review Specialist', skill: 'code-review-specialist', summary: 'Personal data that is collected, logged, stored, or kept' },
+    { perspective: 'performance', label: 'Performance', group: 'non-functional', agent: 'Code Review Specialist', skill: 'code-review-specialist', summary: 'Work that grows with input or traffic' },
+    { perspective: 'supply-chain', label: 'Supply chain', group: 'non-functional', agent: 'Code Review Specialist', skill: 'code-review-specialist', summary: 'Dependencies, pinning, workflows, and downloads' },
+    { perspective: 'responsible-ai', label: 'Responsible AI', group: 'non-functional', agent: 'Code Review Specialist', skill: 'code-review-specialist', summary: 'Model calls, prompts, oversight, and disclosure' },
+].map((entry) => Object.freeze(entry)));
+
+export const PERSPECTIVE = Object.freeze({
+    ...Object.fromEntries(REVIEWERS.map((entry) => [entry.perspective, entry.label])), context: 'Context', investigation: 'Investigation',
+});
 
 export const FEEDBACK_KIND = {
     comment: 'Comment', 'review-next': 'Review next', explain: 'Explain', investigate: 'Investigate',
-    dispute: 'Dispute finding', draft: 'Comment draft',
+    dispute: 'Dispute finding', draft: 'Comment draft', 'add-reviewer': 'Add reviewer',
 };
 
 const ATTENTION = new Set(['blocked', 'unavailable', 'skipped', 'stale']);
@@ -330,9 +346,156 @@ export function feedbackState(item) {
     if (item.status === 'draft') return { label: 'Draft', icon: 'pencil', tone: 'muted' };
     if (item.status === 'queued') return { label: 'Not sent', icon: 'inbox', tone: 'accent' };
     if (item.status === 'interpreted') return { label: 'Read back', icon: 'check', tone: 'success' };
+    if (item.status === 'dismissed') return { label: 'Dismissed', icon: 'x', tone: 'muted' };
     if (item.delivery?.status === 'failed') return { label: 'Not delivered', icon: 'alert', tone: 'danger' };
     if (item.delivery?.status === 'collected') return { label: 'The agent has it', icon: 'sparkle', tone: 'agent' };
     return { label: 'Sent', icon: 'send', tone: 'accent' };
+}
+
+/**
+ * True when a feedback target still names something in this review. A target on an earlier
+ * snapshot, or on a reason, finding, or area the agent has since removed, is gone.
+ */
+export function targetPresent(view, target) {
+    if (target.snapshotId !== view.snapshotId) return false;
+    const present = {
+        review: () => target.id === view.reviewId,
+        area: () => view.areas.some((area) => area.id === target.id),
+        reason: () => (view.reasons ?? []).some((reason) => reason.id === target.id),
+        file: () => view.files.some((file) => file.id === target.id),
+        hunk: () => view.files.some((file) => file.hunks.some((hunk) => hunk.id === target.id)),
+        finding: () => view.findings.some((finding) => finding.id === target.id),
+        comment: () => view.discussion.items.some((comment) => comment.id === target.id),
+        perspective: () => REVIEWERS.some((entry) => entry.perspective === target.id),
+    }[target.kind];
+    return Boolean(present?.());
+}
+
+/** How a reviewer's work stands, as an icon, a word, and a tone. */
+export const REVIEWER_STATUS = {
+    pending: { label: 'Not started', icon: 'circle', tone: 'muted' },
+    active: { label: 'In progress', icon: 'active', tone: 'accent' },
+    done: { label: 'Done', icon: 'check-circle', tone: 'success' },
+    'not-applicable': { label: 'Not applicable', icon: 'dash-circle', tone: 'muted' },
+    attention: { label: 'Needs attention', icon: 'alert', tone: 'danger' },
+};
+
+/** Where a reviewer that is not running stands: requested, suggested, ruled out, or simply available. */
+export const AVAILABILITY = {
+    drafted: { label: 'Request drafted', icon: 'pencil', tone: 'muted' },
+    queued: { label: 'Requested, not sent', icon: 'inbox', tone: 'accent' },
+    sent: { label: 'The agent has the request', icon: 'sparkle', tone: 'agent' },
+    suggested: { label: 'Suggested', icon: 'bulb', tone: 'attention' },
+    'not-needed': { label: 'Not needed', icon: 'dash-circle', tone: 'muted' },
+    available: { label: 'Not added', icon: 'plus', tone: 'muted' },
+};
+
+/**
+ * The review as five ordered steps, each naming the agents that act in it, from recorded state only.
+ * Review lists every reviewer: each one with work shows its status, areas done, and shown findings;
+ * each one without work shows whether it is requested, suggested, ruled out, or simply available,
+ * with any reason the agent recorded. With `shown`, findings the reader has not been shown yet stay
+ * out of every count.
+ *
+ * @param {any} view
+ * @param {Set<string> | null} [shown]
+ */
+export function reviewFlow(view, shown = null) {
+    const work = (view.workItems ?? []).filter((item) => item.status !== 'stale');
+    const findings = view.findings.filter((finding) => !shown || shown.has(finding.id));
+    const decisions = new Map((view.reviewers ?? []).map((entry) => [entry.perspective, entry]));
+    const requests = (view.feedback?.items ?? []).filter((item) => item.kind === 'add-reviewer' && item.target.kind === 'perspective');
+    const reviewers = REVIEWERS.map((entry) => {
+        const items = work.filter((item) => item.perspective === entry.perspective);
+        const decision = decisions.get(entry.perspective) ?? null;
+        const mine = requests.filter((item) => item.target.id === entry.perspective);
+        const base = { ...entry, decision: decision?.decision ?? null, reason: decision?.reason ?? null };
+        if (!items.length) {
+            const request = mine.find((item) => ['draft', 'queued', 'sent'].includes(item.status)) ?? null;
+            const availability = request ? { draft: 'drafted', queued: 'queued', sent: 'sent' }[request.status] : decision?.decision === 'suggested' ? 'suggested' : decision?.decision === 'not-needed' ? 'not-needed' : 'available';
+            return { ...base, scheduled: false, availability, request };
+        }
+        const areaIds = [...new Set(items.flatMap((item) => item.areaIds))];
+        const areaState = (areaId) => {
+            const covering = items.filter((item) => item.areaIds.includes(areaId));
+            if (covering.some((item) => ATTENTION.has(item.status))) return 'attention';
+            if (covering.every((item) => item.status === 'completed')) return 'done';
+            return covering.some((item) => item.status !== 'pending') ? 'active' : 'pending';
+        };
+        const states = areaIds.map(areaState);
+        let status = 'pending';
+        if (states.includes('attention')) status = 'attention';
+        else if (states.every((value) => value === 'done')) status = items.every((item) => item.coverage?.notApplicable) ? 'not-applicable' : 'done';
+        else if (states.some((value) => value !== 'pending')) status = 'active';
+        const ids = new Set(items.map((item) => item.id));
+        const found = findings.filter((finding) => isRetained(finding) && finding.sources?.some((source) => ids.has(source)));
+        const added = decision ? decision.decision !== 'selected' : false;
+        const requested = mine.some((item) => ['sent', 'interpreted'].includes(item.status) || item.dismissedFrom === 'interpreted');
+        return {
+            ...base, scheduled: true, status, areas: { done: states.filter((value) => value === 'done').length, total: areaIds.length },
+            findings: found.length, added: requested ? 'request' : added ? 'later' : null,
+        };
+    });
+    const required = work.filter((item) => item.required);
+    const context = work.filter((item) => item.perspective === 'context');
+    const investigations = work.filter((item) => item.perspective === 'investigation');
+    const open = (items) => items.some((item) => ['pending', 'in_progress'].includes(item.status));
+    const proposed = findings.filter((finding) => finding.disposition === 'proposed').length;
+    const kept = findings.filter((finding) => finding.disposition !== 'proposed' && isRetained(finding)).length;
+    const setAside = findings.filter((finding) => finding.disposition === 'rejected').length;
+    const hunks = view.files.reduce((sum, file) => sum + file.hunks.length, 0);
+    const comments = view.discussion?.items?.length ?? 0;
+    const scheduled = reviewers.filter((entry) => entry.scheduled);
+
+    let review = 'upcoming';
+    if (required.some((item) => ATTENTION.has(item.status))) review = 'blocked';
+    else if (required.length && required.every((item) => item.status === 'completed')) review = 'done';
+    else if (required.length) review = 'active';
+    let check = 'upcoming';
+    if (proposed || open(investigations)) check = 'active';
+    else if (review === 'done') check = 'done';
+    else if (findings.length) check = 'active';
+    let report = 'upcoming';
+    if (view.status === 'incomplete') report = 'blocked';
+    else if (view.outcome && !view.stale) report = view.artifacts?.report ? 'done' : 'active';
+    const compared = [['acceptanceCriteria', 'acceptance criteria'], ['businessAlignment', 'business alignment'], ['securityPlanDrift', 'security plan drift']]
+        .filter(([key]) => view.context?.[key]).map(([, label]) => label);
+    const comparedWords = compared.length > 1 ? `${compared.slice(0, -1).join(', ')} and ${compared.at(-1)}` : compared[0];
+    const count = (value, noun) => `${value} ${noun}${value === 1 ? '' : 's'}`;
+    const steps = [
+        {
+            id: 'capture', label: 'Capture', status: view.stale ? 'blocked' : 'done',
+            summary: `${count(view.files.length, 'file')}, ${count(hunks, 'hunk')}${comments ? `, ${count(comments, 'pull request comment')}` : ''}`,
+            agents: [{ label: 'Code Review', role: 'Captures the change once, read-only' }],
+        },
+        {
+            id: 'understand', label: 'Understand', status: !view.areas.length ? 'upcoming' : open(context) ? 'active' : 'done',
+            summary: [count(view.areas.length, 'area'), count(view.reasons?.length ?? 0, 'reason'), view.changeMap ? 'a change map' : null].filter(Boolean).join(', '),
+            agents: [
+                { label: 'Code Review', role: 'Groups files into areas and records why they changed' },
+                ...(context.length ? [{ label: 'Code Review Orientation', role: `Area overviews and explanations, ${count(context.length, 'task')}`, status: open(context) ? 'active' : 'done' }] : []),
+            ],
+        },
+        {
+            id: 'review', label: 'Review', status: review,
+            summary: scheduled.length ? `${count(scheduled.length, 'reviewer')} side by side, ${reviewers.length - scheduled.length} more available` : 'No reviewers scheduled yet',
+            reviewers,
+        },
+        {
+            id: 'check', label: 'Check', status: check,
+            summary: findings.length ? `${count(findings.length, 'finding')}: ${kept} kept, ${setAside} set aside${proposed ? `, ${proposed} being checked` : ''}` : 'No findings yet',
+            agents: [
+                { label: 'Code Review', role: compared.length ? `Checks every claim, then compares ${comparedWords}` : 'Checks every claim before it counts' },
+                ...(investigations.length ? [{ label: 'Code Review Walkback', role: `Bounded investigations, ${count(investigations.length, 'task')}`, status: open(investigations) ? 'active' : 'done' }] : []),
+            ],
+        },
+        {
+            id: 'report', label: 'Report', status: report,
+            summary: view.outcome && !view.stale ? `${(OUTCOME[view.outcome] ?? OUTCOME.none).label}${view.artifacts?.report ? ', report saved' : ', report not saved yet'}` : 'Waits for every reviewer and check',
+            agents: [{ label: 'Code Review', role: 'Writes the report you edit and approve' }],
+        },
+    ];
+    return { steps, reviewers };
 }
 
 export function targetSummary(view) {
@@ -414,7 +577,11 @@ export function resolveFocus(view, target) {
         selected.fileId = (view.reasons ?? []).some((reason) => reason.id === key) ? reasonFiles(view, key)[0] ?? null : null;
         selected.mapped = Boolean(selected.fileId);
     } else if (kind === 'file') selected.fileId = view.files.find((entry) => entry.id === key)?.id ?? null;
-    else if (kind === 'hunk') {
+    else if (kind === 'perspective') {
+        const work = (view.workItems ?? []).find((item) => item.perspective === key && item.status !== 'stale');
+        selected.areaId = work?.areaIds[0] ?? view.areas[0]?.id ?? null;
+        selected.fileId = view.areas.find((area) => area.id === selected.areaId)?.fileIds[0] ?? null;
+    } else if (kind === 'hunk') {
         selected.fileId = view.files.find((file) => file.hunks.some((hunk) => hunk.id === key))?.id ?? null;
         selected.hunkId = selected.fileId ? key : null;
     } else if (kind === 'finding') {

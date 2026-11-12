@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: MIT
 
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
 import { describe, it } from 'node:test';
+import { REVIEW_PERSPECTIVES } from '../../../../skills/coding-standards/code-review-core/scripts/lib/model.mjs';
 import {
     arrivals, boardLanes, DISPOSITION, feedbackState, fileAnnotations, fileLabel, fileStats, findingGroups, findingsFor, hidingNarrowing, hunkAnnotations, needsYou, NOT_EXPLAINED,
     perspectiveProgress,
-    reasonCoverage, reasonFiles, resolveFocus, safeWebUrl, stageFor, stages, targetSummary,
+    reasonCoverage, reasonFiles, resolveFocus, REVIEWERS, reviewFlow, safeWebUrl, stageFor, stages, targetPresent, targetSummary,
 } from '../ui/views.mjs';
 
 function fixture() {
@@ -118,8 +120,7 @@ describe('stage rail, attention, and steering views', () => {
         assert.equal(status(review({ status: 'incomplete' })).outcome, 'blocked');
         assert.deepEqual(status(review({ findings: [], outcome: 'approve', status: 'completed' })), { capture: 'done', review: 'done', outcome: 'done' });
         assert.equal(status(review({ outcome: 'approve', stale: true })).outcome, 'upcoming');
-        assert.equal(stageFor({ kind: 'finding', id: 'high' }), 'review');
-        assert.equal(stageFor({ kind: 'comment', id: 'current' }), 'review');
+        assert.equal(stageFor(), 'review');
     });
 
     it('asks for unseen retained High and Critical findings in Review', () => {
@@ -240,5 +241,99 @@ describe('stage rail, attention, and steering views', () => {
         view.metadata = { status: 'complete', fields: [{ name: 'title', value: 'Add export', source: 'provider' }] };
         assert.equal(targetSummary(view).title, 'Add export');
         assert.equal(targetSummary(review({ target: { kind: 'local', localMode: 'staged' } })).title, 'Local changes (staged)');
+    });
+});
+
+describe('review flow', () => {
+    const work = (id, perspective, status, extra = {}) => ({
+        id, perspective, status, required: !['context', 'investigation'].includes(perspective), areaIds: extra.areaIds ?? ['area-one'],
+        coverage: { fileIds: [], hunkIds: [], notApplicable: extra.notApplicable ?? null },
+    });
+    const request = (id, perspective, status, extra = {}) => ({ id, kind: 'add-reviewer', target: { kind: 'perspective', id: perspective, snapshotId: 'snapshot-one' }, status, ...extra });
+    function flowView(overrides = {}) {
+        const view = fixture();
+        return Object.assign(view, {
+            reviewId: 'review-one', status: 'in_progress', outcome: null, stale: false, artifacts: { report: null }, context: null, changeMap: null,
+            areas: [{ id: 'area-one', status: 'reviewed', fileIds: ['file-one'] }, { id: 'area-two', status: 'in_progress', fileIds: ['file-one'] }],
+            reasons: [{ id: 'R1' }],
+            workItems: [
+                work('functional-1', 'functional', 'completed'), work('functional-2', 'functional', 'in_progress', { areaIds: ['area-two'] }),
+                work('security-3', 'security', 'completed', { notApplicable: 'No trust boundary changed.' }),
+                work('context-4', 'context', 'in_progress'), work('investigation-5', 'investigation', 'completed'),
+            ],
+            reviewers: [
+                { perspective: 'functional', decision: 'selected', reason: 'Every review checks behavior.' },
+                { perspective: 'security', decision: 'not-needed', reason: 'No trust boundary changed.' },
+                { perspective: 'privacy', decision: 'suggested', reason: 'The change logs request bodies.' },
+                { perspective: 'supply-chain', decision: 'not-needed', reason: 'No dependency changed.' },
+            ],
+            feedback: { items: [request('fb-1', 'performance', 'queued'), request('fb-2', 'accessibility', 'sent'), request('fb-3', 'responsible-ai', 'dismissed', { dismissedFrom: 'queued' })], bookmarks: [], seen: [] },
+            findings: [
+                { id: 'kept', severity: 'High', disposition: 'accepted', sources: ['functional-1'], anchors: [] },
+                { id: 'checking', severity: 'Low', disposition: 'proposed', sources: ['functional-2'], anchors: [] },
+                { id: 'aside', severity: 'Low', disposition: 'rejected', sources: ['functional-1'], anchors: [] },
+                { id: 'held', severity: 'Medium', disposition: 'accepted', sources: ['functional-1'], anchors: [] },
+            ],
+        }, overrides);
+    }
+    const byId = (flow) => Object.fromEntries(flow.reviewers.map((entry) => [entry.perspective, entry]));
+
+    it('orders five steps and names their agents from recorded state', () => {
+        const flow = reviewFlow(flowView(), new Set(['kept', 'checking', 'aside']));
+        assert.deepEqual(flow.steps.map((step) => [step.id, step.status]), [['capture', 'done'], ['understand', 'active'], ['review', 'active'], ['check', 'active'], ['report', 'upcoming']]);
+        const [capture, understand, review, check] = flow.steps;
+        assert.equal(capture.summary, '1 file, 1 hunk, 3 pull request comments');
+        assert.equal(understand.summary, '2 areas, 1 reason');
+        assert.deepEqual(understand.agents.map((agent) => agent.label), ['Code Review', 'Code Review Orientation']);
+        assert.equal(review.summary, '2 reviewers side by side, 7 more available');
+        assert.equal(check.summary, '3 findings: 1 kept, 1 set aside, 1 being checked');
+        assert.deepEqual(check.agents.map((agent) => agent.label), ['Code Review', 'Code Review Walkback']);
+    });
+
+    it('reports each reviewer as running, requested, suggested, ruled out, or available, counting only shown findings', () => {
+        const reviewers = byId(reviewFlow(flowView(), new Set(['kept', 'checking', 'aside'])));
+        assert.deepEqual([reviewers.functional.status, reviewers.functional.areas, reviewers.functional.findings], ['active', { done: 1, total: 2 }, 2]);
+        assert.deepEqual([reviewers.security.status, reviewers.security.added, reviewers.security.reason], ['not-applicable', 'later', 'No trust boundary changed.']);
+        assert.deepEqual([reviewers.performance.scheduled, reviewers.performance.availability, reviewers.performance.request.id], [false, 'queued', 'fb-1']);
+        assert.equal(reviewers.accessibility.availability, 'sent');
+        assert.deepEqual([reviewers.privacy.availability, reviewers.privacy.reason], ['suggested', 'The change logs request bodies.']);
+        assert.equal(reviewers['supply-chain'].availability, 'not-needed');
+        assert.equal(reviewers['responsible-ai'].availability, 'available');
+        assert.equal(reviewers.readiness.availability, 'available');
+        assert.equal(byId(reviewFlow(flowView())).functional.findings, 3);
+    });
+
+    it('marks a reviewer added at your request and finishes the flow once the report is saved', () => {
+        const view = flowView({
+            status: 'completed', outcome: 'approve_with_comments', artifacts: { report: 'review.md' },
+            workItems: [work('functional-1', 'functional', 'completed'), work('privacy-2', 'privacy', 'completed')],
+            feedback: { items: [request('fb-1', 'privacy', 'interpreted')], bookmarks: [], seen: [] },
+            findings: [{ id: 'kept', severity: 'Low', disposition: 'accepted', sources: ['privacy-2'], anchors: [] }],
+            context: { businessAlignment: { status: 'aligned' } },
+        });
+        const flow = reviewFlow(view);
+        assert.deepEqual(flow.steps.map((step) => step.status), ['done', 'done', 'done', 'done', 'done']);
+        assert.equal(flow.steps[4].summary, 'Approve with comments, report saved');
+        assert.match(flow.steps[3].agents[0].role, /compares business alignment/);
+        assert.deepEqual([byId(flow).privacy.added, byId(flow).privacy.findings], ['request', 1]);
+        assert.equal(reviewFlow({ ...view, status: 'incomplete', outcome: null }).steps[4].status, 'blocked');
+    });
+
+    it('names every review perspective, with each worker and skill listed in the code-review Workers table', async () => {
+        assert.deepEqual(REVIEWERS.map((entry) => entry.perspective).sort(), [...REVIEW_PERSPECTIVES].sort());
+        const skill = await fs.readFile(new URL('../../../../skills/coding-standards/code-review/SKILL.md', import.meta.url), 'utf8');
+        const rows = skill.slice(skill.indexOf('## Workers')).split('\n').filter((line) => line.startsWith('|'));
+        for (const entry of REVIEWERS) {
+            assert.ok(rows.some((row) => row.includes(`\`${entry.skill}\``) && row.includes(entry.agent)), `${entry.agent} and ${entry.skill} share a Workers row`);
+        }
+    });
+
+    it('treats a removed reason or an earlier snapshot as gone and any reviewer as present', () => {
+        const view = flowView();
+        assert.equal(targetPresent(view, { kind: 'reason', id: 'R1', snapshotId: 'snapshot-one' }), true);
+        assert.equal(targetPresent(view, { kind: 'reason', id: 'R2', snapshotId: 'snapshot-one' }), false);
+        assert.equal(targetPresent(view, { kind: 'file', id: 'file-one', snapshotId: 'snapshot-old' }), false);
+        assert.equal(targetPresent(view, { kind: 'perspective', id: 'responsible-ai', snapshotId: 'snapshot-one' }), true);
+        assert.equal(feedbackState({ status: 'dismissed' }).label, 'Dismissed');
     });
 });
