@@ -15,7 +15,7 @@ This directory contains the default, vendor-neutral template-profile metadata fo
 
 ## License note
 
-- LICENSE-MIT-REFERENCE.txt: states that the bundled profile metadata is independently authored, and that any redistributed upstream template files keep their original MIT license text and attribution.
+- LICENSE-MIT-REFERENCE.txt: states that the bundled profile metadata is independently authored, and that any redistributed upstream template files must retain their original copyright and permission notices.
 
 ## Reference-only profile tables
 
