@@ -15,7 +15,7 @@
     Base branch or ref (default: the remote default branch). A plain name resolves to origin/NAME
     before NAME. Use refs/heads/NAME for a local branch.
 .PARAMETER Head
-    Local branch to describe (default: the checked-out branch).
+    Local branch to describe (default: the checked-out branch). An empty value is an error.
 .EXAMPLE
     ./Collect-Context.ps1 -Base origin/main
 .EXAMPLE
@@ -353,6 +353,10 @@ function Get-PullRequestContext {
 
 if ($MyInvocation.InvocationName -ne '.') {
     try {
+        # The functions treat an empty -Head as "not given"; only an explicit empty argument is an error.
+        if ($PSBoundParameters.ContainsKey('Head') -and [string]::IsNullOrEmpty($Head)) {
+            throw '-Head requires a branch name.'
+        }
         Get-PullRequestContext -Base $Base -Head $Head
         exit 0
     }

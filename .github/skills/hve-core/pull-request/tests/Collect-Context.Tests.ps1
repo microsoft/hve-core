@@ -261,6 +261,7 @@ BeforeAll {
             [string]$FilePath,
 
             [Parameter(Mandatory = $true)]
+            [AllowEmptyString()]
             [string[]]$ArgumentList
         )
 
@@ -567,6 +568,15 @@ Describe 'Collect-Context.ps1 entry point' -Tag 'Unit' {
         $result.Output | Should -BeNullOrEmpty
         $result.Error -join "`n" | Should -Match ([regex]::Escape("Collect-Context failed: 'nope' is not a local branch."))
     }
+
+    It 'Exits 1 and reports the error when -Head is empty' {
+        $result = Invoke-ExternalCollector -Path $script:RepoPath -FilePath $script:PwshPath -ArgumentList @(
+            '-NoProfile', '-NonInteractive', '-File', $script:PowerShellScript, '-Head', '', '-Base', 'main'
+        )
+        $result.ExitCode | Should -Be 1
+        $result.Output | Should -BeNullOrEmpty
+        $result.Error -join "`n" | Should -Match ([regex]::Escape('Collect-Context failed: -Head requires a branch name.'))
+    }
 }
 
 Describe 'collect-context.sh' -Tag 'Unit' -Skip:(-not $script:BashAvailable) {
@@ -576,6 +586,8 @@ Describe 'collect-context.sh' -Tag 'Unit' -Skip:(-not $script:BashAvailable) {
             @{ Label = '--head feature-b --base main'; HeadArgument = 'feature-b'; BaseArgument = 'main' }
             @{ Label = '--head refs/heads/feature-b --base refs/remotes/upstream/main'; HeadArgument = 'refs/heads/feature-b'; BaseArgument = 'refs/remotes/upstream/main' }
             @{ Label = '--head push-diverged --base auto'; HeadArgument = 'push-diverged'; BaseArgument = 'auto' }
+            @{ Label = '--head push-ahead --base auto'; HeadArgument = 'push-ahead'; BaseArgument = 'auto' }
+            @{ Label = '--head push-behind --base auto'; HeadArgument = 'push-behind'; BaseArgument = 'auto' }
             @{ Label = '--base auto with main checked out'; HeadArgument = ''; BaseArgument = 'auto' }
         ) {
             $arguments = @($script:BashScript, '--base', $BaseArgument)
@@ -609,6 +621,15 @@ Describe 'collect-context.sh' -Tag 'Unit' -Skip:(-not $script:BashAvailable) {
             $result.ExitCode | Should -Be 1
             $result.Output | Should -BeNullOrEmpty
             $result.Error | Should -Contain "Error: '$HeadArgument' is not a local branch."
+        }
+
+        It 'Exits 1 for an empty --head' {
+            $result = Invoke-ExternalCollector -Path $script:RepoPath -FilePath 'bash' -ArgumentList @(
+                $script:BashScript, '--head', '', '--base', 'main'
+            )
+            $result.ExitCode | Should -Be 1
+            $result.Output | Should -BeNullOrEmpty
+            $result.Error | Should -Contain 'Error: --head requires a branch name.'
         }
 
         It 'Exits 1 when HEAD is detached and --head is omitted' {
