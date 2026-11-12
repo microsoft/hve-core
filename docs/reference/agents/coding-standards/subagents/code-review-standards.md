@@ -1,9 +1,9 @@
 ---
 title: Code Review Standards
 description: Review assigned evidence against applicable project criteria and return the shared worker result.
-sidebar_position: 7
+sidebar_position: 8
 author: Microsoft
-ms.date: 2026-11-06
+ms.date: 2026-11-09
 ms.topic: reference
 keywords:
   - agent

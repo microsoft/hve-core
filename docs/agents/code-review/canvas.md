@@ -4,7 +4,7 @@ description: Follow a code review in a canvas beside the chat, see why the chang
 sidebar_position: 3
 sidebar_label: Canvas
 author: Microsoft
-ms.date: 2026-11-08
+ms.date: 2026-11-09
 ms.topic: how-to
 keywords:
   - code review canvas
@@ -58,11 +58,11 @@ The canvas is optional. Without it, the review runs in chat with the same eviden
 
 ### Capture
 
-The captured target: kind, provider, base, head, and merge base, when it was captured, and the snapshot and review IDs. It also shows how many files, hunks, and lines changed, the review's scope (profile, depth, mode, and perspectives), the pull request details with any readiness findings tied to them, and the evidence limits. Missing pull request details are shown as missing, not as a passed check.
+The captured target: kind, provider, base, head, and merge base, when it was captured, and the snapshot and review IDs. It also shows how many files, hunks, and lines changed, the review's scope (profile, depth, mode, and the reviewers that run, with a link to the review flow), the pull request details with any readiness findings tied to them, and the evidence limits. Missing pull request details are shown as missing, not as a passed check.
 
 ### Review
 
-Review is where you understand and assess the change. From top to bottom it shows the coverage board, why the changes were made, a change map, the findings, the selected area with its files and diff, and the pull request discussion.
+Review is where you understand and assess the change. From top to bottom it shows the coverage board, the review flow, why the changes were made, a change map, the findings, the selected area with its files and diff, and the pull request discussion.
 
 #### Coverage Board
 
@@ -71,6 +71,28 @@ The board has three lanes, **Needs review**, **In progress**, and **Reviewed**, 
 The board stays pinned under the context bar while you scroll Review, and its collapse button shrinks it to its title. On panels 560 pixels tall or less, it scrolls with the page instead.
 
 When a lane holds more areas, select its title to list all of them over the page. Escape, a click outside, or moving focus away closes the list. Reviewed means every required perspective finished its assigned files. It is not approval, and an area with no findings has not passed anything.
+
+#### Review Flow
+
+The review flow shows who reviews the change and in what order, as five numbered steps:
+
+| Step       | Who acts                                                  | What it shows                                                                                 |
+|------------|-----------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| Capture    | Code Review                                               | The files, hunks, and pull request comments it captured once, read-only                       |
+| Understand | Code Review, plus Code Review Orientation when it runs    | The areas, the reasons, and the change map                                                    |
+| Review     | The reviewers, side by side                               | One card per reviewer                                                                         |
+| Check      | Code Review, plus Code Review Walkback for investigations | Findings kept, set aside, and still being checked, and comparisons such as business alignment |
+| Report     | Code Review                                               | The outcome and whether the report is saved                                                   |
+
+Reviewers are grouped as **Core** (Functional, Standards, and Readiness) and **Non-functional** (Security, Accessibility, Privacy, Performance, Supply chain, and Responsible AI). Each card shows the reviewer's status, the agent that runs it, how many areas it has finished, the findings it raised that you can see, and the agent's reason for running it. A card marked **Added at your request** or **Added after the first plan** joined the review later.
+
+Privacy, Performance, Supply chain, and Responsible AI run only when someone adds them, and the agent marks one **Suggested** when the change touches what it covers. Under **Add a reviewer**, every reviewer that isn't running has a card:
+
+1. Select **Add** on its card. The card reads **Requested, not sent**, and a status note offers **Undo**.
+2. **Review and send** delivers the request now. Otherwise the agent collects it at its next checkpoint.
+3. When the agent adds the reviewer, its card moves into the review and shows its progress.
+
+Adding a reviewer to a finished review reopens it. The outcome clears until the new reviewer finishes, and then the agent saves the report again. Fold the review flow with the button beside its title.
 
 #### Why These Changes
 
@@ -135,6 +157,15 @@ The saved report opens read-only here. Edit it on disk.
 3. **Review and send** lists the queued items and sends them to the agent. Sending doesn't mean the agent acted.
 4. The agent reads each item back. **The agent understood** shows its reading and what it changed, and the item moves to **Read back**.
 
+You can change your mind about anything the agent doesn't have yet:
+
+* **Dismiss** in the **Add input** header throws away words you haven't saved. With a saved draft open, it dismisses the draft.
+* Drafts and unsent items in **Your feedback** offer **Edit** and **Dismiss**. **Edit** on an unsent item takes it back to a draft. **Review and send** also offers **Dismiss** for each item.
+* Read-backs offer **Dismiss** to clear them from **Your feedback**.
+* Every dismissal shows **Undo** in a status note. Dismissed items never reach the agent. A sent item stays until the agent reads it back.
+
+If an item points at something the agent has since removed, such as a renumbered reason, it reads **(no longer in this review)**. Select **Whole review** to point it at the review instead, or dismiss it.
+
 If the host can't deliver a message, your items are marked Not delivered, and the agent still collects them at its next checkpoint. Items that point at an earlier snapshot are sent with an Earlier snapshot label, so the agent can map them to current evidence.
 
 ## What the Canvas Never Does
@@ -145,7 +176,9 @@ The canvas never edits source files, posts comments, submits or approves reviews
 
 The **Appearance** menu offers **System**, **Light**, and **Dark**, plus **More contrast**. System follows your editor or operating system. The choice lasts while the canvas extension runs.
 
-Status pairs an icon and a word with its color. Compact perspective chips show the perspective name and a status icon, with the status word in their tooltip and accessible name. Change map parts are named buttons, and the map has a text version. Forced colors keep every border, reduced motion turns off the Live pulse and other movement, and the layout reflows to a 320-pixel-wide window without sideways scrolling; only a wide change map scrolls sideways inside its own frame.
+Status pairs an icon and a word with its color. Compact perspective chips show the perspective name and a status icon, with the status word in their tooltip and accessible name. Change map parts are named buttons, and the map has a text version.
+The review flow is an ordered list of headed steps, and each reviewer card states its status in words.
+Forced colors keep every border, reduced motion turns off the Live pulse and other movement, and the layout reflows to a 320-pixel-wide window without sideways scrolling; only a wide change map scrolls sideways inside its own frame.
 
 | Key                              | Action                                                  |
 |----------------------------------|---------------------------------------------------------|
@@ -173,6 +206,9 @@ Single-key shortcuts pause while you type, and the shortcut list has a switch th
 | Appearance went back to System                                        | The canvas keeps your choice while its extension runs. Choose again after the host restarts it.                                     |
 | The change map says it was drawn from areas                           | The agent recorded no change map. Ask it to describe how the changed parts connect.                                                 |
 | **Needs you** or the stage rail counts findings the list doesn't show | New findings wait behind **Show N new findings** until you select it, and a selected reason or area may narrow the list.            |
+| A reviewer has no **Add** button                                      | It already runs, or a request for it is waiting. Dismiss the request to add it again.                                               |
+| An item says it's no longer in this review                            | The agent removed or renumbered what it pointed at. Select **Whole review**, or dismiss the item.                                   |
+| The outcome disappeared after you added a reviewer                    | Adding a reviewer reopens the review until that reviewer finishes.                                                                  |
 
 ## Related Guides
 

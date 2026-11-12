@@ -14,6 +14,7 @@ keywords:
   - accessibility review
   - security review
   - readiness review
+  - non-functional review
   - review canvas
   - skills
 tags:
@@ -21,7 +22,7 @@ tags:
   - code-review
   - coding-standards
 author: Microsoft
-ms.date: 2026-11-06
+ms.date: 2026-11-09
 ms.topic: concept
 estimated_reading_time: 10
 ---
@@ -97,8 +98,12 @@ In both modes the chosen scope stays visible and you can override it. Material a
 | Profile              | Perspectives                                                                                                                                                                                                                                                                                |
 |----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `standard` (default) | Functional, standards, and readiness. Accessibility joins for interactive UI, markup, user-facing content, or accessibility documentation. Security joins for changed trust boundaries, authentication, secrets, parsing, networking, persistence, or confirmed Security Plan Drift context |
-| `full`               | All five perspectives. A perspective with nothing relevant to review returns a reasoned not-applicable result                                                                                                                                                                               |
+| `full`               | Functional, standards, accessibility, security, and readiness. A perspective with nothing relevant to review returns a reasoned not-applicable result                                                                                                                                       |
 | `custom`             | The perspectives you choose. Code Review asks when the choice is ambiguous                                                                                                                                                                                                                  |
+
+Four more non-functional reviewers run only when someone adds them: privacy, performance, supply chain, and responsible AI. Add one with a `custom` profile, a request in chat, or the canvas's **Add** buttons. When the change touches what one of them covers, Code Review suggests it instead of running it. Adding a reviewer to a finished review reopens it until that reviewer finishes, and Code Review renders the report again afterward.
+
+Code Review records why it chose each reviewer as selected, suggested, or not needed, with a one-line reason. The report lists those choices, and the canvas shows them in its review flow.
 
 ### Depth
 
@@ -116,16 +121,17 @@ Code Review uses `standard` unless you pick another depth or concrete risk in th
 
 Each responsibility has its own skill and a matching subagent:
 
-| Responsibility | Skill                       | Subagent                  | Focus                                                                                                       |
-|----------------|-----------------------------|---------------------------|-------------------------------------------------------------------------------------------------------------|
-| Functional     | `code-review-functional`    | Code Review Functional    | Behavioral defects and regressions, plus acceptance-criteria coverage for behavior                          |
-| Standards      | `code-review-standards`     | Code Review Standards     | Departures from applicable repository instructions and domain skills, citing each criterion's source        |
-| Accessibility  | `code-review-accessibility` | Code Review Accessibility | User barriers in changed interaction, markup, and content, separating static evidence from runtime evidence |
-| Security       | `code-review-security`      | Code Review Security      | Changed paths that permit a concrete security failure across a trust boundary                               |
-| Readiness      | `code-review-readiness`     | Code Review Readiness     | PR description, linked issues, checklists, required checks, validation evidence, and changed documentation  |
-| Orientation    | `code-review-context`       | Code Review Orientation   | Factual overview of changed areas, entry points, and affected consumers                                     |
-| Explanation    | `code-review-context`       | Code Review Explainer     | Factual answer to a question about a symbol or area                                                         |
-| Investigation  | `code-review-investigation` | Code Review Walkback      | One bounded evidence gap, answered without restarting the review                                            |
+| Responsibility  | Skill                       | Subagent                  | Focus                                                                                                                                                                                                                            |
+|-----------------|-----------------------------|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Functional      | `code-review-functional`    | Code Review Functional    | Behavioral defects and regressions, plus acceptance-criteria coverage for behavior                                                                                                                                               |
+| Standards       | `code-review-standards`     | Code Review Standards     | Departures from applicable repository instructions and domain skills, citing each criterion's source                                                                                                                             |
+| Accessibility   | `code-review-accessibility` | Code Review Accessibility | User barriers in changed interaction, markup, and content, separating static evidence from runtime evidence                                                                                                                      |
+| Security        | `code-review-security`      | Code Review Security      | Changed paths that permit a concrete security failure across a trust boundary                                                                                                                                                    |
+| Readiness       | `code-review-readiness`     | Code Review Readiness     | PR description, linked issues, checklists, required checks, validation evidence, and changed documentation                                                                                                                       |
+| Added reviewers | `code-review-specialist`    | Code Review Specialist    | Privacy, performance, supply chain, or responsible AI, one lens per assignment, with criteria from `privacy-by-design`, the project's stated budgets with `performance-slo-planner`, `supply-chain-security`, or `rai-standards` |
+| Orientation     | `code-review-context`       | Code Review Orientation   | Factual overview of changed areas, entry points, and affected consumers                                                                                                                                                          |
+| Explanation     | `code-review-context`       | Code Review Explainer     | Factual answer to a question about a symbol or area                                                                                                                                                                              |
+| Investigation   | `code-review-investigation` | Code Review Walkback      | One bounded evidence gap, answered without restarting the review                                                                                                                                                                 |
 
 Each subagent preloads `code-review-core` and its responsibility skill. A worker writes only its assigned result file. It doesn't edit source, publish, pick the overall outcome, or dispatch other workers.
 
@@ -157,17 +163,17 @@ flowchart TD
 
 1. Code Review resolves the target and its revisions, and asks when anything is ambiguous.
 2. The core helper captures the change once. Code Review groups the files into areas and records each area's intent, before and after behavior, and entry points. Scope accounting covers lockfiles, configuration, renames, deletions, and omitted files, and explains anything left out as irrelevant.
-3. Code Review records the scope and assigns the work. Each acceptance criterion gets one owner: functional for behavior, readiness for deliverable-only criteria. Without a story definition, criteria stay unassessed.
+3. Code Review records the scope and its reviewer choices, and assigns the work. Each acceptance criterion gets one owner: functional for behavior, readiness for deliverable-only criteria. Without a story definition, criteria stay unassessed.
 4. The selected perspectives run inline or as parallel workers.
 5. Code Review verifies each returned claim against its captured anchors and counter-evidence, merges duplicates once, and records each finding as accepted, disputed, deferred, or rejected with a reason.
 6. Optional integrations run when their context exists.
 7. The core helper renders `review.md`, keeping your edits and the canonical disclaimer.
 
-| Integration         | Runs when                                                                        | Result                                                                                                         |
-|---------------------|----------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| Business alignment  | You supply BRD, PRD, or ADR sources, or confirm sources Code Review discovers    | Drift findings rated with the shared business-alignment rubric, compared with each source at the base revision |
-| Security Plan Drift | A confirmed security plan baseline exists and the security findings are accepted | Accepted security findings correlated with the plan                                                            |
-| Specialist referral | Changed-surface signals and an available capability support it                   | A named follow-up recommendation; no extra review runs                                                         |
+| Integration         | Runs when                                                                                                          | Result                                                                                                         |
+|---------------------|--------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| Business alignment  | You supply BRD, PRD, or ADR sources, or confirm sources Code Review discovers                                      | Drift findings rated with the shared business-alignment rubric, compared with each source at the base revision |
+| Security Plan Drift | A confirmed security plan baseline exists and the security findings are accepted                                   | Accepted security findings correlated with the plan                                                            |
+| Specialist referral | A concern the added reviewers don't cover, or a full audit beyond the change, is warranted and a capability exists | A named follow-up, such as the Privacy, RAI, or SSSC Reviewer; no extra review runs                            |
 
 ## Review records and the report
 
@@ -186,13 +192,13 @@ Every review gets its own folder:
 
 The `code-review-core` skill's [review contract](https://github.com/microsoft/hve-core/blob/main/.github/skills/coding-standards/code-review-core/references/review-contract.md) defines each record:
 
-| Record                                 | Owner              | Contents                                                                            |
-|----------------------------------------|--------------------|-------------------------------------------------------------------------------------|
-| `snapshot.json` and `files/`           | Core helper        | Immutable capture of the target, changed files and hunks, discussion, and omissions |
-| `review-state.json`                    | Code Review        | Scope, areas, work items, verified findings, limitations, and outcome               |
-| `results/<snapshot-id>/<work-id>.json` | Assigned worker    | One work item's coverage, findings, observations, and limitations                   |
-| `feedback.json`                        | Code Review canvas | Feedback you send from the canvas                                                   |
-| `review.md`                            | You                | The human-editable report                                                           |
+| Record                                 | Owner              | Contents                                                                                        |
+|----------------------------------------|--------------------|-------------------------------------------------------------------------------------------------|
+| `snapshot.json` and `files/`           | Core helper        | Immutable capture of the target, changed files and hunks, discussion, and omissions             |
+| `review-state.json`                    | Code Review        | Scope, reviewer choices, areas, work items, verified findings, limitations, and outcome         |
+| `results/<snapshot-id>/<work-id>.json` | Assigned worker    | One work item's coverage, findings, observations, and limitations                               |
+| `feedback.json`                        | Code Review canvas | Feedback you send from the canvas, including requests to add a reviewer and items you dismissed |
+| `review.md`                            | You                | The human-editable report                                                                       |
 
 Review IDs include a random identifier, so a second review of the same branch gets its own folder. Resuming a review reuses its snapshot when the repository and target still match. When the evidence changes, a new capture archives the previous state and resets coverage, while earlier snapshots, feedback, and reports stay in place.
 
@@ -218,11 +224,13 @@ Your edits are authoritative. Code Review regenerates `review.md` only while the
 
 When your host supports canvases and the Code Review canvas (`hve-core-code-review`) is available, Code Review opens it on the current review. The canvas shows the captured changes, review coverage, findings, PR discussion, and your feedback in one read-only panel.
 
-| The canvas can                                               | The canvas can't                                 |
-|--------------------------------------------------------------|--------------------------------------------------|
-| Show captured changes, coverage, findings, and PR discussion | Change coverage, dispositions, or human sign-off |
-| Send your feedback to Code Review                            | Stage, post, approve, or merge anything          |
-| Keep unsent drafts private                                   | Create another review or delete an earlier one   |
+| The canvas can                                               | The canvas can't                                                           |
+|--------------------------------------------------------------|----------------------------------------------------------------------------|
+| Show captured changes, coverage, findings, and PR discussion | Change coverage, dispositions, or human sign-off                           |
+| Send your feedback to Code Review                            | Stage, post, approve, or merge anything                                    |
+| Keep unsent drafts private                                   | Create another review or delete an earlier one                             |
+| Show which reviewers run and in what order, and request one  | Add a reviewer itself; Code Review does that when it collects your request |
+| Dismiss feedback the agent doesn't have yet, with Undo       | Take back an item the agent has already collected                          |
 
 Code Review collects sent feedback at dispatch and completion boundaries, before a material decision, and before closeout. It applies each item within the review's authority and records what changed. If the canvas is missing or fails, the review continues in chat with the same evidence and decisions, and Code Review names the limitation. See the [Code Review canvas guide](canvas) for the panel itself.
 

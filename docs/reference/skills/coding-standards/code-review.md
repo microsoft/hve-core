@@ -1,9 +1,9 @@
 ---
 title: code-review
 description: "Review a PR, branch comparison, commit, local changes, or selected code using shared evidence and focused perspectives, with an optional Code Review canvas."
-sidebar_position: 9
+sidebar_position: 10
 author: Microsoft
-ms.date: 2026-11-06
+ms.date: 2026-11-09
 ms.topic: reference
 keywords:
   - skill
