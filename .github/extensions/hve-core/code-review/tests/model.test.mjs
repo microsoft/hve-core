@@ -7,8 +7,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 import { captureReview } from '../../../../skills/coding-standards/code-review-core/scripts/lib/snapshot.mjs';
-import { updateContext } from '../../../../skills/coding-standards/code-review-core/scripts/lib/operations.mjs';
-import { editFeedback, markTarget, openReview, queueFeedback, readFeedback, recordInterpretation, refresh, sendFeedback, takeFeedback } from '../lib/model.mjs';
+import { schedule, updateContext } from '../../../../skills/coding-standards/code-review-core/scripts/lib/operations.mjs';
+import {
+    dismissFeedback, editFeedback, markTarget, openReview, queueFeedback, readFeedback, recordInterpretation, refresh, requestReviewer, restoreFeedback,
+    sendFeedback, takeFeedback, unqueueFeedback,
+} from '../lib/model.mjs';
 
 async function fixture(t) {
     const repository = await fs.mkdtemp(path.join(os.tmpdir(), 'hve-review-canvas-'));
@@ -116,6 +119,108 @@ describe('review model and independent feedback', () => {
         const target = { kind: 'reason', id: 'R1', snapshotId: source.state.snapshotId };
         const draft = await editFeedback(source, { revision: 0, kind: 'explain', target, text: 'Why is this one reason?' });
         assert.deepEqual(draft.items[0].target, target);
-        await assert.rejects(editFeedback(source, { revision: draft.revision, kind: 'comment', target: { ...target, id: 'R2' }, text: 'Unknown reason.' }), /not present/);
+        await assert.rejects(editFeedback(source, { revision: draft.revision, kind: 'comment', target: { ...target, id: 'R2' }, text: 'Unknown reason.' }), /no longer in this review/);
+    });
+});
+
+describe('dismissing feedback', () => {
+    const statuses = async (source) => (await readFeedback(source)).items.map((item) => [item.status, item.dismissedFrom ?? null]);
+
+    it('dismisses drafts, unsent items, and read-backs, keeps them from the agent, and restores them', async (t) => {
+        const { source, target } = await fixture(t);
+        let feedback = await editFeedback(source, { revision: 0, kind: 'comment', target, text: 'Maybe later.' });
+        const draftId = feedback.items[0].id;
+        feedback = await editFeedback(source, { revision: feedback.revision, kind: 'explain', target, text: 'Explain the call.' });
+        const queuedId = feedback.items[1].id;
+        feedback = await queueFeedback(source, { revision: feedback.revision, ids: [queuedId] });
+        feedback = await dismissFeedback(source, { revision: feedback.revision, ids: [draftId, queuedId] });
+        assert.deepEqual(await statuses(source), [['dismissed', 'draft'], ['dismissed', 'queued']]);
+        assert.deepEqual((await takeFeedback(source)).items, []);
+        feedback = await restoreFeedback(source, { revision: feedback.revision, ids: [draftId, queuedId] });
+        assert.deepEqual(await statuses(source), [['draft', null], ['queued', null]]);
+        const taken = await takeFeedback(source);
+        assert.deepEqual(taken.items.map((item) => item.id), [queuedId]);
+        await assert.rejects(dismissFeedback(source, { revision: taken.revision, ids: [queuedId] }), /agent already has sent items/);
+        const read = await recordInterpretation(source, { feedbackId: queuedId, text: 'Explained the call.', effect: 'Answered in chat' });
+        const cleared = await dismissFeedback(source, { revision: read.revision, ids: [queuedId] });
+        assert.deepEqual((await statuses(source))[1], ['dismissed', 'interpreted']);
+        await restoreFeedback(source, { revision: cleared.revision, ids: [queuedId] });
+        assert.deepEqual((await statuses(source))[1], ['interpreted', null]);
+    });
+
+    it('takes an unsent item back to a draft and refuses transitions from the wrong state', async (t) => {
+        const { source, target } = await fixture(t);
+        let feedback = await editFeedback(source, { revision: 0, kind: 'comment', target, text: 'Fix the wording first.' });
+        const itemId = feedback.items[0].id;
+        await assert.rejects(unqueueFeedback(source, { revision: feedback.revision, ids: [itemId] }), /Only unsent items/);
+        await assert.rejects(restoreFeedback(source, { revision: feedback.revision, ids: [itemId] }), /Only dismissed feedback/);
+        feedback = await queueFeedback(source, { revision: feedback.revision, ids: [itemId] });
+        feedback = await unqueueFeedback(source, { revision: feedback.revision, ids: [itemId] });
+        assert.deepEqual(await statuses(source), [['draft', null]]);
+        await assert.rejects(dismissFeedback(source, { revision: feedback.revision, ids: ['fb-missing'] }), /no longer exists/);
+        await assert.rejects(dismissFeedback(source, { revision: feedback.revision - 1, ids: [itemId] }), /Feedback changed in another view/);
+    });
+
+    it('still loads feedback whose reason was removed, refuses to queue it, and lets it be dismissed', async (t) => {
+        const { captured, source } = await fixture(t);
+        const reasons = [{ id: 'R1', title: 'Call the result helper', why: 'The agent reads the selection as a new call.', fileIds: ['file-1'], hunkIds: [] }];
+        const state = await updateContext(captured, 0, { reasons });
+        await refresh(source);
+        const target = { kind: 'reason', id: 'R1', snapshotId: source.state.snapshotId };
+        let feedback = await editFeedback(source, { revision: 0, kind: 'explain', target, text: 'Why this reason?' });
+        feedback = await editFeedback(source, { revision: feedback.revision, kind: 'comment', target, text: 'Queued about the reason.' });
+        const [draftId, queuedId] = feedback.items.map((item) => item.id);
+        feedback = await queueFeedback(source, { revision: feedback.revision, ids: [queuedId] });
+        feedback = await markTarget(source, { revision: feedback.revision, target, kind: 'bookmark', value: true });
+        await updateContext(captured, state.revision, { reasons: null });
+        const page = await refresh(source);
+        assert.equal(page.feedback.items.length, 2);
+        assert.equal(page.feedback.bookmarks.length, 1);
+        feedback = await unqueueFeedback(source, { revision: feedback.revision, ids: [queuedId] });
+        await assert.rejects(queueFeedback(source, { revision: feedback.revision, ids: [draftId] }), /no longer in this review/);
+        feedback = await dismissFeedback(source, { revision: feedback.revision, ids: [draftId] });
+        assert.equal((await readFeedback(source)).items[0].status, 'dismissed');
+        assert.deepEqual((await takeFeedback(source)).items, []);
+    });
+
+    it('restores a dismissed unsent item as a draft when it can no longer be queued', async (t) => {
+        const { captured, source } = await fixture(t);
+        const reasons = [{ id: 'R1', title: 'Call the result helper', why: 'The agent reads the selection as a new call.', fileIds: ['file-1'], hunkIds: [] }];
+        const state = await updateContext(captured, 0, { reasons });
+        await refresh(source);
+        const target = { kind: 'reason', id: 'R1', snapshotId: source.state.snapshotId };
+        let feedback = await editFeedback(source, { revision: 0, kind: 'comment', target, text: 'About the reason.' });
+        const itemId = feedback.items[0].id;
+        feedback = await queueFeedback(source, { revision: feedback.revision, ids: [itemId] });
+        feedback = await dismissFeedback(source, { revision: feedback.revision, ids: [itemId] });
+        await updateContext(captured, state.revision, { reasons: null });
+        await restoreFeedback(source, { revision: feedback.revision, ids: [itemId] });
+        assert.deepEqual(await statuses(source), [['draft', null]]);
+    });
+});
+
+describe('adding reviewers', () => {
+    const scope = { profile: 'standard', depth: 'standard', mode: 'sweep', rationale: 'Fixture scope.' };
+
+    it('queues one request per reviewer and refuses reviewers that run, are requested, or are unknown', async (t) => {
+        const { captured, source } = await fixture(t);
+        await schedule(captured, 0, { perspectives: ['functional'], scope });
+        await refresh(source);
+        let feedback = await requestReviewer(source, { revision: 0, perspective: 'privacy', text: 'Add the Privacy reviewer to this review.' });
+        assert.deepEqual(feedback.items.map((item) => [item.kind, item.status, item.target.kind, item.target.id]), [['add-reviewer', 'queued', 'perspective', 'privacy']]);
+        await assert.rejects(requestReviewer(source, { revision: feedback.revision, perspective: 'privacy' }), /already requested/);
+        await assert.rejects(requestReviewer(source, { revision: feedback.revision, perspective: 'functional' }), /already reviews this change/);
+        await assert.rejects(requestReviewer(source, { revision: feedback.revision, perspective: 'telemetry' }), /Unknown reviewer/);
+        const review = { kind: 'review', id: source.state.reviewId, snapshotId: source.state.snapshotId };
+        await assert.rejects(editFeedback(source, { revision: feedback.revision, kind: 'add-reviewer', target: review, text: 'Add one.' }), /Choose the reviewer/);
+        const security = { kind: 'perspective', id: 'security', snapshotId: source.state.snapshotId };
+        feedback = await editFeedback(source, { revision: feedback.revision, kind: 'explain', target: security, text: 'Why is security not running?' });
+        const collected = await takeFeedback(source);
+        assert.deepEqual(collected.items.map((item) => [item.kind, item.target.id]), [['add-reviewer', 'privacy']]);
+        feedback = await requestReviewer(source, { revision: collected.revision, perspective: 'performance' });
+        assert.equal(feedback.items.at(-1).text, 'Add the performance reviewer to this review.');
+        feedback = await dismissFeedback(source, { revision: feedback.revision, ids: [feedback.items.at(-1).id] });
+        feedback = await requestReviewer(source, { revision: feedback.revision, perspective: 'performance' });
+        assert.equal(feedback.items.filter((item) => item.target.id === 'performance' && item.status === 'queued').length, 1);
     });
 });

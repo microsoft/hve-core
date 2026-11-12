@@ -9,8 +9,8 @@ export const OPEN_SCHEMA = schema({ state: { type: 'string', description: 'Works
 export const ACTIONS = [
     { name: 'get_state', description: 'Summarize review identity, actual coverage, source warnings, and feedback awaiting the agent; private drafts are not returned.', inputSchema: schema({}) },
     { name: 'show_review', description: 'Connect this panel to an explicit review state in its workspace; existing review data is preserved.', inputSchema: OPEN_SCHEMA },
-    { name: 'focus_item', description: 'Show an area, reason, captured file/hunk, finding, or provider comment without changing coverage or disposition.', inputSchema: schema({ kind: { type: 'string', enum: TARGET_KINDS }, id: { type: 'string' } }, ['kind', 'id']) },
-    { name: 'take_feedback', description: 'Collect explicitly queued feedback and return sent items awaiting read-back. Deduplicate by review and item ID. Unsent drafts remain private.', inputSchema: schema({ checkpoint: { type: 'boolean', description: 'True at dispatch, completion, and decision checkpoints.' } }) },
+    { name: 'focus_item', description: 'Show an area, reason, captured file/hunk, finding, provider comment, or reviewer (perspective) without changing coverage or disposition.', inputSchema: schema({ kind: { type: 'string', enum: TARGET_KINDS }, id: { type: 'string' } }, ['kind', 'id']) },
+    { name: 'take_feedback', description: 'Collect explicitly queued feedback and return sent items awaiting read-back. Deduplicate by review and item ID. Unsent drafts and dismissed items remain private.', inputSchema: schema({ checkpoint: { type: 'boolean', description: 'True at dispatch, completion, and decision checkpoints.' } }) },
     { name: 'record_interpretation', description: 'Read back a sent item after applying it, or use applied=false while the change is still pending. This never updates review coverage or human sign-off.', inputSchema: schema({ feedbackId: { type: 'string' }, text: { type: 'string' }, effect: { type: 'string' }, applied: { type: 'boolean' } }, ['feedbackId', 'text', 'effect']) },
 ];
 
@@ -51,6 +51,7 @@ export async function invokeAction(registry, context) {
         areas: state.areas.map((area) => ({ id: area.id, title: area.title, status: area.status, perspectives: area.work.map((work) => ({ id: work.id, perspective: work.perspective, status: work.status })) })),
         files: state.files.slice(0, 50).map((file) => ({ id: file.id, path: file.newPath ?? file.oldPath, status: file.status })),
         findings: state.findings.slice(0, 50).map((finding) => ({ id: finding.id, severity: finding.severity, disposition: finding.disposition })),
+        reviewers: state.reviewers,
         totals: { files: state.files.length, findings: state.findings.length, summaryLimit: 50 },
         feedback: { revision: state.feedback.revision, queued: state.feedback.items.filter((item) => item.status === 'queued').length, awaitingInterpretation: state.feedback.items.filter((item) => item.status === 'sent').map((item) => item.id) },
     };

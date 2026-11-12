@@ -56,6 +56,7 @@
   <symbol id="i-half" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M8 1.75v12.5"/><path d="M8 1.75a6.25 6.25 0 0 0 0 12.5z" fill="currentColor"/></symbol>
   <symbol id="i-bulb" viewBox="0 0 16 16"><path d="M5.75 11.25c0-1.75-2.25-2.75-2.25-5.25a4.5 4.5 0 0 1 9 0c0 2.5-2.25 3.5-2.25 5.25z"/><path d="M6.25 13.5h3.5"/></symbol>
   <symbol id="i-nodes" viewBox="0 0 16 16"><circle cx="3" cy="8" r="1.75"/><circle cx="13" cy="3.5" r="1.75"/><circle cx="13" cy="12.5" r="1.75"/><path d="M4.6 7.2l6.8-3M4.6 8.8l6.8 3"/></symbol>
+  <symbol id="i-flow" viewBox="0 0 16 16"><rect x="1.75" y="1.75" width="5" height="3.5" rx="1"/><rect x="1.75" y="10.75" width="5" height="3.5" rx="1"/><rect x="9.25" y="6.25" width="5" height="3.5" rx="1"/><path d="M4.25 5.25v5.5M6.75 3.5h1a1 1 0 0 1 1 1V8h.5"/></symbol>
   <symbol id="i-bookmark" viewBox="0 0 16 16"><path d="M4.25 2.25h7.5v11.5L8 11l-3.75 2.75z"/></symbol>
   <symbol id="i-bookmark-fill" viewBox="0 0 16 16"><path d="M4.25 2.25h7.5v11.5L8 11l-3.75 2.75z" fill="currentColor"/></symbol>
   <symbol id="i-live" viewBox="0 0 16 16"><circle cx="8" cy="8" r="3.25" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r="6.25" opacity=".45"/></symbol>
@@ -105,7 +106,7 @@
       <section class="steer-section" id="needsSection" aria-labelledby="needsTitle"></section>
       <section class="steer-section" id="feedbackSection" aria-labelledby="feedbackTitle"></section>
       <section class="steer-section compose" aria-labelledby="composeTitle">
-        <h3 class="steer-title" id="composeTitle"><svg class="icon" aria-hidden="true"><use href="#i-pencil"/></svg>Add input</h3>
+        <div class="compose-head"><h3 class="steer-title" id="composeTitle"><svg class="icon" aria-hidden="true"><use href="#i-pencil"/></svg>Add input</h3><button type="button" class="btn btn-compact" id="dismissDraft" aria-label="Dismiss this feedback" title="Throw away what you have not sent. You can undo it."><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>Dismiss</button></div>
         <div class="compose-about"><span class="meta">About</span><span id="composeTarget"></span><button type="button" class="link-btn" id="composeReset" hidden>Whole review</button></div>
         <label class="field-label" for="feedbackKind">Request</label>
         <select id="feedbackKind" class="select">
@@ -115,11 +116,12 @@
           <option value="investigate">Investigate</option>
           <option value="dispute">Dispute finding</option>
           <option value="draft">Prepare a comment draft</option>
+          <option value="add-reviewer" hidden disabled>Add this reviewer</option>
         </select>
         <label class="field-label" for="feedbackText">Your words</label>
         <textarea id="feedbackText" rows="5" maxlength="16000" aria-describedby="composeHelp"></textarea>
         <p class="field-error" id="composeError" hidden></p>
-        <p class="meta compose-help" id="composeHelp">Drafts stay private, even across reconnects. Queue an item when it is ready; Review and send delivers queued items to the agent. Nothing here posts to a pull request.</p>
+        <p class="meta compose-help" id="composeHelp">Drafts stay private, even across reconnects. Queue an item when it is ready; Review and send delivers queued items to the agent. Dismiss throws away what you have not sent, with Undo. Nothing here posts to a pull request.</p>
         <div class="btn-row"><button type="button" class="btn" id="saveDraft">Save draft</button><button type="button" class="btn btn-primary" id="queueDraft">Queue for the agent</button></div>
       </section>
     </div>

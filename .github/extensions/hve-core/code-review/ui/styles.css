@@ -2788,7 +2788,8 @@ details > summary:hover {
   box-shadow: 0 0 0 1px var(--cr-accent);
 }
 
-.finding.is-flash {
+.finding.is-flash,
+.reviewer-card.is-flash {
   animation: cr-wash 1.2s var(--cr-ease) 1;
 }
 
@@ -3115,6 +3116,18 @@ details > summary:hover {
   background: color-mix(in srgb, var(--cr-agent) 8%, var(--cr-bg));
 }
 
+.compose-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.compose-head .steer-title {
+  margin-bottom: 0;
+}
+
 .compose-about {
   display: flex;
   flex-wrap: wrap;
@@ -3392,6 +3405,214 @@ details > summary:hover {
   }
 }
 
+/* Review flow: five steps on a rail, reviewers as cards, and Add for reviewers that are not running */
+
+.flow-row.is-folded .row-head {
+  margin-bottom: 0;
+}
+
+.row-toggle {
+  margin-inline-start: auto;
+}
+
+.row-toggle .icon {
+  transition: transform var(--cr-fast) var(--cr-ease);
+}
+
+.row-toggle[aria-expanded="true"] .icon {
+  transform: rotate(90deg);
+}
+
+.flow {
+  display: grid;
+  list-style: none;
+}
+
+.flow-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 0 14px;
+  padding-bottom: 20px;
+}
+
+/* The rail joins each step's marker to the next one. */
+.flow-step::before {
+  content: "";
+  position: absolute;
+  inset-block: 30px 2px;
+  inset-inline-start: 13px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--cr-border);
+}
+
+.flow-step:last-child {
+  padding-bottom: 0;
+}
+
+.flow-step:last-child::before {
+  display: none;
+}
+
+.flow-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--tone);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--tone) 14%, var(--cr-bg));
+  color: var(--cr-fg);
+  font: 600 13px/1 var(--cr-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.flow-body {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.flow-step-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-height: 24px;
+}
+
+.flow-step-title {
+  font: var(--cr-t-h3);
+}
+
+.flow-summary {
+  flex: 1 1 18ch;
+  min-width: 0;
+}
+
+.flow-agents {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+}
+
+.flow-agent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  font: var(--cr-t-ui);
+}
+
+.flow-agent > .icon {
+  color: var(--cr-agent);
+}
+
+.flow-agent-name {
+  font-weight: 600;
+}
+
+.flow-reviewers {
+  display: grid;
+  gap: 14px;
+}
+
+.flow-group {
+  display: grid;
+  gap: 6px;
+}
+
+.flow-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--cr-fg-muted);
+  font: 600 12px/18px var(--cr-font);
+}
+
+.reviewer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr));
+  gap: 8px;
+  list-style: none;
+}
+
+.reviewer-grid > li {
+  display: grid;
+  min-width: 0;
+}
+
+.reviewer-card {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 8px 10px 8px 9px;
+  border: 1px solid var(--cr-border);
+  border-inline-start: 4px solid var(--tone);
+  border-radius: var(--cr-radius);
+  background: var(--cr-bg);
+  font: var(--cr-t-ui);
+}
+
+.reviewer-card.is-available {
+  padding-inline-start: 12px;
+  border-style: dashed;
+  border-inline-start-width: 1px;
+  background: var(--cr-bg-subtle);
+}
+
+.reviewer-card.is-suggested,
+.reviewer-card.is-queued,
+.reviewer-card.is-drafted,
+.reviewer-card.is-sent {
+  border-color: color-mix(in srgb, var(--tone) 55%, var(--cr-border));
+}
+
+.reviewer-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+}
+
+.reviewer-head .badge {
+  height: 18px;
+  padding: 0 6px;
+  font-size: 11.5px;
+}
+
+.reviewer-name {
+  margin: 0;
+  font: 600 13px/20px var(--cr-font);
+}
+
+.reviewer-stats {
+  font: var(--cr-t-meta);
+  font-variant-numeric: tabular-nums;
+}
+
+.reviewer-why {
+  color: var(--cr-fg-muted);
+  font: var(--cr-t-meta);
+  overflow-wrap: anywhere;
+}
+
+.reviewer-added {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.reviewer-card .btn-row {
+  margin-top: 4px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -3402,6 +3623,17 @@ details > summary:hover {
 }
 
 @media (forced-colors: active) {
+  .flow-marker {
+    forced-color-adjust: none;
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  .flow-step::before {
+    background: CanvasText;
+  }
+
   .badge,
   .count,
   .rail-count,

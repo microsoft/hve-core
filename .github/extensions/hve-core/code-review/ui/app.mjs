@@ -3,9 +3,10 @@
 
 import { badge, count, h, icon, idChip, meta, prose, shortSha, svg, time } from './dom.mjs';
 import {
-    anchorLabel, arrivals, boardLanes, bySeverity, DISPOSITION, EXECUTION, FEEDBACK_KIND, feedbackState, fileAnnotations,
+    anchorLabel, arrivals, AVAILABILITY, boardLanes, bySeverity, DISPOSITION, EXECUTION, FEEDBACK_KIND, feedbackState, fileAnnotations,
     fileLabel, fileStats, fileStatus, findingGroups, findingsFor, hidingNarrowing, hunkAnnotations, isMarked, isRetained, matches, needsAttention, needsYou, perspectiveProgress,
-    NOT_EXPLAINED, OUTCOME, PERSPECTIVE, perspectiveOf, plainText, reasonCoverage, reasonFiles, resolveFocus, SEVERITY, splitPath, STAGE_STATUS, stageFor, stages, targetSummary,
+    NOT_EXPLAINED, OUTCOME, PERSPECTIVE, perspectiveOf, plainText, reasonCoverage, reasonFiles, resolveFocus, REVIEWER_STATUS, REVIEWERS, reviewFlow, SEVERITY, splitPath,
+    STAGE_STATUS, stageFor, stages, targetPresent, targetSummary,
 } from './views.mjs';
 import { layoutMap, MAP_VIEWS, mapModel, tagWords } from './map.mjs';
 import { closeMapPreview, renderMap } from './diagram.mjs';
@@ -15,7 +16,7 @@ const token = document.querySelector('meta[name="review-token"]').content;
 const STAGE_KEYS = ['capture', 'review', 'outcome'];
 const ui = {
     stage: 'review', target: null, focus: null, filter: '', follow: true, live: 'connecting',
-    navHidden: false, steerHidden: false, drawer: null, boardOpen: true, boardLane: null, shortcuts: true, reportText: null,
+    navHidden: false, steerHidden: false, drawer: null, boardOpen: true, boardLane: null, flowOpen: true, shortcuts: true, reportText: null,
     remoteFocus: '', needsIndex: -1, composer: { id: null, target: null, saved: '' }, loaded: false,
     mapView: 'changes', mapPinned: null, mapText: false, reason: null,
     expandedFinding: null, groupOpen: new Map(), findingArea: false, shownFindings: new Set(), newlyShown: new Set(), heldIds: new Set(), discussionOpen: false,
@@ -25,8 +26,8 @@ let mapCache = { key: null, model: null, layout: null };
 let coverageCache = { key: null, value: null };
 let view = null;
 const evidence = new Map();
-let refreshing = false;
-let refreshAgain = false;
+let loading = null;
+let reloading = null;
 let sendRevision = null;
 
 // Transport
@@ -88,6 +89,7 @@ function select(target, { stage = null, moveFocus = true, flash = false } = {}) 
     else if (target.kind === 'area') ui.reason = null;
     if (target.kind === 'finding') revealFinding(target.id);
     if (target.kind === 'comment') ui.discussionOpen = true;
+    if (target.kind === 'perspective') ui.flowOpen = true;
     if (stage) ui.stage = stage;
     render({ keepScroll: false });
     const element = selectionElement();
@@ -154,6 +156,7 @@ function selectionElement() {
     if (ui.stage === 'capture' && ui.focus.metadataField) return document.querySelector(`#meta-${escape(ui.focus.metadataField)}`);
     if (ui.stage !== 'review') return null;
     if (target.kind === 'reason') return document.querySelector(`[data-key="reason-${escape(target.id)}"]`);
+    if (target.kind === 'perspective') return document.querySelector(`#reviewer-${escape(target.id)}`);
     if (target.kind === 'finding') return document.querySelector(`#finding-${escape(target.id)}`);
     if (target.kind === 'comment') return document.querySelector(`#comment-${escape(target.id)}`);
     if (ui.focus.hunkId) return document.querySelector(`#hunk-${escape(ui.focus.hunkId)}`);
@@ -188,6 +191,7 @@ function render({ keepScroll = true } = {}) {
     const key = active?.dataset?.key;
     const id = !key && active && active !== document.body ? active.id : '';
     const inDocument = $('document').contains(active) || $('navBody').contains(active) || $('steer').contains(active);
+    const inSteer = $('steer').contains(active);
     const scroll = { doc: $('document').scrollTop, nav: $('navigator').scrollTop };
     const map = document.querySelector('.change-map .diagram-scroll');
     const mapScroll = map ? { left: map.scrollLeft, top: map.scrollTop } : null;
@@ -209,7 +213,7 @@ function render({ keepScroll = true } = {}) {
     if (key || id) {
         const restore = key ? [...document.querySelectorAll('[data-key]')].find((element) => element.dataset.key === key) : document.getElementById(id);
         if (restore && restore !== document.activeElement) restore.focus({ preventScroll: true });
-        else if (!restore && inDocument && !document.activeElement?.closest('#steer .compose')) $('viewTitle')?.focus({ preventScroll: true });
+        else if (!restore && inDocument && !document.activeElement?.closest('#steer .compose')) (inSteer ? $('feedbackTitle') : $('viewTitle'))?.focus({ preventScroll: true });
     }
 }
 
@@ -480,7 +484,14 @@ function captureView() {
     }
     const stat = (label, value) => h('div', { class: 'stat' }, h('strong', {}, String(value)), meta(label));
     const omitted = view.files.filter((file) => file.omission);
-    const perspectives = [...new Set((view.workItems ?? []).map((item) => item.perspective))];
+    const reviewers = REVIEWERS.filter((entry) => (view.workItems ?? []).some((item) => item.perspective === entry.perspective && item.status !== 'stale'));
+    const showFlow = () => {
+        ui.stage = 'review';
+        ui.flowOpen = true;
+        render({ keepScroll: false });
+        $('row-flow')?.scrollIntoView({ block: 'start' });
+        $('row-flow')?.focus({ preventScroll: true });
+    };
     const metadata = view.metadata ?? { status: 'unavailable', fields: [] };
     const statusMeta = { complete: { label: 'Complete', icon: 'check-circle', tone: 'success' }, partial: { label: 'Partial', icon: 'half', tone: 'attention' },
         unavailable: { label: 'Unavailable', icon: 'slash-circle', tone: 'muted' }, not_applicable: { label: 'Not applicable', icon: 'dash-circle', tone: 'muted' } };
@@ -501,7 +512,8 @@ function captureView() {
                 h('ul', {}, omitted.map((file) => h('li', {}, h('code', {}, fileLabel(file)), ` ${file.omission}`)))) : null),
         row('row-scope', 'Scope', 'list', [], view.scope ? facts([
             ['Profile', view.scope.profile], ['Depth', view.scope.depth], ['Mode', view.scope.mode],
-            ['Perspectives', perspectives.length ? h('span', { class: 'chip-row' }, perspectives.map((entry) => badge({ label: PERSPECTIVE[entry] ?? entry, icon: 'eye', tone: 'muted' }))) : null],
+            ['Reviewers', h('span', { class: 'chip-row' }, reviewers.map((entry) => badge({ label: entry.label, icon: 'eye', tone: 'muted' })),
+                h('button', { type: 'button', class: 'link-btn', dataset: { key: 'scope-flow' }, on: { click: showFlow } }, 'See the review flow'))],
             ['Rationale', view.scope.rationale ? prose(view.scope.rationale, 'prose small') : null],
         ]) : h('p', { class: 'empty' }, 'The agent has not scheduled the review yet.')),
         row('row-details', 'Pull request details', 'info', [badge(statusMeta[metadata.status] ?? statusMeta.unavailable)], metadata.fields.length
@@ -545,6 +557,7 @@ function reviewView() {
             h('span', { class: 'visually-hidden' }, ui.boardOpen ? 'Collapse the coverage board' : 'Expand the coverage board'))),
         h('div', { class: 'board', id: 'coverageBoard', hidden: !ui.boardOpen }, lanes.map((lane) => boardLane(lane, agentAreaId))),
         h('p', { class: 'meta', hidden: !ui.boardOpen }, 'Reviewed means every required perspective finished its assigned files. It is not approval, and zero findings is not a pass.')));
+    nodes.push(reviewFlowRow());
     nodes.push(reasonsRow());
     const map = changeMapRow();
     if (map) nodes.push(map);
@@ -580,6 +593,100 @@ function reviewView() {
     nodes.push(h('section', { class: 'row', id: 'row-diff', tabIndex: -1, 'aria-labelledby': 'row-diff-title' }, h('div', { id: 'diffHost' })));
     nodes.push(discussionRow());
     return nodes;
+}
+
+// Review flow
+
+/** Who reviews the change and in what order: five steps on a rail, with Add for reviewers that are not running. */
+function reviewFlowRow() {
+    const flow = reviewFlow(view, ui.shownFindings);
+    const running = flow.reviewers.filter((entry) => entry.scheduled).length;
+    const suggested = flow.reviewers.filter((entry) => !entry.scheduled && entry.availability === 'suggested').length;
+    const requested = flow.reviewers.filter((entry) => entry.request).length;
+    const summary = [`${running} ${running === 1 ? 'reviewer' : 'reviewers'} running`, suggested ? `${suggested} suggested` : null, requested ? `${requested} requested` : null].filter(Boolean).join(', ');
+    const words = ui.flowOpen ? 'Collapse the review flow' : 'Expand the review flow';
+    return h('section', { class: `row flow-row${ui.flowOpen ? '' : ' is-folded'}`, id: 'row-flow', tabIndex: -1, 'aria-labelledby': 'row-flow-title' },
+        h('div', { class: 'row-head' },
+            h('div', { class: 'row-heading' }, h('h3', { class: 'row-title', id: 'row-flow-title' }, icon('flow'), 'Review flow'), meta(summary)),
+            h('button', { type: 'button', class: 'btn btn-icon row-toggle', 'aria-expanded': ui.flowOpen, 'aria-controls': 'reviewFlow', title: words, dataset: { key: 'flow-toggle' },
+                on: { click: () => { ui.flowOpen = !ui.flowOpen; render(); } } }, icon('chevron'), h('span', { class: 'visually-hidden' }, words))),
+        h('div', { class: 'row-text', id: 'reviewFlow', hidden: !ui.flowOpen },
+            h('p', { class: 'meta' }, 'Who reviews this change, in order. The reviewers in step 3 work side by side, and the agent checks every claim before it counts.'),
+            h('ol', { class: 'flow' }, flow.steps.map((step, index) => flowStep(step, index + 1)))));
+}
+
+function flowStep(step, number) {
+    const status = STAGE_STATUS[step.status];
+    return h('li', { class: `flow-step tone-${status.tone}`, dataset: { step: step.id } },
+        h('span', { class: 'flow-marker', 'aria-hidden': 'true' }, String(number)),
+        h('div', { class: 'flow-body' },
+            h('div', { class: 'flow-step-head' },
+                h('h4', { class: 'flow-step-title' }, h('span', { class: 'visually-hidden' }, `Step ${number}: `), step.label),
+                badge(status), h('span', { class: 'meta flow-summary' }, step.summary)),
+            step.reviewers ? reviewerGroups(step.reviewers)
+                : h('ul', { class: 'flow-agents' }, step.agents.map((agent) => h('li', { class: 'flow-agent' },
+                    icon('sparkle'), h('span', { class: 'flow-agent-name' }, agent.label), meta(agent.role),
+                    agent.status ? badge(REVIEWER_STATUS[agent.status]) : null)))));
+}
+
+const REQUEST_RANK = { queued: 0, drafted: 0, sent: 0, suggested: 1, available: 2, 'not-needed': 3 };
+
+function reviewerGroups(reviewers) {
+    const running = reviewers.filter((entry) => entry.scheduled);
+    const available = reviewers.filter((entry) => !entry.scheduled).sort((left, right) => REQUEST_RANK[left.availability] - REQUEST_RANK[right.availability]);
+    const group = (title, entries, card, extra = '') => entries.length
+        ? h('div', { class: `flow-group${extra}` }, h('h5', { class: 'flow-group-title' }, title, count(entries.length)),
+            h('ul', { class: 'reviewer-grid' }, entries.map((entry) => h('li', {}, card(entry)))))
+        : null;
+    return h('div', { class: 'flow-reviewers' },
+        running.length ? null : h('p', { class: 'empty' }, 'The agent chooses reviewers after it groups the files. You can add one now.'),
+        group('Core', running.filter((entry) => entry.group === 'core'), reviewerCard),
+        group('Non-functional', running.filter((entry) => entry.group === 'non-functional'), reviewerCard),
+        group('Add a reviewer', available, availableCard, ' flow-add'));
+}
+
+function reviewerCard(entry) {
+    const status = REVIEWER_STATUS[entry.status];
+    const added = entry.added === 'request' ? 'Added at your request' : entry.added === 'later' ? 'Added after the first plan' : null;
+    const found = entry.findings ? `, ${entry.findings} ${entry.findings === 1 ? 'finding' : 'findings'}` : '';
+    return h('article', { class: `reviewer-card tone-${status.tone}`, id: `reviewer-${entry.perspective}`, tabIndex: -1, title: entry.summary },
+        h('div', { class: 'reviewer-head' }, h('h6', { class: 'reviewer-name' }, entry.label), badge(status)),
+        h('p', { class: 'meta reviewer-agent' }, entry.agent),
+        h('p', { class: 'reviewer-stats' }, `${entry.areas.done} of ${entry.areas.total} ${entry.areas.total === 1 ? 'area' : 'areas'} done${found}`),
+        entry.reason ? h('p', { class: 'reviewer-why' }, entry.reason) : null,
+        added ? h('p', { class: 'meta reviewer-added' }, icon('plus'), added) : null);
+}
+
+function availableCard(entry) {
+    const state = AVAILABILITY[entry.availability];
+    const request = entry.request;
+    let action = null;
+    if (!request) {
+        action = h('button', { type: 'button', class: 'btn btn-compact', dataset: { key: `add-${entry.perspective}` }, 'aria-label': `Add the ${entry.label} reviewer`,
+            on: { click: () => run(() => addReviewer(entry)) } }, icon('plus'), 'Add');
+    } else if (request.status !== 'sent') {
+        action = h('button', { type: 'button', class: 'btn btn-compact', dataset: { key: `request-dismiss-${entry.perspective}` }, 'aria-label': `Dismiss the request to add ${entry.label}`,
+            on: { click: () => run(() => dismissItems([request.id], `The request to add ${entry.label} was dismissed. It will not be sent.`,
+                { focus: () => document.querySelector(`#reviewer-${CSS.escape(entry.perspective)}`) })) } }, icon('x'), 'Dismiss');
+    }
+    return h('article', { class: `reviewer-card is-available is-${entry.availability} tone-${state.tone}`, id: `reviewer-${entry.perspective}`, tabIndex: -1 },
+        h('div', { class: 'reviewer-head' }, h('h6', { class: 'reviewer-name' }, entry.label), entry.availability === 'available' ? null : badge(state)),
+        h('p', { class: 'meta reviewer-agent' }, entry.summary),
+        entry.reason ? h('p', { class: 'reviewer-why' }, entry.reason) : null,
+        action ? h('div', { class: 'btn-row' }, action) : null);
+}
+
+/** Queues a request to add one reviewer; the agent collects it at its next checkpoint or when you send. */
+async function addReviewer(entry) {
+    const result = await api('/api/feedback', { action: 'request-reviewer', input: {
+        revision: view.feedback.revision, perspective: entry.perspective, text: `Add the ${entry.label} reviewer to this review.`,
+    } });
+    const itemId = result.items.at(-1).id;
+    await refresh();
+    document.querySelector(`#reviewer-${CSS.escape(entry.perspective)}`)?.focus({ preventScroll: true });
+    note(`${entry.label} is requested. Review and send delivers it now, or the agent collects it at its next checkpoint.`, 'accent', 'inbox',
+        { label: 'Undo', run: () => run(() => dismissItems([itemId], `The request to add ${entry.label} was dismissed.`,
+            { undo: false, focus: () => document.querySelector(`[data-key="add-${CSS.escape(entry.perspective)}"]`) })) });
 }
 
 /**
@@ -1176,14 +1283,15 @@ function renderSteer() {
             icon(severity.icon), h('span', { class: 'steer-link-text' }, `${severity.label}: ${plainText(item.label)}`)));
         })) : h('p', { class: 'empty' }, 'Nothing needs you. High and Critical findings wait here until you mark them seen.'));
 
+    const active = view.feedback.items.filter((item) => item.status !== 'dismissed');
     const groups = [
-        ['Not sent', view.feedback.items.filter((item) => item.status === 'queued')],
-        ['Drafts', view.feedback.items.filter((item) => item.status === 'draft')],
-        ['Sent', view.feedback.items.filter((item) => item.status === 'sent')],
-        ['Read back', view.feedback.items.filter((item) => item.status === 'interpreted')],
+        ['Not sent', active.filter((item) => item.status === 'queued')],
+        ['Drafts', active.filter((item) => item.status === 'draft')],
+        ['Sent', active.filter((item) => item.status === 'sent')],
+        ['Read back', active.filter((item) => item.status === 'interpreted')],
     ].filter(([, items]) => items.length);
     $('feedbackSection').replaceChildren(
-        h('h3', { class: 'steer-title', id: 'feedbackTitle' }, icon('inbox'), 'Your feedback', count(view.feedback.items.length)),
+        h('h3', { class: 'steer-title', id: 'feedbackTitle', tabIndex: -1 }, icon('inbox'), 'Your feedback', count(active.length)),
         ...(groups.length ? groups.map(([title, items]) => h('div', { class: 'feedback-group' }, h('h4', { class: 'feedback-group-title' }, title),
             h('ul', { class: 'feedback-list' }, items.map((item) => h('li', {}, feedbackItem(item))))))
             : [h('p', { class: 'empty' }, 'Questions, disputes, and comment drafts you add stay here until you send them. Bookmarks and seen marks stay private to you.')]));
@@ -1193,6 +1301,7 @@ function renderSteer() {
 function targetLabel(target) {
     if (target.kind === 'review') return 'Whole review';
     if (target.kind === 'finding') return target.id;
+    if (target.kind === 'perspective') return `${PERSPECTIVE[target.id] ?? target.id} reviewer`;
     if (target.kind === 'file' || target.kind === 'hunk') {
         const file = target.kind === 'file' ? view.files.find((entry) => entry.id === target.id) : view.files.find((entry) => entry.hunks.some((hunk) => hunk.id === target.id));
         return file ? `${splitPath(file.newPath ?? file.oldPath).name}${target.kind === 'hunk' ? ' (lines)' : ''}` : target.id;
@@ -1204,26 +1313,84 @@ function targetLabel(target) {
 
 function targetChip(target) {
     const older = target.snapshotId !== view.snapshotId;
-    const kind = { finding: 'finding', comment: 'comment', area: 'area', reason: 'reason', file: 'file', hunk: 'file', review: 'review' }[target.kind];
-    if (older || target.kind === 'review') return idChip(older ? `${targetLabel(target)} (earlier snapshot)` : targetLabel(target), { kind });
-    return h('button', { type: 'button', class: 'id-chip', 'data-kind': kind, title: 'Show this item', on: { click: () => select(target, { stage: stageFor(target) }) } }, targetLabel(target), icon('go-to'));
+    const gone = !older && !targetPresent(view, target);
+    const kind = { finding: 'finding', comment: 'comment', area: 'area', reason: 'reason', file: 'file', hunk: 'file', review: 'review', perspective: 'review' }[target.kind];
+    if (older || gone || target.kind === 'review') {
+        return idChip(older ? `${targetLabel(target)} (earlier snapshot)` : gone ? `${targetLabel(target)} (no longer in this review)` : targetLabel(target), { kind });
+    }
+    return h('button', { type: 'button', class: 'id-chip', 'data-kind': kind, title: 'Show this item', on: { click: () => select(target, { stage: stageFor() }) } }, targetLabel(target), icon('go-to'));
 }
+
+const DISMISSED_WORDS = {
+    draft: 'Draft dismissed. Nothing was sent.',
+    queued: 'Removed. It will not be sent.',
+    interpreted: 'Read-back cleared from your feedback.',
+};
 
 function feedbackItem(item) {
     const state = feedbackState(item);
+    const key = (action) => ({ key: `${action}-${item.id}` });
+    const dismiss = h('button', { type: 'button', class: 'btn btn-compact', dataset: key('dismiss'), 'aria-label': `Dismiss this ${FEEDBACK_KIND[item.kind]?.toLowerCase() ?? 'feedback'}`,
+        on: { click: () => run(() => dismissItems([item.id], DISMISSED_WORDS[item.status])) } }, icon('x'), 'Dismiss');
+    let actions = [];
+    if (item.status === 'draft') actions = [h('button', { type: 'button', class: 'btn btn-compact', dataset: key('edit'), on: { click: () => editDraft(item) } }, icon('pencil'), 'Edit'), dismiss];
+    else if (item.status === 'queued') actions = [h('button', { type: 'button', class: 'btn btn-compact', dataset: key('edit'), on: { click: () => run(() => editQueued(item)) } }, icon('pencil'), 'Edit'), dismiss];
+    else if (item.status === 'interpreted') actions = [dismiss];
     return h('article', { class: 'feedback-item' },
         h('div', { class: 'chip-row' }, badge(state), meta(FEEDBACK_KIND[item.kind] ?? item.kind), targetChip(item.target)),
         h('p', { class: 'feedback-item-text' }, item.text || '(empty draft)'),
         item.delivery?.status === 'failed' ? h('p', { class: 'field-error' }, icon('alert'), `${item.delivery.error ?? 'Delivery failed.'} The agent can still collect it.`) : null,
         item.interpretation ? h('div', { class: 'readback' }, h('p', { class: 'meta' }, icon('sparkle'), ' The agent understood'), prose(item.interpretation.text, 'prose small'),
             meta(`${item.interpretation.effect}${item.interpretation.applied ? '' : ' (not applied yet)'}`)) : null,
-        item.status === 'draft' ? h('div', { class: 'btn-row' }, h('button', { type: 'button', class: 'btn btn-compact', dataset: { key: `edit-${item.id}` }, on: { click: () => editDraft(item) } }, icon('pencil'), 'Edit')) : null);
+        item.status === 'sent' ? h('p', { class: 'meta' }, 'The agent has this one. It stays until the agent reads it back.') : null,
+        actions.length ? h('div', { class: 'btn-row' }, actions) : null);
+}
+
+/** Dismisses feedback the agent does not have yet, with Undo in the status note. Focus lands on `focus()`, since the dismissed item's controls are gone. */
+async function dismissItems(ids, words, { undo = true, focus = () => $('feedbackTitle') } = {}) {
+    await api('/api/feedback', { action: 'dismiss', input: { revision: view.feedback.revision, ids } });
+    if (ids.includes(ui.composer.id)) resetComposer();
+    await refresh();
+    focus()?.focus({ preventScroll: true });
+    if (undo) note(words, 'accent', 'x', { label: 'Undo', run: () => run(() => restoreItems(ids)) });
+    else announce(words);
+}
+
+async function restoreItems(ids) {
+    await api('/api/feedback', { action: 'restore', input: { revision: view.feedback.revision, ids } });
+    await refresh();
+    const restored = view.feedback.items.filter((item) => ids.includes(item.id));
+    const request = restored.find((item) => item.kind === 'add-reviewer');
+    const target = (request ? document.querySelector(`#reviewer-${CSS.escape(request.target.id)}`) : null)
+        ?? document.querySelector(`[data-key="dismiss-${CSS.escape(ids[0])}"]`) ?? $('feedbackTitle');
+    target?.focus({ preventScroll: true });
+    const drafted = restored.some((item) => item.status === 'draft');
+    announce(drafted ? 'Restored as a draft. Edit it before you queue it again.' : 'Restored.');
+}
+
+/** Takes an unsent item back to a draft and opens it in the composer. */
+async function editQueued(item) {
+    if (composerDirty() && $('feedbackText').value.trim()) {
+        composerError('Save, queue, or dismiss your current words before opening another item.');
+        $('feedbackText').focus();
+        return;
+    }
+    await api('/api/feedback', { action: 'unqueue', input: { revision: view.feedback.revision, ids: [item.id] } });
+    await refresh();
+    const draft = view.feedback.items.find((entry) => entry.id === item.id);
+    if (draft) editDraft(draft);
+    announce('Taken back to a draft. Queue it again when it is ready.');
 }
 
 function renderComposerTarget() {
     if (!ui.composer.target || (ui.composer.target.snapshotId !== view.snapshotId && !ui.composer.id)) ui.composer.target = about('review', view.reviewId);
     $('composeTarget').replaceChildren(targetChip(ui.composer.target));
     $('composeReset').hidden = ui.composer.target.kind === 'review';
+    const reviewer = ui.composer.target.kind === 'perspective';
+    const option = $('feedbackKind').querySelector('option[value="add-reviewer"]');
+    option.hidden = !reviewer;
+    option.disabled = !reviewer;
+    if (!reviewer && $('feedbackKind').value === 'add-reviewer') $('feedbackKind').value = 'comment';
 }
 
 function composerDirty() {
@@ -1242,7 +1409,7 @@ function composerError(message) {
 
 function prepare(kind, target) {
     if (composerDirty() && $('feedbackText').value.trim()) {
-        composerError('Save or queue your current words before starting another item. Your text is still here.');
+        composerError('Save, queue, or dismiss your current words before starting another item. Your text is still here.');
         openSteer();
         $('feedbackText').focus();
         return;
@@ -1259,7 +1426,7 @@ function prepare(kind, target) {
 
 function editDraft(item) {
     if (composerDirty() && $('feedbackText').value.trim()) {
-        composerError('Save or queue your current words before opening another draft.');
+        composerError('Save, queue, or dismiss your current words before opening another draft.');
         $('feedbackText').focus();
         return;
     }
@@ -1285,12 +1452,50 @@ async function saveDraft(queue) {
     const id = ui.composer.id ?? result.items.at(-1).id;
     if (queue) {
         await api('/api/feedback', { action: 'queue', input: { revision: result.revision, ids: [id] } });
-        ui.composer = { id: null, target: about('review', view.reviewId), saved: '' };
-        $('feedbackText').value = '';
-        $('feedbackKind').value = 'comment';
+        resetComposer();
     } else ui.composer = { ...ui.composer, id, saved: text };
     await refresh();
     announce(queue ? 'Queued for the agent. Use Review and send to deliver it.' : 'Draft saved. It stays private until you queue it.');
+}
+
+/** Empties the composer and points it back at the whole review. */
+function resetComposer() {
+    ui.composer = { id: null, target: about('review', view.reviewId), saved: '' };
+    $('feedbackText').value = '';
+    $('feedbackKind').value = 'comment';
+    composerError('');
+    renderComposerTarget();
+}
+
+/**
+ * Throws away what the composer holds. Unsaved words come back with Undo; an open saved draft is
+ * dismissed, and Undo restores it with the words you had typed.
+ */
+async function dismissComposer() {
+    const held = { id: ui.composer.id, target: ui.composer.target, saved: ui.composer.saved, kind: $('feedbackKind').value, text: $('feedbackText').value };
+    if (!held.id && !held.text.trim()) {
+        resetComposer();
+        announce('Nothing to dismiss. The input is empty.');
+        return;
+    }
+    const putBack = () => {
+        if (composerDirty() && $('feedbackText').value.trim()) {
+            composerError('Save, queue, or dismiss your current words before you undo.');
+            return;
+        }
+        ui.composer = { id: held.id, target: held.target, saved: held.saved };
+        $('feedbackKind').value = held.kind;
+        $('feedbackText').value = held.text;
+        renderComposerTarget();
+        $('feedbackText').focus();
+    };
+    resetComposer();
+    if (held.id) {
+        await api('/api/feedback', { action: 'dismiss', input: { revision: view.feedback.revision, ids: [held.id] } });
+        await refresh();
+        note('Draft dismissed. Nothing was sent.', 'accent', 'x', { label: 'Undo', run: () => run(async () => { await restoreItems([held.id]); putBack(); }) });
+    } else note('Your words were dismissed. Nothing was sent.', 'accent', 'x', { label: 'Undo', run: putBack });
+    $('feedbackText').focus();
 }
 
 async function mark(kind, target, value) {
@@ -1303,16 +1508,27 @@ async function mark(kind, target, value) {
 
 async function openSend() {
     await refresh();
+    renderSendList();
+    $('sendError').hidden = true;
+    $('sendSheet').showModal();
+    $('sendTitle').focus();
+}
+
+/** Lists queued items in Review and send, each with Dismiss, and tracks the revision being sent. */
+function renderSendList() {
     sendRevision = view.feedback.revision;
     const queued = view.feedback.items.filter((item) => item.status === 'queued');
     $('sendList').replaceChildren(...(queued.length ? queued.map((item) => h('article', { class: 'feedback-item' },
         h('div', { class: 'chip-row' }, badge(feedbackState(item)), meta(FEEDBACK_KIND[item.kind] ?? item.kind), idChip(targetLabel(item.target)),
             item.target.snapshotId !== view.snapshotId ? badge({ label: 'Earlier snapshot', icon: 'clock', tone: 'attention' }) : null),
-        h('p', { class: 'feedback-item-text' }, item.text))) : [h('p', { class: 'empty' }, 'Nothing is queued. Save an item and choose Queue for the agent first.')]));
+        h('p', { class: 'feedback-item-text' }, item.text),
+        h('div', { class: 'btn-row' }, h('button', { type: 'button', class: 'btn btn-compact', dataset: { key: `send-dismiss-${item.id}` }, 'aria-label': `Dismiss this ${FEEDBACK_KIND[item.kind]?.toLowerCase() ?? 'item'}`,
+            on: { click: () => run(async () => {
+                await dismissItems([item.id], DISMISSED_WORDS.queued, { focus: () => $('sendTitle') });
+                renderSendList();
+                ($('sendList').querySelector('button') ?? $('sendTitle')).focus();
+            }) } }, icon('x'), 'Dismiss')))) : [h('p', { class: 'empty' }, 'Nothing is queued. Save an item and choose Queue for the agent first.')]));
     $('sendNow').disabled = queued.length === 0;
-    $('sendError').hidden = true;
-    $('sendSheet').showModal();
-    $('sendTitle').focus();
 }
 
 async function sendNow() {
@@ -1522,75 +1738,78 @@ function onKey(event) {
 
 // Data
 
-async function refresh() {
-    if (refreshing) {
-        refreshAgain = true;
-        return;
+/**
+ * Loads the current review. A call made while a load is in flight waits for one more load, so a
+ * caller that awaits it always sees data at least as new as its call; concurrent callers share it.
+ */
+function refresh() {
+    if (!loading) {
+        loading = load().finally(() => { loading = null; });
+        return loading;
     }
-    refreshing = true;
-    try {
-        const previous = view;
-        view = await api('/api/state');
-        if (previous && previous.snapshotId !== view.snapshotId) {
-            evidence.clear();
-            ui.reportText = null;
-            ui.reason = null;
-            ui.mapPinned = null;
-            ui.expandedFinding = null;
-            ui.groupOpen.clear();
-            ui.newlyShown.clear();
-        }
-        // The first load and a new snapshot show every finding; later arrivals wait for the reader.
-        if (!previous || previous.snapshotId !== view.snapshotId) {
-            ui.shownFindings = new Set(view.findings.map((finding) => finding.id));
-            ui.heldIds = new Set();
-        }
-        const reasonIds = (view.reasons ?? []).map((reason) => reason.id);
-        // A lens clears once nothing is left for it: a removed reason, or no unexplained changes.
-        const lensEmpty = ui.reason === NOT_EXPLAINED ? !reasonIds.length || !currentCoverage().unexplained.fileIds.length : !reasonIds.includes(ui.reason);
-        if (ui.reason && lensEmpty) ui.reason = null;
-        const remote = view.focus ? `${view.focus.snapshotId}:${view.focusRevision ?? 0}` : '';
-        let agentFocus = null;
-        if (view.focus && remote !== ui.remoteFocus) {
-            ui.remoteFocus = remote;
-            if (previous || !ui.loaded) agentFocus = view.focus;
-        }
-        if (!ui.target || ui.target.snapshotId !== view.snapshotId) ui.target = about('review', view.reviewId);
+    if (!reloading) {
+        const again = () => { reloading = null; return refresh(); };
+        reloading = loading.then(again, again);
+    }
+    return reloading;
+}
+
+async function load() {
+    const previous = view;
+    view = await api('/api/state');
+    if (previous && previous.snapshotId !== view.snapshotId) {
+        evidence.clear();
+        ui.reportText = null;
+        ui.reason = null;
+        ui.mapPinned = null;
+        ui.expandedFinding = null;
+        ui.groupOpen.clear();
+        ui.newlyShown.clear();
+    }
+    // The first load and a new snapshot show every finding; later arrivals wait for the reader.
+    if (!previous || previous.snapshotId !== view.snapshotId) {
+        ui.shownFindings = new Set(view.findings.map((finding) => finding.id));
+        ui.heldIds = new Set();
+    }
+    const reasonIds = (view.reasons ?? []).map((reason) => reason.id);
+    // A lens clears once nothing is left for it: a removed reason, or no unexplained changes.
+    const lensEmpty = ui.reason === NOT_EXPLAINED ? !reasonIds.length || !currentCoverage().unexplained.fileIds.length : !reasonIds.includes(ui.reason);
+    if (ui.reason && lensEmpty) ui.reason = null;
+    const remote = view.focus ? `${view.focus.snapshotId}:${view.focusRevision ?? 0}` : '';
+    let agentFocus = null;
+    if (view.focus && remote !== ui.remoteFocus) {
+        ui.remoteFocus = remote;
+        if (previous || !ui.loaded) agentFocus = view.focus;
+    }
+    if (!ui.target || ui.target.snapshotId !== view.snapshotId) ui.target = about('review', view.reviewId);
+    ui.focus = resolveFocus(view, ui.target);
+    if (ui.target.kind === 'reason' && !ui.focus.mapped) {
+        ui.target = about('review', view.reviewId);
         ui.focus = resolveFocus(view, ui.target);
-        if (ui.target.kind === 'reason' && !ui.focus.mapped) {
-            ui.target = about('review', view.reviewId);
-            ui.focus = resolveFocus(view, ui.target);
-        }
-        // One refresh makes at most one announcement, so the focus note and other news are combined.
-        const news = [];
-        if (agentFocus && agentFocus.snapshotId === view.snapshotId) {
-            if (ui.follow || !ui.loaded) select(agentFocus, { stage: stageFor(agentFocus), moveFocus: false, flash: Boolean(previous) });
-            else {
-                render();
-                const pointed = `The agent pointed to ${agentFocus.kind} ${agentFocus.id}.`;
-                note(pointed, 'accent', 'sparkle', { label: 'Show', run: () => select(agentFocus, { stage: stageFor(agentFocus), flash: true }) }, { quiet: true });
-                news.push(pointed);
-            }
-        } else render();
-        // Held findings are compared by ID after any agent focus reveal, so each arrival is news once.
-        const held = arrivals(view.findings, ui.shownFindings, ui.heldIds);
-        ui.heldIds = new Set(held.ids);
-        if (previous) {
-            if (previous.snapshotId !== view.snapshotId) news.push('A new snapshot loaded. Your feedback is kept; coverage belongs to the new snapshot.');
-            else if (held.fresh.length) news.push(`${held.count} new ${held.count === 1 ? 'finding is' : 'findings are'} waiting in Findings${held.summary ? `, including ${held.summary}` : ''}.`);
-            else if (view.feedback.items.some((item) => item.status === 'interpreted' && previous.feedback.items.find((entry) => entry.id === item.id)?.status !== 'interpreted')) news.push('The agent read back your feedback.');
-            else if (!previous.stale && view.stale) news.push('The review record could not be read. The last valid evidence stays on screen.');
-            else if (previous.revision !== view.revision && !news.length) news.push(`Review updated to revision ${view.revision}.`);
-        }
-        if (news.length) announce(news.join(' '));
-        ui.loaded = true;
-    } finally {
-        refreshing = false;
-        if (refreshAgain) {
-            refreshAgain = false;
-            queueMicrotask(() => run(refresh));
-        }
     }
+    // One refresh makes at most one announcement, so the focus note and other news are combined.
+    const news = [];
+    if (agentFocus && agentFocus.snapshotId === view.snapshotId) {
+        if (ui.follow || !ui.loaded) select(agentFocus, { stage: stageFor(), moveFocus: false, flash: Boolean(previous) });
+        else {
+            render();
+            const pointed = `The agent pointed to ${agentFocus.kind} ${agentFocus.id}.`;
+            note(pointed, 'accent', 'sparkle', { label: 'Show', run: () => select(agentFocus, { stage: stageFor(), flash: true }) }, { quiet: true });
+            news.push(pointed);
+        }
+    } else render();
+    // Held findings are compared by ID after any agent focus reveal, so each arrival is news once.
+    const held = arrivals(view.findings, ui.shownFindings, ui.heldIds);
+    ui.heldIds = new Set(held.ids);
+    if (previous) {
+        if (previous.snapshotId !== view.snapshotId) news.push('A new snapshot loaded. Your feedback is kept; coverage belongs to the new snapshot.');
+        else if (held.fresh.length) news.push(`${held.count} new ${held.count === 1 ? 'finding is' : 'findings are'} waiting in Findings${held.summary ? `, including ${held.summary}` : ''}.`);
+        else if (view.feedback.items.some((item) => item.status === 'interpreted' && previous.feedback.items.find((entry) => entry.id === item.id)?.status !== 'interpreted')) news.push('The agent read back your feedback.');
+        else if (!previous.stale && view.stale) news.push('The review record could not be read. The last valid evidence stays on screen.');
+        else if (previous.revision !== view.revision && !news.length) news.push(`Review updated to revision ${view.revision}.`);
+    }
+    if (news.length) announce(news.join(' '));
+    ui.loaded = true;
 }
 
 const live = new AbortController();
@@ -1683,14 +1902,12 @@ function wire() {
     });
     $('saveDraft').addEventListener('click', () => run(() => saveDraft(false)));
     $('queueDraft').addEventListener('click', () => run(() => saveDraft(true)));
+    $('dismissDraft').addEventListener('click', () => run(dismissComposer));
     $('composeReset').addEventListener('click', () => {
-        if (composerDirty() && $('feedbackText').value.trim()) {
-            composerError('Save or queue your current words before changing what they are about.');
-            return;
-        }
         composerError('');
-        ui.composer = { id: null, target: about('review', view.reviewId), saved: '' };
+        ui.composer = { ...ui.composer, target: about('review', view.reviewId) };
         renderComposerTarget();
+        announce('Now about the whole review. Save to keep the change.');
     });
     $('feedbackText').addEventListener('input', () => composerError(''));
     document.addEventListener('keydown', onKey);

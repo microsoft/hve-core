@@ -132,4 +132,26 @@ describe('contained canvas transport', () => {
         assert.equal(record.focus.kind, 'reason');
         await assert.rejects(focus('R7'), /not present/);
     });
+
+    it('routes reviewer requests, dismissal, and restore, and focuses a reviewer', async (t) => {
+        const { record, headers } = await fixture(t);
+        const post = async (action, input) => {
+            const response = await fetch(`${record.server.url}api/feedback`, { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ action, input }) });
+            return { status: response.status, body: await response.json() };
+        };
+        const requested = await post('request-reviewer', { revision: 0, perspective: 'supply-chain', text: 'Add the Supply chain reviewer to this review.' });
+        assert.equal(requested.status, 200);
+        const itemId = requested.body.items[0].id;
+        assert.equal((await post('request-reviewer', { revision: requested.body.revision, perspective: 'supply-chain' })).status, 409);
+        const dismissed = await post('dismiss', { revision: requested.body.revision, ids: [itemId] });
+        assert.equal(dismissed.body.items[0].status, 'dismissed');
+        const restored = await post('restore', { revision: dismissed.body.revision, ids: [itemId] });
+        assert.equal(restored.body.items[0].status, 'queued');
+        assert.equal((await post('unqueue', { revision: restored.body.revision, ids: [itemId] })).body.items[0].status, 'draft');
+        const registry = createRegistry();
+        await registry.open('reviewer-panel', async () => record);
+        t.after(() => registry.closeAll());
+        await invokeAction(registry, { instanceId: 'reviewer-panel', actionName: 'focus_item', input: { kind: 'perspective', id: 'privacy' } });
+        assert.deepEqual([record.focus.kind, record.focus.id], ['perspective', 'privacy']);
+    });
 });
