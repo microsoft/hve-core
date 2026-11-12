@@ -14,7 +14,7 @@ on:
 engine:
   id: copilot
   # Pinned Copilot CLI; scripts/security/tool-checksums.json records it.
-  version: "1.0.87"
+  version: "1.0.103"
 runs-on: ubuntu-24.04
 runs-on-slim: ubuntu-24.04
 runtimes:

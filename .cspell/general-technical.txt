@@ -821,6 +821,7 @@ psgallery
 pseudonymization
 pseudonymize
 pseudonymized
+pseudonymizes
 psql
 pstn
 psversiontable
@@ -1563,6 +1564,7 @@ filelock
 setuptools
 zizmor
 zizmorcore
+deepmerge
 
 # Video & Image Processing
 drawtext
@@ -1679,3 +1681,22 @@ urlsafe
 wberry
 writeback
 Brussee
+adservice
+cartservice
+cartstore
+checkoutservice
+emailservice
+frontendservice
+paymentservice
+phamquiluan
+rcaeval
+redactions
+rescored
+rescoring
+shippingservice
+strippable
+unassessable
+unrecovered
+currencyservice
+productcatalogservice
+nonfinite

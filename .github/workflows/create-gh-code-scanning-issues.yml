@@ -11,8 +11,9 @@ on:
         type: string
         default: gh-code-scanning-alerts
 
-permissions:
-  contents: read
+# A called workflow cannot request more than its caller job grants, and the
+# caller grants only issues: write.
+permissions: {}
 
 jobs:
   create-gh-code-scanning-issues:
@@ -45,6 +46,22 @@ jobs:
               exit 1
             fi
 
+            # Prints the first open issue whose body carries the exact marker, and,
+            # when a tool is given, records that tool. Search only narrows the
+            # candidates because it matches loosely.
+            find_open_issue() {
+              local marker="$1" tool="${2:-}"
+              gh issue list \
+                --repo "${OWNER}/${REPO}" \
+                --search "\"${marker}\" in:body" \
+                --state open --limit 100 --json number,body \
+                | jq -r --arg marker "<!-- ${marker} -->" --arg tool "$tool" '
+                  [.[]
+                   | select(.body | contains($marker))
+                   | select($tool == "" or (.body | split("\n") | any(.[]; sub("\r$"; "") == ("**Tool:** " + $tool))))
+                  ][0].number // empty'
+            }
+
             while IFS= read -r alert; do
             RULE_ID=$(echo "$alert" | jq -r '.RuleId')
             RULE_DESC=$(echo "$alert" | jq -r '.RuleDescription')
@@ -57,12 +74,15 @@ jobs:
             KIND=$(echo "$alert" | jq -r '.Kind // "open"')
             DISMISSED_REASON=$(echo "$alert" | jq -r '.DismissedReason // ""')
             if [[ "$KIND" == "dismissed-still-detected" ]]; then
-              MARKER="automation:security-scan-dismissed:${RULE_ID}"
+              MARKER_PREFIX="automation:security-scan-dismissed"
               TITLE_PREFIX="[Security][Dismissed but still detected]"
             else
-              MARKER="automation:security-scan:${RULE_ID}"
+              MARKER_PREFIX="automation:security-scan"
               TITLE_PREFIX="[Security]"
             fi
+            # Tools can share a rule ID, so the marker carries both.
+            MARKER="${MARKER_PREFIX}:${TOOL}:${RULE_ID}"
+            LEGACY_MARKER="${MARKER_PREFIX}:${RULE_ID}"
             if [[ -n "$SEVERITY" ]]; then
               ISSUE_TITLE="${TITLE_PREFIX}[${SEVERITY}] ${RULE_DESC}"
             else
@@ -102,10 +122,12 @@ jobs:
               )
             fi
 
-            existing=$(gh issue list \
-              --repo "${OWNER}/${REPO}" \
-              --search "\"${MARKER}\" in:body" \
-              --state open --json number --jq '.[0].number // empty')
+            existing=$(find_open_issue "$MARKER")
+            if [[ -z "$existing" ]]; then
+              # An issue filed before markers carried the tool is reused only when
+              # it records the same tool; the edit below migrates its marker.
+              existing=$(find_open_issue "$LEGACY_MARKER" "$TOOL")
+            fi
 
             ISSUE_BODY=$(cat <<EOF
             <!-- ${MARKER} -->

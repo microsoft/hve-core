@@ -111,13 +111,13 @@
     {
       "name": "gh-aw",
       "repo": "github/gh-aw",
-      "version": "0.89.21",
+      "version": "1.0.1",
       "verification": "published-checksums",
       "envPrefix": "GH_AW",
-      "sha256": "1c74ff5fc28b1891d32b67f4348a9b7f750946b6d4a721e909187a848868016b",
+      "sha256": "746d0b41d5fb87e2c010b8ac23a464436bb745ff89fbd19a3456431942c37652",
       "sha256ByArch": {
-        "linux_amd64": "1c74ff5fc28b1891d32b67f4348a9b7f750946b6d4a721e909187a848868016b",
-        "linux_arm64": "4e521be28bd45030e8165c8654ee69ea1d6830b4e0fdefdd020ab1a9b1dd19ae"
+        "linux_amd64": "746d0b41d5fb87e2c010b8ac23a464436bb745ff89fbd19a3456431942c37652",
+        "linux_arm64": "84a3fb897ec6f6ec698bd160cf8ef8700fd147278e239ad626bd0ec32c3baed2"
       },
       "assetTemplateByArch": {
         "linux_amd64": "https://github.com/github/gh-aw/releases/download/v{version}/linux-amd64",
@@ -128,12 +128,12 @@
     {
       "name": "copilot-cli",
       "repo": "github/copilot-cli",
-      "version": "1.0.87",
+      "version": "1.0.103",
       "verification": "published-checksums",
-      "sha256": "49d81b184f1a1b358af676155fe97e341b9d9f0bc8dd25190dfe17087669b5b9",
+      "sha256": "9aeb4430e9ac9523546db07b227c7aba179a4710a55f9ac29ad143b0f9e1b325",
       "sha256ByArch": {
-        "linux_amd64": "49d81b184f1a1b358af676155fe97e341b9d9f0bc8dd25190dfe17087669b5b9",
-        "linux_arm64": "c175343f60024d368e58a71f2294384b2b7df7b958079570b05b69ca89ce55f6"
+        "linux_amd64": "9aeb4430e9ac9523546db07b227c7aba179a4710a55f9ac29ad143b0f9e1b325",
+        "linux_arm64": "728a91dffb9a02817bd98c5b01bf2f9cb08c4fdac3c0ca8c48d7f1ccbfe282a1"
       },
       "assetTemplateByArch": {
         "linux_amd64": "https://github.com/github/copilot-cli/releases/download/v{version}/copilot-linux-x64.tar.gz",
@@ -190,12 +190,12 @@
     {
       "name": "gh-aw-firewall",
       "repo": "github/gh-aw-firewall",
-      "version": "0.28.23",
+      "version": "0.29.0",
       "verification": "oci-digest",
       "images": {
-        "agent": "sha256:2c78aaba1c108e130e2d6d01e4f2cca334ea04c53e6f258913ac34173fe7e3b2",
-        "api-proxy": "sha256:c15c3d1208df10c5b588a3657be53742aa982ae0909d1eb1812525268794ca64",
-        "squid": "sha256:02ffc56dd40158223064ef03a78c2d9717473c93723b4e403d455ea6f0b09ae0"
+        "agent": "sha256:b14bd399376180b5649a9324be3b50fbfc82bfe8f0c80045840416b5a4e65b96",
+        "api-proxy": "sha256:baff00b856a4bdc93bce134928c70af3d3492f2e518757115042040674d56b0b",
+        "squid": "sha256:6e0cbf7f980beb78b5461563a8164f6439ca959bc93733d5a6b52972e523ed50"
       },
       "notes": "Agent workflow firewall (AWF) images that the gh-aw compiler pins by digest in every *.lock.yml."
     }
