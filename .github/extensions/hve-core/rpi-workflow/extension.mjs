@@ -114,7 +114,7 @@ const canvas = createCanvas({
             task: { type: 'string', description: 'RPI task to show from the workspace .copilot-tracking folder, or from the session\'s workspace when session is given: "current" (the most recently changed task whose session is running) or a task ID. Omit task, state, and session to show the sample.' },
             scenario: { type: 'string', enum: [SCENARIO_ID], description: 'Sample session to show; the canvas ships one.' },
             stage: { type: 'string', enum: [...STAGES], description: 'Stage of the sample session to show when opening.' },
-            sessions: { type: 'array', items: { type: 'string' }, maxItems: MAX_SESSIONS, description: 'Copilot session IDs (UUIDs) of the sessions this conversation started; the picker lists them first, with Show here and Open in new panel. Applied on every open, and it combines with the other inputs. Alone, it leaves an open canvas as it is and otherwise opens the canvas not connected, as an empty input does.' },
+            sessions: { type: 'array', items: { type: 'string' }, maxItems: MAX_SESSIONS, description: 'Copilot session IDs (UUIDs) of the sessions this conversation started; the picker lists them first, with Show here and Open in new panel. Applied on every open, and it combines with the other inputs. Alone, it changes nothing else: the canvas opens as it would with an empty input.' },
         },
         additionalProperties: false,
     },

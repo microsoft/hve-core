@@ -2,7 +2,7 @@
 title: RPI Workflow Canvas
 description: Canvas extension for following and steering RPI sessions through research, planning, implementation, review, and follow-up
 author: Microsoft
-ms.date: 2026-11-10
+ms.date: 2026-11-11
 ms.topic: reference
 keywords:
   - canvas
@@ -52,7 +52,7 @@ Evidence chips (`C5`, `W2`) open their claim and source in place, and each trace
 A task whose Requirements cite research, such as "Research D10", links back to it, so a change's strip runs from the change through its task to the research behind it; a finding's preview lists the plan tasks that cite it.
 See [IDs, Previews, and History](#ids-previews-and-history) and [Sources](#sources).
 
-The canvas shows a real RPI session from the workspace's `.copilot-tracking/` folder, or a fictional sample session, "Offline drafts with background sync", that lets you try every phase and interaction. A canvas with neither says it is not connected and how to connect it; see [Open the Canvas](#open-the-canvas).
+The canvas shows a real RPI session from the workspace's `.copilot-tracking/` folder, or a fictional sample session, "Offline drafts with background sync", that lets you try every phase and interaction. A canvas with neither says it is not connected, lists the sessions it can show in the [session picker](#session-picker), and says how to connect it; see [Open the Canvas](#open-the-canvas).
 A real session comes from its RPI files: the state file, research, plan, critique, changes record, and review log.
 The canvas follows those files while it is open and never changes them. What you add, suggested edits included, waits in the canvas until you send it to the agent, and the agent changes the files. See [Review and Send](#review-and-send) and [Real RPI Sessions](#real-rpi-sessions).
 
@@ -62,7 +62,7 @@ The canvas follows those files while it is open and never changes them. What you
   Each phase shows what its documents hold, with the status they record, wherever the agent is, so a phase the agent moved back from keeps its content; only a later phase with no document yet shows that it has not started. Research or a plan that the user or another session provided shows Provided, and its Source section names where the work came from.
   Research that arrived only with a provided plan also reads Provided, and its Source section says it came with the plan. While the agent works in that phase, it shows In progress; once the session stops there, it shows Provided.
   Under the title, the session button names the session and counts its loops; it opens the session menu, which lists the session's loops as a tree,
-  then, when the session has child sessions in other Copilot sessions, a Child sessions group, and, for a real session, the workspace's other sessions.
+  then the [session picker](#session-picker), and, for a real session, the workspace's other sessions.
   Next comes the canvas badge with the handle that starts this canvas's messages; it never shrinks. For a real session, the line continues with the task ID, the repository and branch, and, for a child loop, a link to its parent task. In a narrow header the session name shortens first, then the task details give way.
 * The navigator on the left outlines the viewed phase and filters it.
 * The document fills the middle. Its context bar starts with Back and Forward, then names the phase, its status, the artifact path with Copy and, when the canvas runs in VS Code, Open in VS Code, when the file last changed, and, in the phase the agent works in, its next action. Sections of a real artifact that no other row shows appear, collapsed, in the phase's record row.
@@ -72,7 +72,7 @@ The canvas follows those files while it is open and never changes them. What you
 ### Following the Agent
 
 The Live control in the header shows whether the canvas follows the agent. While it shows Live, the canvas moves to the loop and phase the agent works in whenever either changes, back to an earlier phase as well as forward, and a note at the bottom of the document says when it moved to another loop.
-Choosing a phase other than the agent's, showing another loop or session, or going Back or Forward stops following, and so does pressing the control or `f`.
+Choosing a phase other than the agent's, showing another loop or workspace session, or going Back or Forward stops following, and so does pressing the control or `f`. Show here in the [session picker](#session-picker) does not stop following.
 Starting to add input stops it too, whether you type in a text area, choose an answer, or pick the comment box's kind, so the page stays put while you write. The control then shows Follow agent, and the canvas stays where you are. Press it, or `f`, to catch up: the canvas shows the loop the agent works in, from anywhere in the session, and the agent's phase, and follows again.
 That loop is the session's running loop, the one that changed last when several run, or, when none runs, the latest loop, the one changed last that no other loop continues. Its tooltip names that loop when it is not the one shown, and the session menu marks it Agent. When the agent points you at an item with `focus_item`, following continues. While the canvas connects or reconnects, the control says so.
 
@@ -233,12 +233,12 @@ To show a task in another local Copilot session, pass that session's ID with a `
 ```
 
 `session` alone shows that session's current task, and `session` with `task` shows a task of that session by its ID or as `current`. The canvas reads the session's workspace from `workspace.yaml` in the session's folder under `~/.copilot/session-state/`, or under `COPILOT_HOME` when that is set.
-An open that cannot read the session fails with the reason, such as a session that is not on this machine or a workspace with no `.copilot-tracking` folder. A reopen of such a canvas shows Not connected with the same reason. Cloud sessions have no local workspace, so this input does not reach them.
+An open that cannot read the session fails with the reason, such as a session that is not on this machine or a workspace with no `.copilot-tracking` folder. A reopen of such a canvas shows Not connected with the same reason. Cloud sessions have no local workspace, so this input does not reach them. The canvas refuses a session ID that is not a UUID, a state path outside that workspace's `.copilot-tracking` folder, and a tracking folder that is a symbolic link.
 
 Opening a canvas without input keeps what it shows. When the host reopens a canvas, it repeats an input the canvas was opened with: after an extension reload, its latest open's input, and after a restart of the chat session, its first open's input. The canvas cannot tell that input from a new request, so any open of a canvas that is not open yet, in a conversation that has shown it, returns it to what it showed last.
 An open of a canvas that is already showing works as usual. When a reopen overrides an open's input, the open result says so; use `show_task` to show another task.
 
-A new canvas opened without input, or one whose remembered session is gone, shows Not connected instead of a session. The page says that the chat agent connects the canvas, which should rarely be needed, and offers:
+A new canvas opened without input, or one whose remembered session is gone, shows Not connected instead of a session. The page says that the chat agent connects the canvas, which should rarely be needed. It lists the [session picker](#session-picker) above the request, and offers:
 
 * Ask the agent, which sends `RPI canvas <handle>: connect this canvas to this conversation's RPI session.` to the chat, at most once every 30 seconds, when the host accepts messages from extensions;
 * Copy request, to paste the same line in the chat yourself;
@@ -252,6 +252,43 @@ The page changes by itself once the agent connects the canvas with `show_task`. 
 ```
 
 Stages are `research`, `plan`, `implement` (the default), `review`, and `followup`; `state` and `task` cannot be combined with each other or with `stage`, and `session` cannot be combined with `stage` either. Reopening the canvas keeps the session as you left it. Opening at a different stage replaces the sample only when you have not changed it; otherwise the canvas keeps your changes and says so.
+
+### Session Picker
+
+The picker lists the local Copilot sessions whose RPI work this canvas can show. It appears on the Not connected page, under "Show a session's RPI work," and in the session menu, under "Copilot sessions." Both show the same list. The page fetches the list when either one appears and when you choose Refresh. It does not poll.
+
+Sessions this chat started come first, under "Sessions this chat started," in the order the conversation gave them. The agent sets them with the `sessions` input of an open, or with the `set_sessions` action, for example:
+
+```json
+{ "sessions": ["<Copilot session ID>", "<Copilot session ID>"] }
+```
+
+Each open that carries `sessions` replaces the list, and an open without it keeps the list. The input combines with the other inputs. Alone, it leaves an open canvas as it is; otherwise it works like an empty input, under the reopen rules above. The list holds up to 50 session IDs and is kept until the canvas closes.
+
+Other sessions with RPI work follow, under "Other sessions with RPI work." They come from the 30 most recently updated local sessions that this chat did not start, and only sessions with RPI work appear among them. Sessions that share a checkout share its RPI tasks, so the picker lists each checkout once, under its most recently updated session. A session this chat started is always listed, and other sessions in its checkout are left out.
+
+Each row shows the session's name from its `workspace.yaml`, or "Session" and the first eight characters of its ID when the session has no name. Below the name come its repository and branch, when recorded, and its current task, with the task's phase and status in words.
+Badges mark **This chat** on the session the conversation runs in, **Shown** on the session this canvas shows, and **Canvas running** or **No canvas running** on each session that has one. Each badge has its own icon, so color is not the only cue.
+
+A session this chat started that has no RPI work keeps its row. Its reason takes the place of the task: No RPI work yet, Not on this machine, Records no workspace folder, or Its workspace has no .copilot-tracking folder. That row has no buttons. Other sessions without RPI work are left out.
+
+A row with RPI work has two buttons. **Show here** binds this canvas to the session and shows its current task, the running task or else the most recently changed one. Following the agent continues. The session the canvas already shows has no Show here button; its **Shown** badge marks it instead. On the session menu, Show here also closes the menu.
+
+**Open in new panel** opens the session's canvas in a new panel of this conversation, or focuses that panel when it is already open. This canvas stays as it is. Each session has one panel, with the instance ID `rpi-` and the first eight characters of its session ID, and the panel opens with the input `{ "session": "<ID>" }`.
+
+While the picker is on screen, the outcome of Open in new panel appears at its foot, not in the status area. NAME is the session's name:
+
+| Outcome | Notice                                                                              |
+|---------|-------------------------------------------------------------------------------------|
+| Opened  | Opened a canvas for NAME in a new panel.                                            |
+| Focused | Focused the canvas for NAME, which was already open in a panel.                     |
+| Asked   | Asked the agent to open a canvas for NAME. Look for the line in the chat.           |
+| Wait    | The agent was just asked to open a canvas for NAME. Wait N seconds, then try again. |
+| Failed  | Opening a canvas for NAME failed: REASON.                                           |
+
+A Wait notice for a different session says "another session" in place of NAME. When the host cannot open the panel, the canvas sends the chat one fixed line, `RPI canvas <handle>: open an RPI Workflow canvas for session <session ID>.`, and reports Asked. It sends at most one such line every 30 seconds, so a request within that time gets the Wait notice.
+
+If Show here fails, the picker says so with the reason. While the list loads, it says "Looking for sessions…" If the list cannot be read, it says "Sessions could not be listed," with the reason. When no session has RPI work, it says "No sessions with RPI work were found on this machine." Refresh fetches the list again.
 
 ## Real RPI Sessions
 
@@ -272,11 +309,7 @@ Inside an earlier document, an ID goes to that document first, then to its own w
 Every file must be a Markdown or JSON file inside `.copilot-tracking/`, reached without symbolic links, and at most 2 MB. A state file, whether given as input or named by another state file's link, must also sit in a session folder. The canvas refuses anything else and never writes these files.
 
 One session folder holds every task one conversation worked on. Each state file names its session (`session_name`), its parent's state file (`parent_task.state_path`), and its children's (`child_tasks`), and the canvas builds the session's tree from those links.
-A link can name another Copilot session with `session_id`. The canvas reads that task from the session's workspace, which it finds from the session's `workspace.yaml`: the first of its `git_root` and `cwd` that holds a real `.copilot-tracking` folder. The task then follows the same rules as any other state file. The canvas refuses a session ID that is not a UUID, a state path outside that workspace's `.copilot-tracking` folder, and a tracking folder that is a symbolic link.
-A task whose parent sits in another session shows that parent as context. A child in another session appears as a card in the tree, labeled with its session, phase, and decisions waiting. The Child sessions group of the session menu lists the same child with its status, whether its canvas runs (**Canvas running** or **No canvas running**), and its decisions waiting.
-Choosing Show in the tree or Show here in the group shows that session's task and stops following. Choosing Open in new panel, on the tree card or in the group, opens the child's canvas in a new panel of this conversation, or focuses that panel when it is already open. This canvas stays as it is.
-The canvas opens no child's canvas on its own. When the host cannot open the panel, the canvas sends its own chat one fixed line that asks the agent to open it, at most once every 30 seconds, and the page says so. The outcome appears on the page in words: opened, focused, asked the agent, wait N seconds (naming the child only when the agent was asked about it), or failed with the reason.
-The canvas never reads that session's other tasks. `get_state` lists the linked child sessions with each one's session ID, its phase and status as its state file records them now (the tree's last record when that file cannot be read), whether its canvas runs, and its decisions waiting, which is null until a canvas has read that task. Review and send names the route for items from a child's task before you send them; see [Review and Send](#review-and-send).
+A task whose parent sits in another session folder of the same workspace shows `"Continues <title> from another session"` above its card, with a Show button for that parent.
 A link the canvas cannot follow, a child its parent does not list, and a state file left directly under a date folder each appear in the problems list above the phase; the canvas skips state files that are not in a session folder.
 
 While a page is open, the canvas checks the task's files and the session's state files about every 1.5 seconds. It imports a change once the file has stopped changing between two checks, so a half-written file is skipped. Edits by the agent appear within a few seconds. When a file cannot be read, the canvas keeps the last good version and lists the problem above each phase.
@@ -292,7 +325,8 @@ What you add stays in the canvas across these updates: feedback, suggested edits
 
 The files remain the record, and only the agent changes them. Answers, overrides, comments, and suggested edits reach the agent when you send them. The agent updates the files and reads each item back. The canvas refuses agent actions that would change file-owned content, such as `update_task` or `update_section`, with `source_managed` and names the file to change instead.
 
-The canvas follows the agent while the Live control shows Live; see [Following the Agent](#following-the-agent). Showing a loop, a task in another session, or a session yourself, from the session menu, Follow-up, or a child's link to its parent, stops following; Open in new panel does not. The session menu also lists the workspace's other sessions, newest first, and shows a session's running loop, or its most recently changed one.
+The canvas follows the agent while the Live control shows Live; see [Following the Agent](#following-the-agent).
+Showing a loop from the session menu, Follow-up, or a child's link to its parent stops following, and so does showing another workspace session from the session menu. Show here in the [session picker](#session-picker) and Open in new panel do not. The session menu also lists the workspace's other sessions, newest first, and shows a session's running loop, or its most recently changed one.
 
 Each task keeps its own drafts, open editor, and scroll position in the page, so switching back returns you to where you were. When an action fails, the failure stays visible in the note area at the bottom of the document until you dismiss it, and a comment that fails keeps your text with the reason beside it.
 When the page cannot render a task, it says why and offers Retry, and `get_state` reports the reason to the agent.
@@ -304,6 +338,7 @@ When the page cannot render a task, it says why and offers Retry, and `get_state
 | State                     | `get_state`             | Summarizes the canvas handle and instance ID, the editor that opens files when there is one, the phase, decisions that need the user, agent decisions, feedback in every loop of the session (`otherTasks`), the session tree, whether it follows the running loop, progress, appearance, and page status, including why the page could not render (`clientInfo.renderError`), and `chatEvents`: the chat's user-message events the canvas has seen and how many matched a message it sent |
 | State                     | `load_scenario`         | Loads the sample at a stage; refuses to overwrite user changes unless `replace` is true, then backs them up                                                                                                                                                                                                                                                                                                                                                                                |
 | State                     | `show_task`             | Shows an RPI task from the workspace (`state`, `current`, or a task ID), or from another local session when `session` is given, with `state` relative to that session's workspace; or the sample (`sample` with an optional stage). A task that is not running pauses following                                                                                                                                                                                                            |
+| State                     | `set_sessions`          | Sets the Copilot sessions this chat started, which the picker lists first, in the order given. Replaces the list, up to 50 session IDs; an empty list clears it. Kept until the canvas closes                                                                                                                                                                                                                                                                                              |
 | Session                   | `update_session`        | Sets the agent's phase, task and session status, mode, next action, or a phase status (done, active, upcoming, paused, blocked, skipped, or provided)                                                                                                                                                                                                                                                                                                                                      |
 | Decisions and feedback    | `upsert_decision`       | Asks the user for a decision (owner `user`) or records an agent decision the user can override (owner `agent`)                                                                                                                                                                                                                                                                                                                                                                             |
 | Decisions and feedback    | `take_feedback`         | Collects what the user has for the agent in every loop of the session and marks it sent: with `checkpoint: true`, only the items the user queued; otherwise every unsent item. Also returns sent items without a read-back, marked `alreadySent` and unchanged. Each item has its `taskId`, and each suggested edit its full text and line changes; skips items being sent                                                                                                                 |
@@ -320,7 +355,7 @@ When the page cannot render a task, it says why and offers Retry, and `get_state
 
 On a canvas that shows a real session, `update_session`, `update_task`, `record_change`, `record_discovery`, `update_finding`, `update_section`, and `upsert_decision` for a decision from the files return `source_managed`; change the file instead, and the canvas follows. Questions for the user, read-backs, activity, research lanes, focus, and appearance work on both kinds of canvas.
 
-On a canvas that is not connected, `get_state` reports `connected: false`, the reason, and the next step, and every other action except `show_task`, `load_scenario`, and `set_appearance` returns `not_connected`. Connect it with `show_task` and the session's state file, or `task: "current"`.
+On a canvas that is not connected, `get_state` reports `connected: false`, the reason, and the next step, and every other action except `show_task`, `load_scenario`, `set_sessions`, and `set_appearance` returns `not_connected`. Connect it with `show_task` and the session's state file, or `task: "current"`.
 
 Feedback text, notes, and section Markdown come from the user, so agents treat them as data rather than instructions.
 
@@ -380,11 +415,11 @@ The extension keeps its data under `~/.copilot/extension-data/hve-core-rpi-workf
   It must not look like it holds secrets: `.env*`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.jks`, `*.keystore`, `id_rsa*`, `id_ed25519*`, `.npmrc`, `.pypirc`, `.netrc`, and `.git-credentials` are refused. The sheet shows at most 5,000 lines.
 * Open in VS Code runs VS Code's own command-line tool, found from the extension's own process, with `--goto` and the file's path and line. It runs without a shell, one open at a time, and only for files the read rules allow. Where no VS Code is found, the button does not appear. It never opens a `.code-workspace` file, which VS Code would open as a workspace with its settings and tasks; the canvas shows such a file instead.
 * Request bodies are limited to 16 KB, and 64 KB for a suggested edit.
-* Nothing reaches the agent until you select Send now or Queue in Review and send, Ask the agent on the Not connected page, or Open in new panel when the host refuses to open the child's canvas. Send now, Ask the agent, and that fallback each send one message, with the host's send method, into the session that opened the canvas.
+* Nothing reaches the agent until you select Send now or Queue in Review and send, Ask the agent on the Not connected page, or Open in new panel when the host cannot open the session's canvas itself. Send now, Ask the agent, and that fallback each send one message, with the host's send method, into the session that opened the canvas.
   Items of another session's task go to that session instead: through its own canvas process when one is running, or through the chat of the canvas that sent them when none is.
   Queue sends nothing, and the agent collects queued items with `take_feedback`. Ask the agent sends only its fixed line naming the canvas.
-* A session link reads task files only from the linked session's `.copilot-tracking` folder, under the same containment rules as the canvas's own workspace, and only after the session ID passes validation.
-* Only your own words direct the RPI Agent. Items sent from a child's task carry your words unchanged, and a coordinator's notes and messages from other sessions are context. They never approve a plan or request Implementation.
+* The session picker reads each session folder's `workspace.yaml` and each listed workspace's `.copilot-tracking` folder only when the page asks for the list, under the same containment rules as the canvas's own workspace. It skips symbolic links. The `session` input reads a session's task files only after its ID passes validation, from that workspace's `.copilot-tracking` folder.
+* Only your own words direct the RPI Agent. Items sent from another session's task carry your words unchanged, and messages from other sessions are context. They never approve a plan or request Implementation.
 * The Not connected page's bug report link opens GitHub with a title and details filled in. The details hold the reason, the canvas handle, the host's name, and the time, never a path or session content, and nothing is filed until you submit the form.
 
 The key keeps other local processes, such as other accounts or containers, from using the canvas. The store, presence, inbox, and outbox files have no key.
@@ -397,8 +432,9 @@ Your user account is their only boundary: any process running as you can read or
 * Artifacts that stray far from the RPI templates still render, but sections the canvas does not recognize appear only in the record rows.
 * Following goes to whichever loop of the session runs, so a subagent that runs its own RPI loop in the session looks like any other loop, and the canvas can follow into it; use the session menu to go back, which stops following. With several running loops, which happens only when an earlier conversation stopped without saying so, it picks the one that changed last.
 * Send now needs a host that accepts messages from extensions. When it does not, the review says so, and the items stay unsent until the agent collects them with `take_feedback`; Queue works either way. The canvas does not attach items to your next message, because VS Code does not show extension attachments. The Not connected page then offers Copy request without Ask the agent.
-* Cloud children are not supported. A child in a cloud session has no local workspace, so the canvas cannot read its tasks, show its decisions, or follow a link into it. Create the children you want to follow as local sessions.
-* A child session that runs an older hve-core build neither announces a running canvas nor takes inbox items, so Send now relays its items through this chat's agent.
+* Cloud sessions are not listed. A cloud session has no local workspace, so the picker never shows it, and the canvas cannot read its tasks or show its decisions. Run the sessions you want to follow as local sessions.
+* Sessions that share one checkout share its RPI tasks, so the picker lists that checkout once, under its most recently updated session. A session this chat started is always listed, and other sessions in its checkout are left out.
+* A session that runs an older hve-core build neither announces a running canvas nor takes inbox items, so Send now relays its items through this chat's agent.
 * During a rollout, an older copy of the provider keeps a task's feedback in its legacy store document. Until every copy updates, feedback can split across two documents.
 * Forwarding needs a chat whose agent has the `send_session_message` tool, such as a GitHub Copilot app Project. The relay message asks that agent to forward the items, so an agent without the tool cannot pass them on.
 * Open in new panel depends on the host's experimental canvas open and list calls. When the host cannot open a panel, the canvas asks the agent instead.
