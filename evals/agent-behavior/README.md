@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-11-06
+ms.date: 2026-11-09
 ---
 
 ## Purpose
@@ -97,9 +97,9 @@ Vally has no agent-routing option, and staging an `.agent.md` at its normal `.gi
 
 ### Deferred Code Review coverage
 
-The primary Code Review agent stays enrolled because the inventory always includes parent agents. Its eight workers leave the inventory under the existing partial-backed enrollment rule. Their nine stimulus partials, the main expectation file, the resume fixture, and three shared Code Review conformance cases are retired without replacements.
+The primary Code Review agent stays enrolled because the inventory always includes parent agents. Its nine workers, including Code Review Specialist, stay out of the inventory under the existing partial-backed enrollment rule. Their nine stimulus partials, the main expectation file, the resume fixture, and three shared Code Review conformance cases are retired without replacements.
 
-Changed-artifact coverage is missing for all nine Code Review agents and these nine skills: `code-review`, `code-review-core`, `code-review-context`, `code-review-functional`, `code-review-standards`, `code-review-accessibility`, `code-review-security`, `code-review-readiness`, and `code-review-investigation`. Parent coverage and stimulus-presence gates remain unchanged and unsatisfied; deterministic runtime or generator tests do not replace model coverage.
+Changed-artifact coverage is missing for all ten Code Review agents and these ten skills: `code-review`, `code-review-core`, `code-review-context`, `code-review-functional`, `code-review-standards`, `code-review-accessibility`, `code-review-security`, `code-review-readiness`, `code-review-specialist`, and `code-review-investigation`. Parent coverage and stimulus-presence gates remain unchanged and unsatisfied; deterministic runtime or generator tests do not replace model coverage.
 
 The three shared baseline-equivalence scenarios retain their `rpi-agent` routing but no longer backlink Code Review. Unrelated RPI business-alignment cases remain. Code Review confirmation evidence for proposed [ADR-0012](../../docs/planning/adrs/0012-close-the-business-alignment-loop-in-rpi.md) is deliberately deferred, not passed. A later authorized eval effort must restore coverage before merge readiness can be claimed.
 

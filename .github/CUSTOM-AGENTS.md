@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-11-06
+ms.date: 2026-11-09
 ms.topic: guide
 keywords:
   - copilot
@@ -275,13 +275,15 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 * `results/<snapshot-id>/<work-id>.json` (one result per perspective or context task)
 * `review.md` (human-editable report, with a PR comment draft for PR and MR targets)
 
-**Skills:** The agent preloads `code-review` and `disclaimer-language` and follows the same workflow as `/code-review`. Each subagent under `.github/agents/coding-standards/subagents/` preloads `code-review-core` plus its responsibility skill: `code-review-functional`, `code-review-standards`, `code-review-accessibility`, `code-review-security`, `code-review-readiness`, `code-review-context` (Orientation and Explainer), or `code-review-investigation` (Walkback).
+**Skills:** The agent preloads `code-review` and `disclaimer-language` and follows the same workflow as `/code-review`.
+Each subagent under `.github/agents/coding-standards/subagents/` preloads `code-review-core` plus its responsibility skill: `code-review-functional`, `code-review-standards`, `code-review-accessibility`, `code-review-security`, `code-review-readiness`, `code-review-specialist` (the added non-functional reviewers), `code-review-context` (Orientation and Explainer), or `code-review-investigation` (Walkback).
 
 **Workflow:** Resolve target → Capture snapshot → Set scope → Review inline or in parallel → Verify findings → Render report → Publish only with consent
 
 **Critical:** Reviews a PR or MR, branch comparison, commit, local changes, or selected code. Sweep mode proceeds after a compact scope summary; guided mode waits for your choices.
 Profiles (`standard`, `full`, or `custom`) select among five perspectives (`functional`, `standards`, `accessibility`, `security`, `readiness`), and depth (`basic`, `standard`, or `comprehensive`) is set independently.
-Small reviews run inline; substantial independent work goes to parallel subagents. An optional Code Review canvas shows the review and collects feedback.
+Four more non-functional reviewers (`privacy`, `performance`, `supply-chain`, and `responsible-ai`) run only when added by a `custom` profile, a request, or the canvas; the agent suggests them when the change touches their surface.
+Small reviews run inline; substantial independent work goes to parallel subagents. An optional Code Review canvas shows the review, its reviewer flow, and collects feedback.
 Review-only: source and Git state stay read-only, and staging or posting to a PR needs explicit human consent. Maturity: experimental.
 
 ### backlog-manager
