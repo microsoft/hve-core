@@ -156,7 +156,7 @@ Per **DD-23** and **DD-24**, most stimuli declare one or more `output-matches` g
 | Contained workspace effect     | Per-stimulus file or diff | Checks expected files, content, or absence of workspace changes.             |
 | Model-judged semantic contract | Per-stimulus judge prompt | Assesses behavior that cannot be reduced credibly to deterministic patterns. |
 
-The behavior specs configure deterministic output, file, and diff graders plus one `prompt` grader. The CLI registers LLM-backed graders on demand when a spec uses them. `orphan-files` and `valid-refs` are skill-hygiene checks run by `vally lint`; they are not eval grader types. This suite loads no custom grader plugin.
+The behavior specs configure deterministic output, file, and diff graders plus `prompt` model-judge graders. The CLI registers LLM-backed graders on demand when a spec uses them. `orphan-files` and `valid-refs` are skill-hygiene checks run by `vally lint`; they are not eval grader types. This suite loads no custom grader plugin.
 
 ## Anti-patterns
 
