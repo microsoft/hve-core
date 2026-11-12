@@ -1,9 +1,9 @@
 ---
 title: code-review-standards
 description: "Review assigned changes against applicable repository instructions and domain skills, preserving criterion provenance. Use for Code Review standards work."
-sidebar_position: 8
+sidebar_position: 9
 author: Microsoft
-ms.date: 2026-11-06
+ms.date: 2026-11-09
 ms.topic: reference
 keywords:
   - skill

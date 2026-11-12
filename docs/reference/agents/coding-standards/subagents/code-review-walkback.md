@@ -1,9 +1,9 @@
 ---
 title: Code Review Walkback
 description: Resolve a bounded evidence gap for Code Review and return findings candidates as factual observations.
-sidebar_position: 8
+sidebar_position: 9
 author: Microsoft
-ms.date: 2026-11-06
+ms.date: 2026-11-09
 ms.topic: reference
 keywords:
   - agent
