@@ -3,7 +3,7 @@ title: pull-request
 description: "Prepare, create, update, or sync a GitHub pull request with targeted local checks and repair commits. Supports optional stacked pull requests through the gh stack extension. Routes Azure DevOps to backlog-management."
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-11-08
+ms.date: 2026-11-12
 ms.topic: reference
 keywords:
   - skill
@@ -38,9 +38,9 @@ When you ask it to fix a failed check, the skill reruns the affected checks and 
 
 If you use the `gh stack` extension, the skill detects when the checked-out branch belongs to a stack. In a stack, it writes one description per branch that covers only that branch's changes.
 
-A create in a stack opens pull requests for your branch and the branches below it that don't have one yet, using `gh stack link`, and leaves the branches above yours alone. Ask for the whole stack to use `gh stack submit --auto` instead. Updates push the stack with `gh stack push`, and syncs use `gh stack sync`.
+A create in a stack opens pull requests for your branch and the branches below it that don't have one yet, using `gh stack link`, and opens none above yours. If a branch in scope is behind its GitHub copy or needs a rebase, the create syncs the stack first; if one was rewritten locally, it pushes the stack with `gh stack push` first. Ask for the whole stack to use `gh stack submit --auto` instead. Updates push the stack with `gh stack push`, and syncs use `gh stack sync`.
 
-Before any push in a stack, the skill fetches each branch and stops when GitHub has commits your local branch lacks, so a collaborator's work isn't overwritten. It also asks first when a run would push stack branches you didn't mention.
+Before any push in a stack, the skill fetches each branch and stops before a push would drop commits that exist only on GitHub, so a collaborator's work isn't overwritten. It also asks first when a run would push stack branches you didn't mention.
 
 Stacks stay optional. Without the extension, or with `stack=off`, the skill uses the ordinary flow. The skill doesn't create or reshape stacks; use `gh stack init` or the gh-stack agent skill for that.
 

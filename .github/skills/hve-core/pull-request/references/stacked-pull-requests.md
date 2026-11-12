@@ -35,7 +35,7 @@ A repair commit on a branch below the top doesn't reach the branches above it. S
 
 ## Choose the remote
 
-Use one remote for the whole run, and pass it as `--remote <name>` to every gh stack command that pushes or fetches: `push`, `submit`, `link`, and `sync`. Take the first one that's set, in gh stack's own order:
+Use one remote for the whole run, and pass it as `--remote <name>` to every gh stack command that pushes or fetches: `push`, `submit`, `link`, `sync`, and `rebase`. Take the first one that's set, in gh stack's own order:
 
 1. The branch's `branch.<name>.pushRemote`
 2. `remote.pushDefault`
@@ -55,12 +55,12 @@ Run this check right before each gh stack command that pushes, for every branch 
 2. Count the commits on each side with `git rev-list --left-right --count refs/remotes/<remote>/<branch>...refs/heads/<branch>`. It prints the commits only on GitHub, then the commits only on the local branch.
 3. When GitHub has commits the branch lacks, run `git cherry refs/heads/<branch> refs/remotes/<remote>/<branch>`. A `+` line is a GitHub commit with no equivalent change on the local branch, so the push would drop it. A `-` line has an equivalent, as after a rebase.
 
-| Result                                          | Before `push`, `submit`, or `link`                               | Before `sync`                                 |
-|-------------------------------------------------|------------------------------------------------------------------|-----------------------------------------------|
-| Not on GitHub, or no commits only on GitHub     | Continue                                                         | Continue                                      |
-| Behind: commits only on GitHub, none only local | Stop and recommend `action=sync`                                 | Continue; sync fast-forwards the branch first |
-| Diverged, with no `+` lines                     | Continue; for `link`, sync first (see Publish)                   | Continue                                      |
-| Diverged, with `+` lines                        | Stop, show the commits, and continue only when the user confirms | Same                                          |
+| Result                                          | Before `push`, `submit`, or `link`                                   | Before `sync`                                 |
+|-------------------------------------------------|----------------------------------------------------------------------|-----------------------------------------------|
+| Not on GitHub, or no commits only on GitHub     | Continue                                                             | Continue                                      |
+| Behind: commits only on GitHub, none only local | Stop and recommend `action=sync`; a create syncs first (see Publish) | Continue; sync fast-forwards the branch first |
+| Diverged, with no `+` lines                     | Continue; a create pushes with `gh stack push` first (see Publish)   | Continue                                      |
+| Diverged, with `+` lines                        | Stop, show the commits, and continue only when the user confirms     | Same                                          |
 
 After a lower branch is squash-merged, its original commits can show as `+` lines on the branches above it even though their changes already merged. Say so when that's the likely cause. A collaborator who pushes between this check and gh stack's own fetch can still be overwritten, which is why the check runs right before the command.
 
@@ -76,7 +76,7 @@ Stack mode adds these rules to the skill's Publishing rule:
 
 * Two or more branches in scope: run `gh stack link --base <trunk> --remote <remote>` with every open branch from the bottom of the stack up to and including the checked-out branch, in stack order, including branches that already have pull requests. It pushes only those branches, without force, opens a draft for each one that has no pull request, and adds them to the stack on GitHub. Leave out merged branches. When a listed branch is queued, stop and report it.
 * Only the checked-out branch, because it's the lowest open branch: push it under the skill's ordinary push rules, then run `gh pr create --base <trunk> --head <branch> --draft --title <title> --body-file <file>`. gh stack links it once a second pull request exists.
-* When a listed branch needs a rebase (`needsRebase`) or was rewritten locally, `link` can't push it. Run Sync first, then create.
+* `link` and the ordinary push never force, so first bring each branch in scope level with GitHub. When one is behind its GitHub copy or needs a rebase (`needsRebase`), run Sync. When one was rewritten locally and none needs a rebase, run `gh stack push --remote <remote>` instead, because Sync forces a push only after its own rebase. Both push every open branch, so the one-question rule above applies. Then create.
 * The whole stack, only when the user asks for it: `gh stack submit --auto --remote <remote>` opens a pull request for every open branch without one.
 * When `link` refuses a pull request because auto-merge is on, report which one, and suggest turning auto-merge off or creating the whole stack.
 
@@ -111,7 +111,7 @@ Then, for each pull request in scope:
 | Exit 9 (stacks aren't available for the repository)      | Offer the ordinary flow, and say its pull request includes every lower branch                                                                                                                                                           |
 | Exit 10 (an interrupted modify session)                  | Tell the user to run `gh stack modify --abort`                                                                                                                                                                                          |
 | Any other nonzero exit                                   | Report stderr and stop                                                                                                                                                                                                                  |
-| `Sync aborted` or `Push failed` with exit 0              | Treat it as a failed sync and report the output                                                                                                                                                                                         |
+| `Sync aborted` or `Push failed` with exit 0              | Treat it as a failed sync and report the output. When the check found a branch diverged with no `+` lines, recommend `action=update`, which pushes it with a lease                                                                      |
 | Exit 0 while a branch in scope still has no pull request | Treat the create as partial, and report each pull request's URL and state                                                                                                                                                               |
 
 ## Never run
