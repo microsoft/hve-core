@@ -3,7 +3,7 @@ title: Security Planning Skill Security Model
 description: STRIDE threat model for the TM7 generation and native feedback runtime that parses untrusted specs, template XML, local screenshots, UI Automation traces, and overlay evidence with human-review gates
 author: microsoft/hve-core
 ms.topic: reference
-ms.date: 2026-08-05
+ms.date: 2026-11-12
 estimated_reading_time: 8
 keywords:
   - security
@@ -51,8 +51,9 @@ The highest-risk behavior is running a local executable against a threat-model a
 1. `scripts/generate_tm7.py`: loads and validates the input spec, selects a template profile, emits deterministic `.tm7` content, and replays a validated overlay when requested.
 2. `scripts/validate_tm7_with_tmt.py`: discovers the local TMT executable, enforces the pinned version, launches the native UI, runs validation and feedback-loop modes, and writes redacted evidence bundles.
 3. `scripts/tm7_visual_feedback.py`: evaluates geometry metrics, derives overlay candidates, ranks them deterministically, and evaluates convergence and semantic regression.
-4. `assets/schemas/`: defines the overlay and evidence-manifest contracts that constrain replay and evidence output.
-5. Generated evidence and overlays: `manifest.json`, `status.json`, iteration bundles, screenshots, UIA snapshots, and pending overlay output written for human review.
+4. `scripts/Deserialize-Tm7.ps1`: the PowerShell fidelity probe. It loads the Threat Modeling Tool's own assemblies from the discovered installation, after checking each one's Authenticode signature, and deserializes a generated `.tm7` with the tool's serializer.
+5. `assets/schemas/`: defines the overlay, evidence-manifest, and agent review request contracts that constrain replay and evidence output.
+6. Generated evidence and overlays: `manifest.json`, `status.json`, iteration bundles, screenshots, UIA snapshots, the `agent-review-request.json` payload a feedback-loop run emits for visual review, and pending overlay output written for human review.
 
 ### Data Flow
 
@@ -138,7 +139,7 @@ flowchart TD
 
 ### Tampering
 
-* The runtime validates the executable path and pinned version before launch, and records the discovered executable metadata in the evidence manifest. It rejects mismatches rather than proceeding with an unverified binary.
+* The runtime validates the executable path and pinned version before launch, and records the discovered executable metadata in the evidence manifest. It rejects mismatches rather than proceeding with an unverified binary. The version check has two operator-controlled exceptions: `--pinned-version` replaces the expected version, and `--diagnostic-override` accepts whatever version is observed. Neither relaxes the Authenticode publisher check, which runs during discovery, and the manifest records both choices as `required_tmt_version` and `diagnostic_override`.
 
 ### Repudiation
 
