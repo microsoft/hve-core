@@ -212,3 +212,27 @@ describe('reasons and the change map through the helper', () => {
         assert.ok(report.indexOf('## Why these changes') < report.indexOf('## Findings'));
     });
 });
+
+describe('added reviewers through the helper', () => {
+    it('adds a reviewer under the same scope, stores reviewer choices, and lists them in the report', async (t) => {
+        const { root, base } = await repository(t);
+        const head = await changedCommit(root);
+        const captured = await captureReview(root, { kind: 'branch', base, head });
+        const state = await schedule(captured, 0, { perspectives: ['functional'], scope });
+        const added = await schedule(captured, state.revision, { perspectives: ['performance'], scope });
+        assert.deepEqual(added.workItems.map((work) => [work.perspective, work.required]), [['functional', true], ['performance', true]]);
+        await assert.rejects(schedule(captured, added.revision, { perspectives: ['privacy'], scope: { ...scope, depth: 'comprehensive' } }), /changed scope/);
+        const reviewers = [
+            { perspective: 'functional', decision: 'selected', reason: 'Every review checks behavior.' },
+            { perspective: 'performance', decision: 'suggested', reason: 'The loop <now> reads *every* line.' },
+        ];
+        const updated = await updateContext(captured, added.revision, { reviewers });
+        assert.deepEqual(updated.reviewers, reviewers);
+        await renderReport(captured, updated.revision);
+        const report = await readText(captured.root, 'review.md');
+        assert.match(report, /Reviewer functional: selected\. Every review checks behavior\./);
+        assert.match(report, /Reviewer performance: suggested\. The loop \\<now\\> reads \\\*every\\\* line\./);
+        const cleared = await updateContext(captured, (await loadReview(captured)).state.revision, { reviewers: null });
+        assert.equal(Object.hasOwn(cleared, 'reviewers'), false);
+    });
+});

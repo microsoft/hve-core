@@ -103,8 +103,14 @@ correlation is not also a specialist referral.
 
 ## Other specialists
 
-Recommend specialist work only when changed-surface signals support it and the
-runtime exposes a relevant capability. Name the concern, evidence, capability,
-and reason for a separate follow-up; avoid a fixed catalog. Missing capabilities
-remain explicit. Production telemetry criteria come from `telemetry-foundations`.
-No referral grants permission for installs, broader audits, or source edits.
+Privacy, performance, supply chain, and responsible AI have added reviewers that
+run inside the review, as the `code-review` skill's Scope and depth section
+describes; suggest those first. Each names a deeper follow-up for a full audit
+beyond the captured change.
+
+For other concerns, or for that deeper audit, recommend specialist work only
+when changed-surface signals support it and the runtime exposes a relevant
+capability. Name the concern, evidence, capability, and reason for a separate
+follow-up; avoid a fixed catalog. Missing capabilities remain explicit.
+Production telemetry criteria come from `telemetry-foundations`. No referral
+grants permission for installs, broader audits, or source edits.
