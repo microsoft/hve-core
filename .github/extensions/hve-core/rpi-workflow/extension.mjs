@@ -7,14 +7,16 @@ import { ACTION_DEFINITIONS, createActionHandlers } from './lib/actions.mjs';
 import { createDelivery } from './lib/delivery.mjs';
 import { createEditorOpener, findEditor } from './lib/editor.mjs';
 import { createInboxRunner } from './lib/inbox.mjs';
+import { openCanvas } from './lib/open.mjs';
 import { createPickupTracker } from './lib/pickup.mjs';
-import { CANVAS_ID, createPanelOpener, providerOf } from './lib/panels.mjs';
+import { CANVAS_ID, createPanelOpener } from './lib/panels.mjs';
 import { createInstanceRegistry } from './lib/lifecycle.mjs';
-import { ModelError, PHASE_LABELS } from './lib/model.mjs';
+import { ModelError } from './lib/model.mjs';
 import { SCENARIO_ID, STAGES } from './lib/scenario.mjs';
 import { createCanvasServer } from './lib/server.mjs';
 import { resolveSessionStateRoot, resolveSessionWorkspace } from './lib/source/sessions.mjs';
-import { createSourceController, NOT_CONNECTED_WHY, openPlan, validateOpenInput } from './lib/sources.mjs';
+import { listRpiSessions } from './lib/source/session-list.mjs';
+import { createSourceController, MAX_SESSIONS } from './lib/sources.mjs';
 import { createStore } from './lib/store.mjs';
 
 /** @type {import('@github/copilot-sdk/extension').CopilotSession | null} */
@@ -45,18 +47,6 @@ findEditor().then((found) => {
     editor = null;
 });
 
-/** The open result: the page address and a status naming what the canvas shows. */
-function openResult(instance, source, session, note) {
-    if (source.kind === 'none') {
-        const why = NOT_CONNECTED_WHY[source.reason] ?? '';
-        return { url: instance.server.url, title: 'RPI Workflow', status: `Not connected to an RPI session${why}. Connect it with show_task, giving this conversation's RPI state file or task "current" · canvas ${instance.handle}` };
-    }
-    const phase = PHASE_LABELS[session.session.activePhase] ?? session.session.activePhase;
-    const bound = source.boundSession ? ` · Copilot session ${source.boundSession}` : '';
-    const status = source.kind === 'rpi' ? `RPI session: ${session.task.title} · ${phase}${bound}${note}` : `Sample session: ${phase}${note}`;
-    return { url: instance.server.url, title: 'RPI Workflow', status: `${status} · canvas ${instance.handle}` };
-}
-
 /** Converts model and source errors into canvas errors the host shows. */
 const asCanvasError = (error) => (error instanceof ModelError
     ? makeError(error.code, error.message)
@@ -77,6 +67,14 @@ const registry = createInstanceRegistry({
             resumeFollowing: () => sources.resumeFollowing(record),
             pauseFollowing: () => sources.pauseFollowing(record),
             listSessions: () => sources.sessions(record),
+            listCopilotSessions: () => listRpiSessions({
+                root: sessionRoot(),
+                mine: record.sessions ?? [],
+                own: joined?.sessionId ?? null,
+                loadPresence: (sessionId) => store.loadPresence(sessionId),
+                now: () => Date.now(),
+            }),
+            showSession: (session) => sources.show(record, { session }, { candidates: record.candidates ?? [process.cwd()] }),
             showSample: () => sources.show(record, { task: 'sample' }, {}),
             deliver: createDelivery({ getSession: () => joined }),
             pickups,
@@ -116,56 +114,13 @@ const canvas = createCanvas({
             task: { type: 'string', description: 'RPI task to show from the workspace .copilot-tracking folder, or from the session\'s workspace when session is given: "current" (the most recently changed task whose session is running) or a task ID. Omit task, state, and session to show the sample.' },
             scenario: { type: 'string', enum: [SCENARIO_ID], description: 'Sample session to show; the canvas ships one.' },
             stage: { type: 'string', enum: [...STAGES], description: 'Stage of the sample session to show when opening.' },
+            sessions: { type: 'array', items: { type: 'string' }, maxItems: MAX_SESSIONS, description: 'Copilot session IDs (UUIDs) of the sessions this conversation started; the picker lists them first, with Show here and Open in new panel. Applied on every open, and it combines with the other inputs. Alone, it leaves an open canvas as it is and otherwise opens the canvas not connected, as an empty input does.' },
         },
         additionalProperties: false,
     },
     actions: ACTION_DEFINITIONS.map((definition) => ({ ...definition, handler: handlers[definition.name] })),
 
-    async open(ctx) {
-        const input = validateOpenInput(ctx.input, makeError);
-        const current = registry.get(ctx.instanceId);
-        const hostSessionId = typeof ctx.sessionId === 'string' ? ctx.sessionId : undefined;
-        const open = Boolean(current?.source && current.server.listening);
-        const plan = openPlan(input, {
-            open,
-            remembered: open ? null : await store.loadInstance(ctx.instanceId, hostSessionId).catch(() => null),
-        });
-        if (plan.keep && current) {
-            if (current.source?.kind === 'none') return openResult(current, current.source, null, '');
-            const session = await store.load(current.sessionId).catch(() => null);
-            if (session) return openResult(current, current.source, session, '');
-        }
-        const candidates = [ctx.session?.workingDirectory, process.cwd()];
-        /** @type {{ sessionId: string, source: any, session: any, note: string } | undefined} */
-        let prepared;
-        const instance = await registry.open({
-            instanceId: ctx.instanceId,
-            sessionId: SCENARIO_ID,
-            prepare: async () => {
-                if (!plan.keep && plan.restore) {
-                    // A reopen repeats an earlier input; when it carries one, the open result says the input did not apply.
-                    prepared = await sources.restore(plan.restore, { candidates });
-                    if (prepared.source.kind !== 'none') {
-                        prepared.note = `${prepared.note} (reopened where this canvas was${Object.keys(input).length ? '; its input was not applied, so use show_task to show another task' : ''})`;
-                    }
-                    return { sessionId: prepared.sessionId, source: prepared.source };
-                }
-                try {
-                    prepared = await sources.prepare(input, { candidates });
-                } catch (error) {
-                    throw asCanvasError(error);
-                }
-                return { sessionId: prepared.sessionId, source: prepared.source };
-            },
-        });
-        const ready = /** @type {{ sessionId: string, source: any, session: any, note: string }} */ (prepared);
-        // The conversation keys the instance's memory.
-        instance.hostSessionId = hostSessionId;
-        // The provider the host opened this instance through, which its panels reuse.
-        instance.extensionId = providerOf(ctx);
-        sources.attach(instance, ready);
-        return openResult(instance, ready.source, ready.session, ready.note);
-    },
+    open: (ctx) => openCanvas(ctx, { registry, store, sources, makeError, asCanvasError }),
 
     async onClose(ctx) {
         const record = registry.get(ctx.instanceId);

@@ -79,6 +79,8 @@ const TASK_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
 const ROUTE_KINDS = new Set(['own', 'inbox', 'relay']);
 /** What a hand-off says when this canvas has no Copilot session to send from. */
 const HAND_OFF_UNAVAILABLE = 'The canvas is not connected to a Copilot session. Your items stay here; ask the agent to collect them with take_feedback.';
+/** Session errors that mean the session, or the RPI work in it, is not there; any other session error is a conflict. */
+const MISSING_SESSION_CODES = new Set(['session_not_found', 'source_not_found']);
 
 const STATUS_FOR = Object.freeze({
     invalid_input: 400,
@@ -211,6 +213,8 @@ export function clientInfoFrom(body) {
  *   resumeFollowing?: () => Promise<{ sessionId: string }>,
  *   pauseFollowing?: () => Promise<{ sessionId: string }>,
  *   listSessions?: () => Promise<{ sessions: any[], skipped: string[] }>,
+ *   listCopilotSessions?: () => Promise<{ sessions: import('./source/session-list.mjs').RpiSessionEntry[], skipped: number }>,
+ *   showSession?: (sessionId: string) => Promise<{ sessionId: string }>,
  *   showSample?: () => Promise<{ sessionId: string }>,
  *   markRetryMs?: number,
  *   claimWindowMs?: number,
@@ -395,6 +399,7 @@ export function createCanvasServer(deps) {
             otherTasks: docs.slice(1).map((doc) => ({ taskId: doc.taskId, title: doc.task?.title ?? doc.session.task.title, status: doc.task?.status ?? null, statePath: doc.task?.statePath ?? null, ...feedbackOverview(doc.session, at, { viewer: ownSessionId() }) })),
             delivery: deliveryTargetOf(session),
             ownSessionId: ownSessionId(),
+            shownSession: shownSessionOf(),
         };
     }
 
@@ -453,6 +458,12 @@ export function createCanvasServer(deps) {
     const ownSessionId = () => {
         const id = deps.getJoinedSessionId?.();
         return typeof id === 'string' && id ? id.toLowerCase() : null;
+    };
+
+    /** The Copilot session the canvas was connected to with its session input or Show here, in lowercase; null otherwise. */
+    const shownSessionOf = () => {
+        const source = deps.getSource?.();
+        return source?.kind === 'rpi' && typeof source.boundSession === 'string' ? source.boundSession.toLowerCase() : null;
     };
 
     /** The session that Send now takes the shown tasks to, named as the page names it; null when they are the canvas's own. */
@@ -1006,6 +1017,25 @@ export function createCanvasServer(deps) {
             return askForPanel(session);
         },
 
+        // The local Copilot sessions whose RPI work the picker lists, for the sessions this conversation started and the others.
+        'GET /api/copilot-sessions': async () => {
+            if (!deps.listCopilotSessions) throw new HttpError(404, 'not_found', 'This canvas cannot list Copilot sessions.');
+            return deps.listCopilotSessions();
+        },
+
+        // Connects the canvas to a session's current RPI task, as show_task does with a session; the page refreshes on its reload.
+        'POST /api/show-session': async (body) => {
+            if (!isSessionId(body?.session)) throw new HttpError(400, 'invalid_input', 'session must be a Copilot session ID (a UUID).');
+            if (!deps.showSession) throw new HttpError(404, 'not_found', 'This canvas cannot show a session.');
+            try {
+                const shown = await deps.showSession(body.session.toLowerCase());
+                return { sessionId: shown.sessionId };
+            } catch (error) {
+                if (error instanceof ModelError) throw new HttpError(MISSING_SESSION_CODES.has(error.code) ? 404 : 409, error.code, error.message);
+                throw error;
+            }
+        },
+
         'POST /api/source': async (body) => {
             try {
                 const { absolute: _absolute, ...shown } = await readWorkspaceFile(workspaceRoot(), body?.path, body?.anchor);
@@ -1196,9 +1226,9 @@ export function createCanvasServer(deps) {
             return { delivered: clients.size > 0 };
         },
 
-        /** Tells the page that the selected session changed. */
-        notifyReload() {
-            broadcast('reload', { at: now() });
+        /** Tells the page that the selected session changed. `detail.sessions` says the picker's sessions changed, so an open picker fetches them again. */
+        notifyReload(detail = {}) {
+            broadcast('reload', { at: now(), ...detail });
         },
 
         /**

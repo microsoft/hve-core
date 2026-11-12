@@ -10,7 +10,7 @@ import { SourceError, TRACKING_DIR } from './workspace.mjs';
 /** Copilot session IDs are UUIDs, and each local session keeps its files in a folder named by one. */
 export const SESSION_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const SESSION_STATE_DIR = 'session-state';
-const WORKSPACE_FILE = 'workspace.yaml';
+export const WORKSPACE_FILE = 'workspace.yaml';
 const MAX_WORKSPACE_BYTES = 64 * 1024;
 const KEY_RE = /^([A-Za-z_][A-Za-z0-9_-]*):(?:\s(.*))?$/;
 
@@ -103,8 +103,13 @@ function inside(base, target) {
     return relative !== '' && relative.split(path.sep)[0] !== '..' && !path.isAbsolute(relative);
 }
 
-/** A small regular file's text, or null when it is missing, linked, too large, or unreadable. */
-async function readSmall(api, file) {
+/**
+ * A small regular file's text, or null when it is missing, linked, too large, or unreadable.
+ *
+ * @param {Partial<typeof fs>} api
+ * @param {string} file
+ */
+export async function readSmall(api, file) {
     const stat = await api.lstat(file).catch(() => null);
     if (!stat?.isFile() || stat.size > MAX_WORKSPACE_BYTES) return null;
     return api.readFile(file, 'utf8').catch(() => null);

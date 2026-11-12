@@ -13,7 +13,7 @@ import { createActionHandlers } from '../lib/actions.mjs';
 import { createFeedback, markDelivered } from '../lib/model.mjs';
 import { buildScenario, SCENARIO_ID } from '../lib/scenario.mjs';
 import { createCanvasServer as newServer } from '../lib/server.mjs';
-import { createSourceController, notConnected, openPlan, sourceSummary, validateOpenInput } from '../lib/sources.mjs';
+import { createSourceController, notConnected, openPlan, splitOpenInput, sourceSummary, validateOpenInput } from '../lib/sources.mjs';
 import { storeIdFor } from '../lib/source/workspace.mjs';
 import { createStore, MAX_INSTANCES } from '../lib/store.mjs';
 import { stopTracked, track } from './helpers/cleanup.mjs';
@@ -71,6 +71,55 @@ describe('open input', () => {
             { state: PATHS.plan }, { state: '' }, { state: 7 }, { state: PATHS.rootState, task: ROOT_TASK }, { state: PATHS.rootState, stage: 'plan' }, { state: `x\u0000-state.json` }]) {
             assert.equal(await codeOf(() => validateOpenInput(bad, makeError)), 'invalid_input', JSON.stringify(bad));
         }
+    });
+});
+
+describe('the picker\'s sessions in open input', () => {
+    const FIRST = '0c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f';
+    const SECOND = '5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b';
+    const idAt = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+    const remembered = { kind: 'rpi', state: PATHS.childState, paused: false };
+    let store;
+    let sources;
+    before(() => {
+        store = createStore({ root: path.join(tmp, 'picker-open-store') });
+        sources = createSourceController({ store });
+    });
+    after(() => store.close());
+
+    it('accepts a list of session IDs alone or with other input, and returns it lowercased and without repeats', () => {
+        assert.deepEqual(validateOpenInput({ sessions: [] }, makeError), { sessions: [] });
+        assert.deepEqual(validateOpenInput({ sessions: [FIRST.toUpperCase(), SECOND, FIRST] }, makeError), { sessions: [FIRST, SECOND] });
+        assert.deepEqual(validateOpenInput({ sessions: [FIRST], task: 'current' }, makeError), { sessions: [FIRST], task: 'current' });
+        assert.deepEqual(validateOpenInput({ sessions: [FIRST], stage: 'plan' }, makeError), { sessions: [FIRST], stage: 'plan' });
+        assert.deepEqual(validateOpenInput({ sessions: [FIRST], state: PATHS.childState }, makeError), { sessions: [FIRST], state: PATHS.childState });
+        assert.equal(validateOpenInput({ sessions: Array.from({ length: 50 }, (_, n) => idAt(n + 1)) }, makeError).sessions.length, 50, 'fifty is the most');
+    });
+
+    it('refuses a value that is not a list of session IDs, and a list of more than fifty', async () => {
+        const bad = [{ sessions: 'x' }, { sessions: [FIRST, 'nope'] }, { sessions: [7] }, { sessions: null }, { sessions: {} }, { sessions: [FIRST, ''] },
+            { sessions: [FIRST, `${SECOND}/..`] }, { sessions: Array.from({ length: 51 }, (_, n) => idAt(n + 1)) }];
+        for (const input of bad) {
+            assert.equal(await codeOf(() => validateOpenInput(input, makeError)), 'invalid_input', JSON.stringify(input).slice(0, 80));
+        }
+    });
+
+    it('combines with the other input, except that a session with stage or scenario is still refused', async () => {
+        assert.equal(await codeOf(() => validateOpenInput({ sessions: [FIRST], session: SECOND, stage: 'plan' }, makeError)), 'invalid_input');
+        assert.equal(await codeOf(() => validateOpenInput({ sessions: [FIRST], task: 'current', stage: 'plan' }, makeError)), 'invalid_input');
+        assert.equal(await codeOf(() => validateOpenInput({ sessions: [FIRST], task: 'sample' }, makeError)), 'invalid_input');
+    });
+
+    it('opens Not connected for a list alone, as for an empty input, and leaves an open canvas as it is', async () => {
+        const { target, sessions } = splitOpenInput(validateOpenInput({ sessions: [FIRST] }, makeError));
+        assert.deepEqual([target, sessions], [{}, [FIRST]]);
+        assert.deepEqual(splitOpenInput(validateOpenInput({}, makeError)), { target: {}, sessions: undefined });
+        assert.deepEqual(splitOpenInput(validateOpenInput({ sessions: [FIRST], task: 'current' }, makeError)).target, { task: 'current' });
+        assert.deepEqual((await sources.prepare(target)).source, notConnected('no-input').source);
+        for (const instance of [{ open: true, remembered: null }, { open: false, remembered }, { open: false, remembered: null }]) {
+            assert.deepEqual(openPlan(target, instance), openPlan({}, instance), JSON.stringify(instance));
+        }
+        assert.deepEqual(openPlan(target, { open: true, remembered: null }), { keep: true }, 'an open canvas keeps its view when the list alone is sent');
     });
 });
 

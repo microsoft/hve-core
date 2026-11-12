@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, clear, decisionAlias, fullTime, h, icon, idTag, PHASE_META, PHASE_STATUS, phaseTabText, plural, relTime, sr } from './dom.mjs';
-import { confirmPress, deliveryNotices, deliveryRequest, disclosure, failedPanel, filePreview, handAnnouncement, hasMarginHome, panelOutcome, presentationControl, revealRow, reviewSheet, ROUTE_CHANGED_NOTE, routeBlock, sendItems, sendShape, sessionMenuNodes, staleAnnouncement, steerPanel, taskRef, uncertainAnnouncement, waitingCount } from './components.mjs';
+import { confirmPress, copilotSessionsPicker, deliveryNotices, deliveryRequest, disclosure, failedPanel, filePreview, handAnnouncement, hasMarginHome, panelOutcome, presentationControl, revealRow, reviewSheet, ROUTE_CHANGED_NOTE, routeBlock, sendItems, sendShape, sessionLabel, sessionMenuNodes, staleAnnouncement, steerPanel, taskRef, uncertainAnnouncement, waitingCount } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
 import { notConnectedView } from './connect-view.mjs';
@@ -47,6 +47,8 @@ const state = {
     notes: [],
     /** Sessions in the workspace, loaded when the session menu opens. */
     sessions: { loading: false, error: null, list: null, skipped: [] },
+    /** The local Copilot sessions the picker lists, fetched when a picker appears and on Refresh. `note` is the last Open in new panel outcome and `showError` the last Show here failure. */
+    copilot: { loading: false, error: null, list: null, note: null, showError: null },
     ui: {
         presentation: 'focused',
         phase: null,
@@ -141,9 +143,14 @@ function noteMoved(moved) {
     announce(`Moved to ${moved.title}, the loop the agent works in.`);
 }
 
-/** Says what an open-panel request did, as a status note. */
+/** Says what an open-panel request did: in the picker it came from while a picker shows, otherwise as a status note. */
 function reportPanel(note) {
     announce(note.text);
+    if (pickerShown()) {
+        state.copilot = { ...state.copilot, note };
+        renderCopilotPicker();
+        return;
+    }
     state.notes = [...state.notes.filter((item) => item.kind !== 'panel'), { id: `note-${++noteSeq}`, kind: 'panel', tone: note.tone, icon: note.icon, text: note.text }].slice(-MAX_NOTES);
     renderStatus();
 }
@@ -720,6 +727,7 @@ function connect() {
     stream.addEventListener('reload', (event) => {
         const data = event.data ? JSON.parse(event.data) : {};
         if (data.moved) noteMoved(data.moved);
+        if (data.sessions && pickerShown()) loadCopilotSessions();
         refresh();
     });
     stream.addEventListener('preferences', (event) => applyPreferences(JSON.parse(event.data)));
@@ -857,6 +865,27 @@ const act = {
         } catch (error) {
             reportPanel(failedPanel(ref.title, error.message));
         }
+    },
+    /** Connects this canvas to a session's current RPI task, then shows it and says which session it shows. */
+    async showSession(entry) {
+        const name = sessionLabel(entry);
+        state.copilot = { ...state.copilot, showError: null };
+        try {
+            await api('/api/show-session', { session: entry.sessionId });
+            toggleSessionMenu(false);
+            await refresh();
+            announce(`Showing ${name}.`);
+            focusQuietly($('taskTitle'));
+        } catch (error) {
+            state.copilot = { ...state.copilot, showError: `Could not show that session: ${error.message}` };
+            renderCopilotPicker();
+        }
+    },
+    /** Fetches the picker's sessions again, unless a fetch is already running. */
+    refreshSessions() {
+        if (state.copilot.loading) return;
+        loadCopilotSessions();
+        renderCopilotPicker();
     },
     /** Follows the agent again: its running loop and the phase it works in. */
     resumeFollowing: () => startFollowing(),
@@ -1405,18 +1434,72 @@ function renderSessionControls() {
     btn.title = `Session “${name}”: ${plural(loops, 'loop')}${tree.key ? ` in ${tree.key}` : ''}`;
 }
 
-/** Opens or closes the session menu: this session's loops, then the workspace's other sessions. */
+/** Opens or closes the session menu: this session's loops, the picker of Copilot sessions, then the workspace's other sessions. */
 function toggleSessionMenu(open) {
     const menu = $('sessionMenu');
     const show = open ?? menu.hidden;
     if (show && !state.data) return;
     menu.hidden = !show;
     $('sessionBtn').setAttribute('aria-expanded', String(show));
+    state.copilot = { ...state.copilot, note: null };
     if (!show) return;
+    loadCopilotSessions();
     renderSessionMenu();
     focusQuietly($('sessionMenuTitle'));
     if (state.data.session.source?.kind === 'rpi') loadSessions();
 }
+
+/** The picker's latest request; an answer to an earlier one is dropped. */
+let copilotRequest = 0;
+
+/** Whether a picker is on screen: the Not connected screen, or the session menu of a connected canvas. */
+const pickerShown = () => Boolean(state.notConnected) || (Boolean(state.data) && !$('sessionMenu').hidden);
+
+/**
+ * Starts fetching the sessions the picker lists. The loading state is set at once, so the caller's next render
+ * shows it, and the answer re-renders the picker. The page does not poll.
+ */
+function loadCopilotSessions() {
+    const request = ++copilotRequest;
+    state.copilot = { ...state.copilot, loading: true, error: null };
+    return api('/api/copilot-sessions').then(
+        (result) => ({ list: { sessions: result.sessions ?? [], skipped: result.skipped ?? 0 }, error: null }),
+        (error) => ({ list: null, error: error.message }),
+    ).then((outcome) => {
+        if (request !== copilotRequest) return;
+        state.copilot = { ...state.copilot, loading: false, ...outcome };
+        renderCopilotPicker();
+    });
+}
+
+/** The picker's controls on screen, in order. */
+const pickerControls = () => [...document.querySelectorAll('.copilot-sessions button')];
+
+/**
+ * Renders the picker where it shows. Focus stays on the same control; when that control is gone, the control in
+ * the same place, or the last one, takes it.
+ */
+function renderCopilotPicker() {
+    const before = pickerControls();
+    const active = document.activeElement;
+    const index = before.indexOf(active);
+    const key = active?.dataset?.key ?? null;
+    if (state.notConnected) {
+        render();
+    } else if (state.data && !$('sessionMenu').hidden) {
+        renderSessionMenu();
+    }
+    if (index < 0) return;
+    const after = pickerControls();
+    const target = after.find((control) => control.dataset.key === key) ?? after[Math.min(index, after.length - 1)];
+    if (target) focusQuietly(target);
+}
+
+/** What the picker shows: its fetched list and last outcomes, and the Copilot session the canvas shows. */
+const pickerModel = () => ({ ...state.copilot, shown: state.data?.shownSession ?? null });
+
+/** What the picker's controls do, for either placement. */
+const pickerActions = () => ({ onShow: (entry) => act.showSession(entry), onOpen: (ref) => act.openPanel(ref), onRefresh: () => act.refreshSessions() });
 
 async function loadSessions() {
     state.sessions = { ...state.sessions, loading: true, error: null };
@@ -1440,6 +1523,7 @@ function renderSessionMenu() {
             toggleSessionMenu(false);
             act.showTask(taskRef(task));
         },
+        picker: { model: pickerModel(), ...pickerActions() },
     }));
     if (session.source?.kind === 'rpi') renderSessionList();
     if (keepFocus) menu.querySelector(`[data-key="${CSS.escape(keepFocus)}"]`)?.focus({ preventScroll: true });
@@ -1852,6 +1936,8 @@ function showNotConnected(next) {
     state.data = null;
     state.error = null;
     applyPreferences(next.preferences);
+    // The picker fetches when the screen appears; later renders of the same screen keep its list.
+    if (entering) loadCopilotSessions();
     render();
     if (entering) announce('This canvas is not connected to an RPI session. Ask the agent to connect it.');
 }
@@ -1860,6 +1946,7 @@ function showNotConnected(next) {
 function leaveNotConnected() {
     state.notConnected = null;
     state.ui.connect = { asking: false, askedAt: 0, retryAfterMs: 30000, error: null, helpOpen: false };
+    state.copilot = { ...state.copilot, note: null, showError: null };
     document.body.classList.remove('is-not-connected');
     $('workspace').hidden = false;
     $('document').hidden = false;
@@ -1928,7 +2015,7 @@ function renderNotConnected() {
     $('sessionBtn').hidden = true;
     const view = $('connectView');
     view.hidden = false;
-    clear(view).append(notConnectedView({ ...answer.notConnected, handle, editor: answer.editor?.name ?? null, now: Date.now(), ui: state.ui.connect }, connectScreen));
+    clear(view).append(notConnectedView({ ...answer.notConnected, handle, editor: answer.editor?.name ?? null, now: Date.now(), ui: state.ui.connect, picker: pickerModel() }, { ...connectScreen, picker: pickerActions() }));
     if (focused) view.querySelector(`[data-key="${CSS.escape(focused)}"]`)?.focus({ preventScroll: true });
 }
 
