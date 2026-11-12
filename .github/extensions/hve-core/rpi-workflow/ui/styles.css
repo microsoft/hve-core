@@ -3806,6 +3806,13 @@ circle.diagram-mark-glyph {
   stroke: none;
 }
 
+/* A done part's hatch shows only in forced colors, where the done fill gives way to Canvas; it never takes a pointer. */
+.diagram-hatch {
+  display: none;
+  stroke: none;
+  pointer-events: none;
+}
+
 .diagram-edge {
   fill: none;
   stroke: var(--rw-fg-muted);
@@ -3885,9 +3892,17 @@ circle.diagram-mark-glyph {
   background: color-mix(in srgb, var(--rw-accent) 16%, var(--rw-bg));
 }
 
-.legend-swatch.is-needed {
-  border: 1.5px solid var(--rw-fg-muted);
-  border-radius: 50%;
+/* Progress swatches are small parts carrying the map's corner mark, so the mark, not the tone, tells the states apart. */
+.legend-swatch.has-mark {
+  position: relative;
+  margin-inline-end: 5px;
+}
+
+.legend-mark {
+  position: absolute;
+  top: -6px;
+  right: -7px;
+  overflow: visible;
 }
 
 .legend-swatch.is-highlight {
@@ -4935,11 +4950,34 @@ circle.diagram-mark-glyph {
   background: var(--rw-bg-hover);
 }
 
+.preview-hint {
+  margin: -2px 0 6px;
+}
+
+/* The pin: an outlined button while the preview is unpinned and a filled one once pinned, so shape, not tone alone, shows the state. */
 .preview-state {
   display: inline-grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--rw-border-control);
+  border-radius: var(--rw-radius);
+  background: transparent;
+  color: var(--rw-fg-muted);
+  cursor: pointer;
+}
+
+.preview-state:hover {
+  background: var(--rw-bg-hover);
+  color: var(--rw-fg);
+}
+
+.preview-state[aria-pressed="true"] {
+  border-color: var(--rw-accent);
+  background: var(--rw-accent);
+  color: var(--rw-bg);
 }
 
 .preview-state > svg {
@@ -4947,21 +4985,23 @@ circle.diagram-mark-glyph {
 }
 
 .preview-pin {
-  display: none;
-  color: var(--rw-accent);
-}
-
-.preview.is-locked .preview-ring {
-  display: none;
-}
-
-.preview.is-locked .preview-pin {
-  display: block;
+  width: 12px;
+  height: 12px;
 }
 
 .preview-ring {
-  width: 16px;
-  height: 16px;
+  display: none;
+}
+
+/* An ID preview that hovering can still pin rings the pin in place of its border; the ring fills while it arms. */
+.preview.is-hover-pin:not(.is-locked) .preview-state {
+  border-color: transparent;
+}
+
+.preview.is-hover-pin:not(.is-locked) .preview-ring {
+  display: block;
+  width: 22px;
+  height: 22px;
   transform: rotate(-90deg);
 }
 
@@ -4990,14 +5030,15 @@ circle.diagram-mark-glyph {
   }
 }
 
+/* Close keeps its space while hidden, so pinning never moves the pin out from under the pointer. */
 .preview-close {
-  display: none;
   width: 24px;
   height: 24px;
+  visibility: hidden;
 }
 
 .preview.is-locked .preview-close {
-  display: inline-flex;
+  visibility: visible;
 }
 
 .preview-title {
@@ -5844,6 +5885,40 @@ kbd {
     fill: HighlightText;
   }
 
+  /* Done parts: a sparse hatch in the system text color, with labels haloed in the part's fill so they read over it. */
+  .diagram-hatch {
+    display: inline;
+    forced-color-adjust: none;
+  }
+
+  .diagram-hatch-line {
+    forced-color-adjust: none;
+    stroke: CanvasText;
+    stroke-width: 1;
+  }
+
+  .diagram-hatch-line.is-on-highlight {
+    stroke: HighlightText;
+  }
+
+  .diagram-node.is-done text {
+    paint-order: stroke;
+    stroke: Canvas;
+    stroke-width: 4px;
+    stroke-linejoin: round;
+  }
+
+  .diagram-node.is-done.is-highlight text {
+    stroke: Highlight;
+  }
+
+  /* The Done swatch shows the hatch done parts take here. */
+  .legend-swatch.is-done {
+    forced-color-adjust: none;
+    border-color: CanvasText;
+    background: repeating-linear-gradient(135deg, Canvas 0 3px, CanvasText 3px 4px);
+  }
+
   .diagram-box > rect,
   .diagram-box.is-new > rect,
   .diagram-box.is-changed > rect,
@@ -5908,6 +5983,22 @@ kbd {
 
   .preview-ring .ring-fill {
     stroke: Highlight;
+  }
+
+  .preview-state {
+    border-color: ButtonText;
+    color: ButtonText;
+  }
+
+  .preview-state[aria-pressed="true"] {
+    forced-color-adjust: none;
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .preview-state:focus-visible {
+    outline-color: CanvasText;
   }
 }
 

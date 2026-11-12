@@ -41,14 +41,14 @@ You enter Review after completing implementation work in [Stage 6: Implementatio
 | rpi-review  | `/rpi-review`     | Review implementation evidence against the approved RPI plan |
 | hve-builder | Use `hve-builder` | Review or validate prompts, instructions, agents, and skills |
 
-### Other Skills, Agents, and Instructions
+### Other Skills and Agents
 
-| Tool                  | Type        | How to Invoke                  | Purpose                                                          |
-|-----------------------|-------------|--------------------------------|------------------------------------------------------------------|
-| pull-request          | Skill       | `/pull-request`                | Create a GitHub or Azure DevOps pull request for current changes |
-| documentation         | Agent       | Select **documentation** agent | Audit, drift, author, and validate documentation                 |
-| commit-message        | Instruction | Auto-activated                 | Enforces commit message conventions                              |
-| community-interaction | Instruction | Auto-activated                 | Enforces community communication standards                       |
+| Tool               | Type  | How to Invoke                                          | Purpose                                                                                              |
+|--------------------|-------|--------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| pull-request       | Skill | `/pull-request`                                        | Create a GitHub or Azure DevOps pull request for current changes                                     |
+| documentation      | Agent | Select **documentation** agent                         | Audit, drift, author, and validate documentation                                                     |
+| git-commit         | Skill | `/git-commit`                                          | Commit staged changes, or write a message with `mode=message-only`, using commit message conventions |
+| backlog-management | Skill | Loaded by backlog workflows such as `/backlog-execute` | Applies community communication templates to GitHub-visible comments                                 |
 
 ## Role-Specific Guidance
 
