@@ -3,7 +3,7 @@ title: RPI Workflow Canvas
 description: Follow an RPI session phase by phase in a canvas beside the chat, answer the agent's decisions, send it your input, and show a Project's sessions from the session picker
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-11-11
+ms.date: 2026-11-13
 ms.topic: how-to
 keywords:
   - rpi workflow canvas
@@ -217,7 +217,6 @@ While the agent works in that phase, it shows **In progress**; once the session 
 * Cloud sessions are not listed. A cloud session has no local workspace, so the picker never shows it, and the canvas cannot read its tasks or show its decisions. Run the sessions you want to follow as local sessions.
 * Sessions that share one checkout share its RPI tasks, so the picker lists that checkout once, under its most recently updated session. A session this chat started is always listed, and other sessions in its checkout are left out.
 * A session that runs an older hve-core build does not announce a running canvas or take inbox items, so its items go through this chat's agent.
-* During a rollout, an older copy of the provider keeps a task's feedback in its legacy store document. Until every copy updates, feedback can split across two documents.
 * Forwarding needs a chat whose agent has the `send_session_message` tool, such as a GitHub Copilot app Project. Without that tool, the agent cannot pass relayed items to the session.
 * Opening a panel depends on the host's experimental canvas open and list calls. When the host cannot open a panel, the canvas asks the agent instead.
 

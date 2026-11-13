@@ -2,7 +2,7 @@
 title: RPI Workflow Canvas
 description: Canvas extension for following and steering RPI sessions through research, planning, implementation, review, and follow-up
 author: Microsoft
-ms.date: 2026-11-11
+ms.date: 2026-11-13
 ms.topic: reference
 keywords:
   - canvas
@@ -395,7 +395,6 @@ The extension keeps its data under `~/.copilot/extension-data/hve-core-rpi-workf
 
 * `sessions/<id>.json` holds the session document. For a real session, `<id>` is `rpi-`, the task ID, and a short hash of the workspace root, so one task ID in two workspaces keeps two documents. The document is a copy of the task's files plus what you added in the canvas.
   Writes are atomic, and a lock file serializes writers across processes. A write lands only when no other process wrote since it read the session; otherwise it is applied again to the newer session. A document saved by an earlier canvas version is brought up to date as it is read.
-  When an earlier canvas stored the task under `rpi-` and the task ID alone, the first import under the workspace's key starts from that document if it came from the same workspace, so its feedback carries over. The earlier document stays where it is.
 * `sessions/<id>.previous.json` holds the session that the last replace discarded your changes from (`load_scenario` with `replace: true`), or an unreadable file it replaced. It stays until the next such replace.
 * `preferences.json` holds the theme and contrast choice.
 * `instances.json` remembers, for each conversation and canvas instance, what the instance shows (its state file and whether following is paused), so the instance returns there when the host reopens it. It keeps the 50 most recently updated instances. A canvas that is not connected leaves its entry as it was.
@@ -435,7 +434,6 @@ Your user account is their only boundary: any process running as you can read or
 * Cloud sessions are not listed. A cloud session has no local workspace, so the picker never shows it, and the canvas cannot read its tasks or show its decisions. Run the sessions you want to follow as local sessions.
 * Sessions that share one checkout share its RPI tasks, so the picker lists that checkout once, under its most recently updated session. A session this chat started is always listed, and other sessions in its checkout are left out.
 * A session that runs an older hve-core build neither announces a running canvas nor takes inbox items, so Send now relays its items through this chat's agent.
-* During a rollout, an older copy of the provider keeps a task's feedback in its legacy store document. Until every copy updates, feedback can split across two documents.
 * Forwarding needs a chat whose agent has the `send_session_message` tool, such as a GitHub Copilot app Project. The relay message asks that agent to forward the items, so an agent without the tool cannot pass them on.
 * Open in new panel depends on the host's experimental canvas open and list calls. When the host cannot open a panel, the canvas asks the agent instead.
 * Open in VS Code is verified with VS Code Insiders on macOS. Other hosts show the source in the canvas and Copy path.
