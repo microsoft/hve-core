@@ -5,6 +5,7 @@ import {
     agentEditSection,
     artifactFor,
     deriveView,
+    isCopilotSessionId,
     ModelError,
     PHASES,
     recordActivity,
@@ -21,7 +22,6 @@ import {
 } from './model.mjs';
 import { buildScenario, SCENARIO_ID, STAGES } from './scenario.mjs';
 import { loadSessionDocs } from './session-docs.mjs';
-import { isSessionId } from './source/sessions.mjs';
 import { sessionListOf, sourceSummary } from './sources.mjs';
 
 const str = (description, extra = {}) => ({ type: 'string', description, ...extra });
@@ -411,7 +411,7 @@ export function createActionHandlers(deps) {
             if (!deps.switchSource) {
                 throw makeError('unavailable', 'This canvas cannot switch sources.');
             }
-            if (input.session !== undefined && !isSessionId(input.session)) {
+            if (input.session !== undefined && !isCopilotSessionId(input.session)) {
                 throw makeError('invalid_input', 'session must be a Copilot session ID (a UUID).');
             }
             if (input.task !== undefined && typeof input.task !== 'string') {

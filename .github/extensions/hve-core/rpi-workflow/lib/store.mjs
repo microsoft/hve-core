@@ -7,9 +7,9 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { ModelError, upgradeSession, validateSession } from './model.mjs';
+import { isCopilotSessionId, ModelError, upgradeSession, validateSession } from './model.mjs';
+import { CANVAS_ID } from './panels.mjs';
 
-export const CANVAS_ID = 'hve-core-rpi-workflow';
 export const PREFERENCES_FORMAT = 'hve-core-rpi-workflow.preferences';
 export const PREFERENCES_VERSION = 1;
 export const INSTANCES_FORMAT = 'hve-core-rpi-workflow.instances';
@@ -21,8 +21,8 @@ const HOST_SESSION_RE = /^[A-Za-z0-9._-]{1,128}$/;
 export const DEFAULT_PREFERENCES = Object.freeze({ theme: 'system', contrast: 'standard' });
 const THEMES = new Set(['system', 'light', 'dark']);
 const CONTRASTS = new Set(['standard', 'more']);
-const SESSION_ID_RE = /^[a-z0-9][a-z0-9-]{0,79}$/;
-const COPILOT_SESSION_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Store document IDs: lowercase letters, digits, and dashes. */
+const STORE_ID_RE = /^[a-z0-9][a-z0-9-]{0,79}$/;
 const REFERENCE_RE = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$/;
 const HANDLE_RE = /^[0-9A-Za-z][0-9A-Za-z-]{0,23}$/;
 /** Most items one inbox entry names, the same limit a send takes. */
@@ -126,7 +126,7 @@ const OWNER_KEYS = new Set(['pid', 'at']);
  * @returns {string}
  */
 function copilotSessionId(value) {
-    if (typeof value !== 'string' || !COPILOT_SESSION_RE.test(value)) {
+    if (!isCopilotSessionId(value)) {
         throw new StoreError('invalid_input', 'Copilot session IDs are UUIDs.');
     }
     return value.toLowerCase();
@@ -143,12 +143,12 @@ function isInboxEntry(value) {
     return isRecord(value)
         && onlyKeys(value, ENTRY_KEYS)
         && typeof value.id === 'string' && REFERENCE_RE.test(value.id)
-        && typeof value.taskDoc === 'string' && SESSION_ID_RE.test(value.taskDoc)
+        && typeof value.taskDoc === 'string' && STORE_ID_RE.test(value.taskDoc)
         && Array.isArray(value.itemIds) && value.itemIds.length >= 1 && value.itemIds.length <= INBOX_MAX_ITEMS
         && value.itemIds.every((id) => typeof id === 'string' && REFERENCE_RE.test(id))
         && new Set(value.itemIds).size === value.itemIds.length
         && isRecord(value.from) && onlyKeys(value.from, FROM_KEYS)
-        && typeof value.from.sessionId === 'string' && COPILOT_SESSION_RE.test(value.from.sessionId)
+        && isCopilotSessionId(value.from.sessionId)
         && typeof value.from.handle === 'string' && HANDLE_RE.test(value.from.handle)
         && isInstant(value.createdAt)
         && INBOX_STATES.includes(value.state)
@@ -160,8 +160,8 @@ function isOutboxEntry(value) {
     return isRecord(value)
         && onlyKeys(value, OUTBOX_ENTRY_KEYS)
         && typeof value.id === 'string' && REFERENCE_RE.test(value.id)
-        && typeof value.taskDoc === 'string' && SESSION_ID_RE.test(value.taskDoc)
-        && typeof value.target === 'string' && COPILOT_SESSION_RE.test(value.target)
+        && typeof value.taskDoc === 'string' && STORE_ID_RE.test(value.taskDoc)
+        && isCopilotSessionId(value.target)
         && typeof value.handle === 'string' && HANDLE_RE.test(value.handle)
         && isInstant(value.relayAfter)
         && isInstant(value.createdAt)
@@ -188,16 +188,6 @@ function entriesOf(file, doc, isEntry) {
         throw new StoreError('storage_corrupt', `${name} has entries with the same ID.`);
     }
     return { entries: doc.entries };
-}
-
-/** The inbox entries of a session, or none when its file is missing. */
-function inboxOf(file, doc) {
-    return entriesOf(file, doc, isInboxEntry);
-}
-
-/** The outbox entries of a session, or none when its file is missing. */
-function outboxOf(file, doc) {
-    return entriesOf(file, doc, isOutboxEntry);
 }
 
 /**
@@ -228,23 +218,52 @@ export function createStore(options = {}) {
     const preferencesFile = path.join(root, 'preferences.json');
     const instancesFile = path.join(root, 'instances.json');
     const presenceDir = path.join(root, 'presence');
-    const inboxDir = path.join(root, 'inbox');
-    const outboxDir = path.join(root, 'outbox');
 
     function presenceFile(id) {
         return path.join(presenceDir, `${copilotSessionId(id)}.json`);
     }
 
-    function inboxFile(id) {
-        return path.join(inboxDir, `${copilotSessionId(id)}.json`);
+    /**
+     * The entry files of one queue, one per Copilot session in `dir`, whose entries `isEntry`
+     * checks. The inbox and the outbox both keep their entries this way.
+     *
+     * @param {string} dir
+     * @param {(value: unknown) => boolean} isEntry
+     */
+    function queueFiles(dir, isEntry) {
+        const fileOf = (sessionId) => path.join(dir, `${copilotSessionId(sessionId)}.json`);
+        return {
+            async load(sessionId) {
+                const file = fileOf(sessionId);
+                return withLock(file, async () => entriesOf(file, await readJson(file), isEntry));
+            },
+            async update(sessionId, change) {
+                const file = fileOf(sessionId);
+                return serialized(file, () => lockedWrite(file, async (stillHeld) => {
+                    const current = entriesOf(file, await readJson(file), isEntry);
+                    const { entries, result } = change(current.entries);
+                    if (entries === current.entries) {
+                        return { value: { result, changed: false } };
+                    }
+                    const next = entriesOf(file, { entries }, isEntry).entries;
+                    if (!(await stillHeld())) {
+                        return { retry: true };
+                    }
+                    await writeAtomic(file, { entries: next });
+                    return { value: { result, changed: true } };
+                }));
+            },
+            async stamp(sessionId) {
+                return stampOf(fileOf(sessionId));
+            },
+        };
     }
 
-    function outboxFile(id) {
-        return path.join(outboxDir, `${copilotSessionId(id)}.json`);
-    }
+    const inbox = queueFiles(path.join(root, 'inbox'), isInboxEntry);
+    const outbox = queueFiles(path.join(root, 'outbox'), isOutboxEntry);
 
     function sessionFile(id) {
-        if (typeof id !== 'string' || !SESSION_ID_RE.test(id)) {
+        if (typeof id !== 'string' || !STORE_ID_RE.test(id)) {
             throw new StoreError('invalid_input', 'Session IDs use lowercase letters, digits, and dashes.');
         }
         return path.join(sessionsDir, `${id}.json`);
@@ -607,9 +626,8 @@ export function createStore(options = {}) {
          * @param {string} sessionId a Copilot session ID
          * @returns {Promise<{ entries: any[] }>}
          */
-        async loadInbox(sessionId) {
-            const file = inboxFile(sessionId);
-            return withLock(file, async () => inboxOf(file, await readJson(file)));
+        loadInbox(sessionId) {
+            return inbox.load(sessionId);
         },
 
         /**
@@ -622,21 +640,8 @@ export function createStore(options = {}) {
          * @param {(entries: any[]) => { entries: any[], result: T }} change
          * @returns {Promise<{ result: T, changed: boolean }>}
          */
-        async updateInbox(sessionId, change) {
-            const file = inboxFile(sessionId);
-            return serialized(file, () => lockedWrite(file, async (stillHeld) => {
-                const current = inboxOf(file, await readJson(file));
-                const { entries, result } = change(current.entries);
-                if (entries === current.entries) {
-                    return { value: { result, changed: false } };
-                }
-                const next = inboxOf(file, { entries }).entries;
-                if (!(await stillHeld())) {
-                    return { retry: true };
-                }
-                await writeAtomic(file, { entries: next });
-                return { value: { result, changed: true } };
-            }));
+        updateInbox(sessionId, change) {
+            return inbox.update(sessionId, change);
         },
 
         /**
@@ -646,8 +651,8 @@ export function createStore(options = {}) {
          * @param {string} sessionId a Copilot session ID
          * @returns {Promise<string>}
          */
-        async inboxStamp(sessionId) {
-            return stampOf(inboxFile(sessionId));
+        inboxStamp(sessionId) {
+            return inbox.stamp(sessionId);
         },
 
         /**
@@ -658,9 +663,8 @@ export function createStore(options = {}) {
          * @param {string} sessionId a Copilot session ID
          * @returns {Promise<{ entries: any[] }>}
          */
-        async loadOutbox(sessionId) {
-            const file = outboxFile(sessionId);
-            return withLock(file, async () => outboxOf(file, await readJson(file)));
+        loadOutbox(sessionId) {
+            return outbox.load(sessionId);
         },
 
         /**
@@ -673,21 +677,8 @@ export function createStore(options = {}) {
          * @param {(entries: any[]) => { entries: any[], result: T }} change
          * @returns {Promise<{ result: T, changed: boolean }>}
          */
-        async updateOutbox(sessionId, change) {
-            const file = outboxFile(sessionId);
-            return serialized(file, () => lockedWrite(file, async (stillHeld) => {
-                const current = outboxOf(file, await readJson(file));
-                const { entries, result } = change(current.entries);
-                if (entries === current.entries) {
-                    return { value: { result, changed: false } };
-                }
-                const next = outboxOf(file, { entries }).entries;
-                if (!(await stillHeld())) {
-                    return { retry: true };
-                }
-                await writeAtomic(file, { entries: next });
-                return { value: { result, changed: true } };
-            }));
+        updateOutbox(sessionId, change) {
+            return outbox.update(sessionId, change);
         },
 
         /**
@@ -696,8 +687,8 @@ export function createStore(options = {}) {
          * @param {string} sessionId a Copilot session ID
          * @returns {Promise<string>}
          */
-        async outboxStamp(sessionId) {
-            return stampOf(outboxFile(sessionId));
+        outboxStamp(sessionId) {
+            return outbox.stamp(sessionId);
         },
 
         async loadPreferences() {

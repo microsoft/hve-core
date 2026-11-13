@@ -40,6 +40,38 @@ export const CLAIM_WINDOW_MS = 20 * 1000;
 const MARK_ATTEMPTS = 3;
 /** The pause before the first retry of recording a send; each later retry waits one step longer. */
 const MARK_RETRY_MS = 50;
+/**
+ * Records items as sent once their message reached a chat, retrying a store write that fails: the
+ * message is already in the chat and must not be sent again, so the record is worth a short wait.
+ * Makes `MARK_ATTEMPTS` attempts, waiting `retryMs` times the attempt number between them, and logs
+ * each failure. Resolves to the store update's `{ session, result }`, or null when every attempt fails.
+ *
+ * @param {{ update: (id: string, change: (doc: any) => any, options: { by: string }) => Promise<{ session: any, result: any }> }} store
+ * @param {string} docId the task document that holds the items
+ * @param {string[]} ids the items the message carried
+ * @param {{
+ *   details: Record<string, unknown>,
+ *   now: () => string,
+ *   pause?: (ms: number) => Promise<unknown>,
+ *   retryMs?: number,
+ *   log?: (message: string, level?: string) => void,
+ *   about?: string | null,
+ * }} options `details` go to `markDelivered`; `about` names the task in the log
+ */
+export async function recordSent(store, docId, ids, options) {
+    const { details, now, pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms)), log = () => {}, about = null } = options;
+    const retryMs = Number.isFinite(options.retryMs) ? options.retryMs : MARK_RETRY_MS;
+    for (let attempt = 1; attempt <= MARK_ATTEMPTS; attempt += 1) {
+        try {
+            return await store.update(docId, (doc) => markDelivered(doc, ids, 'send', now(), details), { by: 'user' });
+        } catch (error) {
+            log(`Sent, but could not record it${about ? ` for ${about}` : ''} (attempt ${attempt} of ${MARK_ATTEMPTS}): ${error instanceof Error ? error.message : 'error'}`, 'warning');
+            if (attempt < MARK_ATTEMPTS) await pause(retryMs * attempt);
+        }
+    }
+    return null;
+}
+
 /** Store errors that a later check cannot fix, because the stored data itself is wrong. */
 const PERMANENT = new Set(['storage_corrupt', 'storage_unsupported', 'invalid_input', 'not_found']);
 /** The change that returns an entry to the queue that any process may take. */
@@ -166,7 +198,6 @@ export function createInboxRunner(deps) {
     const presenceTtlMs = deps.presenceTtlMs ?? PRESENCE_TTL_MS;
     const checkMs = deps.checkMs ?? INBOX_CHECK_MS;
     const claimStaleMs = deps.claimStaleMs ?? CLAIM_STALE_MS;
-    const markRetryMs = deps.markRetryMs ?? MARK_RETRY_MS;
     const reports = {
         presence: failureReport('Could not record that this canvas is live', log),
         inbox: failureReport('Could not check the inbox', log),
@@ -253,16 +284,8 @@ export function createInboxRunner(deps) {
      */
     async function markSent(taskDoc, ids, messageId, route) {
         const how = route === 'relay' ? { route, relayedVia: sessionId } : { route };
-        for (let attempt = 1; attempt <= MARK_ATTEMPTS; attempt += 1) {
-            try {
-                const { result } = await store.update(taskDoc, (doc) => markDelivered(doc, ids, 'send', iso(now()), { messageId, ...how }), { by: 'user' });
-                return result;
-            } catch (error) {
-                log(`Sent, but could not record it (attempt ${attempt} of ${MARK_ATTEMPTS}): ${error instanceof Error ? error.message : 'error'}`, 'warning');
-                if (attempt < MARK_ATTEMPTS) await pause(markRetryMs * attempt);
-            }
-        }
-        return null;
+        const marked = await recordSent(store, taskDoc, ids, { details: { messageId, ...how }, now: () => iso(now()), pause, retryMs: deps.markRetryMs, log });
+        return marked ? marked.result : null;
     }
 
     /** Marks the items uncertain and removes the entry, or leaves the entry in `sending` for the stale check when marking fails. */
