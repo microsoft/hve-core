@@ -420,19 +420,6 @@ export async function readGit(root) {
     return { repository, branch };
 }
 
-/**
- * The store ID an earlier canvas gave a task's document, before documents were keyed by
- * workspace: `rpi-` plus the task ID, cleaned and shortened to fit the store's pattern and length.
- *
- * @param {string} taskId
- */
-function legacyStoreIdFor(taskId) {
-    const clean = String(taskId).toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
-    const id = `rpi-${clean}`;
-    if (id.length <= 80 && clean === taskId) return id;
-    return `${id.slice(0, 70).replace(/-+$/, '')}-${createHash('sha256').update(String(taskId)).digest('hex').slice(0, 8)}`;
-}
-
 const STORE_ID_MAX = 80;
 
 /**
@@ -451,22 +438,6 @@ export function storeIdFor(taskId, root) {
     if (clean === taskId && clean.length <= room) return `rpi-${clean}${suffix}`;
     const taskHash = createHash('sha256').update(String(taskId)).digest('hex').slice(0, 8);
     return `rpi-${clean.slice(0, room - taskHash.length - 1).replace(/-+$/, '')}-${taskHash}${suffix}`;
-}
-
-/**
- * The document an earlier canvas stored for a task under its workspace-free ID, when that document
- * was assembled from the same workspace root. Null when there is none or it came from another root.
- *
- * @param {ReturnType<typeof import('../store.mjs').createStore>} store
- * @param {string} taskId
- * @param {string | null | undefined} root the workspace root's real path
- */
-export async function legacyDocumentFor(store, taskId, root) {
-    if (!root) return null;
-    const legacy = await store.load(legacyStoreIdFor(taskId)).catch(() => undefined);
-    if (!legacy || legacy.source?.kind !== 'rpi' || typeof legacy.source.root !== 'string') return null;
-    const recorded = await fs.realpath(legacy.source.root).catch(() => null);
-    return recorded === root ? legacy : null;
 }
 
 const MAX_SOURCE_CHECKS = 200;
@@ -773,9 +744,7 @@ export async function sourceSignature(workspace, watched, sessionKey) {
 
 /**
  * Writes a loaded task into the store: creates the document on first import, otherwise
- * merges, attributed to the source so the user's change count does not move. The first import
- * under a workspace's ID starts from the matching earlier document, when there is one, so its
- * feedback, decisions, and history carry over; that earlier document stays where it is.
+ * merges, attributed to the source so the user's change count does not move.
  *
  * @param {ReturnType<typeof import('../store.mjs').createStore>} store
  * @param {{ session: any }} loaded
@@ -784,10 +753,8 @@ export async function sourceSignature(workspace, watched, sessionKey) {
 export async function importIntoStore(store, loaded, now) {
     const existing = await store.load(loaded.session.id).catch(() => undefined);
     if (!existing) {
-        const earlier = await legacyDocumentFor(store, loaded.session.source.taskId, loaded.session.source.root);
-        const fresh = earlier ? { ...mergeImport(earlier, loaded.session, now), id: loaded.session.id } : loaded.session;
         try {
-            return { session: await store.create(fresh), changed: true };
+            return { session: await store.create(loaded.session), changed: true };
         } catch (error) {
             if (!(error instanceof ModelError) || error.code !== 'scenario_exists') throw error;
         }

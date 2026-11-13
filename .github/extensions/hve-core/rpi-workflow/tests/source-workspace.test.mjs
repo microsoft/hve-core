@@ -9,7 +9,6 @@ import { after, before, describe, it } from 'node:test';
 
 import { symlinkOrSkip } from '../../session-log/tests/helpers.mjs';
 import { createFeedback } from '../lib/model.mjs';
-import { loadSessionDocs } from '../lib/session-docs.mjs';
 import { parseWorkspaceYaml, resolveSessionStateRoot, resolveSessionWorkspace } from '../lib/source/sessions.mjs';
 import {
     createFollower,
@@ -712,7 +711,6 @@ describe('documents keyed by workspace', () => {
     let scratch;
     let workspaceA;
     let workspaceB;
-    const LEGACY_ID = `rpi-${ROOT_TASK}`;
 
     before(async () => {
         scratch = await scratchFolder('keys');
@@ -723,8 +721,6 @@ describe('documents keyed by workspace', () => {
     });
     after(() => fs.rm(scratch, { recursive: true, force: true }));
 
-    const comment = (text) => (session) => createFeedback(session, { kind: 'comment', text }, NOW);
-
     it('keeps one task in two workspaces apart, and gives one workspace one document', async (t) => {
         const store = createStore({ root: path.join(scratch, 'store-apart') });
         t.after(() => store.close());
@@ -733,52 +729,6 @@ describe('documents keyed by workspace', () => {
         assert.equal(first.session.id, storeIdFor(ROOT_TASK, workspaceA.root));
         assert.notEqual(first.session.id, second.session.id);
         assert.equal((await importIntoStore(store, await loadTask(workspaceA, PATHS.rootState, NOW), NOW)).changed, false);
-    });
-
-    it('starts a workspace document from the matching earlier one once, and keeps the earlier one', async (t) => {
-        const store = createStore({ root: path.join(scratch, 'store-migrate') });
-        t.after(() => store.close());
-        const loaded = await loadTask(workspaceA, PATHS.rootState, NOW);
-        await store.create({ ...loaded.session, id: LEGACY_ID });
-        await store.update(LEGACY_ID, comment('Kept from before'), { by: 'user' });
-        const migrated = await importIntoStore(store, loaded, NOW);
-        assert.equal(migrated.session.id, loaded.session.id);
-        assert.deepEqual(migrated.session.feedback.map((item) => item.text), ['Kept from before']);
-        assert.equal(migrated.session.scenario.userChanges, 1, 'the migrated changes keep their count');
-        assert.equal((await store.load(LEGACY_ID)).feedback.length, 1, 'the earlier document stays');
-
-        await store.update(LEGACY_ID, comment('Added to the old document'), { by: 'user' });
-        const again = await importIntoStore(store, await loadTask(workspaceA, PATHS.rootState, NOW), NOW);
-        assert.deepEqual(again.session.feedback.map((item) => item.text), ['Kept from before'], 'the migration copies once');
-    });
-
-    it('leaves an earlier document from another workspace alone', async (t) => {
-        const store = createStore({ root: path.join(scratch, 'store-other-root') });
-        t.after(() => store.close());
-        const loaded = await loadTask(workspaceA, PATHS.rootState, NOW);
-        await store.create({ ...loaded.session, id: LEGACY_ID, source: { ...loaded.session.source, root: workspaceB.root } });
-        await store.update(LEGACY_ID, comment('Belongs to the other workspace'), { by: 'user' });
-        const fresh = await importIntoStore(store, loaded, NOW);
-        assert.deepEqual(fresh.session.feedback, [], 'nothing moves across workspaces');
-        assert.equal((await store.load(LEGACY_ID)).feedback.length, 1);
-        assert.equal((await store.load(LEGACY_ID)).source.root, workspaceB.root);
-    });
-
-    it('lists a related task from its earlier document in the same workspace, and not from another', async (t) => {
-        const store = createStore({ root: path.join(scratch, 'store-related') });
-        t.after(() => store.close());
-        const shown = await importIntoStore(store, await loadTask(workspaceA, PATHS.rootState, NOW), NOW);
-        const child = await loadTask(workspaceA, PATHS.childState, NOW);
-        await store.create({ ...child.session, id: `rpi-${CHILD_TASK}` });
-        await store.update(`rpi-${CHILD_TASK}`, comment('Earlier child note'), { by: 'user' });
-        const source = { kind: 'rpi', workspace: workspaceA };
-        const listed = await loadSessionDocs(store, shown.session, source);
-        assert.deepEqual(listed.map((doc) => [doc.taskId, doc.id, doc.session.feedback.length]), [[ROOT_TASK, shown.session.id, 0], [CHILD_TASK, `rpi-${CHILD_TASK}`, 1]]);
-        const otherStore = createStore({ root: path.join(scratch, 'store-related-other') });
-        t.after(() => otherStore.close());
-        await otherStore.create({ ...child.session, id: `rpi-${CHILD_TASK}`, source: { ...child.session.source, root: workspaceB.root } });
-        const unlisted = await loadSessionDocs(otherStore, shown.session, source);
-        assert.deepEqual(unlisted.map((doc) => doc.taskId), [ROOT_TASK], 'a document from another workspace is not listed');
     });
 });
 
