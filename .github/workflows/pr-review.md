@@ -29,17 +29,26 @@ network:
     - node
 timeout-minutes: 15
 
-imports:
-  - ../agents/coding-standards/code-review.agent.md
-
 checkout:
+  # Skills and instructions the code-review skill reads at runtime. The
+  # accessibility perspective needs only the accessibility skill entry and
+  # its framework references.
   sparse-checkout: |
     .github/copilot-instructions.md
     .github/PULL_REQUEST_TEMPLATE.md
-    .github/instructions/coding-standards/
-    .github/instructions/hve-core/
-    .github/instructions/shared/
+    .github/instructions/
     .github/skills/coding-standards/code-review/
+    .github/skills/coding-standards/code-review-core/
+    .github/skills/coding-standards/code-review-functional/
+    .github/skills/coding-standards/code-review-standards/
+    .github/skills/coding-standards/code-review-accessibility/
+    .github/skills/coding-standards/code-review-security/
+    .github/skills/coding-standards/code-review-readiness/
+    .github/skills/coding-standards/hve-artifact-authoring/
+    .github/skills/coding-standards/python-foundational/
+    .github/skills/shared/telemetry-foundations/
+    .github/skills/accessibility/accessibility/SKILL.md
+    .github/skills/accessibility/accessibility/references/frameworks/
     scripts/
     docs/
     package.json
@@ -98,30 +107,59 @@ For all other associations (`CONTRIBUTOR`, `FIRST_TIMER`,
 `FIRST_TIME_CONTRIBUTOR`, `NONE`), use the standard review mode with full
 enforcement.
 
-## Code Review Agent Invocation
+## Code Review Skill Activation
 
-This workflow imports the **Code Review** agent and runs it in its hidden
-**workflow autonomy mode**. Operate that agent non-interactively with these
-fixed settings:
+This workflow is the host-managed automation contract for the `code-review`
+skill. Read these before reviewing and follow them as the review policy for
+this run:
 
-* **Perspectives:** `full` (apply every perspective lens: functional,
-  standards, accessibility, security, and PR).
-* **Depth:** `basic` (Tier 1 verification rigor).
-* **No human pauses:** skip all scope-confirmation and perspective/depth
-  selection prompts. Auto-accept the change scope derived from the PR diff.
-* **Inline application:** apply each perspective lens and the `code-review`
-  skill knowledge inline. Do not dispatch subagents and do not write the
-  agent's tracking-file findings report.
-* **Output contract:** surface all findings through the Review Steps and
-  safe-outputs below: this workflow owns output and submission.
+1. `.github/skills/coding-standards/code-review/SKILL.md`, including its
+   Host-managed automation section
+2. `.github/skills/coding-standards/code-review-core/SKILL.md` and its
+   `references/review-contract.md`
+3. The `SKILL.md` of each perspective skill under
+   `.github/skills/coding-standards/`: `code-review-functional`,
+   `code-review-standards`, `code-review-accessibility`,
+   `code-review-security`, and `code-review-readiness`
+4. For accessibility, `.github/skills/accessibility/accessibility/SKILL.md`
+   and only the files under its `references/frameworks/` that the changed
+   surface needs
+5. For standards, the applicable `.github/instructions/` files and the
+   matching domain skills: `python-foundational` and `hve-artifact-authoring`
+   under `.github/skills/coding-standards/`, and
+   `.github/skills/shared/telemetry-foundations/`
+
+Run the skill with these fixed settings:
+
+* Profile `full`: the functional, standards, accessibility, security, and
+  readiness perspectives.
+* Depth `basic`.
+* No human pauses. Accept the change scope derived from the PR diff and treat
+  derived choices as agent-owned.
+* Apply each perspective inline. Do not dispatch subagents.
+* Keep review state in memory. Do not run the `code-review-core` helper, write
+  tracking files or a local report, or open a canvas.
+* This run supplies no business-alignment sources or Security Plan Drift
+  baseline, so those comparisons do not run.
+
+The review target is the pull request that received the `/review` comment.
+Before step 1, read its open or closed state, base and head SHAs, description,
+linked issues, changed files, and diff through the GitHub tools. Record the
+state and both SHAs for the freshness check in step 5. If the pull request
+cannot be read, call `noop` with the reason.
 
 ## Instruction Priority
 
 Follow the Review Steps below as the authoritative procedure and output
-contract. The imported Code Review agent supplies perspective lenses, the
-`code-review` skill knowledge, and coding standards. Ignore the agent's
-interactive, human-gated, phase-based, or tracking-file procedures: its
-workflow autonomy mode defers all sequencing and output to these steps.
+contract. This workflow owns target acquisition, output, freshness checks,
+and publication. The skills supply the review criteria and the finding
+verification, severity, and coverage rules. The Review Steps, not the skill's
+outcome, set the review event, labels, and draft conversion. Report findings
+in the matching review body section: readiness metadata under Issue Alignment
+or PR Template Compliance, standards under Coding Standards, and functional,
+security, accessibility, and changed-documentation findings under Code
+Quality. When required review work is blocked or unavailable, state what was
+not reviewed in the overview and do not add `review-passed`.
 
 Search for and apply `content-policy-citation.instructions.md` before submitting
 PR review comments, review summaries, PR updates, or other GitHub-visible text
@@ -213,6 +251,15 @@ Based on all findings, determine the review verdict. If the review mode is
 
 * All required items are present but there are suggestions or minor issues.
 * Some coding standard deviations exist but are non-critical.
+
+Immediately before the first safe output that writes to the PR, re-read the
+pull request and compare its open or closed state and its base and head SHAs
+with the values recorded before step 1. If any of them changed, do not submit
+the review, inline comments, labels, or draft conversion. Post one
+`add-comment` stating that the review was not submitted because the pull
+request changed while it ran, then stop. Otherwise, confirm that each inline
+comment's path and line still fall on a changed line on the RIGHT side of the
+current diff, and move any finding that does not map into the review body.
 
 For each finding, create an inline `create-pull-request-review-comment`
 on the specific file and line where the issue occurs. For template and

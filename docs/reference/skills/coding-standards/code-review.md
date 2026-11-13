@@ -1,9 +1,9 @@
 ---
 title: code-review
-description: "Review code changes from multiple perspectives with context bootstrap, depth-tier rigor, and structured findings output."
-sidebar_position: 1
+description: "Review a PR, branch comparison, commit, local changes, or selected code using shared evidence and focused perspectives, with an optional Code Review canvas."
+sidebar_position: 10
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-11-09
 ms.topic: reference
 keywords:
   - skill
@@ -23,35 +23,22 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Review code changes from multiple perspectives with context bootstrap, depth-tier rigor, and structured findings output.
+Review a PR, branch comparison, commit, local changes, or selected code using shared evidence and focused perspectives, with an optional Code Review canvas.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-Use this skill to review a PR, an explicit branch comparison, or local changes
-across functional, standards, accessibility, security, and readiness perspectives.
-It establishes the complete change surface and an orientation before findings.
-Use implementation workflows to fix accepted findings; requesting a review alone
-does not authorize source edits or publishing comments.
+Use this skill to review a PR or MR, a named branch comparison, a commit, staged or unstaged local changes, or selected code. Run it as `/code-review` or through the Code Review agent.
+A clear request runs as a sweep: Code Review shows a compact scope summary and continues. Add `mode=guided` to choose areas, perspectives, or depth at each decision point.
 
-Target, profile, and depth are separate choices. The standard profile recommends
-core perspectives plus security/accessibility when signaled; comprehensive depth
-increases verification rigor without automatically changing the selected lanes.
+The `standard` profile selects functional, standards, and readiness, and adds accessibility or security when the change touches those surfaces. `full` runs all five perspectives, and `custom` runs the ones you name. Depth (`basic`, `standard`, or `comprehensive`) is a separate choice that sets how far each perspective traces the change.
+
+Each review captures one immutable snapshot. Small or tightly coupled work runs inline, and independent work goes to parallel workers that return the shared result contract with coverage. When the Code Review canvas is available, Code Review opens it to show coverage and findings and to collect your feedback; the review works the same without it.
+Review keeps source and Git state read-only. Fix accepted findings in an implementation workflow, and expect Code Review to ask for your explicit consent before it stages or posts anything to a PR.
 
 ## Example usage
 
-Ask: `/code-review Review this checked-out feature branch against origin/main,
-with the standard profile. Start with orientation and recommend a depth; keep
-source unchanged and do not publish review comments.` Provide the intended change
-and available test evidence.
+Run `/code-review feature/search compared with main profile=full` and describe what the change should do. Code Review resolves both revisions, captures the snapshot, shows the scope summary, and reviews with all five perspectives at `standard` depth.
+Expect a `review.md` under `.copilot-tracking/reviews/code-reviews/<date>/<review-id>/` that leads with findings and their consequences, reports execution and outcome separately, and lists incomplete coverage and limitations.
 
-Expect target/head binding, a change brief based on the full diff, a walkthrough,
-and independent confirmation of perspectives and depth before the findings sweep.
-A useful result ties normalized findings to files and locations, separates
-observations from conclusions, and identifies validation gaps and follow-up work.
-
-For local changes, name staged or unstaged scope explicitly rather than implying
-a PR exists. A PR review additionally needs the provider-resolved reviewed head
-SHA; changed target identity blocks emission until refreshed. Success is a
-traceable review with honest coverage limits, not human approval or a claim that
-tests passed without being run.
+For local changes, say whether to review staged, unstaged, or combined changes. A successful review is a traceable report with explicit coverage limits. It still needs your review before you act on it, and it doesn't claim tests passed unless their results were captured.

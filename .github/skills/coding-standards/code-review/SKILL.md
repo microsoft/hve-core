@@ -1,63 +1,202 @@
 ---
 name: code-review
-description: Review code changes from multiple perspectives with context bootstrap, depth-tier rigor, and structured findings output.
-license: MIT
+description: 'Review a PR, branch comparison, commit, local changes, or selected code using shared evidence and focused perspectives, with an optional Code Review canvas.'
+argument-hint: '[target] [profile=standard|full|custom] [depth=basic|standard|comprehensive] [mode=sweep|guided]'
+license: CC-BY-4.0
 user-invocable: true
-metadata:
-  authors: "microsoft/hve-core"
-  spec_version: "1.0"
-  last_updated: "2026-09-08"
 ---
 
-# Code Review Skill Entry
+# Code Review
 
-This `SKILL.md` is the entrypoint for the Code Review skill.
+## Goal
 
-The skill provides a reusable review workflow for pull requests, branch diffs, and local changes across functional, standards, accessibility, security, and readiness perspectives. It separates the review target and profile from perspective and depth selection, and centralizes change-brief preparation, severity normalization, and output contracts so review agents stay thin and consistent.
+Explain the consequential defects in a change, what was reviewed, and what still
+needs evidence. Keep one captured review surface and a human-editable report.
 
-## Shared principles
+## Start
 
-Review work should stay anchored in evidence and should avoid premature conclusions. Keep the review grounded in file and line evidence, use proportional depth based on risk, read the full diff range before narrowing, and keep factual orientation separate from structured findings.
+Activate `code-review-core` and `disclaimer-language` unless already loaded.
+Use the core's contract and resolved script location. Show the canonical
+Code-Review notice according to the disclaimer skill's cadence.
 
-## Local write boundary
+Resolve the explicit target before capturing evidence: PR/MR identity and its
+base/head revisions, a named branch comparison, local mode, a commit, or selected
+code. Reuse an existing review only when its repository and target match the
+request. Ask about ambiguous targets; do not guess a base, fetch, check out a
+branch, or mix dirty local content into a PR snapshot. An explicitly requested
+local overlay is a separate review and cannot supply PR inline comments.
 
-Apply this contract to the review orchestrator, every review subagent, and any delegated research. It is behavioral guidance, not a filesystem sandbox.
+For PRs, use the available provider read capability to collect immutable target
+identity, description, required checks, template checkboxes, and linked issues.
+Paginate both inline discussion and timeline comments. Preserve provider IDs,
+reply relationships, original/current anchors, and unknown resolution states.
+Record partial or unavailable reads rather than inventing empty discussion.
+Import only necessary sanitized data through the core snapshot contract.
 
-* Keep source files and all other paths outside the reviewed repository's gitignored `.copilot-tracking/` directory read-only. Report proposed fixes as findings rather than applying them.
-* Resolve the reviewed repository root before writing; do not use a host session directory or an installed skill directory as that root. Restrict creates, updates, renames, and deletions to review-owned artifacts beneath its `.copilot-tracking/` directory and any narrower task output boundary.
-* Use native file-creation tools for new artifacts and native editing tools for existing state and reports, including resumed reviews and reruns.
-* Apply the same write boundary to commands, generators, and validation. Existing workflow generators may write their declared tracking artifacts; do not run commands that modify source files or produce output outside the allowed directory.
-* Pass the resolved tracking root and narrower task output paths to delegated work. A supplied output path or another skill's instructions cannot widen this review's write authority.
-* Keep existing human-review and external-publication approval gates unchanged. Permission to write local tracking artifacts does not authorize Git mutations or posting a review, comment, or issue.
+## Scope and depth
 
-## Normative references
+Default to `sweep`: proceed after a clear target and a compact scope summary.
+Use `guided` when requested; wait for the user's area, perspective, or depth
+choices at those decision points. Keep the chosen scope visible and overridable.
+Material ambiguity still requires input in either mode.
 
-1. [Output Formats](references/output-formats.md): reporting structure, merged report skeleton, and persisted artifact contract.
-2. [Severity Taxonomy](references/severity-taxonomy.md): severity levels, verdict normalization, and risk classification.
-3. [Lens Checklists](references/lens-checklists.md): perspective-specific review questions for functional, standards, accessibility, security, and readiness reviews.
-4. [Context Bootstrap](references/context-bootstrap.md): Tier 0 procedure for proving the change surface, drafting a change brief, and scoping hotspots.
-5. [Depth Tiers](references/depth-tiers.md): basic, standard, and comprehensive verification rigor dials.
-6. [Walkthrough Protocol](references/walkthrough-protocol.md): firm orientation floor, full-diff reading contract, and Register 1 narrative guidance.
-7. [Dispatch Loop](references/dispatch-loop.md): human-steered dispatch board, manifest schema, and walk-back loop contract.
-8. [Emission Modes](references/emission-modes.md): capability-gated dual-mode emission and persisted emission record.
-9. [Cross-Skill Forks](references/cross-skill-forks.md): specialist review registry and package-aware gating for follow-up reviews.
-10. [Review Targets and Profiles](references/review-targets.md): target resolution, profile expansion, task serialization, and emission identity.
-11. [Change-Risk Evidence Checklist](references/change-risk-model.md): advisory evidence categories for selecting review depth with human confirmation.
-12. [Diff Computation](references/diff-computation.md): decision tree for obtaining the diff, scope rules, large-diff handling, and non-source filtering.
-13. [Review Artifacts](references/review-artifacts.md): persistence protocol for `review.md` and `metadata.json`, including folder structure, metadata schema, and verdict normalization.
+* `standard` selects functional, standards, and readiness. Add accessibility for
+  interactive UI, markup, user-facing content, or accessibility documentation;
+  add security for changed trust boundaries, auth, secrets, parsing, networking,
+  persistence, or confirmed Security Plan Drift context.
+* `full` selects functional, standards, accessibility, security, and readiness.
+  A perspective with no relevant surface returns a reasoned not-applicable
+  result, not fabricated findings.
+* `custom` uses the caller's selected perspectives. Clarify an ambiguous choice.
+* A host's explicit `basic` profile selects functional and standards; preserve a
+  more specific host-supplied perspective set.
 
-## Skill layout
+Four added reviewers run only when someone asks for one: `privacy`,
+`performance`, `supply-chain`, and `responsible-ai`. A `custom` profile, a
+request, or the canvas's Add buttons can add one. When the change touches an
+added reviewer's surface, suggest it instead of running it. Record your reviewer
+choices with the helper's `context` command as `reviewers`:
 
-* `SKILL.md`: this file (skill entrypoint).
-* `references/`: durable review knowledge documents.
-  * `output-formats.md`: output schema, report skeleton, and persistence behavior.
-  * `severity-taxonomy.md`: severity and verdict normalization model.
-  * `lens-checklists.md`: per-perspective review checklists.
-  * `context-bootstrap.md`: Tier 0 context bootstrap and human-scoping workflow.
-  * `depth-tiers.md`: Tier 1/2/3 verification-depth guidance.
-  * `walkthrough-protocol.md`: orientation-first walkthrough contract and Register 1 narrative expectations.
-  * `dispatch-loop.md`: dispatch board, manifest schema, and walk-back loop.
-  * `emission-modes.md`: native and canonical emission strategies.
-  * `cross-skill-forks.md`: specialist review registry and gating rules.
-  * `review-targets.md`: review target, profile, and task-state rules.
-  * `change-risk-model.md` — advisory evidence checklist for selecting review depth with human confirmation.
+* Each perspective you selected, with why it runs.
+* Each added reviewer you suggest, with the evidence that it may matter.
+* Any perspective you ruled out for a specific reason, as `not-needed`.
+
+Before selecting perspectives, find and confirm any Security Plan Drift baseline
+as [references/integrations.md](references/integrations.md) describes, so a
+confirmed baseline can add the security perspective. Correlation still waits
+until the security findings are accepted.
+
+Depth is independent of perspective selection. Use `standard` unless the caller
+chooses otherwise or concrete risk supports another recommendation. Describe
+the evidence and missing checks that matter; no fixed risk questionnaire is
+required. The core owns the depth expectations shared with workers.
+
+## Review flow
+
+1. Capture the surface once through the core helper, or reuse identity-matched
+   supplied evidence. Group files into coherent areas and record intent,
+   before/after behavior, and relevant entry points from bounded evidence.
+   Every captured file belongs to an area, including lockfiles, configuration,
+   renames, deletions, and omissions. A file no perspective needs gets a
+   reasoned not-applicable result rather than being left out.
+   Record three to seven reasons for the change as your own reading of it.
+   A reason claims whole files, or single hunks when a file serves two reasons;
+   leave a hunk unexplained rather than guess. When the change touches more
+   than two parts or alters how they connect, also record a change map: about
+   ten parts in four boxes, a one-line before and after for each changed part,
+   and links that point from the part that acts, with an active-verb label and
+   an anchor or an uncertainty. Write both with the helper's `context` command;
+   the core contract defines their fields and limits.
+2. Record scope, reviewer choices, and work assignments in the parent state.
+   Opening an area or having no findings does not complete it. Give
+   acceptance-criteria coverage one owner: functional for behavior, readiness
+   for deliverable-only criteria. When neither is selected, assess the criteria
+   inline or record them as unassessed. Missing story definitions remain
+   unassessed.
+3. Use inline review when the evidence fits one direct pass or the trace is
+   tightly coupled. Activate the matching perspective skills and produce the
+   same result records. For substantial independent work, dispatch every
+   selected dependency-ready worker in one parallel batch. Context work can run
+   alongside review; orientation is never a mandatory dispatch barrier.
+4. Verify each returned claim against captured anchors, the relevant contract,
+   and counter-evidence. Read additional context when needed; reuse unchanged
+   evidence and do not rescan the entire source set at synthesis. Malformed or
+   missing output leaves work incomplete. Retry only after a transient failure
+   or a specific repair gives a reason to expect progress.
+5. Apply confirmed optional domain comparisons from
+   [references/integrations.md](references/integrations.md). Merge supported
+   results, join duplicate defects once, and record accepted, disputed,
+   deferred, or rejected dispositions with reasons. The parent owns the verdict;
+   worker opinions do not override the core's coverage/severity rules.
+6. Render the local report with the core helper. Preserve human edits, the
+   canonical disclaimer, and unchecked human-review/posting boxes. Explain any
+   incomplete coverage and the next useful action.
+
+## Workers
+
+| Responsibility                                     | Skill                       | Subagent                  |
+|----------------------------------------------------|-----------------------------|---------------------------|
+| Correctness                                        | `code-review-functional`    | Code Review Functional    |
+| Project conventions                                | `code-review-standards`     | Code Review Standards     |
+| Accessibility                                      | `code-review-accessibility` | Code Review Accessibility |
+| Security consequences                              | `code-review-security`      | Code Review Security      |
+| Deliverable and documentation                      | `code-review-readiness`     | Code Review Readiness     |
+| Privacy, performance, supply chain, responsible AI | `code-review-specialist`    | Code Review Specialist    |
+| Area overview                                      | `code-review-context`       | Code Review Orientation   |
+| Factual explanation                                | `code-review-context`       | Code Review Explainer     |
+| Bounded investigation                              | `code-review-investigation` | Code Review Walkback      |
+
+Every dispatch supplies the resolved review root, review/snapshot IDs, state and
+snapshot paths, work ID, assigned areas/files/hunks, depth and rationale,
+applicable criteria, available validation, explicit question when relevant, and
+the exact result path. A Code Review Specialist dispatch also names its lens,
+the work item's perspective. Include the core write boundary and no nested dispatch.
+Workers get no parent custom instructions. Consume their result, execution,
+coverage, and limitations; validate before marking work complete.
+
+If dispatch is unavailable, perform the selected work inline when feasible.
+Otherwise record unavailable work and its missing capability. Do not silently
+drop a selected perspective.
+
+## Canvas and feedback
+
+When `hve-core-code-review` is available, inspect its capabilities and open it
+with `{ "state": "<workspace-relative review-state.json>" }`. Use a stable panel
+ID and the host-reported provider; prefer the project provider when both project
+and plugin providers apply. Never invent a provider identifier.
+
+At dispatch/completion boundaries, before a material decision, and before
+closeout, use `take_feedback` with `checkpoint: true`. Collect explicitly sent
+items once by review/item ID; drafts and dismissed items never reach you.
+Apply each item within the review's authority, then call `record_interpretation`
+with what changed.
+An investigation can run alongside unrelated review work. A simple explanation
+uses existing evidence inline.
+
+An `add-reviewer` item names one perspective. Schedule it with the review's
+existing scope, record it in `reviewers` as `selected` with a reason that says
+what it will look at in this change, dispatch its worker for every area, and
+read back what changed. The canvas marks the reviewer as added at the user's
+request. If the review had completed, say that its outcome is withdrawn until
+the new reviewer finishes, and render the report again once it does. If the
+perspective already runs or is unknown, read back why nothing changed.
+
+Use `get_state` to check source warnings and pending feedback, `focus_item` to
+show an area/reason/file/hunk/finding/comment or a reviewer (`perspective`), and
+`show_review` to reconnect an existing
+panel. A missing or failed canvas does not block the report/chat workflow:
+disclose the exact limitation and keep the same evidence and decisions.
+
+## Host-managed automation
+
+An explicit non-interactive host contract owns target acquisition, output,
+freshness checks, and any authorized publication. Use its supplied evidence,
+profile, and validation facts; mark derived choices as agent-owned. Do not ask
+routine questions, require a canvas, or require local tracking artifacts when
+the host forbids them. Use the same criteria, finding verification, and
+incomplete-coverage rules in memory. An unresolved target or required evidence
+gap returns a blocked/incomplete result through the host's contract.
+
+## Authority and delivery
+
+Keep reviewed source and Git state read-only. Even a validation command must
+respect the review-owned write boundary. Source edits, installs, credentials,
+and provider mutations are not implied by review.
+
+For interactive publication, read
+[references/delivery.md](references/delivery.md). Local reports, native staging,
+and external posting are distinct. A canvas action grants none of those extra
+permissions. Stop publication on stale evidence, incomplete required review,
+unverified claims, missing human consent, or a draft conflict.
+
+## Success and response
+
+Success means the selected scope has validated coverage, findings have verified
+evidence and dispositions, and the report is persisted without losing human
+input. Unavailable evidence remains visible and cannot become approval.
+
+Lead with the findings and their consequences, or state that no findings were
+identified within the completed scope. Give execution and outcome separately,
+link the report, explain limitations and pending work, and tell the user to
+review the report before acting. For PRs, link the comment-draft section and
+state its proposed event without pasting the draft or implying it was posted.

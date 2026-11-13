@@ -1,9 +1,9 @@
 ---
 title: Code Review Explainer
-description: Thin skill-backed Register 1 explainer subagent that answers factual symbol or function questions and persists an explanation artifact
+description: Answer a factual symbol or area question against captured Code Review evidence.
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-06
 ms.topic: reference
 keywords:
   - agent
@@ -23,13 +23,15 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Thin skill-backed Register 1 explainer subagent that answers factual symbol or function questions and persists an explanation artifact
+Answer a factual symbol or area question against captured Code Review evidence.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-Code Review dispatches this worker for a factual question about a selected board item's symbol or function. It produces an evidence-linked explanation without severity, verdicts, or recommendations. Deeper investigative questions belong to Code Review Walkback; this worker is not a direct picker entry.
+Code Review dispatches this worker for a factual question about a symbol or area in the captured change. It preloads `code-review-core` and `code-review-context` and follows the skill's question path. Its answer carries no severity, verdict, or recommendation.
+A simple explanation that existing evidence covers can stay inline, and a question that needs missing evidence or a deeper judgment goes to Code Review Walkback.
 
 ## Example usage
 
-The parent supplies the board item, `targetPath`, `targetSymbol`, and the question "How does cancellation reach the importer?" through review state. The worker reads the relevant code, writes an explanation in the assigned review folder, and returns its path with follow-on symbols. If the symbol cannot be resolved, it reports that gap rather than inventing a call path.
+The parent supplies the review and snapshot IDs, the work item, the symbol or area, the question "How does cancellation reach the importer?", and the result path. The worker traces the immediate context and writes a shared result with `findings: []` and observations linked to source evidence.
+It returns the path with follow-on symbols. If it can't resolve the symbol, it names the missing evidence and doesn't invent a call path.

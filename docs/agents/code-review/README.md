@@ -1,340 +1,277 @@
 ---
 title: Code Review
-description: Human-gated code review for pull requests, branch diffs, and local changes across five skill-backed findings perspectives
+description: Skill-first code review for pull requests, branch comparisons, commits, local changes, and selected code, with focused perspectives and snapshot-backed review records
 sidebar_position: 1
 sidebar_label: Overview
 sidebar_custom_props:
   accessibleName: "Overview: Code Review"
 keywords:
   - code review
+  - pull request review
   - pre-PR review
-  - standards review
   - functional review
+  - standards review
   - accessibility review
   - security review
-  - coding standards
+  - readiness review
+  - non-functional review
+  - review canvas
   - skills
 tags:
   - agents
   - code-review
   - coding-standards
 author: Microsoft
-ms.date: 2026-10-09
+ms.date: 2026-11-09
 ms.topic: concept
 estimated_reading_time: 10
 ---
 
-The code review system is a single human-gated agent for pull requests, branch diffs, and local changes. It resolves the review target, applies a recommended profile, bootstraps change context once, confirms scope with you, lets you adjust which findings perspectives run and how deeply, and merges their results into one report.
+Code Review finds consequential defects in a change and records what it reviewed and what still needs evidence. The workflow lives in the `code-review` skill. You can run it with the `/code-review` command or select the **Code Review** agent, and both follow the same skill.
 
-Select the **Code Review** agent for an open pull request, a branch diff, or working-tree changes. It resolves the target itself and applies the same human-gated emission controls to every target.
+Each review captures the change once as an immutable snapshot, and every perspective works from that snapshot. Code Review verifies each finding against the captured lines and records a disposition for it. The report is a Markdown file you can edit, and in an interactive review nothing reaches a pull request until you confirm it.
 
-## Why Pre-PR Code Review?
+## Why use Code Review
 
-| Benefit                       | Description                                                                                 |
-|-------------------------------|---------------------------------------------------------------------------------------------|
-| Flexible review targets       | Reviews an open PR or MR, an explicit branch diff, or local working-tree changes            |
-| Consistent standards coverage | Every diff gets the same skill-based analysis regardless of which reviewer picks up the PR  |
-| Multiple perspectives         | One run can cover functional, standards, accessibility, security, and deliverable readiness |
-| Extensible language support   | Teams add their own skills without modifying the review agent                               |
-| Actionable output             | Every finding includes file paths, line numbers, current code, and a suggested fix          |
+Code Review ties each finding to the reviewed code and shows what each perspective covered:
+
+| Need                         | How Code Review handles it                                                                                                                          |
+|------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| Review the change you mean   | Reviews a PR or MR, a named branch comparison, a commit, staged or unstaged local changes, or selected code, and asks when the target is ambiguous  |
+| Findings that match the code | Every perspective reviews the same captured snapshot, and each finding is anchored to captured changed lines                                        |
+| Focused review               | Functional, standards, accessibility, security, and readiness perspectives each have their own skill and criteria                                   |
+| Visible coverage             | The report shows what each perspective covered; blocked, unavailable, skipped, or stale required work leaves the review incomplete, with no outcome |
+| Human control                | You edit the report, and staging or posting to a pull request from an interactive review needs your explicit consent                                |
 
 > [!TIP]
-> New to hve-core code review? Run the **Code Review** agent on your current branch with the `standard` depth tier and one or two perspectives to see the output format, then add perspectives or raise the depth as you get comfortable with the workflow.
+> To try it, stage a small change and run `/code-review staged changes`. Read the generated `review.md` before you act on any finding.
 
-## Architecture
+## Start a review
 
-```mermaid
-flowchart TD
-  accTitle: Code review architecture
-  accDescr: The Code Review orchestrator uses shared protocols and skill references, then dispatches orientation, interactive investigation, and five findings perspectives.
-  ORCH["Code Review<br/>(Orchestrator)"]
-  AO["Code Review Orientation<br/>(Register 1 stage)"]
+| Entry point       | How to start                                                                                                                  |
+|-------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| `/code-review`    | Type the command in Copilot Chat, optionally followed by a target and options                                                 |
+| Code Review agent | Select **Code Review** in the agent picker and describe the target. The agent preloads the `code-review` skill and follows it |
 
-  subgraph Perspectives
-    AF["Code Review<br/>Functional"]
-    AS["Code Review<br/>Standards"]
-    AA["Code Review<br/>Accessibility"]
-    ASEC["Code Review<br/>Security"]
-    AR["Code Review<br/>Readiness"]
-  end
-
-  subgraph "Interactive Subagents"
-    EX["Code Review Explainer<br/>(Register 1)"]
-    WB["Code Review Walkback<br/>(Register 2)"]
-    RR["rpi-research<br/>Skill"]
-  end
-
-  subgraph "Shared Protocols"
-    D["Diff Computation<br/>Protocol"]
-    R["Review Artifacts<br/>Protocol"]
-    PR["pr-reference<br/>Skill"]
-  end
-
-  subgraph "code-review Skill"
-    K1["Context Bootstrap"]
-    K2["Depth Tiers"]
-    K3["Lens Checklists"]
-    K4["Severity Taxonomy"]
-    K5["Output Formats"]
-    K6["Review Targets<br/>and Profiles"]
-    K7["Change-Risk<br/>Evidence"]
-  end
-
-  subgraph Skills
-    S1["coding-standards<br/>skills"]
-    S2["accessibility<br/>skills"]
-    S3["Enterprise<br/>custom skills"]
-  end
-
-  ORCH -->|"reads"| K1 & K2 & K3 & K4 & K5 & K6 & K7
-  ORCH -->|"Step 1"| D
-  ORCH -->|"Step 1"| PR
-  ORCH -->|"Step 2"| AO
-  ORCH -->|"Step 5 walk-back"| EX & WB
-  WB -->|"activates"| RR
-  ORCH -->|"Step 6 parallel"| AF & AS & AA & ASEC & AR
-  AS -->|"loads at runtime"| S1 & S3
-  AA -->|"loads at runtime"| S2 & S3
-  AF -->|"follows"| R
-  AS -->|"follows"| R
-```
-
-The orchestrator resolves the target and profile, computes the diff once in Step 1 using the `pr-reference` skill, and writes a shared `diff-state.json` with an explicit orientation task. The Code Review Orientation worker then builds the factual walkthrough and dispatch-board appendices without grading findings.
-During the interactive walk-back loop it routes the human's questions to the Code Review Explainer (factual) or Code Review Walkback (deep research) before dispatching the selected perspective subagents concurrently.
-Each subagent writes structured JSON findings to disk. The orchestrator reads every findings file and merges them into a single deduplicated report.
-
-## The Orchestrator and Its Perspectives
-
-A single user-invocable **Code Review** agent orchestrates the review. It owns the human-gated flow and dispatches one thin subagent per selected perspective. Perspective selection (which lanes run) and depth level (how deeply each lane verifies) are independent choices.
-
-:::table{caption="Review perspectives and the subagents that own each lane"}
-
-| Perspective     | Subagent                  | Lane focus                                                                                                    |
-|-----------------|---------------------------|---------------------------------------------------------------------------------------------------------------|
-| `functional`    | Code Review Functional    | Logic, edge cases, error handling, concurrency, contract correctness                                          |
-| `standards`     | Code Review Standards     | Project coding standards traceable to loaded `coding-standards` skills                                        |
-| `accessibility` | Code Review Accessibility | Accessibility conformance traceable to loaded `accessibility` skills                                          |
-| `security`      | Code Review Security      | Authn/authz, input validation, secrets, injection, deserialization paths                                      |
-| `readiness`     | Code Review Readiness     | Change packaging, scope hygiene, validation evidence, PR metadata, follow-up items, and changed documentation |
-| `full`          | all of the above          | Runs every perspective and synthesizes one merged assessment                                                  |
-
-:::
-
-The `security` and `accessibility` perspectives are self-contained and skill-backed. They source their review logic from the `code-review` and domain skills and do not call into the standalone Security Reviewer or Accessibility Reviewer agents. When a high-risk surface is in scope, the perspective surfaces a one-line note that a deeper standalone audit exists.
-
-Code Review Orientation is a required workflow stage rather than a findings perspective.
-
-### Review Targets and Profiles
-
-Targets identify what is reviewed. Profiles recommend which findings perspectives run.
-
-| Target        | Default profile | Recommended findings perspectives                                                                    |
-|---------------|-----------------|------------------------------------------------------------------------------------------------------|
-| Pull request  | `standard`      | Functional, Standards, and Readiness, plus Security and Accessibility when their signals are present |
-| Branch diff   | `standard`      | Functional, Standards, and Readiness, plus Security and Accessibility when their signals are present |
-| Local changes | `standard`      | Functional, Standards, and Readiness, plus Security and Accessibility when their signals are present |
-
-Select `full` to run all five findings perspectives. Select `custom` for caller-selected or changed-surface-inferred perspectives, then confirm them. Profile selection and depth remain independent of the target.
-
-For pull-request and branch-diff targets, the agent resolves an immutable target head SHA and requires checked-out `HEAD` to match it before generating the diff. If they differ, the review stops and asks you to check out the target head. This keeps provider metadata, the reviewed commit, and prepared line comments bound to the same change.
-
-### Skill-Backed Review Logic
-
-The review workflow lives in the `code-review` skill, not in the agent. The orchestrator and subagents read the skill entry and its references once and apply them verbatim:
-
-| Reference         | Provides                                                                   |
-|-------------------|----------------------------------------------------------------------------|
-| Context Bootstrap | Tier 0 procedure for proving the change surface and scoping hotspots       |
-| Depth Tiers       | Basic, standard, and comprehensive verification-rigor dials                |
-| Lens Checklists   | Per-perspective review questions                                           |
-| Severity Taxonomy | Severity levels, verdict normalization, and risk classification            |
-| Output Formats    | Reporting structure, merged report skeleton, and persisted artifact schema |
-| Review Targets    | Target resolution, profile expansion, task state, and emission identity    |
-| Change-Risk Model | Advisory evidence checklist and recommended review depth                   |
-
-The Standards perspective is language-agnostic: it discovers `coding-standards` skills from the built-in hve-core baseline and supported repository skill roots, de-duplicates same-named skills with repository precedence, matches the remaining candidates against the languages in the diff, and loads the relevant skills. See [Language Skills](language-skills.md) for details on built-in skills, supported discovery roots, skill stacking, and conflict behavior.
-
-## How the Review Works
-
-The agent runs a human-gated flow. Each step pauses for your input where the table notes a gate.
-
-```mermaid
-flowchart TD
-  accTitle: Code review workflow
-  accDescr: Seven ordered steps move from target resolution and orientation through human selection, perspective dispatch, and persisted findings.
-  S1["Step 1: Context Bootstrap<br/>resolve target/profile, compute diff, write orientation state"]
-  S2["Step 2: Orientation Worker + Dispatch Board<br/>factual walkthrough, enumerated board (gate)"]
-  S3["Step 3: Perspective + Depth Selection (gate)"]
-  S4["Step 4: Finalize Dispatch State<br/>perspective outputs + dispatch-manifest.json"]
-  S5["Step 5: Human-Steered Walk-Back Loop<br/>bookmark -> dispatch -> walk-back (gate)"]
-  S6["Step 6: Dispatch Perspectives<br/>(parallel subagents)"]
-  S7["Step 7: Merge, Walk Back + Persist<br/>review.md + metadata.json"]
-
-  S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7
-```
-
-| Step | Stage                               | What happens                                                                                                                                                                                                                                                                                                                        |
-|------|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1    | Context Bootstrap                   | The agent resolves the target and profile, verifies that the target head SHA matches checked-out `HEAD`, generates a structured XML diff from the exact target base, drafts a change brief, gathers change-risk evidence, detects hotspots, resolves optional PR and security-plan context, and writes serialized orientation state |
-| 2    | Orientation Worker + Dispatch Board | Code Review Orientation writes the factual Register 1 walkthrough and seeds the dispatch board; you confirm or edit the board, change-risk evidence, perspective recommendation, and advisory depth recommendation in one decision (gate)                                                                                           |
-| 3    | Perspective + Depth Selection       | The agent resolves your confirmed perspective and depth choices, including any difference from the advisory recommendation (gate only when the Step 2 response was ambiguous)                                                                                                                                                       |
-| 4    | Finalize Dispatch State             | The agent records exact per-perspective output paths in `diff-state.json` and writes `dispatch-manifest.json`                                                                                                                                                                                                                       |
-| 5    | Human-Steered Walk-Back Loop        | You bookmark a board item and ask a question; the agent routes factual questions to the Explainer (Register 1) and deep questions to the Walkback (Register 2), then walks each answer back onto its board item (gate)                                                                                                              |
-| 6    | Dispatch Perspectives               | Selected perspective subagents run concurrently, each writing structured JSON findings to disk                                                                                                                                                                                                                                      |
-| 7    | Merge, Walk Back + Persist          | Findings are deduplicated, severity-sorted, source-tagged, walked back onto the board, and written as `review.md` plus `metadata.json`                                                                                                                                                                                              |
-
-### Orientation, Registers, and the Walk-Back Loop
-
-The flow separates two distinct modes of reasoning so factual orientation never gets entangled with severity judgments:
-
-* **Register 1 (factual, orientation):** the Step 2 walkthrough and the Code Review Explainer answer "what does this symbol or function do" without assigning severity, verdicts, or recommendations. This gives you a shared, factual map of the change before any judgment is applied.
-* **Register 2 (investigative, deep research):** the Code Review Walkback answers "is this correct, is this safe, what are the implications" by activating `rpi-research` and anchoring the resulting evidence to its board item.
-
-In the Step 5 walk-back loop you steer the review by bookmarking a board item and asking a question.
-The orchestrator routes the question by depth: shallow factual questions dispatch to the **Code Review Explainer** subagent (Register 1), and deep investigative questions dispatch to the **Code Review Walkback** subagent (Register 2).
-Each answer is walked back onto its board item, updating the item status and queueing any follow-on questions. The loop continues until you are satisfied or request the full perspective sweep.
-In non-interactive (workflow) mode, Steps 2, 3, and 5 are skipped and the board is swept as a batch.
-
-### Depth Tiers
-
-Depth controls how deeply each selected perspective verifies the confirmed scope. It does not add or remove perspectives.
-
-Before you select a tier, the agent presents an advisory recommendation derived from the [Change-Risk Evidence Checklist source on GitHub](https://github.com/microsoft/hve-core/blob/main/.github/skills/coding-standards/code-review/references/change-risk-model.md).
-The checklist covers six categories: change scope, path criticality, history, test presence, coverage, and rollback.
-
-For each category, the checklist records one of three evidence states:
-
-* `observed`: directly supported by the diff, repository, test results, coverage report, or version history.
-* `unavailable`: the required source is absent, inaccessible, or too shallow to support a claim.
-* `qualitative`: interpretation-dependent evidence from available context rather than a reproducible measurement.
-
-The checklist is advisory only.
-In interactive reviews, you confirm the final depth tier, and any difference from the recommendation is recorded with your rationale.
-In non-interactive (workflow) mode, the review records the selected depth as `automation-derived`, meaning automation chose it rather than a person.
-
-| Tier | Depth           | When to use                                                                                                                                                                                                                             |
-|------|-----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1    | `basic`         | Recommended only when evidence consistently supports a narrow, reversible, well-tested change with no critical-path concern                                                                                                             |
-| 2    | `standard`      | Default; recommended for most reviews, including whenever evidence is incomplete, unavailable in a material category, or inconclusive                                                                                                   |
-| 3    | `comprehensive` | Recommended when observed or qualitative evidence identifies critical paths, broad behavioral spread, weak detection for important logic, hard rollback, or material ambiguity; unavailable history or coverage alone does not escalate |
-
-See the [Depth Tiers skill reference on GitHub](https://github.com/microsoft/hve-core/blob/main/.github/skills/coding-standards/code-review/references/depth-tiers.md) for the full per-tier verification focus.
-
-## Usage
-
-Select **Code Review** from the agent picker. For an open pull request or merge request, optionally provide its number or URL; the agent resolves the target and applies the target-independent `standard` profile unless you choose another. Then confirm the target and scope, adjust the recommended perspectives, and choose a depth tier.
-
-### Story Reference
-
-Pass a work item reference (for example, `AB#456` or `AIAA-123`) when you start the review to enable acceptance criteria coverage. The orchestrator forwards the reference to the Standards perspective, which includes an Acceptance Criteria Coverage table in its report.
-
-### Pull Request and Base Branch
-
-The agent accepts an explicit PR or MR number or URL. Without one, it first looks for an open PR or MR mapped from the current branch. If none exists, it compares the current branch against the resolved default base. Supply a different base branch (for example, `baseBranch=origin/develop`) when your branch targets another base.
-
-Check out the PR or branch head before starting the review. The agent compares checked-out `HEAD` with the resolved target head SHA and stops on mismatch instead of reviewing another checkout under the requested target's metadata. Before native emission, it verifies again that the target is open and its base, head, and head SHA are unchanged.
-
-### Perspectives and Depth
-
-When the agent reaches the selection step, choose any combination of `functional`, `standards`, `accessibility`, `security`, and `readiness`, or select `full` to run all five. Pick a depth tier (`basic`, `standard`, or `comprehensive`) independently.
-The `standard` profile pre-populates Functional, Standards, and Readiness for every target. It adds Accessibility only when a UI, markup, or documentation surface is in scope and Security when a hotspot touches auth, crypto, parsing, deserialization, secrets, or networking. PR metadata enrichment, readiness PR checks, PR-comment drafts, and native emission apply only when the resolved target is a pull request and its `prContext` is available.
-
-## Review Output
-
-Each perspective produces severity-ordered findings. Every finding includes:
-
-* A descriptive title and severity level (Critical, High, Medium, Low)
-* The file path and line range where the issue appears
-* The current code from the diff that has the issue
-* A suggested fix with replacement code
-* The category and (for standards findings) the skill that surfaced the finding
-* A source tag (for example, `[Functional]` or `[Standards]`) indicating which perspective raised it
-
-### Structured JSON Contracts
-
-Subagents write findings as structured JSON rather than markdown. This enables deterministic merging without LLM re-parsing. The JSON schema is defined in the `code-review` skill's output-formats reference, which both the orchestrator and subagents treat as the authoritative data contract.
-
-The data flow through the orchestrator:
+Options follow the target, and each one is optional:
 
 ```text
-diff-state.json              (orchestrator writes orientation task)
-  ↓
-orientation-walkthrough.md   (orientation worker writes Register 1)
-  ↓
-diff-state.json              (orchestrator records perspective outputs)
-  ↓
-<perspective>-findings.json  (each dispatched subagent writes its own file)
-  ↓
-review.md + metadata.json    (orchestrator merges and writes)
+/code-review [target] [profile=standard|full|custom] [depth=basic|standard|comprehensive] [mode=sweep|guided]
 ```
 
-### Lane Separation
+For example:
 
-Each dispatch prompt includes a lane note telling the subagent to stay within its own focus and not duplicate findings owned by another selected perspective. This reduces duplicate findings in the merged report and keeps each subagent focused on its domain.
-
-### Verdict Scale
-
-| Condition                     | Verdict               |
-|-------------------------------|-----------------------|
-| Any Critical or High findings | Request changes       |
-| Only Medium or Low findings   | Approve with comments |
-| No findings                   | Approve               |
-
-The orchestrator uses the strictest verdict across the perspectives that ran: if any perspective would request changes, the merged report requests changes. Any Critical finding forces `request_changes`.
-
-### Artifact Persistence
-
-Review artifacts are saved to `.copilot-tracking/reviews/code-reviews/{branch-slug}/` with two files:
-
-* `review.md`: the full merged review report
-* `metadata.json`: a machine-readable summary for automation
-
-The `metadata.json` file contains fields that CI pipelines, pre-commit hooks, and custom scripts can consume:
-
-```json
-{
-  "schema_version": "1",
-  "branch": "feat/my-feature",
-  "head_commit": "abc123...",
-  "reviewed_at": "2026-06-19T15:30:00Z",
-  "verdict": "request_changes",
-  "files_changed": ["src/main.py", "src/utils.py"],
-  "findings_count": {
-    "critical": 0,
-    "high": 2,
-    "medium": 1,
-    "low": 0
-  },
-  "reviewer": "code-review"
-}
+```text
+/code-review PR #482
+/code-review feature/search compared with main profile=full
+/code-review staged changes depth=comprehensive
+/code-review src/parser.ts lines 40-120 mode=guided
 ```
 
-The `verdict` field holds one of three values: `approve`, `approve_with_comments`, or `request_changes`. A pre-commit hook can read this file and block commits when the verdict is `request_changes`, ensuring review findings are addressed before code leaves the local branch. For example:
+Code Review supports these targets:
 
-```bash
-verdict=$(jq -r '.verdict' .copilot-tracking/reviews/code-reviews/*/metadata.json 2>/dev/null)
-if [ "$verdict" = "request_changes" ]; then
-  echo "Code review requires changes. Fix findings before committing."
-  exit 1
-fi
+| Target                        | What Code Review captures                                                                                                                      |
+|-------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| Pull request or merge request | Provider identity, base and head revisions, description, required checks, template checkboxes, linked issues, and inline and timeline comments |
+| Branch comparison             | The named base and head, compared from their merge base unless you ask for a direct comparison                                                 |
+| Commit                        | The commit against its parent, or against a base you name. A merge commit needs an explicit base                                               |
+| Local changes                 | Staged, unstaged, or combined working-tree changes                                                                                             |
+| Selected code                 | The paths and line ranges you name                                                                                                             |
+
+Code Review doesn't guess a base branch, fetch, or check out a branch; it asks you instead. A PR review never mixes in uncommitted local edits. If you ask for a local overlay, Code Review treats it as a separate review, and that review can't produce PR inline comments. When provider reads are partial or unavailable, the review records the gap and doesn't treat the discussion as empty.
+
+## Choose the scope
+
+Three independent options shape a review. The mode decides when Code Review stops for your input, the profile picks the perspectives, and the depth sets how far each perspective traces the change.
+
+### Sweep and guided modes
+
+| Mode              | Behavior                                                                                  |
+|-------------------|-------------------------------------------------------------------------------------------|
+| `sweep` (default) | After the target is clear, Code Review shows a compact scope summary and continues        |
+| `guided`          | Code Review waits for your choice of areas, perspectives, or depth at each decision point |
+
+In both modes the chosen scope stays visible and you can override it. Material ambiguity, such as an unclear target, still stops for your input.
+
+### Profiles
+
+| Profile              | Perspectives                                                                                                                                                                                                                                                                                |
+|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `standard` (default) | Functional, standards, and readiness. Accessibility joins for interactive UI, markup, user-facing content, or accessibility documentation. Security joins for changed trust boundaries, authentication, secrets, parsing, networking, persistence, or confirmed Security Plan Drift context |
+| `full`               | Functional, standards, accessibility, security, and readiness. A perspective with nothing relevant to review returns a reasoned not-applicable result                                                                                                                                       |
+| `custom`             | The perspectives you choose. Code Review asks when the choice is ambiguous                                                                                                                                                                                                                  |
+
+Four more non-functional reviewers run only when someone adds them: privacy, performance, supply chain, and responsible AI. Add one with a `custom` profile, a request in chat, or the canvas's **Add** buttons. When the change touches what one of them covers, Code Review suggests it instead of running it. Adding a reviewer to a finished review reopens it until that reviewer finishes, and Code Review renders the report again afterward.
+
+Code Review records why it chose each reviewer as selected, suggested, or not needed, with a one-line reason. The report lists those choices, and the canvas shows them in its review flow.
+
+### Depth
+
+Depth sets how far each selected perspective follows the change, independently of the profile:
+
+| Depth                | What each perspective checks                                                  |
+|----------------------|-------------------------------------------------------------------------------|
+| `basic`              | The changed path and its immediate contract                                   |
+| `standard` (default) | Also relevant consumers, error paths, and validation evidence                 |
+| `comprehensive`      | Also follows demonstrated high-risk interactions and missing evidence further |
+
+Code Review uses `standard` unless you pick another depth or concrete risk in the change supports a different recommendation. A recommendation names the evidence and missing checks behind it; there's no fixed risk questionnaire. No depth authorizes source edits or a repository-wide audit.
+
+## Perspectives and workers
+
+Each responsibility has its own skill and a matching subagent:
+
+| Responsibility  | Skill                       | Subagent                  | Focus                                                                                                                                                                                                                            |
+|-----------------|-----------------------------|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Functional      | `code-review-functional`    | Code Review Functional    | Behavioral defects and regressions, plus acceptance-criteria coverage for behavior                                                                                                                                               |
+| Standards       | `code-review-standards`     | Code Review Standards     | Departures from applicable repository instructions and domain skills, citing each criterion's source                                                                                                                             |
+| Accessibility   | `code-review-accessibility` | Code Review Accessibility | User barriers in changed interaction, markup, and content, separating static evidence from runtime evidence                                                                                                                      |
+| Security        | `code-review-security`      | Code Review Security      | Changed paths that permit a concrete security failure across a trust boundary                                                                                                                                                    |
+| Readiness       | `code-review-readiness`     | Code Review Readiness     | PR description, linked issues, checklists, required checks, validation evidence, and changed documentation                                                                                                                       |
+| Added reviewers | `code-review-specialist`    | Code Review Specialist    | Privacy, performance, supply chain, or responsible AI, one lens per assignment, with criteria from `privacy-by-design`, the project's stated budgets with `performance-slo-planner`, `supply-chain-security`, or `rai-standards` |
+| Orientation     | `code-review-context`       | Code Review Orientation   | Factual overview of changed areas, entry points, and affected consumers                                                                                                                                                          |
+| Explanation     | `code-review-context`       | Code Review Explainer     | Factual answer to a question about a symbol or area                                                                                                                                                                              |
+| Investigation   | `code-review-investigation` | Code Review Walkback      | One bounded evidence gap, answered without restarting the review                                                                                                                                                                 |
+
+Each subagent preloads `code-review-core` and its responsibility skill. A worker writes only its assigned result file. It doesn't edit source, publish, pick the overall outcome, or dispatch other workers.
+
+Orientation, Explainer, and Walkback return factual observations with no graded findings, and their work doesn't count as review coverage. When a Walkback question turns into open-ended research, the worker stops and recommends an `rpi-research` escalation, and Code Review decides whether to start it.
+
+Small reviews run inline. When the evidence fits one direct pass or the trace is tightly coupled, Code Review applies the perspective skills itself and writes the same result records. For larger independent work, it dispatches every selected worker that's ready in one parallel batch, and orientation can run alongside the perspectives without holding them back.
+
+If subagents aren't available, Code Review does the selected work inline when it can. Otherwise it records the work as unavailable, so a selected perspective never disappears without notice.
+
+The standards perspective takes its criteria from the repository instructions and skills that apply to the changed files. See [Language Skills](language-skills.md) to add your own.
+
+## How a review runs
+
+```mermaid
+flowchart TD
+  accTitle: Code Review workflow
+  accDescr: Code Review resolves the target, captures one immutable snapshot, sets scope, reviews inline or with parallel workers, verifies findings, and renders an editable report. Posting to a pull request is a separate step that needs human consent.
+  T["Resolve target"] --> C["Capture snapshot"]
+  C --> S["Set scope:<br/>areas, perspectives, depth"]
+  S --> D{"Fits one<br/>direct pass?"}
+  D -- Yes --> I["Review inline"]
+  D -- No --> P["Parallel workers"]
+  I --> V["Verify findings and<br/>record dispositions"]
+  P --> V
+  V --> R["Render review.md"]
+  R --> H["You review and edit"]
+  H -.->|"explicit consent"| PUB["Stage or post to the PR"]
 ```
 
-## What You Need
+1. Code Review resolves the target and its revisions, and asks when anything is ambiguous.
+2. The core helper captures the change once. Code Review groups the files into areas and records each area's intent, before and after behavior, and entry points. Scope accounting covers lockfiles, configuration, renames, deletions, and omitted files, and explains anything left out as irrelevant.
+3. Code Review records the scope and its reviewer choices, and assigns the work. Each acceptance criterion gets one owner: functional for behavior, readiness for deliverable-only criteria. Without a story definition, criteria stay unassessed.
+4. The selected perspectives run inline or as parallel workers.
+5. Code Review verifies each returned claim against its captured anchors and counter-evidence, merges duplicates once, and records each finding as accepted, disputed, deferred, or rejected with a reason.
+6. Optional integrations run when their context exists.
+7. The core helper renders `review.md`, keeping your edits and the canonical disclaimer.
 
-| Requirement        | Details                                               |
-|--------------------|-------------------------------------------------------|
-| VS Code + Copilot  | GitHub Copilot Chat with agent mode enabled           |
-| Git branch         | A local branch with commits ahead of the base branch  |
-| HVE Core           | The complete `hve-core` extension or plugin installed |
-| pr-reference skill | Included with HVE Core; generates the XML diff        |
+| Integration         | Runs when                                                                                                          | Result                                                                                                         |
+|---------------------|--------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| Business alignment  | You supply BRD, PRD, or ADR sources, or confirm sources Code Review discovers                                      | Drift findings rated with the shared business-alignment rubric, compared with each source at the base revision |
+| Security Plan Drift | A confirmed security plan baseline exists and the security findings are accepted                                   | Accepted security findings correlated with the plan                                                            |
+| Specialist referral | A concern the added reviewers don't cover, or a full audit beyond the change, is warranted and a capability exists | A named follow-up, such as the Privacy, RAI, or SSSC Reviewer; no extra review runs                            |
 
-The agent works with any programming language. Standards and accessibility enforcement require skills that match the languages and surfaces in your diff. If no matching skills are found, the relevant perspective notes the gap and restricts its verdict.
+## Review records and the report
 
-## Extending with Custom Skills
+Every review gets its own folder:
 
-The Standards perspective discovers coding-standards skills dynamically at review time. You extend its coverage by adding `SKILL.md` files under a supported repository skill root without modifying the agent itself.
+```text
+.copilot-tracking/reviews/code-reviews/<date>/<review-id>/
+├── snapshots/<snapshot-id>/
+│   ├── snapshot.json
+│   └── files/
+├── review-state.json
+├── results/<snapshot-id>/<work-id>.json
+├── feedback.json
+└── review.md
+```
 
-The Accessibility perspective loads skills from its fixed named catalog, so extending its coverage requires updating that catalog. See [Language Skills](language-skills.md) for the full guide on built-in standards skills, skill stacking, same-name precedence, and authoring enterprise-specific standards.
+The `code-review-core` skill's [review contract](https://github.com/microsoft/hve-core/blob/main/.github/skills/coding-standards/code-review-core/references/review-contract.md) defines each record:
+
+| Record                                 | Owner              | Contents                                                                                        |
+|----------------------------------------|--------------------|-------------------------------------------------------------------------------------------------|
+| `snapshot.json` and `files/`           | Core helper        | Immutable capture of the target, changed files and hunks, discussion, and omissions             |
+| `review-state.json`                    | Code Review        | Scope, reviewer choices, areas, work items, verified findings, limitations, and outcome         |
+| `results/<snapshot-id>/<work-id>.json` | Assigned worker    | One work item's coverage, findings, observations, and limitations                               |
+| `feedback.json`                        | Code Review canvas | Feedback you send from the canvas, including requests to add a reviewer and items you dismissed |
+| `review.md`                            | You                | The human-editable report                                                                       |
+
+Review IDs include a random identifier, so a second review of the same branch gets its own folder. Resuming a review reuses its snapshot when the repository and target still match. When the evidence changes, a new capture archives the previous state and resets coverage, while earlier snapshots, feedback, and reports stay in place.
+
+### Findings and outcome
+
+Each finding states a claim and its consequence, anchors it to captured lines, names the criterion it applies when there is one, and suggests a remediation. Severity (`Critical`, `High`, `Medium`, or `Low`) describes the consequence, and findings carry no confidence scores. A new finding stays `proposed` until Code Review verifies it and records a disposition with a reason. Disputed and deferred findings stay visible in the report.
+
+| Completed review                      | Outcome                 |
+|---------------------------------------|-------------------------|
+| Any retained Critical or High finding | `request_changes`       |
+| Only Medium or Low findings           | `approve_with_comments` |
+| No retained findings                  | `approve`               |
+
+When required work is blocked, unavailable, skipped, or stale, or a blocking limitation exists, the review is `incomplete` and has no outcome. Complete coverage and an empty findings list are separate facts, and the report shows both.
+
+### The report
+
+`review.md` contains the target and coverage, the findings, context and limitations, and the disclaimer with an unchecked human-review checkbox. Pull request and merge request reports add a comment draft with the proposed event and its own unchecked posting checkbox. Only a human checks either box.
+
+Your edits are authoritative. Code Review regenerates `review.md` only while the file still matches its last render. If you've edited the file, rendering stops and Code Review reconciles the changes with you.
+
+## Code Review canvas
+
+When your host supports canvases and the Code Review canvas (`hve-core-code-review`) is available, Code Review opens it on the current review. The canvas shows the captured changes, review coverage, findings, PR discussion, and your feedback in one read-only panel.
+
+| The canvas can                                               | The canvas can't                                                           |
+|--------------------------------------------------------------|----------------------------------------------------------------------------|
+| Show captured changes, coverage, findings, and PR discussion | Change coverage, dispositions, or human sign-off                           |
+| Send your feedback to Code Review                            | Stage, post, approve, or merge anything                                    |
+| Keep unsent drafts private                                   | Create another review or delete an earlier one                             |
+| Show which reviewers run and in what order, and request one  | Add a reviewer itself; Code Review does that when it collects your request |
+| Dismiss feedback the agent doesn't have yet, with Undo       | Take back an item the agent has already collected                          |
+
+Code Review collects sent feedback at dispatch and completion boundaries, before a material decision, and before closeout. It applies each item within the review's authority and records what changed. If the canvas is missing or fails, the review continues in chat with the same evidence and decisions, and Code Review names the limitation. See the [Code Review canvas guide](canvas) for the panel itself.
+
+## Publishing to a pull request
+
+Saving the local report, staging a draft review with the provider, and posting are separate actions. Staging a draft doesn't submit it, and neither the canvas nor the core helper can stage or post. Before Code Review stages or posts anything:
+
+1. It shows every retained Critical or High finding and any pending or unopened areas, and asks you to inspect them or explicitly acknowledge proceeding. Acknowledging doesn't complete missing review work.
+2. It links the report and the PR comment draft, then asks you to confirm the target, the event, and the comments. Posting the general comment also needs its checkbox, which only you can check.
+3. Right before submission, it re-reads the PR's identity, open or closed state, base and head revisions, and inline-comment anchors. A mismatch stops the submission until you agree how to refresh.
+4. It records what was staged or posted, including provider IDs, separately from findings and coverage.
+
+Code Review never resolves threads, approves, or merges as a side effect. Evidence from local changes or selected code can't become PR inline comments, and local stakeholder notes are never published. If you decline, the local report is the delivered result.
+
+## Automated PR review
+
+The PR Review workflow runs Code Review on a pull request when a user with write access posts `/review`. It activates the `code-review` skill in host-managed, non-interactive mode with fixed settings:
+
+| Setting      | Value                                                                 |
+|--------------|-----------------------------------------------------------------------|
+| Perspectives | `full`: functional, standards, accessibility, security, and readiness |
+| Depth        | `basic`                                                               |
+| Execution    | Inline, without subagents                                             |
+| Output       | Owned by the workflow, including any review it submits                |
+
+In host-managed runs, Code Review asks no routine questions and doesn't require a canvas or local tracking files when the host forbids them. It applies the same criteria, verification, and coverage rules in memory.
+It uses only business sources the host supplies, never grants owner-acknowledged status, and returns a blocked or incomplete result when the target or required evidence is missing.
+See [Agentic Workflows](../../architecture/agentic-workflows.md) for the trigger, labels, and maintainer advisory mode.
+
+## What you need
+
+| Requirement                     | Details                                                                                                                         |
+|---------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| VS Code and GitHub Copilot Chat | Agent mode enabled                                                                                                              |
+| HVE Core                        | The `hve-core` extension or plugin, which includes the Code Review skills, agent, and subagents                                 |
+| Git                             | The revisions under review must be in your local clone. Code Review doesn't fetch or check out branches                         |
+| Node.js                         | Runs the `code-review-core` helper that captures snapshots, updates review state, and renders the report                        |
+| Provider read access            | Optional. Needed for PR descriptions, checks, linked issues, and comments; without it, those checks are recorded as unavailable |
+| Canvas support                  | Optional. Needed only for the Code Review canvas                                                                                |
+
+Code Review works with any programming language. Standards and accessibility coverage depend on the instructions and skills available for the changed files. When none apply, the perspective reports the gap and doesn't count the change as passing.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

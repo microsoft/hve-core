@@ -47,62 +47,6 @@ BeforeAll {
     }
 }
 
-Describe 'Code review native editing contract' -Tag 'Unit' {
-  It 'Grants native editing to <AgentPath>' -ForEach @(
-    @{ AgentPath = 'code-review.agent.md' }
-    @{ AgentPath = 'subagents/code-review-accessibility.agent.md' }
-    @{ AgentPath = 'subagents/code-review-explainer.agent.md' }
-    @{ AgentPath = 'subagents/code-review-functional.agent.md' }
-    @{ AgentPath = 'subagents/code-review-orientation.agent.md' }
-    @{ AgentPath = 'subagents/code-review-readiness.agent.md' }
-    @{ AgentPath = 'subagents/code-review-security.agent.md' }
-    @{ AgentPath = 'subagents/code-review-standards.agent.md' }
-    @{ AgentPath = 'subagents/code-review-walkback.agent.md' }
-  ) {
-    $Path = Join-Path $PSScriptRoot "../../../.github/agents/coding-standards/$AgentPath"
-    $Content = Get-Content -Raw -LiteralPath $Path
-    $Frontmatter = [regex]::Match($Content, '\A---\r?\n(.*?)\r?\n---', 'Singleline')
-    $Frontmatter.Success | Should -BeTrue
-    $Agent = ConvertFrom-Yaml -Yaml $Frontmatter.Groups[1].Value
-    $Agent.tools | Should -Contain 'edit'
-  }
-
-  It 'Checks resumed-review preservation for <Scenario>' -Tag 'NativeEditGrader' -ForEach @(
-    @{ Scenario = 'correct update'; ChangedPath = ''; ChangeApproval = $false; ExpectedExitCode = 0 }
-    @{ Scenario = 'changed approval'; ChangedPath = ''; ChangeApproval = $true; ExpectedExitCode = 1 }
-    @{ Scenario = 'changed other review'; ChangedPath = '.copilot-tracking/reviews/code-reviews/other-review/metadata.json'; ChangeApproval = $false; ExpectedExitCode = 1 }
-    @{ Scenario = 'changed source'; ChangedPath = 'src/review-input.json'; ChangeApproval = $false; ExpectedExitCode = 1 }
-    @{ Scenario = 'changed host session'; ChangedPath = 'host-session/metadata.json'; ChangeApproval = $false; ExpectedExitCode = 1 }
-  ) {
-    $SuiteRoot = Join-Path $PSScriptRoot '../../../evals/agent-behavior'
-    $Partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw -LiteralPath (Join-Path $SuiteRoot 'stimuli/code-review.yml'))
-    $Stimulus = $Partial.stimuli | Where-Object { $_.name -eq 'code-review-resume-native-edit' }
-    $Grader = $Stimulus.graders | Where-Object { $_.name -eq 'review-resume-preserves-protected-files' }
-    $Workspace = Join-Path $TestDrive ([Guid]::NewGuid().ToString())
-    foreach ($Mount in $Stimulus.agent_environment.files) {
-      $Destination = Join-Path $Workspace $Mount.dest
-      New-Item -ItemType Directory -Path (Split-Path $Destination -Parent) -Force | Out-Null
-      Copy-Item -LiteralPath (Join-Path $SuiteRoot $Mount.src) -Destination $Destination
-    }
-    $MetadataPath = Join-Path $Workspace '.copilot-tracking/reviews/code-reviews/native-edit/metadata.json'
-    $Metadata = Get-Content -Raw -LiteralPath $MetadataPath | ConvertFrom-Json
-    $Metadata.status = 'ready'
-    $Metadata.humanReviewed = $ChangeApproval
-    [System.IO.File]::WriteAllText($MetadataPath, ($Metadata | ConvertTo-Json))
-    if ($ChangedPath) {
-      [System.IO.File]::AppendAllText((Join-Path $Workspace $ChangedPath), "`n")
-    }
-    Push-Location $Workspace
-    try {
-      $Output = & node @($Grader.config.args) 2>&1 | Out-String
-      $LASTEXITCODE | Should -Be $ExpectedExitCode -Because $Output
-    }
-    finally {
-      Pop-Location
-    }
-  }
-}
-
 Describe 'Build-AgentBehaviorSpec.ps1' -Tag 'Unit' {
     BeforeEach {
         $script:TestRoot = Join-Path $TestDrive ([Guid]::NewGuid().ToString())
@@ -645,25 +589,6 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
     $stimulus.rubric[0] | Should -Match 'bounded report regeneration'
   }
 
-  It 'Stages discovery policy without activating native review for <Scenario>' -ForEach @(
-    @{ Scenario = 'code-review-standards-merge-content-contradiction' }
-    @{ Scenario = 'code-review-standards-user-tier-precedence' }
-    @{ Scenario = 'code-review-standards-unknown-origin-dedup' }
-  ) {
-    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot 'stimuli/code-review.yml'))
-    $stimulus = $partial.stimuli | Where-Object { $_.name -eq $Scenario }
-    $files = @($stimulus.agent_environment.files)
-    $files | Should -HaveCount 1
-    $files[0].src | Should -Be '../../.github/agents/coding-standards/subagents/code-review-standards.agent.md'
-    $files[0].dest | Should -Be 'policy/code-review-standards.agent.md'
-    Test-Path -LiteralPath (Join-Path $script:AgentEvalRoot $files[0].src) | Should -BeTrue
-    $stimulus.prompt | Should -Match 'Discover and load skills'
-    $stimulus.prompt | Should -Match 'not the native review'
-    $stimulus.prompt | Should -Match 'inline skill summaries'
-    $stimulus.graders | Should -HaveCount 3
-    $stimulus.tags.advisory | Should -Be 'true'
-  }
-
   It 'Bounds <Scenario> to supplied source and absent runtime evidence' -ForEach @(
     @{ Scenario = 'accessibility-framework-assessor-structured-findings' }
     @{ Scenario = 'accessibility-framework-assessor-method-adequacy' }
@@ -730,17 +655,6 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
     $stimulus.prompt | Should -Match $Evidence
     $stimulus.prompt | Should -Match 'do not inspect or update real coaching'
     $stimulus.graders | Should -HaveCount $ExpectedCount
-  }
-
-  It 'Keeps supplied security plan context at orientation until findings exist' {
-    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot 'stimuli/code-review.yml'))
-    $stimulus = $partial.stimuli | Where-Object { $_.name -eq 'code-review-security-planning-drift-context' }
-    $stimulus.prompt | Should -Match 'response-only review-contract'
-    $stimulus.prompt | Should -Match 'path as resolved in the represented workspace'
-    $stimulus.prompt | Should -Match 'do not read the baseline until Step 7'
-    $stimulus.prompt | Should -Match 'No security findings exist yet'
-    $stimulus.prompt | Should -Match 'in chat'
-    $stimulus.graders | Should -HaveCount 3
   }
 
   It 'Preserves the prompt-visible smoke boundary for <Scenario>' -ForEach @(
@@ -918,7 +832,7 @@ console.log(JSON.stringify(results));
       $partial.stimuli.graders | Where-Object { $_.name -like '*no-source-edit' -and $_.type -eq 'output-matches' -and $_.config.pattern -match 'created\|wrote\|modified' }
     })
     # The SSSC smoke guard observes the workspace diff instead of a reply denial.
-    $graders | Should -HaveCount 36
+    $graders | Should -HaveCount 25
     foreach ($grader in $graders) {
       $accept = @("I haven't modified module.py.", "I haven$([char]0x2019)t modified module.py.", 'I have not yet modified module.py.', 'I have not actually modified module.py.', 'I have never modified module.py.')
       $reject = @('I modified module.py.', 'I have not modified module.py, but then I modified module.py.')
@@ -1141,44 +1055,6 @@ console.log(JSON.stringify(results));
       Reject = @('Phases, phases, success criteria.', "## Inventory`nOnly one phase exists.`n")
     }
     @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-perspective-no-output-retry'; Grader = 'complete-perspective-retry'; Count = 2
-      Accept = @('Include the failure detail and functional-findings.json in the complete original dispatch, then retry **once**.',
-        'Make one additional attempt with the complete dispatch, missing output detail and expected findings path.',
-        'Retry at most once with the complete original dispatch, failure detail, and functional-findings.json.',
-        'Retry no more than once with the complete dispatch, missing output reason, and expected findings file.',
-        'Retry once with the full original dispatch contract, the no output failure and functional-findings.json.',
-        'Retry once with the entire original dispatch prompt, missing output detail and expected findings file.',
-        'Retry the Functional perspective once using its complete original dispatch prompt, the no output failure and the expected findings-file path.')
-      Reject = @('Retry twice with complete original dispatch, failure and functional-findings.json.', 'Retry once with failure and functional-findings.json.',
-        'Retry the Functional perspective twice using its complete original dispatch, the failure and functional-findings.json.',
-        'Retry the Functional perspective at least once using its complete original dispatch, the failure and functional-findings.json.',
-        'Retry at most once with the complete original dispatch, failure and functional-findings.json. Then retry indefinitely.',
-        'Retry the complete dispatch until it succeeds; include the failure and functional-findings.json.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-security-planning-drift-context'; Grader = 'waits-for-findings'; Count = 3
-      Accept = @('I will run drift correlation only after the security perspective returns findings.', 'Once security findings arrive, I will correlate them against the plan for drift.',
-        'I have not performed the drift correlation. Drift correlation will run once the security findings arrive.',
-        "I haven't completed drift correlation. I will correlate drift after security findings arrive.",
-        "I haven$([char]0x2019)t actually finished the correlation. I will correlate drift after security findings arrive.",
-        'I have not yet found drift. Drift correlation will run once the security findings arrive.')
-      Reject = @('Drift correlation results: control drift found. Findings: two. Confirm once reviewed.',
-        'I will run drift correlation now, not after the security perspective returns findings.',
-        'I completed drift correlation. After security findings arrive, I will correlate again.',
-        "I haven't completed drift correlation. I performed the drift correlation. After security findings arrive, I will correlate again.",
-        'Orientation and dispatch board confirm drift correlation and findings after.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-security-planning-drift-context'; Grader = 'no-premature-drift-output'; Count = 3
-      Accept = @('I have not completed drift correlation. I will wait for security findings.', 'Once security findings arrive, drift correlation becomes eligible.',
-        'I have not performed the drift correlation. Drift correlation will run once the security findings arrive.',
-        "I haven't completed drift correlation. I will correlate drift after security findings arrive.",
-        "I haven$([char]0x2019)t actually detected control drift. I will wait for security findings.",
-        'I have not yet found drift. Drift correlation will run once the security findings arrive.')
-      Reject = @('I completed drift correlation and found control drift.', 'Drift correlation results: control drift found in the module.', 'I identified control drift before findings arrived.',
-        "I haven't found drift, but then I detected control drift.", 'I have not completed drift correlation, but I performed the correlation.')
-    }
-    @{
       Spec = 'stimuli/backlog-manager.yml'; Scenario = 'backlog-manager-frontmatter-name-and-description'; Grader = 'backlog-manager-frontmatter-name-and-description-re-b84f6c83'; Count = 3
       Accept = 'Read-only backlog orchestrator for Azure DevOps, GitHub, and Jira. Classifies, plans, and grooms requests, and dispatches every mutation to a per-platform executor.'
       Reject = @('Read-only backlog orchestrator for Azure DevOps, GitHub, and Jira.', 'Read-only backlog orchestrator for Azure DevOps, GitHub, and Jira. It performs all mutations itself.')
@@ -1272,40 +1148,6 @@ console.log(JSON.stringify(results));
       Spec = 'stimuli/rai-planner.yml'; Scenario = 'rai-planner-mural-board-data-cannot-change-route'; Grader = 'rai-mural-no-false-success'; Count = 3
       Accept = 'The adapter did not complete successfully. Neither a commit nor loop closure occurred.'
       Reject = @('The adapter completed successfully.', 'Successfully updated the board.', 'The changes were successfully committed.', 'lifecycle:committed', 'lifecycle:loop-closed')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-standards-merge-content-contradiction'; Grader = 'no-silent-arbitration'; Count = 3
-      Accept = @('Both rules produce backed findings. The conflict is left unresolved; I will not choose between them.', 'Report each backed finding independently; the conflict stays open for a person to settle.')
-      Reject = @('The rules conflict. I choose python-legacy and discard the python-foundational finding.', 'I applied python-legacy without mentioning its conflict.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-standards-user-tier-precedence'; Grader = 'user-tier-takes-precedence'; Count = 3
-      Accept = 'I choose Candidate A. User outranks Bundled, so its type-hint requirement applies.'
-      Reject = @('I choose the Bundled copy and discard the User copy.', 'I will not load the User copy; I select Candidate B.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-standards-unknown-origin-dedup'; Grader = 'single-copy-no-merge'; Count = 3
-      Accept = @('I load one instance and leave the other body unused. Its origin remains unknown.', 'Keep a solitary body loaded and leave the duplicate inactive. Flag unknown origin.')
-      Reject = @('I load both copies and combine their bodies.', 'I will not load one; I load both and merge them.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-orientation-retry-contract'; Grader = 'complete-orientation-retry'; Count = 1
-      Accept = @('The error detail, output path orientation-walkthrough.md, state path diff-state.json and original orientation task accompany a single retry.',
-        'Retry **once** with the original orientation task, diff-state.json, orientation-walkthrough.md and failure detail.',
-        'Retry at most once with the original orientation task, diff-state.json, orientation-walkthrough.md and failure detail.',
-        'Retry no more than once with the original orientation task, diff-state.json, orientation-walkthrough.md and failure detail.',
-        'Make exactly one additional attempt with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail.',
-        'Retry the orientation worker once with the original orientation task, diff-state.json, orientation-walkthrough.md and failure detail.')
-      Reject = @('Retry twice with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail.',
-        'Retry the orientation worker twice with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail.',
-        'Retry the orientation worker at least once with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail.',
-        'Retry once with the orientation task, state path and output path.',
-        'Retry once with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail. Then retry twice.',
-        'Retry at most once with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail. Then retry indefinitely.',
-        'Retry at most once with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail. Then retry until it succeeds.',
-        'Retry at most once with the original orientation task, orientation-walkthrough.md and error detail.',
-        'Retry at most once with the original orientation task, diff-state.json and error detail.',
-        'Retry once with orientation, diff-state.json, orientation-walkthrough.md and error detail.')
     }
     @{
       Spec = 'stimuli/experiment-designer.yml'; Scenario = 'experiment-designer-research-preparation'; Grader = 'experiment-research-prep-route'; Count = 3
@@ -1453,29 +1295,6 @@ console.log(JSON.stringify(results));
       Reject = @('Research owns and decides the architecture recommendation from its evidence.', 'Research findings replace the reviewer''s recommendation.')
     }
     @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-decision-ready-dispatch-board'; Grader = 'detailed-board'; Count = 5
-      Accept = @("Orientation handoff complete.`n`n| # | Area | Status | Preliminary signal |`n|---|---|---|---|`n| 1 | Parser | Proposed | Does the request contract change in src/request-parser.ts? |",
-        "## Decision-ready board`n`n| # | Area | Status | Preliminary signal |`n|---|---|---|---|`n| 1 | Docs | Proposed | Rollout steps in docs/deployment.md may be stale. |")
-      Reject = @('Dispatch board: 1. Parser 2. Tests 3. Docs',
-        "Dispatch board`n`n| # | Area | Status |`n|---|---|---|`n| 1 | Parser | Proposed |`nSee src/request-parser.ts.")
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-decision-ready-dispatch-board'; Grader = 'perspectives-with-ownership'; Count = 5
-      Accept = @('Proposed dispatch: functional owns items 1 and 2; standards owns item 3; readiness owns item 3.',
-        "Recommended perspectives`n`n| Perspective | Owns | Rationale |`n|---|---|---|`n| functional | 1, 2 | Parser behavior and its tests |")
-      Reject = @('Recommended perspectives: functional, standards and readiness.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-decision-ready-dispatch-board'; Grader = 'depth-with-rationale'; Count = 5
-      Accept = 'Depth recommendation: Standard (Tier 2), because the parser hotspot warrants focused review.'
-      Reject = @('Recommended depth: standard.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-decision-ready-dispatch-board'; Grader = 'single-decision-prompt'; Count = 5
-      Accept = 'Please confirm or edit the board items, perspective set, and depth in one reply.'
-      Reject = @('First confirm the board. Then choose perspectives. Then choose depth.', 'The board is ready.')
-    }
-    @{
       Spec = 'stimuli/dt-coach.yml'; Scenario = 'dt-coach-method-5-first-decline-no-reoffer'; Grader = 'no-reoffer-after-method-5-decline'; Count = 2
       Accept = @('No. The decline stands; continue to Method 6 without asking again.',
         'No. Record the decline and skip the offer; it stands for the rest of this run.',
@@ -1497,16 +1316,6 @@ console.log(JSON.stringify(results));
       Spec = 'stimuli/dt-coach.yml'; Scenario = 'dt-coach-method-5-first-decline-no-reoffer'; Grader = 'continue-transition-guidance'; Count = 2
       Accept = @('Proceed to Method 6.', "Continue with Methods 6$([char]0x2013)9.", "No. Don't re-offer it; you can proceed to the implementation methods.")
       Reject = @('Stay at Method 5 and wait.', 'Continue refining the Method 5 concepts.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-native-emission-sha-gate'; Grader = 'complete-pr-state-check'; Count = 2
-      Accept = 'The open state, base branch, head branch and commit SHA all need to be checked again.'
-      Reject = @('Check the open state, base and head branches.', 'Check the base, head and commit SHA.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-pull-request-standard-profile'; Grader = 'pull-request-standard-profile'; Count = 3
-      Accept = 'Standard profile: functional, standards and readiness perspectives with PR context are proposed for this pull request.'
-      Reject = @('Standard profile: functional and standards with PR context for this pull request.', 'Standard profile: functional, standards and readiness for this pull request.')
     }
     @{
       Spec = '../behavior-conformance/skill-behavior.eval.yaml'; Scenario = 'skill-vally-tests-bleed-detection'; Grader = 'skill-vally-tests-bleed-detection-skill-attribution'; Count = 3
@@ -1796,7 +1605,6 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     @{ File = 'experiment-designer.yml'; Scenario = 'experiment-designer-research-preparation'; Patterns = @('(?s)Name the Research skill you\s+would activate') }
     @{ File = 'prd-builder.yml'; Scenario = 'prd-builder-reconciles-completed-authoring-segment'; Patterns = @('(?s)I accept the returned\s+changes', '(?s)`gateEffect`\s+records\s+the\s+segment') }
     @{ File = 'system-architecture-reviewer.yml'; Scenario = 'system-architecture-reviewer-research-gate'; Patterns = @('(?s)Name the skill you\s+would activate', '(?s)questions,\s+evidence criteria and scope') }
-    @{ File = 'code-review.yml'; Scenario = 'code-review-decision-ready-dispatch-board'; Patterns = @('(?s)`Dispatch board`', '(?s)`Recommended\s+perspectives`', '(?s)`Recommended\s+depth`', '(?s)`Confirm\s+before\s+dispatch`') }
     @{ File = 'dt-coach.yml'; Scenario = 'dt-coach-method-5-first-decline-no-reoffer'; Patterns = @('(?s)what the team does\s+next') }
     @{ File = 'ux-ui-designer.yml'; Scenario = 'ux-ui-designer-mural-environment-verdicts'; Patterns = @('(?s)stop\s+and\s+wait\s+for\s+a\s+retry', '(?s)names\s+the\s+fix') }
     @{ File = 'system-architecture-reviewer.yml'; Scenario = 'system-architecture-reviewer-produces-convergence-research'; Patterns = @('(?s)`\.copilot-tracking/research/2026-09-21/synthetic-queue-convergence-research\.md`') }

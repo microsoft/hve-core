@@ -93,11 +93,11 @@ This content is a skill rather than an instructions file for three reasons: skil
 
 ## Troubleshooting
 
-| Symptom                      | Check                                                                                                                                                             |
-|------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Skill not loaded             | Confirm the diff contains `.py` files. The agent selects skills by matching file types in the changed files against skill descriptions.                           |
-| No findings generated        | Verify the `Skills Loaded` footer in the review output lists `python-foundational`. If listed but no findings appear, the diff may already satisfy the checklist. |
-| Severity seems miscalibrated | Compare against the Severity Rubric above. High requires runtime impact; medium is maintainability-only.                                                          |
+| Symptom                      | Check                                                                                                                                                                  |
+|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Skill not loaded             | Confirm the diff contains `.py` files. The agent selects skills by matching file types in the changed files against skill descriptions.                                |
+| No findings generated        | Check that the standards perspective's criteria provenance names `python-foundational`. If it does and no findings appear, the diff may already satisfy the checklist. |
+| Severity seems miscalibrated | Compare against the Severity Rubric above. High requires runtime impact; medium is maintainability-only.                                                               |
 
 ## Contributing
 

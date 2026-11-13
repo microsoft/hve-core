@@ -1,9 +1,9 @@
 ---
 title: Code Review Readiness
-description: "Reviews pull-request packaging, deliverable readiness, validation evidence, and changed documentation as structured findings"
+description: "Review change packaging, captured PR metadata, validation evidence, and changed documentation."
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-25
+ms.date: 2026-11-06
 ms.topic: reference
 keywords:
   - agent
@@ -23,13 +23,15 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Reviews pull-request packaging, deliverable readiness, validation evidence, and changed documentation as structured findings
+Review change packaging, captured PR metadata, validation evidence, and changed documentation.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-Code Review dispatches Readiness to examine change packaging, validation evidence, follow-ups, and changed documentation. PR-specific checks require supplied PR context; the worker does not infer remote state. Code logic and specialist findings stay with their respective perspectives.
+Code Review dispatches Readiness to check change packaging, validation evidence, PR metadata, and changed documentation. It preloads `code-review-core` and `code-review-readiness`. PR checks use only the metadata captured in the snapshot, so missing PR context is recorded as an unavailable check.
+Code correctness, standards, accessibility, and security stay with their own perspectives.
 
 ## Example usage
 
-The parent supplies the change brief, diff, full changed guides, optional `prContext`, and `task.outputs.readiness`. The worker checks whether the description and validation claims match the actual change and writes structured findings citing code or specific metadata fields. It returns the output path and coverage summary, never checking human-review boxes or submitting the review itself.
+For a PR, the parent supplies the work item, assigned files and hunks, available validation, and the result path, and the snapshot holds the captured PR metadata. The worker compares the description and validation claims with the actual change and anchors packaging findings to the exact metadata field, such as an unchecked required checklist item.
+It returns the result path, execution status, and any unavailable delivery checks, and it never checks a human-review box.

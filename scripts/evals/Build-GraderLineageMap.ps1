@@ -5,12 +5,14 @@
 
 <#
 .SYNOPSIS
-    Builds or checks the Vally grader-name lineage map.
+    Builds, checks, or retires listed sources from the Vally grader-name lineage map.
 .DESCRIPTION
     Pairs graders from two reachable revisions by source, stimulus, and a
     name-free behavior digest. The script fails closed on unreachable history,
     provenance drift, ambiguous pairs, semantic changes, count drift, kind
-    mismatches, duplicate result keys, or output drift.
+    mismatches, duplicate result keys, or output drift. Retirement verifies the
+    map committed at HEAD and prunes only explicitly retired sources without
+    rebuilding historical records.
 .PARAMETER RepoRoot
     Repository root. Defaults to the current Git worktree root.
 .PARAMETER SourceRevision
@@ -23,33 +25,41 @@
     Path to the committed lineage JSON.
 .PARAMETER Check
     Verifies the committed map without changing it.
+.PARAMETER Retire
+    Removes explicitly retired aliases from the verified map committed at HEAD.
+    Preserves historical metadata and validates every retained current target.
 .EXAMPLE
     ./scripts/evals/Build-GraderLineageMap.ps1 -SourceRevision <sha> -TargetRevision <sha>
 .EXAMPLE
     ./scripts/evals/Build-GraderLineageMap.ps1 -Check
+.EXAMPLE
+    ./scripts/evals/Build-GraderLineageMap.ps1 -Retire
 .NOTES
-    Runs via: npm run lint:eval-grader-lineage
+    Runs via: npm run lint:eval-grader-lineage or npm run eval-grader-lineage:retire
 #>
-[CmdletBinding(SupportsShouldProcess)]
+[CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Generate')]
 [OutputType([pscustomobject])]
 param(
     [Parameter(Mandatory = $false)]
     [string]$RepoRoot,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, ParameterSetName = 'Generate')]
     [string]$SourceRevision,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, ParameterSetName = 'Generate')]
     [string]$TargetRevision,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, ParameterSetName = 'Generate')]
     [string]$SourceProvenanceRevision = 'ce4c686f8906288db28ccf8a1108c26e2ea52bd9',
 
     [Parameter(Mandatory = $false)]
     [string]$OutputPath,
 
-    [Parameter(Mandatory = $false)]
-    [switch]$Check
+    [Parameter(Mandatory = $true, ParameterSetName = 'Check')]
+    [switch]$Check,
+
+    [Parameter(Mandatory = $true, ParameterSetName = 'Retire')]
+    [switch]$Retire
 )
 
 Set-StrictMode -Version Latest
@@ -58,10 +68,22 @@ $ErrorActionPreference = 'Stop'
 #region Constants
 
 $script:ExpectedSourceToTargetPairs = 1240
-$script:ExpectedAuthoredAliases = 411
+$script:ExpectedAuthoredAliases = 397
 $script:ExpectedGeneratedCopies = 171
-# Stimulus sources whose agents were removed; their aliases have no current target.
-$script:RetiredAliasSources = @('evals/agent-behavior/stimuli/pptx.yml')
+# Explicitly retired stimulus sources whose aliases have no current target.
+$script:RetiredAliasSources = @(
+    'evals/agent-behavior/stimuli/pptx.yml',
+    'evals/agent-behavior/stimuli/code-review.yml',
+    'evals/agent-behavior/stimuli/code-review-accessibility.yml',
+    'evals/agent-behavior/stimuli/code-review-explainer.yml',
+    'evals/agent-behavior/stimuli/code-review-functional.yml',
+    'evals/agent-behavior/stimuli/code-review-orientation.yml',
+    'evals/agent-behavior/stimuli/code-review-readiness.yml',
+    'evals/agent-behavior/stimuli/code-review-security.yml',
+    'evals/agent-behavior/stimuli/code-review-standards.yml',
+    'evals/agent-behavior/stimuli/code-review-walkback.yml'
+)
+$script:LineageMapPath = 'evals/migrations/vally-0.16-grader-name-aliases.json'
 $script:GeneratedSpecPath = 'evals/agent-behavior/eval.yaml'
 $script:LineageRoots = @(
     'evals/agent-behavior/stimuli',
@@ -470,6 +492,69 @@ function Get-CurrentGraderLineageRecords {
     return @($records)
 }
 
+function Assert-GraderLineageMapIntegrity {
+    <#
+    .SYNOPSIS
+        Validates map identity, counts, digests, and alias uniqueness without reading targets.
+    .PARAMETER Map
+        Map whose historical metadata and active aliases must be internally consistent.
+    .PARAMETER ExpectedAliases
+        Required alias count, including listed sources awaiting retirement when applicable.
+    #>
+    [CmdletBinding()]
+    [OutputType([void])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [pscustomobject]$Map,
+
+        [Parameter(Mandatory = $false)]
+        [int]$ExpectedAliases = $script:ExpectedAuthoredAliases
+    )
+
+    $aliases = @($Map.aliases)
+    if ($Map.schemaVersion -cne '1.0' -or $Map.migrationId -cne 'vally-grader-names-v0.16') {
+        throw 'Committed grader lineage map identity is invalid.'
+    }
+    if ($Map.counts.sourceToTargetPairs -ne $script:ExpectedSourceToTargetPairs -or
+        $Map.counts.authoredAliases -ne $ExpectedAliases -or
+        $Map.counts.generatedCopies -ne $script:ExpectedGeneratedCopies -or
+        $Map.counts.semanticChanges -ne 0 -or
+        $aliases.Count -ne $ExpectedAliases) {
+        throw 'Committed grader lineage map counts are invalid.'
+    }
+    foreach ($revision in @($Map.sourceProvenanceRevision, $Map.sourceRevision, $Map.targetRevision)) {
+        if ([string]$revision -cnotmatch '^[a-f0-9]{40}$') {
+            throw 'Committed grader lineage map contains an invalid revision.'
+        }
+    }
+    foreach ($digest in @($Map.sourceSpecSha256, $Map.targetSpecSha256, $Map.mapSha256)) {
+        if ([string]$digest -cnotmatch '^[a-f0-9]{64}$') {
+            throw 'Committed grader lineage map contains an invalid digest.'
+        }
+    }
+
+    $aliasJson = $aliases | ConvertTo-Json -Depth 20 -Compress
+    if ((Get-LineageSha256 -Text $aliasJson) -ne $Map.mapSha256) {
+        throw 'Committed grader lineage alias digest does not match its contents.'
+    }
+
+    $oldKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    $newKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    foreach ($alias in $aliases) {
+        if ((Get-GraderResultKind -GraderType $alias.graderType) -ne $alias.resultKind) {
+            throw "Result kind does not match grader type for '$($alias.newName)'."
+        }
+        $oldKey = "$($alias.evalName)`n$($alias.stimulus)`n$($alias.resultKind)`n$($alias.oldName)"
+        $newKey = "$($alias.evalName)`n$($alias.stimulus)`n$($alias.resultKind)`n$($alias.newName)"
+        if (-not $oldKeys.Add($oldKey)) {
+            throw "Duplicate historical composite key for '$($alias.oldName)'."
+        }
+        if (-not $newKeys.Add($newKey)) {
+            throw "Duplicate current composite key for '$($alias.newName)'."
+        }
+    }
+}
+
 function Test-CommittedGraderLineageMap {
     <#
     .SYNOPSIS
@@ -487,28 +572,8 @@ function Test-CommittedGraderLineageMap {
         [pscustomobject]$Map
     )
 
+    Assert-GraderLineageMapIntegrity -Map $Map
     $aliases = @($Map.aliases)
-    if ($Map.schemaVersion -ne '1.0' -or $Map.migrationId -ne 'vally-grader-names-v0.16') {
-        throw 'Committed grader lineage map identity is invalid.'
-    }
-    if ($Map.counts.sourceToTargetPairs -ne $script:ExpectedSourceToTargetPairs -or
-        $Map.counts.authoredAliases -ne $script:ExpectedAuthoredAliases -or
-        $Map.counts.generatedCopies -ne $script:ExpectedGeneratedCopies -or
-        $Map.counts.semanticChanges -ne 0 -or
-        $aliases.Count -ne $script:ExpectedAuthoredAliases) {
-        throw 'Committed grader lineage map counts are invalid.'
-    }
-    foreach ($digest in @($Map.sourceSpecSha256, $Map.targetSpecSha256, $Map.mapSha256)) {
-        if ([string]$digest -notmatch '^[a-f0-9]{64}$') {
-            throw 'Committed grader lineage map contains an invalid digest.'
-        }
-    }
-
-    $aliasJson = $aliases | ConvertTo-Json -Depth 20 -Compress
-    if ((Get-LineageSha256 -Text $aliasJson) -ne $Map.mapSha256) {
-        throw 'Committed grader lineage alias digest does not match its contents.'
-    }
-
     Import-LineageYamlModule
     $paths = @($aliases.source | Sort-Object -Unique)
     $currentRecords = @(Get-CurrentGraderLineageRecords -RepoRoot $RepoRoot -Paths $paths)
@@ -521,21 +586,7 @@ function Test-CommittedGraderLineageMap {
         $targetIndex[$key] = $record
     }
 
-    $oldKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
-    $newKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
     foreach ($alias in $aliases) {
-        if ((Get-GraderResultKind -GraderType $alias.graderType) -ne $alias.resultKind) {
-            throw "Result kind does not match grader type for '$($alias.newName)'."
-        }
-        $oldKey = "$($alias.evalName)`n$($alias.stimulus)`n$($alias.resultKind)`n$($alias.oldName)"
-        $newKey = "$($alias.evalName)`n$($alias.stimulus)`n$($alias.resultKind)`n$($alias.newName)"
-        if (-not $oldKeys.Add($oldKey)) {
-            throw "Duplicate historical composite key for '$($alias.oldName)'."
-        }
-        if (-not $newKeys.Add($newKey)) {
-            throw "Duplicate current composite key for '$($alias.newName)'."
-        }
-
         $targetKey = "$($alias.evalName)`n$($alias.source)`n$($alias.stimulus)`n$($alias.resultKind)`n$($alias.newName)"
         if (-not $targetIndex.ContainsKey($targetKey)) {
             throw "Mapped current grader '$($alias.newName)' was not found."
@@ -555,6 +606,38 @@ function Test-CommittedGraderLineageMap {
         generatedCopies     = $Map.counts.generatedCopies
         semanticChanges     = $Map.counts.semanticChanges
     }
+}
+
+function New-RetiredGraderLineageMap {
+    <#
+    .SYNOPSIS
+        Prunes only listed retired sources after checking the entire input map.
+    .PARAMETER RepoRoot
+        Repository containing the retained current grader targets.
+    .PARAMETER Map
+        Verified committed migration map to copy without changing historical metadata.
+    .OUTPUTS
+        System.Management.Automation.PSCustomObject
+    #>
+    [CmdletBinding()]
+    [OutputType([pscustomobject])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [pscustomobject]$Map
+    )
+
+    $retiredCount = @($Map.aliases | Where-Object { $_.source -cin $script:RetiredAliasSources }).Count
+    Assert-GraderLineageMapIntegrity -Map $Map -ExpectedAliases ($script:ExpectedAuthoredAliases + $retiredCount)
+
+    $retiredMap = $Map | ConvertTo-Json -Depth 20 | ConvertFrom-Json
+    $retiredMap.aliases = @($retiredMap.aliases | Where-Object { $_.source -cnotin $script:RetiredAliasSources })
+    $retiredMap.counts.authoredAliases = $retiredMap.aliases.Count
+    $retiredMap.mapSha256 = Get-LineageSha256 -Text ($retiredMap.aliases | ConvertTo-Json -Depth 20 -Compress)
+    [void](Test-CommittedGraderLineageMap -RepoRoot $RepoRoot -Map $retiredMap)
+    return $retiredMap
 }
 
 function Compare-GraderLineageRecords {
@@ -722,7 +805,7 @@ function New-GraderLineageMap {
             $generatedCopies++
             continue
         }
-        if ($pair.Source.Source -in $script:RetiredAliasSources) {
+        if ($pair.Source.Source -cin $script:RetiredAliasSources) {
             continue
         }
         $aliases.Add([ordered]@{
@@ -784,35 +867,38 @@ function New-GraderLineageMap {
 function Invoke-GraderLineageMap {
     <#
     .SYNOPSIS
-        Builds or checks the committed lineage map.
+        Builds, checks, or prunes listed retired sources from the committed lineage map.
     .OUTPUTS
         System.Management.Automation.PSCustomObject
     #>
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Generate')]
     [OutputType([pscustomobject])]
     param(
         [Parameter(Mandatory = $false)]
         [string]$RepoRoot,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, ParameterSetName = 'Generate')]
         [string]$SourceRevision,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, ParameterSetName = 'Generate')]
         [string]$TargetRevision,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, ParameterSetName = 'Generate')]
         [string]$SourceProvenanceRevision = 'ce4c686f8906288db28ccf8a1108c26e2ea52bd9',
 
         [Parameter(Mandatory = $false)]
         [string]$OutputPath,
 
-        [Parameter(Mandatory = $false)]
-        [switch]$Check
+        [Parameter(Mandatory = $true, ParameterSetName = 'Check')]
+        [switch]$Check,
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'Retire')]
+        [switch]$Retire
     )
 
     $resolvedRoot = Resolve-LineageRepoRoot -Override $RepoRoot
     if ([string]::IsNullOrWhiteSpace($OutputPath)) {
-        $OutputPath = Join-Path $resolvedRoot 'evals/migrations/vally-0.16-grader-name-aliases.json'
+        $OutputPath = Join-Path $resolvedRoot $script:LineageMapPath
     }
 
     $existingMap = $null
@@ -833,6 +919,39 @@ function Invoke-GraderLineageMap {
         }
         Write-Host "grader lineage map is current: $OutputPath" -ForegroundColor Green
         return [pscustomobject]@{ Outcome = 'NoDrift'; OutputPath = $OutputPath; Counts = $counts }
+    }
+
+    if ($Retire) {
+        if ($null -eq $existingMap) {
+            throw "Committed lineage map not found: $OutputPath"
+        }
+        $committedJson = (Invoke-LineageGit -RepoRoot $resolvedRoot -Arguments @('show', "HEAD:$($script:LineageMapPath)")) -join "`n"
+        $committedMap = $committedJson | ConvertFrom-Json
+        $retiredMap = New-RetiredGraderLineageMap -RepoRoot $resolvedRoot -Map $committedMap
+        $existingJson = $existingMap | ConvertTo-Json -Depth 20 -Compress
+        $retiredJson = $retiredMap | ConvertTo-Json -Depth 20 -Compress
+        if ($existingJson -cne ($committedMap | ConvertTo-Json -Depth 20 -Compress) -and $existingJson -cne $retiredJson) {
+            throw 'Lineage retirement refuses changes beyond the committed retirement projection.'
+        }
+
+        $retiredCount = $committedMap.aliases.Count - $retiredMap.aliases.Count
+        $rendered = (($retiredMap | ConvertTo-Json -Depth 20) -replace "`r`n", "`n") + "`n"
+        $existing = [System.IO.File]::ReadAllText($OutputPath) -replace "`r`n", "`n"
+        $outcome = 'NoDrift'
+        if ($existing -cne $rendered) {
+            $outcome = 'WhatIf'
+            if ($PSCmdlet.ShouldProcess($OutputPath, "Retire $retiredCount listed grader aliases")) {
+                [System.IO.File]::WriteAllText($OutputPath, $rendered, [System.Text.UTF8Encoding]::new($false))
+                $outcome = 'Retired'
+            }
+        }
+        Write-Host "grader lineage retirement ${outcome}: $($retiredMap.aliases.Count) active aliases; $retiredCount retired from HEAD" -ForegroundColor Green
+        return [pscustomobject]@{
+            Outcome = $outcome
+            OutputPath = $OutputPath
+            Counts = $retiredMap.counts
+            RetiredAliases = $retiredCount
+        }
     }
 
     if ([string]::IsNullOrWhiteSpace($SourceRevision) -or [string]::IsNullOrWhiteSpace($TargetRevision)) {

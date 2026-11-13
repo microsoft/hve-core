@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Templates"
 pagination_label: Templates
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-11-06
 ms.topic: overview
 keywords:
   - templates
@@ -25,8 +25,8 @@ Standardized templates for common documentation tasks. Each template provides a 
 | Template                                                                 | Purpose                                                          |
 |--------------------------------------------------------------------------|------------------------------------------------------------------|
 | [ADR Template](adr-template-solutions.md)                                | Record architecture decisions with context, options, and outcome |
-| [Code Review Output Format](full-review-output-format.md)                | Shared report structure and rules for code review orchestrators  |
-| [Code Review Standards Output Format](standards-review-output-format.md) | Report template and findings format for standards reviews        |
+| [Code Review Output Format](full-review-output-format.md)                | Where the canonical Code Review report contract lives            |
+| [Code Review Standards Output Format](standards-review-output-format.md) | How standards findings fit the shared Code Review contract       |
 | [Engineering Fundamentals](engineering-fundamentals.md)                  | Language-agnostic design principles applied to code reviews      |
 | [RAI Assessment](rai-plan-template.md)                                   | RAI assessment output structure                                  |
 | [Root Cause Analysis](rca-template.md)                                   | Investigate incidents with timeline, analysis, and action items  |
