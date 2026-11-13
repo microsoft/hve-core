@@ -59,7 +59,7 @@ source document or contacts anyone.
 Reach for a different asset when:
 
 * No approved plan exists. Run [rpi-plan](rpi-plan) first; do not implement from research alone.
-* The implementation is finished and you want an acceptance review. Run [rpi-review](rpi-review); review is optional.
+* The implementation is finished and ready for review. Run [rpi-review](rpi-review) for acceptance verification and [rpi-refine](rpi-refine) for subtractive simplification.
 * The change is small and isolated. Edit directly instead of creating lifecycle artifacts.
 
 ## Example usage
@@ -88,4 +88,4 @@ The skill sends one `RPI Implement` opening with the scope, write boundary, and 
 Run `/rpi-implement plan=... task=P01-T02`, or omit `task` to complete the rest of the plan.
 ```
 
-A later invocation can implement accepted `RV-xxx` findings from a review as ordinary work; no second review is required.
+A later invocation can implement accepted `RV-xxx` and `RF-xxx` findings directly or through new `Pxx` follow-up phases as ordinary work without automatically triggering another full review.
