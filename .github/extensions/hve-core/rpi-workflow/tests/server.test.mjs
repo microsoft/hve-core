@@ -544,6 +544,7 @@ describe('a session-wide send', () => {
 describe('a send to another session', () => {
     const PROJECT = '7b2e8f10-3c4d-4e5f-8a6b-1c2d3e4f5a6b';
     const CHILD = 'c4d5e6f7-0a1b-4c2d-9e3f-4a5b6c7d8e9f';
+    const SIBLING = 'd5e6f7a8-1b2c-4d3e-8f4a-5b6c7d8e9f0a';
     const SESSION_NAME = 'Offline trail maps';
 
     /** Checks `condition` (sync or async) every 20 ms until it holds, for up to 3 seconds. */
@@ -564,7 +565,7 @@ describe('a send to another session', () => {
     /**
      * A canvas that shows the child's task, bound to the child's session and joined to the Project's
      * session. `childRunner` is the child's canvas process, and `source` is this canvas's own process
-     * for the Project's session. `failWrites` decides which of the canvas's writes fail: it receives
+     * for the Project's session. `shown` is what the canvas shows; a test can rebind its `boundSession`. `failWrites` decides which of the canvas's writes fail: it receives
      * the number of each write, counted from 1 across task documents, the outbox, and the inbox, and
      * returns true for a write that fails. Tests reassign `writes.failWrites` to let the canvas restart.
      * `hooks.beforeInboxWrite`, when set, runs once before the source writes an inbox entry. `withParent`
@@ -608,11 +609,12 @@ describe('a send to another session', () => {
             chat.push(request);
             return { messageId: `relay-${chat.length}` };
         } });
+        const shown = { kind: 'rpi', boundSession: CHILD, workspace: { root: FIXTURE_ROOT }, follow: { paused: false } };
         const server = createCanvasServer({
             store: flaky,
             getSessionId: () => child.id,
             getCanvas: () => ({ handle: 'K7QF', instanceId: 'rpi-workflow-demo' }),
-            getSource: () => ({ kind: 'rpi', boundSession: CHILD, workspace: { root: FIXTURE_ROOT }, follow: { paused: false } }),
+            getSource: () => shown,
             getJoinedSessionId: () => joined,
             deliver: async (request) => {
                 chat.push(request);
@@ -624,7 +626,7 @@ describe('a send to another session', () => {
         });
         const url = new URL(await server.start());
         return {
-            store, server, url, child, parent, chat, childChat, childRunner, source, hooks, writes, sourceClock,
+            store, server, url, child, parent, chat, childChat, childRunner, source, shown, hooks, writes, sourceClock,
             async stop() {
                 await server.stop();
                 await childRunner.stop();
@@ -1015,6 +1017,25 @@ describe('a send to another session', () => {
             await until(async () => (await itemIn(f.store, f.child.id, mine.id)).state === 'sent' && (await f.store.loadOutbox(PROJECT)).entries.length === 0);
             assert.equal((await itemIn(f.store, f.child.id, mine.id)).route, 'relay');
             assert.equal(f.chat.length, 1, 'the items went once, through the relay the page named');
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('refuses a Send now whose preview showed another session that shares the checkout, and changes nothing', async () => {
+        const f = await crossSetup('cross-rebound');
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const items = [{ taskId: CHILD_TASK, id: mine.id }];
+            const preview = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items } });
+            assert.equal(preview.json.route.sessionId, CHILD);
+            f.shown.boundSession = SIBLING;
+            const refused = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items, digest: preview.json.digest, route: preview.json.route.kind } });
+            assert.deepEqual([refused.status, refused.json.error.code], [409, 'preview_stale'], JSON.stringify(refused.json));
+            assert.deepEqual([refused.json.error.preview.route.kind, refused.json.error.preview.route.sessionId], [preview.json.route.kind, SIBLING], 'only the session moved');
+            const held = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([held.state, held.handoff], ['queued', undefined]);
+            assert.deepEqual([(await f.store.loadOutbox(PROJECT)).entries, f.chat.length, f.childChat.length], [[], 0, 0]);
         } finally {
             await f.stop();
         }

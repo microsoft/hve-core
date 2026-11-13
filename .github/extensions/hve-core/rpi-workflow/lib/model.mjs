@@ -1104,7 +1104,7 @@ const indent = (text) => String(text).split('\n').map((line) => `   ${line}`);
  * @param {any} session
  * @param {string[]} ids
  * @param {string} [now]
- * @param {{ canvas?: { handle?: string | null, instanceId?: string | null } | null, note?: string, otherSession?: { id: string, root?: string | null } | null }} [options]
+ * @param {{ canvas?: { handle?: string | null, instanceId?: string | null } | null, note?: string }} [options]
  * @returns {{ prompt: string, displayPrompt: string, ids: string[], digest: string, parts: { taskId: string, ids: string[] }[] }}
  */
 export function composeDelivery(session, ids, now = new Date().toISOString(), options = {}) {
@@ -1135,19 +1135,14 @@ function sendableItems(session, ids, now) {
 }
 
 /**
- * One task's files, as message lines. A task of another session names that session and its
- * workspace root, and the paths below are relative to that root.
+ * One task's files, as message lines.
  *
  * @param {any} session
- * @param {{ id: string, root?: string | null } | null} [otherSession]
  */
-function fileLines(session, otherSession = null) {
+function fileLines(session) {
     const files = FILE_LABELS.map(([key, label]) => [label, key === 'statePath' ? session.source.statePath : session.source.artifacts?.[key]]).filter(([, path]) => typeof path === 'string' && path);
     if (!files.length) return [];
-    const where = otherSession
-        ? `Task files, in session ${otherSession.id}${typeof otherSession.root === 'string' && otherSession.root ? ` at workspace root ${otherSession.root}; paths are relative to that root` : ''}:`
-        : 'Task files:';
-    return [where, ...files.map(([label, path]) => `- ${label}: ${path}`)];
+    return ['Task files:', ...files.map(([label, path]) => `- ${label}: ${path}`)];
 }
 
 /** One task's items, as message lines numbered from `start`. */
@@ -1201,7 +1196,7 @@ const isCompleted = (session) => session.session?.status === 'completed';
  *
  * @param {{ session: any, ids: string[] }[]} parts
  * @param {string} [now]
- * @param {{ canvas?: { handle?: string | null, instanceId?: string | null } | null, note?: string, sessionName?: string | null, otherSession?: { id: string, root?: string | null } | null }} [options] `otherSession` names the Copilot session and workspace root that hold the tasks when they are not the canvas's own
+ * @param {{ canvas?: { handle?: string | null, instanceId?: string | null } | null, note?: string, sessionName?: string | null }} [options]
  * @returns {{ prompt: string, displayPrompt: string, ids: string[], digest: string, parts: { taskId: string, ids: string[] }[] }}
  */
 export function composeSessionDelivery(parts, now = new Date().toISOString(), options = {}) {
@@ -1211,7 +1206,6 @@ export function composeSessionDelivery(parts, now = new Date().toISOString(), op
         fail('invalid_input', 'ids must list 1 to 50 feedback items.');
     }
     const note = text(options.note, 'note', { optional: true });
-    const otherSession = options.otherSession ?? null;
     const sections = groups.map((part) => ({ session: part.session, items: sendableItems(part.session, part.ids, now) }));
     const all = sections.flatMap((section) => section.items);
     const handle = typeof options.canvas?.handle === 'string' && options.canvas.handle ? options.canvas.handle : null;
@@ -1255,13 +1249,13 @@ export function composeSessionDelivery(parts, now = new Date().toISOString(), op
             const phase = phaseOfTask(session);
             const status = isCompleted(session) ? 'completed; follow-up work' : phase ? `current phase: ${phase}` : '';
             rest.push('', `Task ${session.task.id}: ${session.task.title}${status ? ` (${status})` : ''}`);
-            if (rpi) rest.push(...fileLines(session, otherSession));
+            if (rpi) rest.push(...fileLines(session));
             rest.push('Items:', ...itemLines(session, section.items, number));
             number += section.items.length;
         }
     } else {
         const { session } = sections[0];
-        const files = rpi ? fileLines(session, otherSession) : [];
+        const files = rpi ? fileLines(session) : [];
         if (files.length) rest.push('', ...files);
         rest.push('', 'Items:', ...itemLines(session, sections[0].items, 1));
     }
