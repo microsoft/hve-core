@@ -14,7 +14,7 @@ import { NOT_CONNECTED_WHY, openPlan, splitOpenInput, validateOpenInput } from '
  * @param {any} session
  * @param {string} note
  */
-export function openResult(instance, source, session, note) {
+function openResult(instance, source, session, note) {
     if (source.kind === 'none') {
         const why = NOT_CONNECTED_WHY[source.reason] ?? '';
         return { url: instance.server.url, title: 'RPI Workflow', status: `Not connected to an RPI session${why}. The user can pick a session in its session picker, or connect it with show_task, giving this conversation's RPI state file, task "current", or another session's ID · canvas ${instance.handle}` };

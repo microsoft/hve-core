@@ -31,16 +31,6 @@
  * @property {number} changedAt When the state file last changed, in milliseconds.
  */
 
-/**
- * The key a link's reached task is stored under: the state path the link names, or null when it names none.
- *
- * @param {{ statePath?: string | null }} link
- * @returns {string | null}
- */
-export function linkKey(link) {
-    return link.statePath ?? null;
-}
-
 /** Session folder name as words: hyphens become spaces and the first letter is capitalized. */
 export function humanizeSlug(slug) {
     const words = String(slug ?? '').replace(/-+/g, ' ').trim();
@@ -77,7 +67,7 @@ export function buildTree({ members, shownPath, outside = new Map() }) {
     for (const member of members) {
         const link = member.state.parent;
         if (!link) continue;
-        const resolved = link.statePath && !byPath.has(link.statePath) ? outside.get(linkKey(link)) : undefined;
+        const resolved = link.statePath && !byPath.has(link.statePath) ? outside.get(link.statePath) : undefined;
         if (resolved && !resolved.error) {
             continues.set(member.path, resolved);
             continue;

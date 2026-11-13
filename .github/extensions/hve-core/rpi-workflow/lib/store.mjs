@@ -28,9 +28,9 @@ const HANDLE_RE = /^[0-9A-Za-z][0-9A-Za-z-]{0,23}$/;
 /** Most items one inbox entry names, the same limit a send takes. */
 export const INBOX_MAX_ITEMS = 50;
 /** The states an inbox entry moves through, in order: waiting, claimed by one process, then sending. */
-export const INBOX_STATES = Object.freeze(['waiting', 'claimed', 'sending']);
+const INBOX_STATES = Object.freeze(['waiting', 'claimed', 'sending']);
 /** The states an outbox entry moves through: pending while its handoff is recorded, then committed, when it may be relayed. */
-export const OUTBOX_STATES = Object.freeze(['pending', 'committed']);
+const OUTBOX_STATES = Object.freeze(['pending', 'committed']);
 
 /**
  * Resolves the Copilot home every host shares: a non-empty `COPILOT_HOME`, otherwise

@@ -28,11 +28,11 @@ import { CLAIM_STALE_MS, claimRelay, composeInboxDelivery, composeRelayDelivery,
 /** Version of the presence and inbox protocol. A process reports it; only processes that speak it take entries. */
 export const INBOX_VERSION = 1;
 /** How often a process refreshes its presence entry. */
-export const PRESENCE_BEAT_MS = 30 * 1000;
+const PRESENCE_BEAT_MS = 30 * 1000;
 /** A presence entry that has not been refreshed for this long is dropped. */
 export const PRESENCE_TTL_MS = 2 * 60 * 1000;
 /** How often a process checks its inbox and outbox files for changes. */
-export const INBOX_CHECK_MS = 2 * 1000;
+const INBOX_CHECK_MS = 2 * 1000;
 /** How long a handed-off inbox entry waits to be claimed before its source canvas relays the items. */
 export const CLAIM_WINDOW_MS = 20 * 1000;
 
@@ -58,7 +58,7 @@ const ownedBy = (owner, state) => (entry) => entry.state === state && sameOwner(
  * @param {string} id
  * @returns {{ entries: any[], result: null }}
  */
-export function withoutEntry(entries, id) {
+function withoutEntry(entries, id) {
     const kept = entries.filter((entry) => entry.id !== id);
     return { entries: kept.length === entries.length ? entries : kept, result: null };
 }
