@@ -31,9 +31,11 @@ Review completed RPI work for what can be removed, simplified, consolidated, or 
 Use `rpi-refine` after implementation finishes to examine completed work for what can be removed, simplified, consolidated, or redesigned across everything the session touched.
 While [rpi-review](rpi-review) checks whether delivered work meets planned requirements and acceptance criteria, `rpi-refine` looks across code, tests, documents, domain language, conventions, SDKs and libraries, base assumptions, error boundaries, runtime performance, language versions, and configuration to cut unnecessary weight and surface workarounds that warrant redesign.
 
-During an [rpi](rpi) or [RPI Agent](../../agents/hve-core/rpi-agent) session, `rpi-refine` runs alongside `rpi-review` in the Review phase, and the [RPI Workflow canvas](../../../rpi/rpi-workflow-canvas) displays both reviews together in its Review view. You can also invoke `/rpi-refine` standalone on any task's plan and changes record, or ask the session or Project coordinator to run a single review skill.
+During an [rpi](rpi) or [RPI Agent](../../agents/hve-core/rpi-agent) session, `rpi-refine` runs alongside `rpi-review` in the Review phase, and the [RPI Workflow canvas](../../../rpi/rpi-workflow-canvas) displays both reviews together in its Review view.
+When a Project coordinates the session on significant changes, the coordinator can create a dedicated fresh-context session just to run and manage `rpi-refine` and hand back the completed record; without a Project coordinator (standalone `/rpi-refine` or single-session RPI), the current main agent runs and manages `rpi-refine` directly.
 
-When subagent dispatch is available, `rpi-refine` prefers running four fresh-context lenses in parallel through [RPI Refiner](../../agents/hve-core/subagents/rpi-refiner) so sunk-cost assumptions from implementation do not hide avoidable complexity; pass `subagents=none` to assess all four lenses directly in the parent context:
+The main agent owns the refinement analysis, backward logic tracing, assumption and domain judgment, and authoring of `-refinement.md` across four subtractive lenses.
+When subagent dispatch is available, the main agent creates and manages regular subagents strictly for narrow targeted lookups (such as finding existing SDKs/helpers, enumerating call sites, checking test overlap, or scanning docs/configs for duplicates); pass `subagents=none` to run every lookup directly in the main agent:
 
 * Logic, branching, error boundaries, and performance: removable logic lines, deep branching simplified by tracing backward from outputs to inputs, redundant internal guards where failing fast or handling errors higher up the stack is cleaner (never removing trust-boundary, containment, auth, secret, or untrusted-content checks), and CPU, memory, or I/O waste.
 * Conventions, SDKs, libraries, and language versions: missed workspace helpers or SDKs, leftover scaffolding from corrected assumptions, avoidable added packages versus hand-rolled code replaceable by existing libraries, unused current-version language features, and safe non-breaking version upgrade offers.
@@ -55,7 +57,7 @@ Reach for a different asset when:
 /rpi-refine task=offline-sync
 ```
 
-The skill initializes the refinement record, runs the four fresh-context subtractive lenses, verifies candidates at their workspace paths, and walks through actionable `RF-xxx` findings:
+The skill initializes the refinement record, performs the main-agent review across all four subtractive lenses (using targeted subagent lookups only for narrow searches such as locating existing retry helpers), verifies evidence at workspace paths, and walks through actionable `RF-xxx` findings:
 
 ```text
 ### RF-001 [Medium]: outbox.ts implements custom timer backoff when retryWithBackoff already exists

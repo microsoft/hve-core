@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Understanding the RPI Workflow"
 pagination_label: Understanding the RPI Workflow
 author: Microsoft
-ms.date: 2026-11-12
+ms.date: 2026-11-13
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -92,7 +92,7 @@ Completion checkboxes change only after evidence exists. If implementation needs
 Review splits post-implementation assessment across two complementary skills that remain read-only with respect to the files under review and appear together in the [RPI Workflow canvas](rpi-workflow-canvas) Review view:
 
 * `/rpi-review` reconciles requirements, acceptance criteria, plan and task completion, critique dispositions, implementation-time plan updates, business-source alignment, changes, and validation evidence in one acceptance record (`RV-xxx` findings and `RD-xxx` decisions).
-* `/rpi-refine` inspects touched code, tests, documents, domain language, conventions, SDKs and libraries, base assumptions, error boundaries, runtime performance, language versions, and configuration for what can be removed, simplified, consolidated, or redesigned in one subtractive refinement record (`RF-xxx` findings and `FD-xxx` decisions), preferring parallel fresh-context `RPI Refiner` lenses when subagents are available.
+* `/rpi-refine` has the main agent inspect touched code, tests, documents, domain language, conventions, SDKs and libraries, base assumptions, error boundaries, runtime performance, language versions, and configuration for what can be removed, simplified, consolidated, or redesigned in one subtractive refinement record (`RF-xxx` findings and `FD-xxx` decisions), using regular subagents only for narrow targeted lookups (or running inside a dedicated fresh-context session managed by a Project coordinator).
 
 ```text
 .copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md

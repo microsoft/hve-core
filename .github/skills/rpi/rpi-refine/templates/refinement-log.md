@@ -81,7 +81,7 @@ Append events in order. Never rewrite or delete an earlier row. The latest event
 * Touched surfaces assessed: {{code_docs_domain_tests_dependencies_config_summary}}
 * Review depth and provenance: {{surface_standard_or_deep}}; {{default_same_loop_significant_changes_or_explicit_user_request}}
 * Review execution: {{started_Complete_Partial_or_Blocked}}
-* Helper use: {{none_or_each_RPI_Refiner_lane_with_lens_reasoning_effort_effort_source_and_verified_candidates}}
+* Helper use: {{none_or_each_targeted_subagent_lookup_with_task_reasoning_effort_effort_source_and_verified_evidence}}
 * Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
 * Changes: .copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md
 * Other evidence considered: {{research_changed_files_or_validation_evidence}}
@@ -92,7 +92,7 @@ Append events in order. Never rewrite or delete an earlier row. The latest event
 * Review scope: {{full_task_or_bounded_pxx_or_pxx_txx_scope}}
 * Evidence readiness: {{available_artifacts_and_changed_files}}
 * Active read-only and trust boundaries: {{refinement_record_only_and_security_trust_boundary_preservation}}
-* Authority: the refinement parent verifies candidates and writes findings; final outcome, route dispositions, and continuation live in Parent Decision Record
+* Authority: the main agent performs the refinement analysis, verifies any targeted helper lookups, and writes findings; final outcome, route dispositions, and continuation live in Parent Decision Record
 * Initial blockers: {{none_or_active_blocker_with_next_action}}
 
 ### Lens Coverage and Kept-As-Is Summary
@@ -110,6 +110,6 @@ Append events in order. Never rewrite or delete an earlier row. The latest event
 * [ ] Every `RF-xxx` finding has net subtractive, simplifying, or defect-preventing value rather than additive ceremony.
 * [ ] No input validation, path/workspace containment, authentication, authorization, secret redaction, or untrusted-content guard was classified as unneeded defensive clutter, and any security-touching refinement routes to `rpi-plan`.
 * [ ] Execution status, assessed outcome, review depth, validation coverage, and `FD-xxx` parent decisions are complete and consistent.
-* [ ] The review mutated no source, test, doc, config, plan, critique, research, or changes file, and verified every subagent candidate at its cited workspace path before recording it.
+* [ ] The review mutated no source, test, doc, config, plan, critique, research, or changes file, and verified every targeted helper lookup at its cited workspace path before recording any finding.
 * Checked boundary: {{lenses_files_and_artifacts_checked}}
 * Missing or limited evidence: {{none_or_exact_unassessed_boundary}}
