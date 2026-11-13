@@ -20,8 +20,9 @@ expectations:
       When the workflow describes an artifact, the response cites the applicable
       plain dated path: `.copilot-tracking/plans/<YYYY-MM-DD>/<task>-plan.md`,
       `.copilot-tracking/reviews/plans/<YYYY-MM-DD>/<task>-plan-critique.md`,
-      `.copilot-tracking/changes/<YYYY-MM-DD>/<task>-changes.md`, or
-      `.copilot-tracking/reviews/logs/<YYYY-MM-DD>/<task>-review.md`.
+      `.copilot-tracking/changes/<YYYY-MM-DD>/<task>-changes.md`,
+      `.copilot-tracking/reviews/logs/<YYYY-MM-DD>/<task>-review.md`, or
+      `.copilot-tracking/reviews/logs/<YYYY-MM-DD>/<task>-refinement.md`.
     failure_modes:
       - Plan placed in `~/.copilot/session-state/.../plan.md` instead of a dated tracking location.
       - Plan written to repo root or `docs/` instead of `.copilot-tracking/plans/`.
@@ -47,11 +48,11 @@ expectations:
   - expectation_id: phase-skill-routing
     summary: Each workflow stage routes to the applicable current RPI skill.
     signal: Output identifies the relevant `rpi-research`, `rpi-plan`, `rpi-implement`,
-      or `rpi-review` skill by stage.
+      `rpi-review`, or `rpi-refine` skill by stage.
     pass_criteria: |
       For a request spanning workflow stages, the response routes evidence gaps to
       `rpi-research`, planning to `rpi-plan`, approved plan execution to
-      `rpi-implement`, and completed-work assessment to `rpi-review`. It names only
+      `rpi-implement`, and completed-work assessment to `rpi-review` and `rpi-refine`. It names only
       the stages applicable to the request.
     failure_modes:
       - Routes an evidence gap directly to implementation.

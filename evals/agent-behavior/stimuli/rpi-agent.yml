@@ -45,10 +45,12 @@ stimuli:
     prompt: |
       This is a contained, response-only lifecycle-policy regression, not native
       RPI execution. Read `policy/rpi-agent.agent.md` and `policy/rpi.SKILL.md`.
-      Consider the first task in
-      a new automatic session. The user has not skipped either assessment.
-      Select the default settings. Return exactly two lines: `Critique: run|skip`
-      and `Review: run|skip`. Do not execute phases or write files.
+      Consider the initial pass in a new automatic session. Neither the user nor
+      a coordinating session has skipped an assessment or selected a single
+      review skill. Select the default settings. Return exactly two lines:
+      `Critique: run|skip` and
+      `Reviews: rpi-review+rpi-refine|rpi-review|rpi-refine|skip`. Do not
+      execute phases or write files.
     agent_environment:
       files:
         - src: ../../.github/agents/hve-core/rpi-agent.agent.md
@@ -59,20 +61,47 @@ stimuli:
       category: agent-behavior
       advisory: "true"
       shape: rpi-assessment-policy
-      prompt_sha256: b39ca8f00147ebf635eab4502d834d08678f702d811ee183725cb0d7fb54d1f1
+      prompt_sha256: f69d3ee42364700e8aac08a16216b1a3b41b066bb147f6d7f4255a81cd2f0e9f
     graders:
       - type: output-matches
-        name: first-task-runs-both-assessments
+        name: first-task-runs-critique-and-dual-reviews
         config:
-          pattern: '(?i)^\s*Critique:[ \t]*run[ \t]*\r?\nReview:[ \t]*run\s*$'
-  - name: rpi-agent-child-assessment-defaults
+          pattern: '(?i)^\s*Critique:[ \t]*run[ \t]*\r?\nReviews:[ \t]*rpi-review\+rpi-refine\s*$'
+  - name: rpi-agent-same-session-bounded-loop-review
     prompt: |
       This is a contained, response-only lifecycle-policy regression, not native
       RPI execution. Read `policy/rpi-agent.agent.md` and `policy/rpi.SKILL.md`.
-      The first task already
-      completed its critique and Review. A required child task is ready, and the
-      user has not requested more assessments. Select the child defaults.
-      Return exactly two lines: `Critique: run|skip` and `Review: run|skip`.
+      The session already completed its initial plan critique and Review
+      (`rpi-review` and `rpi-refine`). A repeated loop in the same session
+      appended a follow-up `Pxx` phase whose edits stayed localized to accepted
+      finding targets, and the user has not requested another critique or review.
+      Return exactly two lines: `Critique: run|skip` and
+      `Review: run|surface|skip`. Do not execute phases or write files.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+          dest: policy/rpi-agent.agent.md
+        - src: ../../.github/skills/rpi/rpi/SKILL.md
+          dest: policy/rpi.SKILL.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      shape: rpi-assessment-policy
+      prompt_sha256: c4324e5232d61d16ac03bd6cb613705f4be1cd57eb533ee50468de5b9620ac88
+    graders:
+      - type: output-matches
+        name: bounded-repeat-loop-skips-extra-assessments
+        config:
+          pattern: '(?i)^\s*Critique:[ \t]*skip[ \t]*\r?\nReview:[ \t]*skip\s*$'
+  - name: rpi-agent-same-session-significant-change-surface-review
+    prompt: |
+      This is a contained, response-only lifecycle-policy regression, not native
+      RPI execution. Read `policy/rpi-agent.agent.md` and `policy/rpi.SKILL.md`.
+      The session already completed its initial Review. A repeated loop in the
+      same session introduced significant architectural and cross-module contract
+      changes outside the prior review finding locations, and the user has not
+      requested a full review. Select whether Review runs and its depth. Return
+      exactly two lines: `Review: run|skip` and `Depth: surface|standard|deep`.
       Do not execute phases or write files.
     agent_environment:
       files:
@@ -84,21 +113,21 @@ stimuli:
       category: agent-behavior
       advisory: "true"
       shape: rpi-assessment-policy
-      prompt_sha256: 6d27effc7cea9ce75878cb53a9864da5bca6604b1d3b7c4874ee7bc217441644
+      prompt_sha256: 7b33354e567b2825fdc0b94159b754aad3014ba2855428dba2531c621ca8f643
     graders:
       - type: output-matches
-        name: child-skips-unrequested-assessments
+        name: significant-same-session-loop-runs-surface-review
         config:
-          pattern: '(?i)^\s*Critique:[ \t]*skip[ \t]*\r?\nReview:[ \t]*skip\s*$'
-  - name: rpi-agent-child-explicit-assessment-override
+          pattern: '(?i)^\s*Review:[ \t]*run[ \t]*\r?\nDepth:[ \t]*surface\s*$'
+  - name: rpi-agent-single-review-skill-selection
     prompt: |
       This is a contained, response-only lifecycle-policy regression, not native
       RPI execution. Read `policy/rpi-agent.agent.md` and `policy/rpi.SKILL.md`.
-      The first task already
-      completed both assessments. For a required child task the user explicitly
-      requests another plan critique and another Review. Select the child
-      settings. Return exactly two lines: `Critique: run|skip` and
-      `Review: run|skip`. Do not execute phases or write files.
+      On a session's initial pass, the user explicitly sets `review=rpi-refine`
+      and leaves the plan critique at its default. Select the settings. Return
+      exactly two lines: `Critique: run|skip` and
+      `Reviews: rpi-review+rpi-refine|rpi-review|rpi-refine|skip`. Do not
+      execute phases or write files.
     agent_environment:
       files:
         - src: ../../.github/agents/hve-core/rpi-agent.agent.md
@@ -109,21 +138,22 @@ stimuli:
       category: agent-behavior
       advisory: "true"
       shape: rpi-assessment-policy
-      prompt_sha256: a02188200291c4e632d58f1fa80a2307bb8b1cf80c11e5a18f535737ef606cd9
+      prompt_sha256: f5390c48e1a2d3dc7b98382794db9e4c74fff8d0b7b0ea693d729f4f33d7372f
     graders:
       - type: output-matches
-        name: explicit-child-request-runs-both
+        name: single-review-skill-selection-honored
         config:
-          pattern: '(?i)^\s*Critique:[ \t]*run[ \t]*\r?\nReview:[ \t]*run\s*$'
-  - name: rpi-agent-child-review-only-override
+          pattern: '(?i)^\s*Critique:[ \t]*run[ \t]*\r?\nReviews:[ \t]*rpi-refine\s*$'
+  - name: rpi-agent-coordinator-review-handoff
     prompt: |
       This is a contained, response-only lifecycle-policy regression, not native
       RPI execution. Read `policy/rpi-agent.agent.md` and `policy/rpi.SKILL.md`.
-      The first task already
-      completed both assessments. For a required child task the user requests
-      another Review but does not request another critique. Select the child
-      settings. Return exactly two lines: `Critique: run|skip` and
-      `Review: run|skip`. Do not execute phases or write files.
+      A Project coordinates this session and the completed implementation
+      introduced significant cross-cutting changes that benefit from
+      coordinator-managed review sessions across the Project. Select how this
+      session reports review readiness to the coordinating Project. Return
+      exactly two lines: `Action: send_session_message|local-only` and
+      `Purpose: handoff|progress`. Do not call session tools or write files.
     agent_environment:
       files:
         - src: ../../.github/agents/hve-core/rpi-agent.agent.md
@@ -133,13 +163,13 @@ stimuli:
     tags:
       category: agent-behavior
       advisory: "true"
-      shape: rpi-assessment-policy
-      prompt_sha256: 399cd161ccf41484e8c83a22d1203f33031b76c17f2422b8d452a22561e32242
+      shape: rpi-coordination-policy
+      prompt_sha256: 80b137d5967f7141ee27d39133348f413d44dec0cee801480a1ab5d0e6a60d4b
     graders:
       - type: output-matches
-        name: review-request-does-not-add-critique
+        name: coordinator-review-readiness-uses-handoff
         config:
-          pattern: '(?i)^\s*Critique:[ \t]*skip[ \t]*\r?\nReview:[ \t]*run\s*$'
+          pattern: '(?i)^\s*Action:[ \t]*send_session_message[ \t]*\r?\nPurpose:[ \t]*handoff\s*$'
   - name: rpi-agent-interrupted-critique-continuation
     prompt: |
       This is a contained, response-only lifecycle-policy regression, not native
