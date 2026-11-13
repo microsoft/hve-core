@@ -8,7 +8,7 @@ import { hasLiveProcess } from '../inbox.mjs';
 import { lineageStatusOf, phaseKey } from './assemble.mjs';
 import { parseArtifact } from './parse.mjs';
 import { isCopilotSessionId } from '../model.mjs';
-import { parseWorkspaceYaml, readSmall, resolveSessionStateRoot, resolveSessionWorkspace, WORKSPACE_FILE } from './sessions.mjs';
+import { resolveSessionStateRoot, sessionFolderReader, WORKSPACE_FILE, workspaceOfSession } from './sessions.mjs';
 import { loadState, readContained, resolveTask, SourceError } from './workspace.mjs';
 
 /** How many other sessions a listing examines when no limit is given: the most recently updated ones. */
@@ -85,13 +85,14 @@ async function currentTaskOf(workspace) {
 }
 
 /**
- * The directories of the session-state root whose names are session IDs, by lowercase ID. Each has its
- * `workspace.yaml` fields (when readable) and its last update: the file's `updated_at`, else the folder's
- * modification time. Links are never listed.
+ * The folders of the session-state root whose names are session IDs, by lowercase ID, each with when
+ * it was last updated: the modification time of its `workspace.yaml`, which the CLI rewrites along with
+ * `updated_at`, or 0 when it has no regular `workspace.yaml`. Only `lstat` runs here, so a long session
+ * history opens no files. Links are never listed.
  *
  * @param {Partial<typeof fs>} api
  * @param {string} root
- * @returns {Promise<Map<string, { sessionId: string, meta: Record<string, string | boolean | null> | null, updatedMs: number }>>}
+ * @returns {Promise<Map<string, { sessionId: string, updatedMs: number }>>}
  */
 async function sessionFoldersOf(api, root) {
     let entries;
@@ -104,12 +105,8 @@ async function sessionFoldersOf(api, root) {
     const folders = await Promise.all(entries
         .filter((entry) => entry.isDirectory() && isCopilotSessionId(entry.name))
         .map(async (entry) => {
-            const folder = path.join(root, entry.name);
-            const text = await readSmall(api, path.join(folder, WORKSPACE_FILE));
-            const meta = text === null ? null : parseWorkspaceYaml(text);
-            const stat = await api.lstat(folder).catch(() => null);
-            const parsed = typeof meta?.updated_at === 'string' ? Date.parse(meta.updated_at) : Number.NaN;
-            return { sessionId: entry.name.toLowerCase(), meta, updatedMs: Number.isFinite(parsed) ? parsed : (stat?.mtimeMs ?? 0) };
+            const stat = await api.lstat(path.join(root, entry.name, WORKSPACE_FILE)).catch(() => null);
+            return { sessionId: entry.name.toLowerCase(), updatedMs: stat?.isFile() ? stat.mtimeMs : 0 };
         }));
     return new Map(folders.map((folder) => [folder.sessionId, folder]));
 }
@@ -122,8 +119,10 @@ const newestFirst = (a, b) => b.updatedMs - a.updatedMs || a.sessionId.localeCom
  * conversation started (`mine`, in the order given), then the most recently updated other sessions, up to
  * `limit`. A workspace shared by several sessions is listed once, under its most recently updated session,
  * and never under a session that the conversation started. Mine sessions are always listed, with their
- * problem; other sessions with a problem are left out and counted in `skipped`. Only `workspace.yaml`
- * and each workspace's tracking folder are read, and a symbolic link is never followed.
+ * problem; other sessions with a problem are left out and counted in `skipped`. Other sessions are ranked
+ * without opening a file, and each listed session's `workspace.yaml` is read once, under the containment
+ * rules of `sessionFolderReader`. Only `workspace.yaml` and each workspace's tracking folder are read,
+ * and a symbolic link to a session folder is never followed.
  *
  * @param {{
  *   root?: string,
@@ -151,19 +150,23 @@ export async function listRpiSessions(options = {}) {
 
     // A workspace is read once per listing, however many sessions use it.
     const tasks = new Map();
+    const reader = sessionFolderReader({ root, fs: api });
     const resolveEntry = async (sessionId) => {
-        if (!folders.has(sessionId)) return { sessionId, root: null, task: null, problem: 'not-found' };
+        if (!folders.has(sessionId)) return { sessionId, meta: null, root: null, task: null, problem: 'not-found' };
+        let meta = null;
         let workspace;
         try {
-            workspace = await resolveSessionWorkspace(sessionId, { root, fs: api });
+            const session = await reader.read(sessionId);
+            meta = session.meta;
+            workspace = await workspaceOfSession(session, { fs: api });
         } catch (error) {
             const problem = PROBLEM_BY_CODE[/** @type {any} */ (error)?.code];
             if (!problem) throw error;
-            return { sessionId, root: null, task: null, problem };
+            return { sessionId, meta, root: null, task: null, problem };
         }
         if (!tasks.has(workspace.root)) tasks.set(workspace.root, currentTaskOf(workspace));
         const current = await tasks.get(workspace.root);
-        return { sessionId, root: workspace.root, task: current?.task ?? null, problem: current?.problem ?? null };
+        return { sessionId, meta, root: workspace.root, task: current.task, problem: current.problem };
     };
 
     const mineResolved = await Promise.all(mine.map((sessionId) => resolveEntry(sessionId)));
@@ -187,19 +190,16 @@ export async function listRpiSessions(options = {}) {
             return false;
         }
     };
-    const sessions = await Promise.all([...mineResolved, ...kept.filter((item) => !item.problem)].map(async (item) => {
-        const meta = folders.get(item.sessionId)?.meta ?? null;
-        return {
-            sessionId: item.sessionId,
-            name: textOf(meta?.name),
-            repository: textOf(meta?.repository),
-            branch: textOf(meta?.branch),
-            mine: mine.includes(item.sessionId),
-            own: item.sessionId === own,
-            live: await liveOf(item.sessionId),
-            task: item.task ? { ...item.task } : null,
-            problem: item.problem,
-        };
-    }));
+    const sessions = await Promise.all([...mineResolved, ...kept.filter((item) => !item.problem)].map(async (item) => ({
+        sessionId: item.sessionId,
+        name: textOf(item.meta?.name),
+        repository: textOf(item.meta?.repository),
+        branch: textOf(item.meta?.branch),
+        mine: mine.includes(item.sessionId),
+        own: item.sessionId === own,
+        live: await liveOf(item.sessionId),
+        task: item.task ? { ...item.task } : null,
+        problem: item.problem,
+    })));
     return { sessions, skipped };
 }

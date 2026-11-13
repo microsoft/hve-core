@@ -51,12 +51,20 @@ async function workspace(dir, task = null) {
     return dir;
 }
 
-/** A session folder under `root`, with its workspace.yaml lines when given; `mtime` sets the folder's modification time. */
+/**
+ * A session folder under `root`, with its workspace.yaml lines when given. The file's modification time
+ * is its `updated_at`, as when the CLI writes it, or `mtime` when given.
+ */
 async function session(root, id, lines, mtime = null) {
     const folder = path.join(root, id);
     await fs.mkdir(folder, { recursive: true });
-    if (lines) await fs.writeFile(path.join(folder, 'workspace.yaml'), `${lines.join('\n')}\n`);
-    if (mtime) await fs.utimes(folder, mtime, mtime);
+    if (lines) {
+        const file = path.join(folder, 'workspace.yaml');
+        await fs.writeFile(file, `${lines.join('\n')}\n`);
+        const updated = lines.find((line) => line.startsWith('updated_at: '))?.slice('updated_at: '.length);
+        const at = mtime ?? (updated ? new Date(updated) : null);
+        if (at) await fs.utimes(file, at, at);
+    }
     return folder;
 }
 
@@ -114,12 +122,38 @@ describe('listing the sessions with RPI work', () => {
         assert.deepEqual(idsOf(limited), [sid(3), sid(1)], 'the started session is listed, and one other session is examined');
     });
 
-    it('orders other sessions by updated_at, and by the folder\'s modification time when updated_at is missing', async () => {
+    it('orders other sessions by when their workspace.yaml last changed, and examines a folder without one last', async () => {
         const { base, root } = await world('mtime');
         await session(root, sid(1), inDir(await workspace(path.join(base, 'a'), { id: 'trail-maps' }), { minutes: 90 }));
         await session(root, sid(2), inDir(await workspace(path.join(base, 'b'), { id: 'map-api' }), { repository: null, branch: null }), new Date(NOW - 10 * 60 * 1000));
         await session(root, sid(3), inDir(await workspace(path.join(base, 'c'), { id: 'tiles' }), { repository: null, branch: null }), new Date(NOW - 180 * 60 * 1000));
+        await session(root, sid(4), null);
         assert.deepEqual(idsOf(await listRpiSessions({ root, now: () => NOW })), [sid(2), sid(1), sid(3)]);
+        assert.equal((await listRpiSessions({ root, limit: 3, now: () => NOW })).skipped, 0, 'the folder without a workspace.yaml is not among the three examined');
+    });
+
+    it('resolves the session-state folder once, reads each listed session\'s workspace.yaml once, and opens none of the others', async () => {
+        const { base, root } = await world('reads');
+        for (let n = 1; n <= 5; n += 1) {
+            await session(root, sid(n), inDir(await workspace(path.join(base, `w${n}`), { id: `task-${n}` }), { minutes: n }));
+        }
+        const reads = [];
+        let rootResolved = 0;
+        const counting = {
+            readFile: async (file, ...rest) => {
+                reads.push(file);
+                return fs.readFile(file, ...rest);
+            },
+            realpath: async (target, ...rest) => {
+                if (target === root) rootResolved += 1;
+                return fs.realpath(target, ...rest);
+            },
+        };
+        const result = await listRpiSessions({ root, mine: [sid(5)], limit: 2, now: () => NOW, fs: counting });
+        assert.deepEqual(idsOf(result), [sid(5), sid(1), sid(2)]);
+        const yamlReads = reads.filter((file) => path.basename(file) === 'workspace.yaml').map((file) => path.basename(path.dirname(file)));
+        assert.deepEqual(yamlReads.sort(), [sid(1), sid(2), sid(5)].sort());
+        assert.equal(rootResolved, 1);
     });
 
     it('lists each workspace once, under its most recently updated session, and never under a session the conversation started', async () => {

@@ -98,44 +98,67 @@ function inside(base, target) {
  * @param {Partial<typeof fs>} api
  * @param {string} file
  */
-export async function readSmall(api, file) {
+async function readSmall(api, file) {
     const stat = await api.lstat(file).catch(() => null);
     if (!stat?.isFile() || stat.size > MAX_WORKSPACE_BYTES) return null;
     return api.readFile(file, 'utf8').catch(() => null);
 }
 
 /**
- * Finds the workspace root of a local Copilot session from its `workspace.yaml`: the first
- * absolute path among `git_root` and `cwd` that directly contains a real `.copilot-tracking`
- * folder, the same rule `resolveWorkspace` applies to candidates. Nothing is cached, because a
- * session's metadata can change. `options.fs` overrides any of the file functions used.
+ * Reads local session folders under one session-state root, resolving the root's real path once
+ * for all the reads. `read` checks the ID, resolves the session's folder, which must lie strictly
+ * inside the real root, and reads and parses its `workspace.yaml`, which must be a small regular
+ * file. Nothing is cached between readers, because a session's metadata can change.
+ * `options.fs` overrides any of the file functions used.
  *
- * @param {string} sessionId A Copilot session ID; upper-case letters are accepted.
  * @param {{ root?: string, fs?: Partial<typeof fs> }} [options] `root` is the session-state folder, by default the one `resolveSessionStateRoot` finds.
+ */
+export function sessionFolderReader(options = {}) {
+    const api = { ...fs, ...options.fs };
+    const stateRoot = options.root ?? resolveSessionStateRoot().root;
+    /** @type {Promise<string | null> | undefined} */
+    let realRoot;
+    return {
+        /**
+         * @param {string} sessionId A Copilot session ID; upper-case letters are accepted.
+         * @returns {Promise<{ id: string, yamlPath: string, meta: Record<string, string | boolean | null> }>}
+         */
+        async read(sessionId) {
+            if (!isCopilotSessionId(sessionId)) {
+                throw new SessionError('session_invalid', 'session must be a Copilot session ID (a UUID), as in the name of its folder under session-state.');
+            }
+            const id = sessionId.toLowerCase();
+            realRoot ??= api.realpath(stateRoot).catch(() => null);
+            const root = await realRoot;
+            const folder = root ? await api.realpath(path.join(stateRoot, id)).catch(() => null) : null;
+            if (!folder) {
+                throw new SessionError('session_not_found', `No Copilot session ${id} was found in ${stateRoot}.`, id);
+            }
+            if (!inside(root, folder)) {
+                throw new SessionError('session_invalid', `Copilot session ${id} is outside ${stateRoot}.`, id);
+            }
+            const yamlPath = path.join(folder, WORKSPACE_FILE);
+            const text = await readSmall(api, yamlPath);
+            if (text === null) {
+                throw new SessionError('session_no_workspace', `Copilot session ${id} has no readable ${WORKSPACE_FILE} in ${folder}.`, yamlPath);
+            }
+            return { id, yamlPath, meta: parseWorkspaceYaml(text) };
+        },
+    };
+}
+
+/**
+ * The workspace a session's `workspace.yaml` names: the first absolute path among `git_root` and
+ * `cwd` that directly contains a real `.copilot-tracking` folder, the same rule `resolveWorkspace`
+ * applies to candidates.
+ *
+ * @param {{ id: string, yamlPath: string, meta: Record<string, string | boolean | null> }} session what a `sessionFolderReader` read
+ * @param {{ fs?: Partial<typeof fs> }} [options]
  * @returns {Promise<{ root: string, tracking: string }>}
  */
-export async function resolveSessionWorkspace(sessionId, options = {}) {
+export async function workspaceOfSession(session, options = {}) {
     const api = { ...fs, ...options.fs };
-    if (!isCopilotSessionId(sessionId)) {
-        throw new SessionError('session_invalid', 'session must be a Copilot session ID (a UUID), as in the name of its folder under session-state.');
-    }
-    const id = sessionId.toLowerCase();
-    const stateRoot = options.root ?? resolveSessionStateRoot().root;
-    const realRoot = await api.realpath(stateRoot).catch(() => null);
-    const folder = realRoot ? await api.realpath(path.join(stateRoot, id)).catch(() => null) : null;
-    if (!folder) {
-        throw new SessionError('session_not_found', `No Copilot session ${id} was found in ${stateRoot}.`, id);
-    }
-    if (!inside(realRoot, folder)) {
-        throw new SessionError('session_invalid', `Copilot session ${id} is outside ${stateRoot}.`, id);
-    }
-
-    const yamlPath = path.join(folder, WORKSPACE_FILE);
-    const text = await readSmall(api, yamlPath);
-    if (text === null) {
-        throw new SessionError('session_no_workspace', `Copilot session ${id} has no readable ${WORKSPACE_FILE} in ${folder}.`, yamlPath);
-    }
-    const meta = parseWorkspaceYaml(text);
+    const { id, yamlPath, meta } = session;
     const candidates = [...new Set([meta.git_root, meta.cwd].filter((value) => typeof value === 'string' && path.isAbsolute(value)))];
     if (candidates.length === 0) {
         throw new SessionError('session_no_workspace', `Copilot session ${id} records no workspace folder in ${yamlPath}.`, yamlPath);
@@ -149,4 +172,17 @@ export async function resolveSessionWorkspace(sessionId, options = {}) {
     }
     const named = candidates.map((candidate) => path.join(candidate, TRACKING_DIR));
     throw new SessionError('session_no_tracking', `Copilot session ${id} has no real ${TRACKING_DIR} folder in ${named.join(' or ')}.`, named[0]);
+}
+
+/**
+ * Finds the workspace root of one local Copilot session: reads its folder with a
+ * `sessionFolderReader`, then resolves the workspace its `workspace.yaml` names with
+ * `workspaceOfSession`.
+ *
+ * @param {string} sessionId A Copilot session ID; upper-case letters are accepted.
+ * @param {{ root?: string, fs?: Partial<typeof fs> }} [options] `root` is the session-state folder, by default the one `resolveSessionStateRoot` finds.
+ * @returns {Promise<{ root: string, tracking: string }>}
+ */
+export async function resolveSessionWorkspace(sessionId, options = {}) {
+    return workspaceOfSession(await sessionFolderReader(options).read(sessionId), options);
 }
