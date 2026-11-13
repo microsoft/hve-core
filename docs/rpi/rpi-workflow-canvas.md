@@ -1,6 +1,6 @@
 ---
 title: RPI Workflow Canvas
-description: Follow an RPI session phase by phase in a canvas beside the chat, answer the agent's decisions, send it your input, and show a Project's sessions from the session picker
+description: Follow an RPI session phase by phase in a canvas beside the chat, answer the agent's decisions, send it your input, and show other local sessions' RPI work from the session picker
 sidebar_position: 6
 author: Microsoft
 ms.date: 2026-11-13
@@ -101,7 +101,7 @@ Answers, overrides, comments, and suggestions wait under **Your feedback** until
 
 **Send now** gives the items to the agent at its next step, even in the middle of a task, as one chat message. The chat shows a line such as "RPI canvas XWK0 sent 2 items: 1 answer and 1 comment." **Queue** keeps them in the canvas until the agent's next checkpoint: when it changes phase, finishes a task, asks you something, or ends its turn. Until then, you can take a queued item back.
 
-Before you send, you can edit or discard any item, add a message for the agent, and open the exact text Send now will deliver. Items for another session's task take a different route. See [Follow a Project's Sessions](#follow-a-projects-sessions).
+Before you send, you can edit or discard any item, add a message for the agent, and open the exact text Send now will deliver. Items for another session's task take a different route. See [Follow Other Sessions](#follow-other-sessions).
 
 When the RPI Agent asks you a question in the chat, it also offers **Answered in the canvas**. Choose it after answering in the canvas, and the agent collects your answers before it goes on.
 
@@ -172,36 +172,34 @@ Follow-up ranks the work that remains. Required items keep the session open, and
 
 When one session takes on a new request, the new work gets its own research, plan, changes record, and review. A **Document** switcher in the context bar then lists each phase's earlier documents by title and time. An earlier document opens read-only, with a button back to the current one.
 
-## Follow a Project's Sessions
+## Follow Other Sessions
 
-A Project coordinates its sessions, and each session runs RPI on its own when its work needs it. From the Project's session, you can show the RPI work of any local session and send input to that session's agent. Without the canvas, you would switch sessions to read each one's plan and answer its decisions.
+Any chat can show another local session's RPI work and send input to that session's agent. A GitHub Copilot app Project is the usual case: the Project coordinates its sessions, each session runs RPI on its own when its work needs it, and you follow them all from the Project without switching chats.
 
 ### Find a Session
 
-When the canvas has no session to show, it opens on the Not connected page, with the session picker above the request. The picker lists the local sessions with RPI work on your machine. Sessions that share a checkout appear once. Sessions the Project's agent passed come first, under **Sessions this chat started**, in the order it gave them. Other sessions with RPI work follow, under **Other sessions with RPI work**.
+When the canvas has no session to show, it opens on the Not connected page, with the session picker above the request. The same picker appears in the session menu, under **Copilot sessions**, so you can switch sessions from a canvas that already shows one. It lists the local sessions on your machine that have RPI work, one per checkout.
 
-The Project's agent passes its sessions with the `sessions` input when it opens the canvas, or later with the `set_sessions` action. Each list holds up to 50 session IDs. The same list appears in the session menu, under **Copilot sessions**, so you can switch sessions from a canvas that already shows one.
+Sessions this chat started come first, under **Sessions this chat started**. A Project's agent passes the sessions it starts when it opens the canvas, or later. Other sessions with RPI work follow, under **Other sessions with RPI work**.
 
-Each row names its session and shows its repository, its branch, and its current task with the task's phase and status. **Canvas running** or **No canvas running** shows whether the canvas extension runs for that session, panel open or not; when it runs, Send now reaches that session's agent directly. **Shown** marks the session this canvas shows. A session the Project's agent passed that has no RPI work says why, for example **No RPI work yet**.
+Each row names its session and shows its repository, its branch, and its current task with the task's phase and status. **Canvas running** or **No canvas running** shows whether the canvas extension runs for that session, panel open or not; when it runs, Send now reaches that session's agent directly. **Shown** marks the session this canvas shows. A session this chat started that has no RPI work says why, for example **No RPI work yet**.
 
 ### Show or Open a Session
 
-Choose **Show here** to bind this canvas to that session. The canvas shows the session's current task, which is the running task or else the most recently changed one, and it keeps following the agent. The session this canvas shows has no **Show here** button.
+Choose **Show here** to bind this canvas to that session. The canvas shows the session's current task, which is the running task or else the most recently changed one, and it keeps following the agent.
 
-Choose **Open in new panel** to open that session's canvas in a new panel of this conversation. Each session has one panel, so choosing the button again focuses it. This canvas stays as it is.
-
-If the host cannot open the panel, the canvas asks the agent, in the chat, to open it with the line `RPI canvas <handle>: open an RPI Workflow canvas for session <session ID>.` The page then says the agent was asked. The canvas asks at most once every 30 seconds, and a request made sooner than that gets a wait notice instead.
+Choose **Open in new panel** to open that session's canvas in a new panel of this conversation. Each session has one panel, so choosing the button again focuses it, and this canvas stays as it is. When the host cannot open the panel, the canvas asks this chat's agent to open it, and the picker says so.
 
 ### Where Your Input Goes
 
-Input for another session's task waits in **Review and send** like any other item. Before you send, the review names the route that Send now takes. Items for a task in another session go to that session, through its canvas or through this chat's agent. Direct delivery does not involve this chat's agent. A relayed item reaches the session as a chat message, which this chat's agent forwards:
+Input for another session's task waits in **Review and send** like any other item. Before you send, the review names the route that Send now takes, and items for a task in another session go to that session:
 
-| Route the review names            | Where the items go                                                                                                                        |
-|-----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
-| The session's canvas is running   | Straight to that session's agent through its canvas. If the canvas does not take them within 20 seconds, this chat's agent forwards them. |
-| No canvas running for the session | This chat's agent forwards them to the session.                                                                                           |
+| Route the review names            | Where the items go                                                                                                                    |
+|-----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| The session's canvas is running   | Straight to that session's agent through its canvas. If that canvas does not take them soon, this chat's agent forwards them instead. |
+| No canvas running for the session | This chat's agent forwards them to the session.                                                                                       |
 
-If the route changes while the review is open, the review says so and asks you to check it again. Queue sends nothing. The items wait in the session's task until its agent collects them.
+If the route changes while the review is open, the review says so and asks you to check it again. Queue sends nothing; the items wait in the session's task until its agent collects them.
 
 After you send, each item shows whether it went direct or was relayed, and through which chat. Until this chat's agent takes relayed items, a notice at the bottom of the document begins with "Relayed to" and names the session. You can dismiss that notice.
 
@@ -214,13 +212,11 @@ While the agent works in that phase, it shows **In progress**; once the session 
 
 ### Limits
 
-* Cloud sessions are not listed. A cloud session has no local workspace, so the picker never shows it, and the canvas cannot read its tasks or show its decisions. Run the sessions you want to follow as local sessions.
-* Sessions that share one checkout share its RPI tasks, so the picker lists that checkout once, under its most recently updated session. A session this chat started is always listed, and other sessions in its checkout are left out.
-* A session that runs an older hve-core build does not announce a running canvas or take inbox items, so its items go through this chat's agent.
-* Forwarding needs a chat whose agent has the `send_session_message` tool, such as a GitHub Copilot app Project. Without that tool, the agent cannot pass relayed items to the session.
-* Opening a panel depends on the host's experimental canvas open and list calls. When the host cannot open a panel, the canvas asks the agent instead.
+* Only local sessions appear. A cloud session has no local workspace, so the picker never lists it, and the canvas cannot read its tasks.
+* Sessions that share a checkout share its RPI tasks, so the picker lists that checkout once.
+* Relayed items need a chat whose agent can message other sessions, such as a GitHub Copilot app Project.
 
-The [canvas README](https://github.com/microsoft/hve-core/blob/main/.github/extensions/hve-core/rpi-workflow/README.md) lists the storage and security rules for these features.
+The [canvas README](https://github.com/microsoft/hve-core/blob/main/.github/extensions/hve-core/rpi-workflow/README.md) gives the exact limits, timers, and messages behind these features, with their storage and security rules.
 
 ## Themes, Accessibility, and Keyboard
 
