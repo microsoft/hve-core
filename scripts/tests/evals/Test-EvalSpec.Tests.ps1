@@ -585,3 +585,49 @@ stimuli:
         $report.orphanedTags.Count | Should -Be 0
     }
 }
+
+Describe 'Get-NewParentAgentSlugFromGit (function)' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath -SkipAgentCoverage *> $null
+    }
+
+    It 'Returns an empty array when AgentsRoot contains only a user-invocable: false agent outside subagents/' {
+        $gitRoot = Join-Path $TestDrive ("git-agents-" + [Guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $gitRoot -Force | Out-Null
+
+        Push-Location -LiteralPath $gitRoot
+        try {
+            git init --quiet
+            git config user.email 'eval@example.invalid'
+            git config user.name 'Eval Fixture'
+            Set-Content -LiteralPath (Join-Path $gitRoot 'README.md') -Value 'base' -Encoding UTF8
+            git add README.md
+            git commit --quiet -m 'base'
+
+            $customAgentsDir = Join-Path $gitRoot 'custom-agents'
+            New-Item -ItemType Directory -Path $customAgentsDir -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $customAgentsDir 'internal-helper.agent.md') -Value "---`nname: Internal Helper`nuser-invocable: false`n---`n`n# Helper`n" -Encoding UTF8
+            git add 'custom-agents/internal-helper.agent.md'
+            git commit --quiet -m 'add non-invocable helper outside subagents'
+        }
+        finally {
+            Pop-Location
+        }
+
+        $added = @(Get-NewParentAgentSlugFromGit -RepoRoot $gitRoot -BaseRef 'HEAD~1' -AgentsRoot 'custom-agents')
+        $added.Count | Should -Be 0
+
+        Push-Location -LiteralPath $gitRoot
+        try {
+            Set-Content -LiteralPath (Join-Path $gitRoot 'custom-agents/public-parent.agent.md') -Value "---`nname: Public Parent`n---`n`n# Parent`n" -Encoding UTF8
+            git add 'custom-agents/public-parent.agent.md'
+            git commit --quiet -m 'add parent agent'
+        }
+        finally {
+            Pop-Location
+        }
+
+        $addedWithParent = @(Get-NewParentAgentSlugFromGit -RepoRoot $gitRoot -BaseRef 'HEAD~2' -AgentsRoot 'custom-agents')
+        $addedWithParent | Should -Be @('public-parent')
+    }
+}

@@ -53,7 +53,7 @@ Each `RF-xxx` finding sets `* Dimension:` to one concise label: `Logic and branc
 
 ## Main-agent execution and targeted subagents
 
-The main agent running `rpi-refine` (often a higher-capability model, though user configurations vary and no specific model is required) owns and performs the refinement review itself. Read the changed code, tests, docs, and configuration critically, trace backward from required outputs to inputs, weigh base assumptions and domain boundaries across all four lenses, and write `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-refinement.md`. Do not delegate whole lenses or core refinement judgment to a single lower-intelligence subagent.
+The main agent running `rpi-refine` owns and performs the refinement review itself. Read the changed code, tests, docs, and configuration critically, trace backward from required outputs to inputs, weigh base assumptions and domain boundaries across all four lenses, and write `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-refinement.md`. Do not delegate whole lenses or core refinement judgment to a single lower-intelligence subagent.
 
 Both operating contexts use this same contract without special-case branching:
 

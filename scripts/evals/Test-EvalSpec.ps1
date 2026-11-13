@@ -958,6 +958,12 @@ function Get-ParentAgentInventoryForCoverage {
 }
 
 function Get-NewParentAgentSlugFromGit {
+    <#
+    .SYNOPSIS
+        Returns parent-agent slugs added in git since BaseRef under AgentsRoot.
+    .OUTPUTS
+        [string[]] Added parent-agent slugs.
+    #>
     [CmdletBinding()]
     [OutputType([string[]])]
     param(
@@ -970,9 +976,17 @@ function Get-NewParentAgentSlugFromGit {
         [string]$AgentsRoot = '.github/agents'
     )
 
+    $agentsFull = if ([System.IO.Path]::IsPathRooted($AgentsRoot)) {
+        $AgentsRoot
+    }
+    else {
+        Join-Path -Path $RepoRoot -ChildPath $AgentsRoot
+    }
+    $gitAgentsPath = [System.IO.Path]::GetRelativePath($RepoRoot, $agentsFull).Replace('\', '/')
+
     Push-Location -LiteralPath $RepoRoot
     try {
-        $output = git diff --name-only --diff-filter=A $BaseRef -- '.github/agents/**/*.agent.md' 2>$null
+        $output = git diff --name-only --diff-filter=A $BaseRef -- $gitAgentsPath 2>$null
         $gitExit = $LASTEXITCODE
     }
     finally {
@@ -981,23 +995,21 @@ function Get-NewParentAgentSlugFromGit {
 
     if ($gitExit -ne 0 -or $null -eq $output) { return @() }
 
-    $parentSlugs = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $slugByPath = [System.Collections.Generic.Dictionary[string, string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     foreach ($entry in @(Get-ParentAgentInventoryForCoverage -RepoRoot $RepoRoot -AgentsRoot $AgentsRoot)) {
-        [void]$parentSlugs.Add([string]$entry.slug)
+        $normPath = ([string]$entry.path).Trim().TrimStart('\', '/').Replace('\', '/')
+        $slugByPath[$normPath] = [string]$entry.slug
     }
 
     $slugs = [System.Collections.Generic.List[string]]::new()
     foreach ($line in @($output)) {
-        $trimmed = ([string]$line).Trim().Replace('\', '/')
+        $trimmed = ([string]$line).Trim().TrimStart('\', '/').Replace('\', '/')
         if ([string]::IsNullOrWhiteSpace($trimmed)) { continue }
-        if ($trimmed -match '(?:^|/)subagents/') { continue }
-        $name = [System.IO.Path]::GetFileName($trimmed)
-        if (-not $name.EndsWith('.agent.md')) { continue }
-        $slug = $name.Substring(0, $name.Length - '.agent.md'.Length)
-        if ($parentSlugs.Count -gt 0 -and -not $parentSlugs.Contains($slug)) { continue }
-        $slugs.Add($slug)
+        if ($slugByPath.ContainsKey($trimmed)) {
+            $slugs.Add($slugByPath[$trimmed])
+        }
     }
-    return ,$slugs.ToArray()
+    return $slugs.ToArray()
 }
 
 function Test-AgentBehaviorCoverage {

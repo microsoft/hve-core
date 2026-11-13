@@ -59,20 +59,27 @@ Reach for a different asset when:
 
 The skill initializes the refinement record, performs the main-agent review across all four subtractive lenses (using targeted subagent lookups only for narrow searches such as locating existing retry helpers), verifies evidence at workspace paths, and walks through actionable `RF-xxx` findings:
 
-```text
+```markdown
+<!-- rpi:refinement id=RF-001 -->
 ### RF-001 [Medium]: outbox.ts implements custom timer backoff when retryWithBackoff already exists
 
-Dimension: Dependencies and SDKs
-Current state: src/offline/outbox.ts scheduleNext maintains 64 lines of custom exponential timer state and Retry-After parsing.
-What to remove or rework: Delete scheduleNext and delegate to retryWithBackoff in src/net/retry.ts.
-Proposed destination: rpi-plan (new follow-up phase).
+outbox.ts maintains custom exponential timer state that duplicates the shared network retry helper.
+
+* Related scope: P02-T01
+* Dimension: Dependencies and SDKs
+* Current state and evidence: src/offline/outbox.ts scheduleNext maintains 64 lines of custom exponential timer state and Retry-After parsing.
+* What to remove or rework: Delete scheduleNext and delegate to retryWithBackoff in src/net/retry.ts.
+* Impact: Removes 64 lines of duplicated timer state and Retry-After edge cases.
+* Resolution condition: src/offline/outbox.ts delegates retries to retryWithBackoff with unit tests passing.
+* Proposed destination: rpi-plan
+* Smallest useful next action: Add a follow-up phase to replace scheduleNext with retryWithBackoff.
 ```
 
 After decisions are recorded in `## Parent Decision Record`, the final response reports execution and outcome separately:
 
 ```text
 * Review execution: Complete; Outcome: Refinements identified (standard depth)
-* RF-001 (Medium, Dependencies and SDKs) accepted -> rpi-plan; RF-002 (Low, Documents and language) accepted -> rpi-plan
+* RF-001 (Medium, Dependencies and SDKs) accepted -> rpi-plan; RF-002 (Low, Documents and domain language) accepted -> rpi-plan
 
 ## Next Steps
 
