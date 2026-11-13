@@ -800,10 +800,11 @@ console.log(JSON.stringify(results));
   }
 
   It 'Grades RPI policy case <Name> without accepting wrong choices or prompt echoes' -Tag 'RpiReviewRemediation' -ForEach @(
-    @{ Name = 'rpi-agent-first-task-assessment-defaults'; Expected = "Critique: run`nReview: run"; Wrong = "Critique: skip`nReview: skip" }
-    @{ Name = 'rpi-agent-child-assessment-defaults'; Expected = "Critique: skip`nReview: skip"; Wrong = "Critique: run`nReview: run" }
-    @{ Name = 'rpi-agent-child-explicit-assessment-override'; Expected = "Critique: run`nReview: run"; Wrong = "Critique: skip`nReview: skip" }
-    @{ Name = 'rpi-agent-child-review-only-override'; Expected = "Critique: skip`nReview: run"; Wrong = "Critique: run`nReview: skip" }
+    @{ Name = 'rpi-agent-first-task-assessment-defaults'; Expected = "Critique: run`nReviews: rpi-review+rpi-refine"; Wrong = "Critique: skip`nReviews: skip" }
+    @{ Name = 'rpi-agent-same-session-bounded-loop-review'; Expected = "Critique: skip`nReview: skip"; Wrong = "Critique: run`nReview: run" }
+    @{ Name = 'rpi-agent-same-session-significant-change-surface-review'; Expected = "Review: run`nDepth: surface"; Wrong = "Review: skip`nDepth: standard" }
+    @{ Name = 'rpi-agent-single-review-skill-selection'; Expected = "Critique: run`nReviews: rpi-refine"; Wrong = "Critique: skip`nReviews: rpi-review+rpi-refine" }
+    @{ Name = 'rpi-agent-coordinator-review-handoff'; Expected = "Action: send_session_message`nPurpose: handoff"; Wrong = "Action: local-only`nPurpose: progress" }
     @{ Name = 'rpi-agent-interrupted-critique-continuation'; Expected = "Recovery: resume-existing`nReadiness: not-ready"; Wrong = "Recovery: start-additional`nReadiness: ready" }
     @{ Name = 'rpi-agent-interrupted-review-continuation'; Expected = "Recovery: resume-existing`nEvidence: canonical"; Wrong = "Recovery: start-additional`nEvidence: projection" }
   ) {
@@ -848,7 +849,7 @@ console.log(JSON.stringify(results));
 
   It 'Qualifies both public effort fallbacks by host and dispatch support' -Tag 'RpiReviewRemediation' {
     $root = (Resolve-Path (Join-Path $script:LexicalEvalRoot '../..')).Path
-    foreach ($name in @('rpi-researcher', 'rpi-reviewer')) {
+    foreach ($name in @('rpi-researcher', 'rpi-reviewer', 'rpi-refiner')) {
       $text = Get-Content -Raw (Join-Path $root "docs/reference/agents/hve-core/subagents/$name.md")
       $text | Should -Match 'only on hosts that honor reasoning-effort frontmatter'
       $text | Should -Match ([regex]::Escape("VS Code's Local harness ignores that field"))
