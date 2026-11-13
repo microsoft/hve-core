@@ -3,7 +3,6 @@
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-import os from 'node:os';
 import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 
@@ -12,6 +11,7 @@ import { openCanvas } from '../lib/open.mjs';
 import { createSourceController } from '../lib/sources.mjs';
 import { createStore } from '../lib/store.mjs';
 import { CHILD_TASK, ROOT_TASK, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
+import { scratchFolder } from './helpers/scratch.mjs';
 
 class FakeCanvasError extends Error {
     constructor(code, message) {
@@ -55,7 +55,7 @@ function fakeServer() {
 let tmp;
 let repo;
 before(async () => {
-    tmp = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'rpi-workflow-open-')));
+    tmp = await scratchFolder('open');
     repo = await writeFixtureWorkspace(path.join(tmp, 'repo'));
 });
 after(() => fs.rm(tmp, { recursive: true, force: true }));

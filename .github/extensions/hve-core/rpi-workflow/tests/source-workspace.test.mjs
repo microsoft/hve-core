@@ -3,11 +3,9 @@
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-import os from 'node:os';
 import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 
-import { symlinkOrSkip } from '../../session-log/tests/helpers.mjs';
 import { createFeedback } from '../lib/model.mjs';
 import { parseWorkspaceYaml, resolveSessionStateRoot, resolveSessionWorkspace } from '../lib/source/sessions.mjs';
 import {
@@ -33,7 +31,7 @@ import {
     storeIdFor,
 } from '../lib/source/workspace.mjs';
 import { createStore } from '../lib/store.mjs';
-import { scratchFolder } from './helpers/scratch.mjs';
+import { scratchFolder, symlinkOrSkip } from './helpers/scratch.mjs';
 import { CHILD_STATE, CHILD_TASK, EARLY, PATHS, PLAN, ROOT_STATE, ROOT_TASK, SESSION_KEY, STALE_TASK, writeEarlierWork, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
 
 const EARLY_RESEARCH = `# Task Research: Offline trail maps, first look
@@ -106,7 +104,7 @@ let root;
 let workspace;
 
 before(async () => {
-    tmp = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'rpi-workflow-source-')));
+    tmp = await scratchFolder('source');
     root = path.join(tmp, 'repo');
     await writeFixtureWorkspace(root);
     workspace = await resolveWorkspace([undefined, root]);

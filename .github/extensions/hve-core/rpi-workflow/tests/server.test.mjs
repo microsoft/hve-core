@@ -18,6 +18,7 @@ import { createSourceController } from '../lib/sources.mjs';
 import { storeIdFor } from '../lib/source/workspace.mjs';
 import { createStore } from '../lib/store.mjs';
 import { stopTracked, track } from './helpers/cleanup.mjs';
+import { hostCanvas } from './helpers/host-canvas.mjs';
 import { scratchFolder } from './helpers/scratch.mjs';
 import { CHILD_TASK, childSession, FIXTURE_ROOT, PATHS, ROOT_TASK, rootSession, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
 
@@ -1560,31 +1561,6 @@ describe('opening a session in a new panel', () => {
     const FIXED_LINE = `RPI canvas K7QF: open an RPI Workflow canvas for session ${SESSION}.`;
 
     /**
-     * The host's canvas API as a fake: `listed` is what it reports open at first, `openError` makes its open
-     * refuse, and `listError` makes its listing fail. Every open is recorded, and an opened panel is listed.
-     */
-    function hostCanvas({ listed = [], openError = null, listError = null } = {}) {
-        const calls = [];
-        const open = [...listed];
-        return {
-            calls,
-            canvas: {
-                listOpen: async () => {
-                    if (listError) throw listError;
-                    return { openCanvases: [...open] };
-                },
-                open: async (params) => {
-                    calls.push(params);
-                    if (openError) throw openError;
-                    const instance = { instanceId: params.instanceId, extensionId: params.extensionId, canvasId: params.canvasId };
-                    open.push(instance);
-                    return instance;
-                },
-            },
-        };
-    }
-
-    /**
      * A canvas that opens panels through `rpc` as the joined session does, or has no opener when `opener` is false.
      * Only SESSION and OTHER_SESSION have a workspace that reads; any other session is not found. Its clock is the
      * test's, so the ask interval can be checked.
@@ -1621,7 +1597,7 @@ describe('opening a session in a new panel', () => {
         const { server, url, store, sent } = await panelSetup('panel-opened', { rpc: host });
         const opened = await askPanel(url);
         assert.deepEqual([opened.status, opened.json], [200, { outcome: 'opened', instanceId: INSTANCE }]);
-        assert.deepEqual(host.calls, [{ extensionId: PROVIDER, canvasId: 'hve-core-rpi-workflow', instanceId: INSTANCE, input: { session: SESSION } }]);
+        assert.deepEqual(host.opens, [{ extensionId: PROVIDER, canvasId: 'hve-core-rpi-workflow', instanceId: INSTANCE, input: { session: SESSION } }]);
         assert.deepEqual(sent, [], 'no message goes to the agent when the host opens the panel');
         await server.stop();
         store.close();
@@ -1632,7 +1608,7 @@ describe('opening a session in a new panel', () => {
         const { server, url, store } = await panelSetup('panel-focused', { rpc: host });
         const focused = await askPanel(url);
         assert.deepEqual([focused.status, focused.json], [200, { outcome: 'focused', instanceId: INSTANCE }]);
-        assert.equal(host.calls.length, 1, 'the host focuses the panel it already has for that instance');
+        assert.equal(host.opens.length, 1, 'the host focuses the panel it already has for that instance');
         await server.stop();
         store.close();
     });
@@ -1734,7 +1710,7 @@ describe('opening a session in a new panel', () => {
             const refused = await askPanel(url, body);
             assert.deepEqual([refused.status, refused.json.error.code], [status, code], JSON.stringify(body));
         }
-        assert.deepEqual([host.calls, sent], [[], []]);
+        assert.deepEqual([host.opens, sent], [[], []]);
         await server.stop();
         store.close();
     });
@@ -1743,8 +1719,8 @@ describe('opening a session in a new panel', () => {
         const host = hostCanvas();
         const { server, url, store } = await panelSetup('panel-case', { rpc: host });
         assert.equal((await askPanel(url, { session: SESSION.toUpperCase() })).json.outcome, 'opened');
-        assert.equal(host.calls[0].input.session, SESSION);
-        assert.equal(host.calls[0].instanceId, INSTANCE);
+        assert.equal(host.opens[0].input.session, SESSION);
+        assert.equal(host.opens[0].instanceId, INSTANCE);
         await server.stop();
         store.close();
     });

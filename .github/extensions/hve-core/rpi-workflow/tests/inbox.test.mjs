@@ -8,12 +8,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { after, before, describe, it } from 'node:test';
 
-import { CLAIM_STALE_MS, claimDelivery, claimRelay, createFeedback, isDeliveryUncertain, markDelivered, ModelError, takeFeedback } from '../lib/model.mjs';
+import { CLAIM_STALE_MS, claimDelivery, claimRelay, isDeliveryUncertain, markDelivered, ModelError, takeFeedback } from '../lib/model.mjs';
 import { createInboxRunner, hasLiveProcess, INBOX_VERSION, PRESENCE_TTL_MS } from '../lib/inbox.mjs';
 import { createPickupTracker } from '../lib/pickup.mjs';
-import { buildScenario } from '../lib/scenario.mjs';
 import { createStore, StoreError } from '../lib/store.mjs';
 import { scratchFolder } from './helpers/scratch.mjs';
+import { TASK_DOC, taskDoc } from './helpers/task-doc.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const NOW = '2026-11-09T18:00:00.000Z';
@@ -22,7 +22,6 @@ const T0 = Date.parse(NOW);
 const SESSION = '6f1c3c1e-2a7b-4d1e-9d7a-1b2c3d4e5f60';
 const OTHER_SESSION = 'b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e';
 const FROM = { sessionId: 'a0b1c2d3-e4f5-4a6b-8c7d-9e0f1a2b3c4d', handle: 'K7QF' };
-const TASK_DOC = 'rpi-report-export-csv-0123456789';
 const iso = (ms) => new Date(ms).toISOString();
 /** The session whose canvas hands the items over; its outbox records the handoffs. */
 const SOURCE = FROM.sessionId;
@@ -79,32 +78,12 @@ function fakeClock(start = T0) {
     };
 }
 
-/** A task document of one RPI task with three queued comments, FB-001 to FB-003. */
-function taskDoc() {
-    const sample = buildScenario('research', T0);
-    let session = {
-        ...sample,
-        id: TASK_DOC,
-        feedback: [],
-        task: { ...sample.task, id: 'report-export-csv', title: 'Export the report as CSV' },
-        source: {
-            kind: 'rpi',
-            statePath: 'workspace/rpi-sessions/2026-11-09/report/report-export-csv-state.json',
-            artifacts: { research: 'workspace/research/2026-11-09/report-export-csv-research.md' },
-        },
-    };
-    for (const text of ['Keep the header row.', 'Quote the commas.', 'Ship it on Friday.']) {
-        session = createFeedback(session, { kind: 'comment', text, target: { id: 'F1' } }, NOW).session;
-    }
-    return session;
-}
-
 /**
  * Stores a task document and the inbox entry `entry-1` for SESSION, as the source canvas does.
  * `holds` lists the items handed off with each inbox entry.
  */
 async function seed(store, { itemIds = ['FB-001', 'FB-002'], holds = [{ ids: itemIds, entryId: 'entry-1' }], createdAt = NOW, state = 'waiting', owner = null } = {}) {
-    let doc = taskDoc();
+    let doc = taskDoc(NOW);
     for (const hold of holds) {
         doc = claimDelivery(doc, hold.ids, NOW, { handoff: { sessionId: SESSION, entryId: hold.entryId, relayAfter: iso(T0 + 20_000) } }).session;
     }
@@ -123,7 +102,7 @@ async function seed(store, { itemIds = ['FB-001', 'FB-002'], holds = [{ ids: ite
  * `note` names the held item that is the handoff's note.
  */
 async function seedRelay(store, { holds = ['FB-001', 'FB-002'], relayAfter = NOW, claim = null, inbox = null, state, note = null } = {}) {
-    let doc = claimDelivery(taskDoc(), holds, NOW, { handoff: { sessionId: SESSION, entryId: 'entry-1', relayAfter }, note }).session;
+    let doc = claimDelivery(taskDoc(NOW), holds, NOW, { handoff: { sessionId: SESSION, entryId: 'entry-1', relayAfter }, note }).session;
     if (claim) doc = claimRelay(doc, 'entry-1', claim, claim.at, { policy: 'take' }).session;
     await store.create(doc);
     await store.updateOutbox(SOURCE, (entries) => ({ entries: [...entries, { id: 'entry-1', taskDoc: TASK_DOC, target: SESSION, handle: FROM.handle, relayAfter, createdAt: NOW, ...(state === undefined ? {} : { state }) }], result: null }));

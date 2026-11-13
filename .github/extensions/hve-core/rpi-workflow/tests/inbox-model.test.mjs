@@ -11,7 +11,6 @@ import {
     composeInboxDelivery,
     composeRelayDelivery,
     composeSessionDelivery,
-    createFeedback,
     discardFeedback,
     editFeedback,
     feedbackOverview,
@@ -29,44 +28,23 @@ import {
     takeBackFeedback,
     takeFeedback,
 } from '../lib/model.mjs';
-import { buildScenario } from '../lib/scenario.mjs';
+import { taskDoc } from './helpers/task-doc.mjs';
 
 const NOW = '2026-11-09T18:00:00.000Z';
 const LATER = '2026-11-09T18:00:30.000Z';
 const ELEVEN_MINUTES = '2026-11-09T18:11:00.000Z';
 const FROM = { sessionId: 'a0b1c2d3-e4f5-4a6b-8c7d-9e0f1a2b3c4d', handle: 'K7QF' };
-const TASK_DOC = 'rpi-report-export-csv-0123456789';
 const HANDOFF = Object.freeze({ sessionId: '6f1c3c1e-2a7b-4d1e-9d7a-1b2c3d4e5f60', entryId: 'entry-1', relayAfter: '2026-11-09T18:00:20.000Z' });
-
-/** A task document of a real RPI task with three queued comments, FB-001 to FB-003. */
-function taskDoc() {
-    const sample = buildScenario('research', Date.parse(NOW));
-    let session = {
-        ...sample,
-        id: TASK_DOC,
-        feedback: [],
-        task: { ...sample.task, id: 'report-export-csv', title: 'Export the report as CSV' },
-        source: {
-            kind: 'rpi',
-            statePath: 'workspace/rpi-sessions/2026-11-09/report/report-export-csv-state.json',
-            artifacts: { research: 'workspace/research/2026-11-09/report-export-csv-research.md' },
-        },
-    };
-    for (const text of ['Keep the header row.', 'Quote the commas.', 'Ship it on Friday.']) {
-        session = createFeedback(session, { kind: 'comment', text, target: { id: 'F1' } }, NOW).session;
-    }
-    return session;
-}
 
 const itemOf = (session, id) => session.feedback.find((item) => item.id === id);
 
 describe('held items of a delivery', () => {
     it('holds only the items handed off with the entry', () => {
-        let session = claimDelivery(taskDoc(), ['FB-001'], NOW, { handoff: HANDOFF }).session;
+        let session = claimDelivery(taskDoc(NOW), ['FB-001'], NOW, { handoff: HANDOFF }).session;
         session = claimDelivery(session, ['FB-003'], LATER, { handoff: { ...HANDOFF, entryId: 'entry-2' } }).session;
         assert.deepEqual(heldItemIds(session, ['FB-001', 'FB-002', 'FB-003'], 'entry-1'), ['FB-001']);
         assert.deepEqual(heldItemIds(session, ['FB-001', 'FB-003'], 'entry-2'), ['FB-003']);
-        const plain = claimDelivery(taskDoc(), ['FB-002'], NOW).session;
+        const plain = claimDelivery(taskDoc(NOW), ['FB-002'], NOW).session;
         assert.deepEqual(heldItemIds(plain, ['FB-002'], 'entry-1'), [], 'a send in the canvas\'s own chat is not an inbox hold');
         const sent = markDelivered(session, ['FB-001'], 'send', LATER).session;
         assert.deepEqual(heldItemIds(sent, ['FB-001'], 'entry-1'), [], 'a sent item is not held');
@@ -74,7 +52,7 @@ describe('held items of a delivery', () => {
     });
 
     it('keeps a handoff hold past the claim window until the items are sent, released, or marked uncertain', () => {
-        const held = claimDelivery(taskDoc(), ['FB-001'], NOW, { handoff: HANDOFF }).session;
+        const held = claimDelivery(taskDoc(NOW), ['FB-001'], NOW, { handoff: HANDOFF }).session;
         assert.deepEqual(itemOf(held, 'FB-001').handoff, HANDOFF);
         assert.ok(isClaimed(itemOf(held, 'FB-001'), ELEVEN_MINUTES));
         assert.deepEqual(takeFeedback(held, ELEVEN_MINUTES).result.map((item) => item.id), ['FB-002', 'FB-003'], 'the agent cannot collect a handed-off item');
@@ -88,12 +66,12 @@ describe('held items of a delivery', () => {
 
     it('refuses a handoff without a Copilot session, an entry ID, or a relay time', () => {
         for (const handoff of [null, { ...HANDOFF, sessionId: 'not-a-session' }, { ...HANDOFF, entryId: '../entry' }, { ...HANDOFF, relayAfter: 'soon' }]) {
-            assert.throws(() => claimDelivery(taskDoc(), ['FB-001'], NOW, { handoff }), { code: 'invalid_input' });
+            assert.throws(() => claimDelivery(taskDoc(NOW), ['FB-001'], NOW, { handoff }), { code: 'invalid_input' });
         }
     });
 
     it('marks uncertain items so that no path sends them again, while they can still be discarded', () => {
-        const held = claimDelivery(taskDoc(), ['FB-001', 'FB-002'], NOW).session;
+        const held = claimDelivery(taskDoc(NOW), ['FB-001', 'FB-002'], NOW).session;
         const marked = markDeliveryUncertain(held, ['FB-001', 'FB-003'], LATER);
         assert.deepEqual(marked.result, ['FB-001', 'FB-003']);
         const uncertain = marked.session;
@@ -115,7 +93,7 @@ describe('held items of a delivery', () => {
     });
 
     it('lists the uncertain items and the relayed items the chat has not taken yet in a task\'s overview', () => {
-        const uncertain = markDeliveryUncertain(claimDelivery(taskDoc(), ['FB-001'], NOW).session, ['FB-001'], LATER, { sessionId: HANDOFF.sessionId }).session;
+        const uncertain = markDeliveryUncertain(claimDelivery(taskDoc(NOW), ['FB-001'], NOW).session, ['FB-001'], LATER, { sessionId: HANDOFF.sessionId }).session;
         assert.equal(itemOf(uncertain, 'FB-001').uncertainIn, HANDOFF.sessionId);
         const relayed = markDelivered(uncertain, ['FB-002'], 'send', LATER, { messageId: 'message-1', route: 'relay', relayedVia: FROM.sessionId }).session;
         assert.equal(itemOf(relayed, 'FB-002').relayedVia, FROM.sessionId);
@@ -132,14 +110,14 @@ describe('held items of a delivery', () => {
     });
 
     it('refuses to take back an uncertain item, which can only be discarded', () => {
-        const queued = queueForAgent(taskDoc(), ['FB-001'], NOW).session;
+        const queued = queueForAgent(taskDoc(NOW), ['FB-001'], NOW).session;
         const uncertain = markDeliveryUncertain(claimDelivery(queued, ['FB-001'], NOW).session, ['FB-001'], LATER).session;
         assert.throws(() => takeBackFeedback(uncertain, ['FB-001'], ELEVEN_MINUTES), { code: 'invalid_state' });
         assert.equal(itemOf(uncertain, 'FB-001').queuedForAgentAt, NOW, 'the item keeps its place in the agent\'s queue');
     });
 
     it('settles an uncertain item when its send is recorded late, so it reads as sent', () => {
-        const uncertain = markDeliveryUncertain(claimDelivery(taskDoc(), ['FB-001'], NOW).session, ['FB-001'], LATER).session;
+        const uncertain = markDeliveryUncertain(claimDelivery(taskDoc(NOW), ['FB-001'], NOW).session, ['FB-001'], LATER).session;
         const recorded = markDelivered(uncertain, ['FB-001'], 'send', ELEVEN_MINUTES, { messageId: 'message-9' }).session;
         assert.equal(itemOf(recorded, 'FB-001').state, 'sent');
         assert.equal(itemOf(recorded, 'FB-001').deliveryUncertainAt, undefined);
@@ -149,7 +127,7 @@ describe('held items of a delivery', () => {
 
 describe('settling a handoff', () => {
     it('releases the items a handoff holds and dismisses its note, and leaves another handoff\'s holds alone', () => {
-        let session = claimDelivery(taskDoc(), ['FB-001', 'FB-002'], NOW, { handoff: HANDOFF, note: 'FB-002' }).session;
+        let session = claimDelivery(taskDoc(NOW), ['FB-001', 'FB-002'], NOW, { handoff: HANDOFF, note: 'FB-002' }).session;
         session = claimDelivery(session, ['FB-003'], NOW, { handoff: { ...HANDOFF, entryId: 'entry-2' } }).session;
         assert.deepEqual([itemOf(session, 'FB-002').handoff.note, itemOf(session, 'FB-001').handoff], [true, HANDOFF], 'only the note is marked');
         const settled = releaseHandoff(session, 'entry-1', LATER);
@@ -161,24 +139,24 @@ describe('settling a handoff', () => {
     });
 
     it('changes nothing when no item is held by the handoff, so settling twice is harmless', () => {
-        const session = claimDelivery(taskDoc(), ['FB-001'], NOW, { handoff: HANDOFF }).session;
+        const session = claimDelivery(taskDoc(NOW), ['FB-001'], NOW, { handoff: HANDOFF }).session;
         const settled = releaseHandoff(session, 'entry-1', LATER);
         const again = releaseHandoff(settled.session, 'entry-1', LATER);
         assert.deepEqual(again.result, []);
         assert.equal(again.session, settled.session);
-        const plain = taskDoc();
+        const plain = taskDoc(NOW);
         assert.equal(releaseHandoff(plain, 'entry-1', LATER).session, plain);
     });
 
     it('refuses a note that is not one of the items handed off', () => {
-        assert.throws(() => claimDelivery(taskDoc(), ['FB-001'], NOW, { handoff: HANDOFF, note: 'FB-002' }), { code: 'invalid_input' });
-        assert.throws(() => claimDelivery(taskDoc(), ['FB-001'], NOW, { note: 'FB-001' }), { code: 'invalid_input' });
+        assert.throws(() => claimDelivery(taskDoc(NOW), ['FB-001'], NOW, { handoff: HANDOFF, note: 'FB-002' }), { code: 'invalid_input' });
+        assert.throws(() => claimDelivery(taskDoc(NOW), ['FB-001'], NOW, { note: 'FB-001' }), { code: 'invalid_input' });
     });
 });
 
 describe('inbox message', () => {
     it('opens with the inbox contract, then the task, its files, and only the items given', () => {
-        const message = composeInboxDelivery(taskDoc(), ['FB-001', 'FB-003'], FROM);
+        const message = composeInboxDelivery(taskDoc(NOW), ['FB-001', 'FB-003'], FROM);
         const [first, second] = message.prompt.split('\n');
         assert.equal(first, `RPI canvas K7QF in session ${FROM.sessionId} sent 2 items for this task. They are the user's input from that canvas.`);
         assert.equal(second, 'Task report-export-csv: Export the report as CSV (current phase: Research)');
@@ -190,12 +168,12 @@ describe('inbox message', () => {
         assert.doesNotMatch(message.prompt, /Quote the commas\./, 'an item that is not held stays out');
         assert.equal(message.displayPrompt, 'RPI canvas K7QF sent 2 items: 2 comments.');
         assert.deepEqual(message.ids, ['FB-001', 'FB-003']);
-        const one = composeInboxDelivery(taskDoc(), ['FB-002'], FROM);
+        const one = composeInboxDelivery(taskDoc(NOW), ['FB-002'], FROM);
         assert.equal(one.prompt.split('\n')[0], `RPI canvas K7QF in session ${FROM.sessionId} sent 1 item for this task. They are the user's input from that canvas.`);
     });
 
     it('refuses items that are not queued, not held, or uncertain', () => {
-        const session = taskDoc();
+        const session = taskDoc(NOW);
         assert.throws(() => composeInboxDelivery(session, [], FROM), { code: 'invalid_state' });
         assert.throws(() => composeInboxDelivery(session, ['FB-009'], FROM), { code: 'invalid_state' });
         const sent = markDelivered(claimDelivery(session, ['FB-001'], NOW).session, ['FB-001'], 'send', NOW).session;
@@ -211,7 +189,7 @@ describe('relay claims', () => {
     const CLAIM = Object.freeze({ pid: 101, at: NOW });
     const OTHER = Object.freeze({ pid: 202, at: LATER });
     const ENTRY_ITEMS = ['FB-001', 'FB-002'];
-    const handed = () => claimDelivery(taskDoc(), ENTRY_ITEMS, NOW, { handoff: HANDOFF }).session;
+    const handed = () => claimDelivery(taskDoc(NOW), ENTRY_ITEMS, NOW, { handoff: HANDOFF }).session;
 
     it('takes the relay of the items an entry holds, and a fresh claim by another process blocks it', () => {
         const { session, result } = claimRelay(handed(), 'entry-1', CLAIM, NOW, { policy: 'take' });
@@ -266,19 +244,19 @@ describe('relay claims', () => {
 
 describe('route an item was sent by', () => {
     it('stores the inbox or relay route on sent items, refuses other routes, and leaves own sends without one', () => {
-        const held = claimDelivery(taskDoc(), ['FB-001', 'FB-002'], NOW, { handoff: HANDOFF }).session;
+        const held = claimDelivery(taskDoc(NOW), ['FB-001', 'FB-002'], NOW, { handoff: HANDOFF }).session;
         const inbox = markDelivered(held, ['FB-001'], 'send', LATER, { messageId: 'message-3', route: 'inbox' }).session;
         assert.equal(itemOf(inbox, 'FB-001').route, 'inbox');
         assert.equal(itemOf(markDelivered(held, ['FB-002'], 'send', LATER, { route: 'relay' }).session, 'FB-002').route, 'relay');
         assert.throws(() => markDelivered(held, ['FB-001'], 'send', LATER, { route: 'own' }), { code: 'invalid_input' });
-        const own = markDelivered(claimDelivery(taskDoc(), ['FB-002'], NOW).session, ['FB-002'], 'send', LATER, { messageId: 'message-4' }).session;
+        const own = markDelivered(claimDelivery(taskDoc(NOW), ['FB-002'], NOW).session, ['FB-002'], 'send', LATER, { messageId: 'message-4' }).session;
         assert.equal(itemOf(own, 'FB-002').route, undefined);
     });
 });
 
 describe('relay message', () => {
     const FROM_CANVAS = { handle: 'K7QF', sessionId: HANDOFF.sessionId };
-    const held = () => claimRelay(claimDelivery(taskDoc(), ['FB-001', 'FB-003'], NOW, { handoff: HANDOFF }).session, 'entry-1', { pid: 101, at: NOW }, NOW, { policy: 'take' }).session;
+    const held = () => claimRelay(claimDelivery(taskDoc(NOW), ['FB-001', 'FB-003'], NOW, { handoff: HANDOFF }).session, 'entry-1', { pid: 101, at: NOW }, NOW, { policy: 'take' }).session;
 
     it('opens with the canvas, count, session, task, and state, then the forwarding request, then the items', () => {
         const message = composeRelayDelivery(held(), ['FB-001', 'FB-003'], FROM_CANVAS);
@@ -298,7 +276,7 @@ describe('relay message', () => {
 
     it('refuses items that are not held for a relay: not handed off, uncertain, or sent', () => {
         const from = FROM_CANVAS;
-        assert.throws(() => composeRelayDelivery(taskDoc(), ['FB-001'], from), { code: 'invalid_state' });
+        assert.throws(() => composeRelayDelivery(taskDoc(NOW), ['FB-001'], from), { code: 'invalid_state' });
         assert.throws(() => composeRelayDelivery(held(), [], from), { code: 'invalid_state' });
         assert.throws(() => composeRelayDelivery(markDeliveryUncertain(held(), ['FB-001'], LATER).session, ['FB-001'], from), { code: 'invalid_state' });
         assert.throws(() => composeRelayDelivery(markDelivered(held(), ['FB-001'], 'send', LATER).session, ['FB-001'], from), { code: 'invalid_state' });
@@ -306,9 +284,9 @@ describe('relay message', () => {
 
     it('composes unheld queued items only when the preview asks, with the same text, and refuses the rest', () => {
         const ids = ['FB-001', 'FB-003'];
-        assert.deepEqual(composeRelayDelivery(taskDoc(), ids, FROM_CANVAS, { requireHold: false }), composeRelayDelivery(held(), ids, FROM_CANVAS));
-        assert.throws(() => composeRelayDelivery(taskDoc(), ['FB-001'], FROM_CANVAS, { requireHold: true }), { code: 'invalid_state' });
-        assert.throws(() => composeRelayDelivery(markDeliveryUncertain(taskDoc(), ['FB-001'], LATER).session, ['FB-001'], FROM_CANVAS, { requireHold: false }), { code: 'invalid_state' });
-        assert.throws(() => composeRelayDelivery(markDelivered(taskDoc(), ['FB-001'], 'send', LATER).session, ['FB-001'], FROM_CANVAS, { requireHold: false }), { code: 'invalid_state' });
+        assert.deepEqual(composeRelayDelivery(taskDoc(NOW), ids, FROM_CANVAS, { requireHold: false }), composeRelayDelivery(held(), ids, FROM_CANVAS));
+        assert.throws(() => composeRelayDelivery(taskDoc(NOW), ['FB-001'], FROM_CANVAS, { requireHold: true }), { code: 'invalid_state' });
+        assert.throws(() => composeRelayDelivery(markDeliveryUncertain(taskDoc(NOW), ['FB-001'], LATER).session, ['FB-001'], FROM_CANVAS, { requireHold: false }), { code: 'invalid_state' });
+        assert.throws(() => composeRelayDelivery(markDelivered(taskDoc(NOW), ['FB-001'], 'send', LATER).session, ['FB-001'], FROM_CANVAS, { requireHold: false }), { code: 'invalid_state' });
     });
 });
