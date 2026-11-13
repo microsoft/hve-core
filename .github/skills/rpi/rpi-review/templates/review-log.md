@@ -7,6 +7,7 @@
 * Why this matters: {{practical_effect_on_the_users_goal}}
 * Review execution: {{Complete_Partial_or_Blocked}}
 * Assessed outcome: {{Conformant_Conformant_with_justified_divergence_Defects_found_Residual_work_or_Not_accepted}}
+* Review depth: {{surface_standard_or_deep}}
 * Validation coverage: {{validation_summary}}
 * Confidence and limitations: {{confidence_and_material_limits}}
 
@@ -89,7 +90,7 @@ Append events in order. Never rewrite or delete an earlier row. The latest event
 * Review date: {{YYYY-MM-DD}}
 * Review scope: {{full_task_or_bounded_pxx_or_pxx_txx_scope}}
 * Assessed boundary: {{requirements_scope_architecture_acceptance_dependencies_and_evidence_boundary_summary}}
-* Review depth and provenance: {{standard_or_deep}}; {{default_or_explicit_user_request}}
+* Review depth and provenance: {{surface_standard_or_deep}}; {{default_significant_change_repeat_loop_or_explicit_user_request}}
 * Candidate identity: {{task_id_scope_and_artifact_revision}}
 * Review execution: {{started_Complete_Partial_or_Blocked}}
 * Helper use: {{none_or_each_helper_lane_with_its_question_reasoning_effort_and_effort_source_and_what_was_verified_at_the_cited_evidence}}

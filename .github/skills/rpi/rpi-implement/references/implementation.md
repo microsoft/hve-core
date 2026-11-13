@@ -69,7 +69,7 @@ Implementation never edits the source document, a tracker, or any outbound chann
 
 ## Review findings and pre-Review reconciliation
 
-When a later standalone invocation implements Review findings, treat the applicable `RV-xxx` entries as ordinary plan inputs. Record the changed behavior, affected files, and validation in the changes record. Do not create correction or amended run types, and do not require another Review.
+When a later invocation implements Review or Refinement findings (directly or through new `Pxx` follow-up phases), treat the applicable `RV-xxx` and `RF-xxx` entries as ordinary plan inputs. Record the changed behavior, affected files, and validation in the changes record. Do not create correction or amended run types, and do not require another Review unless a repeated loop introduced significant changes (`surface` depth) or the user requests one.
 
 Before handoff to Review, reconcile current plan markers and task-local context, changes-record entries, handoff prose, blockers, remaining work, follow-up items, and validation state. When tasks cite business sources, compare the completed behavior of each with every cited source requirement and add any missing Business Alignment entry. A `pending-decision` entry blocks Review readiness until the user decides. Do not hand off stale status text or unchecked work as complete.
 
