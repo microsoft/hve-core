@@ -9213,8 +9213,9 @@ stimuli:
       conformance, we want a review focused on what can be removed, simplified,
       or reworked across code, docs, domain language, tests, dependencies, error
       boundaries, and configuration. Which skill under
-      `.github/skills/rpi/**/SKILL.md` applies and what helper subagent does it
-      prefer when subagent dispatch is available?
+      `.github/skills/rpi/**/SKILL.md` applies, and how does it divide work
+      between the main agent and regular subagents when subagent dispatch is
+      available?
     agent_environment:
       skills:
         - ../../.github/skills/rpi/rpi-refine
@@ -9230,16 +9231,16 @@ stimuli:
       skill: rpi-refine
       shape: tool-trigger
       advisory: "true"
-      prompt_sha256: a73909137ede6d7fce4dadd333e8f54df7d97cb12b4ca92ae2613bab3fdab624
+      prompt_sha256: 0033b0e255ac2a7a6fb16e9efd94c3e6e12f9087f69917c7a6972d7a0749a944
     graders:
       - type: output-matches
-        name: skill-rpi-refine-tool-trigger-skill-and-subagent
+        name: skill-rpi-refine-tool-trigger-skill-and-main-agent
         config:
-          pattern: '(?is)(?=[\s\S]*(?:^|\W)rpi-refine(?:\W|$))(?=[\s\S]*\bRPI\s+Refiner\b)'
+          pattern: '(?is)(?=[\s\S]*(?:^|\W)rpi-refine(?:\W|$))(?=[\s\S]*\bmain\s+agent\b)(?=[\s\S]*\b(?:targeted|narrow|bounded|lookup|specific)\b)'
       - type: output-matches
         name: skill-rpi-refine-tool-trigger-scope-language
         config:
-          pattern: '(?i)(remove|simplify|subtractive|refinement|fresh[-\s]context)'
+          pattern: '(?i)(remove|simplify|subtractive|refinement|subagents?)'
 
   - name: skill-rpi-refine-bleed-detection
     prompt: |
@@ -9295,7 +9296,7 @@ stimuli:
       - type: output-matches
         name: skill-rpi-refine-subagents-none-direct-parent-lenses
         config:
-          pattern: '(?is)(?=[\s\S]*\b(?:direct|directly|parent|this\s+context|in[-\s]context)\b)(?=[\s\S]*\b(?:four|4|all)\b[\s\S]*\blenses\b)'
+          pattern: '(?is)(?=[\s\S]*\b(?:direct|directly|main\s+agent|parent|this\s+context|in[-\s]context)\b)(?=[\s\S]*\b(?:four|4|all)\b[\s\S]*\blenses\b)'
       - type: output-matches
         name: skill-rpi-refine-subagents-none-no-failure-or-skip
         config:

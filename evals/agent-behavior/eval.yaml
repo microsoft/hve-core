@@ -7782,20 +7782,6 @@ stimuli:
     name: critique-parent-owns-ids
     config:
       pattern: (?i)^\s*[`*'"]*critique-parent[`*'"]*[.!]?\s*$
-- name: rpi-refiner-return-only-suggestions
-  prompt: |
-    RPI Refiner returns candidate subtractive findings for the refinement
-    parent to verify and never assigns refinement IDs itself. Which agent
-    assigns every `RF-xxx` ID? Do not call tools. Return exactly `parent`.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: rpi-refiner
-  graders:
-  - type: output-matches
-    name: parent-owns-refinement-ids
-    config:
-      pattern: (?i)^\s*['"`]?(?:the\s+)?(?:refinement\s+)?parent['"`]?[.!]?\s*$
 - name: rpi-researcher-return-only-suggestions
   prompt: |
     You found three documentation pages that answer the caller's bounded

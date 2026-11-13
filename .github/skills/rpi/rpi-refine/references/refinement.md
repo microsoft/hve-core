@@ -1,5 +1,5 @@
 ---
-description: "Reference protocol for subtractive RPI refinement review across four fresh-context lenses, depth tiers, outcome vocabulary, and planning handoff."
+description: "Reference protocol for main-agent subtractive RPI refinement review across four lenses, targeted subagent lookups, depth tiers, outcome vocabulary, and planning handoff."
 ---
 
 # RPI Refine Reference
@@ -51,19 +51,30 @@ Assess every area the session worked in across these four lenses:
 
 Each `RF-xxx` finding sets `* Dimension:` to one concise label: `Logic and branching`, `Error boundaries`, `Performance and resources`, `Conventions`, `Dependencies and SDKs`, `Language and version features`, `Assumptions and architecture`, `Tests`, `Future mistake prevention`, `Documents and domain language`, or `Infrastructure and configuration`.
 
-## Fresh-context helpers
+## Main-agent execution and targeted subagents
 
-The refinement parent owns verified findings, IDs, decisions, and the artifact. Subagents are never mandatory, and `subagents=none` or an environment without a dispatch tool runs the same four lenses directly in the parent context.
+The main agent running `rpi-refine` (often a higher-capability model, though user configurations vary and no specific model is required) owns and performs the refinement review itself. Read the changed code, tests, docs, and configuration critically, trace backward from required outputs to inputs, weigh base assumptions and domain boundaries across all four lenses, and write `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-refinement.md`. Do not delegate whole lenses or core refinement judgment to a single lower-intelligence subagent.
 
-When a dispatch tool is available and `Subagent use` permits subagents, prefer dispatching `RPI Refiner` in one parallel batch right after initializing the `-refinement.md` skeleton with `Review execution: started`, before reading the full implementation diffs yourself. Fresh subagent context avoids inheriting the rationale that justified unnecessary complexity during implementation.
+Both operating contexts use this same contract without special-case branching:
 
-* Scope each lane to one lens (or a subset of touched directories for a large diff) and pass: the lens question, the changed-file list and relevant plan or changes paths, the active review depth (`surface`, `standard`, or `deep`), the security and trust-boundary exclusion rule, and any explicit caller exclusions. Do not pass a list of expected findings.
-* Select each lane's reasoning effort when dispatching:
-  * `low` for mechanical inventory checks, such as spotting unused exports, duplicate config keys, or untouched leftover files.
-  * `high` for convention, SDK, documentation, language-idiom, and test-redundancy comparisons across touched files.
-  * `max` for backward-path logic simplification, base-assumption and architectural rework, error-boundary placement, security-adjacent boundary checks, and CPU/memory/I/O analysis. In `deep` depth, use `max` for every non-mechanical lane.
+* With a Project coordinator: the coordinator can create a dedicated session specifically to run and manage `rpi-refine` on significant changes, giving that session's main agent fresh context to inspect the work, manage targeted subagents, and return the completed `-refinement.md` record.
+* Without a Project coordinator (standalone `/rpi-refine` or a single-session RPI Review pass): the current main agent runs and manages `rpi-refine` directly.
+
+Subagents are never required, and `subagents=none` or an environment without a dispatch tool runs every check directly in the main agent. When a dispatch tool is available and `Subagent use` permits subagents (guided by this skill, a coordinating Project, or the user), create and manage regular subagents (such as `explore` or `general-purpose` tasks) strictly for narrow, bounded lookups that feed your own analysis:
+
+* Searching untouched directories for existing SDK wrappers, shared helpers, or codebase conventions that new code may have duplicated.
+* Enumerating call sites, exports, or configuration references across the workspace to verify whether a branch, shim, or config key can be removed safely.
+* Checking existing test suites for overlapping assertions or tracing fixtures that drove extra production branches.
+* Scanning documentation and configuration trees for duplicate, misplaced, or conflicting rules.
+
+When dispatching targeted subagents, run independent lookups in parallel and pass each one a specific question, the directories or files to search, and a read-only boundary (no file edits and no nested subagents):
+
+* Select each subagent's reasoning effort from the narrow lookup it performs:
+  * `low` for mechanical symbol, call-site, export, or config-key enumeration.
+  * `high` for convention, SDK, test-overlap, and documentation-duplication searches across workspace areas.
+  * `max` for tracing cross-module invariants or subtle reachability paths. In `deep` depth, use `max` for non-mechanical lookups.
   * Honor any user- or caller-set effort override. If a dispatch fails because the model does not support the requested effort, retry once with `reasoning_effort` set to `medium` and record that fallback.
-* Verify every candidate at its cited workspace path before recording an `RF-xxx` finding. Discard candidates that propose additive ceremony, violate confirmed user direction, or weaken a trust boundary. Record each lane's scope, effort, effort source, and verification result under `### Scope and Evidence`.
+* Subagent returns are raw search inputs: read the cited workspace files yourself, perform the subtractive judgment in the main agent, discard anything that adds ceremony or weakens a trust boundary, and record each targeted subagent's task, effort, effort source, and verification result under `### Scope and Evidence`.
 
 ## Depth tiers
 
@@ -133,7 +144,7 @@ After persisting `### Scope and Evidence` and `### Opening Refinement State` wit
 
 * Scope and touched surfaces: [code, tests, docs, domain, config, or bounded Pxx/Pxx-Txx]
 * Review depth: [surface, standard default, or explicit-user deep]
-* Lenses and helpers: [parallel RPI Refiner lenses or direct parent pass]
+* Execution and targeted helpers: [main-agent pass across all four lenses, with any targeted subagent lookups or direct-only]
 * Current blockers: [active blockers]
 * Relevant links: [Markdown links when available]
 

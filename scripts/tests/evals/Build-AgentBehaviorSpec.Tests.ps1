@@ -849,7 +849,7 @@ console.log(JSON.stringify(results));
 
   It 'Qualifies both public effort fallbacks by host and dispatch support' -Tag 'RpiReviewRemediation' {
     $root = (Resolve-Path (Join-Path $script:LexicalEvalRoot '../..')).Path
-    foreach ($name in @('rpi-researcher', 'rpi-reviewer', 'rpi-refiner')) {
+    foreach ($name in @('rpi-researcher', 'rpi-reviewer')) {
       $text = Get-Content -Raw (Join-Path $root "docs/reference/agents/hve-core/subagents/$name.md")
       $text | Should -Match 'only on hosts that honor reasoning-effort frontmatter'
       $text | Should -Match ([regex]::Escape("VS Code's Local harness ignores that field"))

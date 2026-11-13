@@ -3,7 +3,7 @@ title: Why the RPI Workflow Works
 description: The psychology and principles behind the evidence-led RPI lifecycle and its entry surfaces
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-12
+ms.date: 2026-11-13
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -102,7 +102,7 @@ The plan becomes a contract. When implementation begins, the AI follows the plan
 Review pairs two read-only perspectives that appear together in the RPI Workflow canvas:
 
 * `/rpi-review` compares the task-centered plan, critique, business alignment, changes, and validation evidence in one pass, separates execution status from outcome, and routes defects and gaps.
-* `/rpi-refine` uses fresh-context `RPI Refiner` lenses to strip avoidable complexity, dead scaffolding, redundant tests, misplaced docs, AI-sounding prose, and architectural workarounds, feeding accepted rework into new `Pxx` plan phases or a separate RPI session.
+* `/rpi-refine` has the main agent review the completed work across four subtractive lenses (with regular subagents limited to targeted workspace lookups, or inside a dedicated fresh-context session created by a Project coordinator) to strip avoidable complexity, dead scaffolding, redundant tests, misplaced docs, AI-sounding prose, and architectural workarounds, feeding accepted rework into new `Pxx` plan phases or a separate RPI session.
 
 ### Follow-up: Routing, Not Relabeling
 

@@ -3,7 +3,7 @@ title: Using RPI Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-11-12
+ms.date: 2026-11-13
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -276,7 +276,7 @@ Ready for review.
 3. `/rpi-review` creates the acceptance record (`-review.md`), while `/rpi-refine` creates the subtractive refinement record (`-refinement.md`):
 
    * `/rpi-review` compares each `Pxx` and `Pxx-Txx` item against completion, business alignment, and validation evidence, recording severity-graded `RV-xxx` findings and `RD-xxx` parent decisions
-   * `/rpi-refine` inspects touched code, tests, docs, domain language, SDKs, assumptions, error boundaries, performance, language versions, and configuration through fresh-context `RPI Refiner` lenses to identify what can be removed, consolidated, or redesigned (`RF-xxx` findings and `FD-xxx` parent decisions)
+   * `/rpi-refine` has the main agent inspect touched code, tests, docs, domain language, SDKs, assumptions, error boundaries, performance, language versions, and configuration across four subtractive lenses (managing regular subagents only for narrow targeted lookups, or running in a dedicated fresh-context session created by a Project coordinator) to identify what can be removed, consolidated, or redesigned (`RF-xxx` findings and `FD-xxx` parent decisions)
    * Both records appear together in the RPI Workflow canvas Review view and route accepted work into `rpi-plan` (as new `Pxx` follow-up phases or a separate RPI session), `rpi-implement`, `rpi-research`, or follow-up
 
 4. Review the findings:

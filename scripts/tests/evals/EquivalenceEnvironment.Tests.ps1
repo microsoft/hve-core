@@ -690,7 +690,7 @@ Describe 'Repository agents' -Tag 'Unit' {
         $skillDir = Join-Path $TestDrive 'rpi-surface-skills'
         $null = New-CustomizedEnvironment -RepoRoot $script:RepoRoot -Agent 'rpi-agent' -WorkspacePath $workspace -SkillDirPath $skillDir
 
-        foreach ($subagent in @('rpi-researcher', 'rpi-plan-critic', 'rpi-reviewer', 'rpi-refiner')) {
+        foreach ($subagent in @('rpi-researcher', 'rpi-plan-critic', 'rpi-reviewer')) {
             Join-Path $workspace ".github/agents/hve-core/subagents/$subagent.agent.md" | Should -Exist
         }
         foreach ($skill in @('rpi', 'rpi-plan-critique', 'rpi-refine')) {
