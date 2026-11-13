@@ -16,3 +16,26 @@ import path from 'node:path';
 export async function scratchFolder(name) {
     return fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), `rpi-workflow-${name}-`)));
 }
+
+/**
+ * Creates a symbolic link, or skips the calling test where the host does not allow links, such as
+ * Windows without Developer Mode.
+ *
+ * @param {import('node:test').TestContext} t
+ * @param {string} target
+ * @param {string} linkPath
+ * @param {'dir' | 'file'} [type]
+ * @returns {Promise<boolean>} Whether the link exists.
+ */
+export async function symlinkOrSkip(t, target, linkPath, type) {
+    try {
+        await fs.symlink(target, linkPath, type);
+        return true;
+    } catch (error) {
+        if (error.code === 'EPERM' || error.code === 'EACCES') {
+            t.skip(`this host does not allow symbolic links (${error.code})`);
+            return false;
+        }
+        throw error;
+    }
+}

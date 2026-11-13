@@ -6,11 +6,10 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 
-import { symlinkOrSkip } from '../../session-log/tests/helpers.mjs';
 import { DEFAULT_LIMIT, listRpiSessions } from '../lib/source/session-list.mjs';
 import { resolveSessionWorkspace } from '../lib/source/sessions.mjs';
 import { loadTask } from '../lib/source/workspace.mjs';
-import { scratchFolder } from './helpers/scratch.mjs';
+import { scratchFolder, symlinkOrSkip } from './helpers/scratch.mjs';
 import { PATHS, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
 
 const NOW = Date.parse('2026-01-15T12:00:00.000Z');

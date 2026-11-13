@@ -8,7 +8,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, afterEach, before, describe, it } from 'node:test';
 
-import { symlinkOrSkip } from '../../session-log/tests/helpers.mjs';
 import { createActionHandlers } from '../lib/actions.mjs';
 import { createFeedback, markDelivered } from '../lib/model.mjs';
 import { buildScenario, SCENARIO_ID } from '../lib/scenario.mjs';
@@ -17,7 +16,7 @@ import { createSourceController, notConnected, openPlan, splitOpenInput, sourceS
 import { storeIdFor } from '../lib/source/workspace.mjs';
 import { createStore, MAX_INSTANCES } from '../lib/store.mjs';
 import { stopTracked, track } from './helpers/cleanup.mjs';
-import { scratchFolder } from './helpers/scratch.mjs';
+import { scratchFolder, symlinkOrSkip } from './helpers/scratch.mjs';
 import { CHILD_STATE, CHILD_TASK, PATHS, ROOT_STATE, ROOT_TASK, SESSION_KEY, STALE_SESSION_KEY, STALE_TASK, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
 
 /** A canvas server that stops after the test even when an assertion fails. */
@@ -58,6 +57,20 @@ async function codeOf(run) {
     }
     assert.fail('expected an error');
 }
+
+/** POSTs JSON to a canvas server with its key, and resolves to the status and parsed body. */
+const post = (url, pathname, body) => new Promise((resolve, reject) => {
+    const req = http.request({ host: '127.0.0.1', port: url.port, method: 'POST', path: pathname, headers: { 'content-type': 'application/json', 'x-rw-key': url.searchParams.get('k') } }, (res) => {
+        let text = '';
+        res.setEncoding('utf8');
+        res.on('data', (chunk) => {
+            text += chunk;
+        });
+        res.on('end', () => resolve({ status: res.statusCode, json: JSON.parse(text) }));
+    });
+    req.on('error', reject);
+    req.end(JSON.stringify(body));
+});
 
 describe('open input', () => {
     it('accepts the sample and task forms and rejects mixtures', async () => {
@@ -597,20 +610,6 @@ describe('server following and task switching', () => {
         return { req, events, until };
     }
 
-    const post = (url, pathname, body) => new Promise((resolve, reject) => {
-        const payload = JSON.stringify(body);
-        const req = http.request({ host: '127.0.0.1', port: url.port, method: 'POST', path: pathname, headers: { 'content-type': 'application/json', 'x-rw-key': url.searchParams.get('k') } }, (res) => {
-            let text = '';
-            res.setEncoding('utf8');
-            res.on('data', (chunk) => {
-                text += chunk;
-            });
-            res.on('end', () => resolve({ status: res.statusCode, json: JSON.parse(text) }));
-        });
-        req.on('error', reject);
-        req.end(payload);
-    });
-
     it('follows only while a page is connected, switches tasks, and tells the page', async () => {
         const store = createStore({ root: path.join(tmp, 'server-store'), pollMs: 20 });
         const session = await store.create(buildScenario('research'));
@@ -732,19 +731,6 @@ describe('binding a canvas to a Copilot session', () => {
 
     /** A controller whose session-state root is the scratch folder and whose own session is `OWN`. */
     const controller = (store) => createSourceController({ store, sessionRoot: () => stateRoot, ownSessionId: () => OWN, intervalMs: 60000 });
-
-    const post = (url, pathname, body) => new Promise((resolve, reject) => {
-        const req = http.request({ host: '127.0.0.1', port: url.port, method: 'POST', path: pathname, headers: { 'content-type': 'application/json', 'x-rw-key': url.searchParams.get('k') } }, (res) => {
-            let text = '';
-            res.setEncoding('utf8');
-            res.on('data', (chunk) => {
-                text += chunk;
-            });
-            res.on('end', () => resolve({ status: res.statusCode, json: JSON.parse(text) }));
-        });
-        req.on('error', reject);
-        req.end(JSON.stringify(body));
-    });
 
     it('accepts a session with a state or task, or alone, and refuses a bad ID or a session with stage or scenario', async () => {
         assert.deepEqual(validateOpenInput({ session: BOUND }, makeError), { session: BOUND });

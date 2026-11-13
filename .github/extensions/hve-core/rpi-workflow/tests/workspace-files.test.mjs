@@ -8,11 +8,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, before, describe, it, mock } from 'node:test';
 
-import { symlinkOrSkip } from '../../session-log/tests/helpers.mjs';
 import { buildScenario } from '../lib/scenario.mjs';
 import { createCanvasServer } from '../lib/server.mjs';
 import { createStore } from '../lib/store.mjs';
 import { FileError, findLine, MAX_SOURCE_BYTES, MAX_SOURCE_LINES, readWorkspaceFile, resolveWorkspaceFile } from '../lib/workspace-files.mjs';
+import { symlinkOrSkip } from './helpers/scratch.mjs';
 
 let tmp;
 let root;
