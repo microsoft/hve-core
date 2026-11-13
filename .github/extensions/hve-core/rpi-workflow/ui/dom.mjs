@@ -193,6 +193,14 @@ export const DECISION_STATUS = vocab([
     ['resolved', 'check', 'Resolved', 'success'],
 ]);
 
+export const FINDING_DECISION = vocab([
+    ['proposed', 'question', 'Proposed', 'muted'],
+    ['accepted', 'check', 'Accepted', 'success'],
+    ['rejected', 'x', 'Rejected', 'muted'],
+    ['deferred', 'clock', 'Deferred', 'attention'],
+    ['resolved', 'check-circle', 'Resolved', 'success'],
+]);
+
 export const EVIDENCE_STATE = vocab([
     ['evidence-backed', 'shield-check', 'Evidence-backed', 'success'],
     ['partially-supported', 'half', 'Partially supported', 'attention'],

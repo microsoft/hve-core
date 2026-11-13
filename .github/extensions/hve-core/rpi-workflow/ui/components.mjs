@@ -12,7 +12,7 @@ const DECISION_MARGIN_ROWS = Object.freeze({
     research: /^F\d{1,3}$/,
     plan: /^P\d{2}(?:-T\d{2})?$/,
     implement: /^DS-\d{3}$/,
-    review: /^RV-\d{3}$/,
+    review: /^(?:RV|RF)-\d{3}$/,
 });
 
 /** Rows that list the decisions a phase's artifact records, by phase. */

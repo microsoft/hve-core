@@ -275,6 +275,7 @@ export const VIEW_ROWS = Object.freeze({
     validation: { phase: 'implement', title: 'Validation and blockers' },
     'implement-record': { phase: 'implement', title: 'Implementation record' },
     'review-summary': { phase: 'review', title: 'Assessment' },
+    'refinement-summary': { phase: 'review', title: 'Refinement assessment' },
     history: { phase: 'review', title: 'Decision history' },
     'review-validation': { phase: 'review', title: 'Validation evidence' },
     'review-record': { phase: 'review', title: 'Review record' },
@@ -1087,7 +1088,7 @@ const KIND_LABELS = Object.freeze({
 const wordsKind = (kind) => (Object.prototype.hasOwnProperty.call(KIND_LABELS, kind) ? kind : 'comment');
 
 const ARTIFACT_OF_PHASE = Object.freeze({ research: 'research', plan: 'plan', implement: 'changes', review: 'review' });
-const FILE_LABELS = Object.freeze([['statePath', 'State'], ['research', 'Research'], ['plan', 'Plan'], ['critique', 'Plan critique'], ['changes', 'Changes'], ['review', 'Review']]);
+const FILE_LABELS = Object.freeze([['statePath', 'State'], ['research', 'Research'], ['plan', 'Plan'], ['critique', 'Plan critique'], ['changes', 'Changes'], ['review', 'Review'], ['refinement', 'Refinement review']]);
 
 /**
  * The workspace-relative file that holds a phase's content in a session read from RPI
@@ -1096,13 +1097,18 @@ const FILE_LABELS = Object.freeze([['statePath', 'State'], ['research', 'Researc
  *
  * @param {any} session
  * @param {string | null | undefined} phase
+ * @param {string | null | undefined} [sectionId]
  * @returns {string | null}
  */
-export function artifactFor(session, phase) {
+export function artifactFor(session, phase, sectionId = null) {
     const source = session?.source;
     if (source?.kind !== 'rpi') return null;
+    if (sectionId === 'refinement-summary' && source.artifacts?.refinement) return source.artifacts.refinement;
     const key = phase ? ARTIFACT_OF_PHASE[phase] : undefined;
-    return (key ? source.artifacts?.[key] : null) ?? source.statePath ?? null;
+    const primary = key ? source.artifacts?.[key] : null;
+    if (primary) return primary;
+    if (phase === 'review' && source.artifacts?.refinement) return source.artifacts.refinement;
+    return source.statePath ?? null;
 }
 
 const listOf = (parts) => (parts.length < 3 ? parts.join(' and ') : `${parts.slice(0, -1).join(', ')}, and ${parts.at(-1)}`);
@@ -1166,7 +1172,9 @@ function itemLines(session, items, start) {
         lines.push(`${start + index}. ${item.id}: ${subject}`);
         if (item.target?.quote) lines.push(`   Quote: "${item.target.quote}"`);
         const decision = item.target?.type === 'decision' ? byId(session.decisions, item.target.id) : null;
-        const file = rpi && (item.kind === 'edit' || decision || item.target?.type === 'decisions-row') ? artifactFor(session, item.target?.phase) : null;
+        const file = rpi && (item.kind === 'edit' || decision || item.target?.type === 'decisions-row')
+            ? artifactFor(session, item.target?.phase, item.kind === 'edit' ? item.section?.id ?? item.target?.id : null)
+            : null;
         if (file) lines.push(`   File: ${file}`);
         if (item.optionLabel) {
             lines.push(`   Chose: ${item.optionLabel}`);
@@ -1826,12 +1834,13 @@ export function updateFinding(session, input, now) {
     return mutate(session, now, (draft) => {
         let finding = byId(draft.review.findings, id);
         if (!finding) {
-            finding = { id, summary: '', expected: '', observed: '', impact: '', resolution: '', route: 'rpi-implement', decision: 'proposed', related: [] };
+            finding = { id, kind: /^RF-\d{3}$/.test(id) ? 'refinement' : 'acceptance', summary: '', expected: '', observed: '', impact: '', resolution: '', route: 'rpi-implement', decision: 'proposed', related: [] };
             draft.review.findings.push(finding);
         }
         Object.assign(finding, fields, { updatedAt: now });
         if (fields.decision) {
-            draft.review.history.push({ id: nextId(draft.review.history, 'RD'), subject: id, status: fields.decision, owner: 'agent', rationale: text(input.rationale, 'rationale', { optional: true }) ?? '', at: now });
+            const eventPrefix = /^RF-\d{3}$/.test(id) ? 'FD' : 'RD';
+            draft.review.history.push({ id: nextId(draft.review.history, eventPrefix), subject: id, status: fields.decision, owner: 'agent', rationale: text(input.rationale, 'rationale', { optional: true }) ?? '', at: now });
         }
         return finding;
     });
@@ -1895,7 +1904,7 @@ export function deriveView(session) {
 }
 
 // Rows whose anchored decision follows from them, and task rows a decision shapes.
-const DECISION_SOURCE_ROW_RE = /^(?:Q\d{1,3}|F\d{1,3}|DS-\d{3}|RV-\d{3})$/;
+const DECISION_SOURCE_ROW_RE = /^(?:Q\d{1,3}|F\d{1,3}|DS-\d{3}|(?:RV|RF)-\d{3})$/;
 const TASK_ROW_RE = /^P\d{2}-T\d{2}$/;
 
 /**

@@ -2,7 +2,7 @@
 title: RPI Workflow Canvas Style Guide
 description: Visual language, interaction grammar, and accessibility requirements for the hve-core RPI Workflow canvas
 author: Microsoft
-ms.date: 2026-11-11
+ms.date: 2026-11-12
 ms.topic: reference
 keywords:
   - canvas
@@ -80,8 +80,9 @@ Each ID family in `ui/ids.mjs` names one of Primer's display hues (Primer Primit
 | F      | green  | T      | cyan   | AL     | pine   |
 | D      | indigo | FR     | lime   | RV     | red    |
 | C      | orange | NFR    | olive  | RD     | auburn |
-| W      | teal   | PC     | coral  | FU     | pink   |
-| L      | gray   | CH     | yellow | FB     | plum   |
+| W      | teal   | PC     | coral  | RF     | cobalt |
+| L      | gray   | CH     | yellow | FD     | ochre  |
+| FU     | pink   | FB     | plum   |        |        |
 
 ### Syntax Colors
 
@@ -285,7 +286,7 @@ A decision whose anchor has no row in a started phase, or that has no anchor, ap
   * Change map: the plan's After map with done parts in the success tone and in-progress parts in the accent tone, the canvas's in-progress tone (the agent tone is the agent's voice and shares the success value), each with a corner mark (a check or a dot), and still-needed parts on the plain background with a hollow ring in the muted tone, a Phase control whose tabs carry each phase's status icon and spoken status, starting on the phase in progress, and a legend.
     The chosen phase's parts take a 3-pixel outline in the foreground color over their progress fill, so the choice shows whatever a part's progress is; in forced colors they take Highlight. The legend reads Done, In progress, Still needed, the borders the map draws, and Bold outline: the chosen phase; each progress swatch is a small part carrying the same corner mark as the map, decorative beside its words. Plan's own map keeps its accent fill for the chosen phase.
   * Below them: changes grouped under a heading for each task (ID and title) in plan order, with files and validation and no repeated task chip; discoveries grouped under a heading for each kind (plan change, follow-up, implementation note, local judgment) with the kind's icon and word, omitting empty kinds; plan updates with before and after text; decisions that paused work; business alignment entries; blockers; and the validation record. Each group lists newest first.
-* Review: a summary band (execution, outcome, counts by severity), findings rows with expected and observed behavior side by side, resolution condition, and route; decision cards in the margin; the decision history as a timeline; and validation evidence.
+* Review: acceptance (`rpi-review`) and subtractive refinement (`rpi-refine`) summary rows with execution, outcome, depth, and severity/pass counts; `RV-xxx` (`Expected` and `Observed`) and `RF-xxx` (`Current state` and `Remove or rework` with dimension chips) finding rows with resolution condition and route; `RD-xxx` and `FD-xxx` decision cards in the margin; the unified decision history as a timeline; and validation evidence.
 * Follow-up: ranked follow-ups with rationale, evidence, Select, and Skip, and "Loops in this session", the session tree. For a real session, each other loop offers Show, whose accessible name includes the loop's title, such as "Show Offline trail maps".
 * Real sessions: the context bar adds Open in editor beside Copy for the phase's file, and "Updated" is when that file last changed.
 * Several documents: when Research, Plan, Implement, or Review has an earlier document, the context bar adds a Document switcher after the status chip: a visible "Document" label and a native select listing each document by its title and time, such as "An early look at the canvas · 3 days ago", with the current one marked "(current)", so arrows, typeahead, and screen readers work as they do anywhere.
@@ -421,7 +422,7 @@ Every interactive control has default, hover, focus, active, disabled, and busy 
 * Use sentence case for labels, buttons, and headings, and no label above a heading.
 * Controls name their action: "Answer", "Correct this", "Send now", "Queue", "Take back", "Add suggestion", "Open change", "Show here", "Open in new panel".
 * Address the person as "you" and refer to the agent as "the agent".
-* IDs appear exactly as the artifacts write them, in monospace: `Q2`, `C5`, `W1`, `D3`, `P02-T01`, `FR-003`, `PC-002`, `RV-001`, `RD-004`.
+* IDs appear exactly as the artifacts write them, in monospace: `Q2`, `C5`, `W1`, `D3`, `P02-T01`, `FR-003`, `PC-002`, `RV-001`, `RD-004`, `RF-002`, `FD-004`.
 * Times come from the browser's `Intl` formatters: relative in the reader's language ("5 minutes ago", "yesterday"), with the full date, time, and time zone in a `title`. They update with the data, not on a timer.
 * Focusing a text area, an answer option, or the comment box's kind stops following, once, with an announcement.
 * Never invent text. A value the session never recorded is left out with its label: times, line counts, owners, clearing text, review execution and depth, critique verdict and setting, confidence, and the next action. A row whose section was never recorded is left out, and an unrecognized status shows its recorded word in a neutral chip.

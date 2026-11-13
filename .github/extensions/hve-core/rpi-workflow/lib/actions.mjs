@@ -89,7 +89,7 @@ export const ACTION_DEFINITIONS = Object.freeze([
     },
     {
         name: 'upsert_decision',
-        description: 'Ask the user for a decision (owner user) or record a decision the agent made that the user can override (owner agent). Updates the decision when id exists. The card appears beside its anchor row when that row is a research finding (F1), plan phase or task (P02, P02-T03), implement discovery (DS-004), or review finding (RV-001) in a phase that has started; otherwise it appears as a full card in the steering panel. Decisions read from RPI files cannot be edited here; new questions can be asked.',
+        description: 'Ask the user for a decision (owner user) or record a decision the agent made that the user can override (owner agent). Updates the decision when id exists. The card appears beside its anchor row when that row is a research finding (F1), plan phase or task (P02, P02-T03), implement discovery (DS-004), or review finding (RV-001 or RF-001) in a phase that has started; otherwise it appears as a full card in the steering panel. Decisions read from RPI files cannot be edited here; new questions can be asked.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -104,7 +104,7 @@ export const ACTION_DEFINITIONS = Object.freeze([
                 options: { type: 'array', items: { type: 'object', properties: { id: str('Option ID'), label: str('Option label'), consequence: str('What happens if chosen'), recommended: { type: 'boolean' }, why: str('Why it is recommended') }, required: ['label'], additionalProperties: false } },
                 chosen: str('Chosen option ID; required for agent decisions'),
                 evidence: ids('Evidence IDs such as C5 or W2'),
-                anchor: { type: 'object', properties: { rowId: str('Row the decision sits beside: a finding (F3), plan phase or task (P02-T03), discovery (DS-004), or review finding (RV-001)') }, required: ['rowId'], additionalProperties: false },
+                anchor: { type: 'object', properties: { rowId: str('Row the decision sits beside: a finding (F3), plan phase or task (P02-T03), discovery (DS-004), or review finding (RV-001 or RF-001)') }, required: ['rowId'], additionalProperties: false },
                 status: { type: 'string', enum: ['needs-input', 'answered', 'decided', 'override-pending', 'resolved'] },
             },
             additionalProperties: false,
@@ -165,11 +165,11 @@ export const ACTION_DEFINITIONS = Object.freeze([
     },
     {
         name: 'update_finding',
-        description: 'Create or update a review finding (RV-xxx): severity, expected and observed behavior, resolution condition, route, and decision. On a canvas that follows RPI files (show_task), this is refused with source_managed; update the file instead.',
+        description: 'Create or update a review or refinement finding (RV-xxx or RF-xxx): severity, expected and observed behavior, resolution condition, route, and decision. On a canvas that follows RPI files (show_task), this is refused with source_managed; update the file instead.',
         inputSchema: {
             type: 'object',
             properties: {
-                id: str('Finding ID such as RV-003'),
+                id: str('Finding ID such as RV-003 or RF-002'),
                 severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low'] },
                 title: str('Finding title'), summary: str('Plain summary'), expected: str('Expected behavior'), observed: str('Observed behavior and evidence'),
                 impact: str('Impact'), resolution: str('Resolution condition'),
@@ -343,8 +343,8 @@ export function createActionHandlers(deps) {
             case 'update_task': return artifacts.plan;
             case 'record_change':
             case 'record_discovery': return artifacts.changes;
-            case 'update_finding': return artifacts.review;
-            case 'update_section': return artifactFor(session, session?.sections?.[input.sectionId]?.doc) ?? source.statePath;
+            case 'update_finding': return /^RF-\d{3}$/.test(input?.id ?? '') ? (artifacts.refinement ?? artifacts.review) : (artifacts.review ?? artifacts.refinement);
+            case 'update_section': return artifactFor(session, session?.sections?.[input.sectionId]?.doc, input.sectionId) ?? source.statePath;
             case 'upsert_decision': {
                 const decision = input.id === undefined ? null : session?.decisions?.find((item) => item.id === input.id);
                 if (!decision || decision.origin !== 'artifact') return null;

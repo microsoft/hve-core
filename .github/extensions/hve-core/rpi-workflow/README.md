@@ -32,7 +32,7 @@ The canvas adapts to the phase you view:
   * Below the board, Phases and tasks from the plan show what is in progress by default, with Backlog, Done, and All. An expanded task also shows its changes, discoveries, and trace, and asks the agent to do it next or skip it.
   * The change map marks each change done, in progress, or still needed, puts a status on each phase's tab, and lists a changed part's tasks when you select it.
   * Then come changes grouped by task with files and validation, discoveries grouped by kind with their plan updates, business alignment, and blockers.
-* Review: an assessment with severity counts, findings with expected and observed behavior side by side, the agent's decisions with Question this decision, and the decision history
+* Review: acceptance (`rpi-review`) and subtractive refinement (`rpi-refine`) assessments together with severity and per-review counts, `RV-xxx` (`Expected` and `Observed`) and `RF-xxx` (`Current state` and `Remove or rework` with dimension tags) findings, the agent's `RD-xxx` and `FD-xxx` decisions with Question this decision, and the unified decision history
 * Follow-up: ranked follow-ups with Select and Skip, and the loops in this session as a tree, parent first
 
 ### Information Detail
@@ -53,7 +53,7 @@ A task whose Requirements cite research, such as "Research D10", links back to i
 See [IDs, Previews, and History](#ids-previews-and-history) and [Sources](#sources).
 
 The canvas shows a real RPI session from the workspace's `.copilot-tracking/` folder, or a fictional sample session, "Offline drafts with background sync", that lets you try every phase and interaction. A canvas with neither says it is not connected, lists the sessions it can show in the [session picker](#session-picker), and says how to connect it; see [Open the Canvas](#open-the-canvas).
-A real session comes from its RPI files: the state file, research, plan, critique, changes record, and review log.
+A real session comes from its RPI files: the state file, research, plan, critique, changes record, acceptance review log, and refinement review log.
 The canvas follows those files while it is open and never changes them. What you add, suggested edits included, waits in the canvas until you send it to the agent, and the agent changes the files. See [Review and Send](#review-and-send) and [Real RPI Sessions](#real-rpi-sessions).
 
 ### Regions
@@ -295,7 +295,7 @@ If Show here fails, the picker says so with the reason. While the list loads, it
 The canvas looks for `.copilot-tracking/` in the session's working directory, then in the directory the host started in. It reads:
 
 * the state files in session folders, `.copilot-tracking/rpi-sessions/<date>/<session>/<task>-state.json`, to find the task, its mode and phase, its session, and the other loops in it;
-* the artifacts a state file names in `artifact_paths`, the documents the current work uses: research, plan, plan critique, changes record, and review log;
+* the artifacts a state file names in `artifact_paths`, the documents the current work uses: research, plan, plan critique, changes record, acceptance review log, and refinement review log;
 * the other documents its `documents` lists in the order they were made, for a session that took on a new request; each is named for its work, such as `task-board-polish-research.md`, and a critique, changes record, and review take their plan's name, such as `task-board-polish-changes.md` and `task-board-polish-review-2.md`;
 * the branch and repository from the workspace's `.git` folder, for the header.
 

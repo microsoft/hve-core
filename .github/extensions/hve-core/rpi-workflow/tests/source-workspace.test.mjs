@@ -414,6 +414,55 @@ describe('loading and importing a task', () => {
         assert.ok(!loaded.warnings.some((text) => /\b(?:CH|DS|AL|RV|RD)-\d{3}\b/.test(text)), loaded.warnings.join(' | '));
     });
 
+    it('combines an earlier work\'s review and refinement into one Review document entry without duplicating snapshots', async () => {
+        const dual = path.join(tmp, 'dual-earlier');
+        await writeFixtureWorkspace(dual);
+        const documents = await writeEarlierWork(dual);
+        const earlyRefinement = '.copilot-tracking/reviews/logs/2026-10-18/early-look-refinement.md';
+        const soloRefinement = '.copilot-tracking/reviews/logs/2026-10-18/tile-cache-refinement.md';
+        await fs.mkdir(path.dirname(path.join(dual, earlyRefinement)), { recursive: true });
+        const refinementText = [
+            '# Refinement Review: Early tile cache',
+            '',
+            '## Executive Summary',
+            '* Assessment: Remove the custom retry wrapper.',
+            '* Review execution: Complete',
+            '* Assessed outcome: Refinements identified',
+            '',
+            '## Findings and Proposed Routes',
+            '<!-- rpi:refinement id=RF-001 -->',
+            '### RF-001 [Medium]: Custom retry wrapper duplicates retryWithBackoff',
+            '* Related scope: P02-T01',
+            '* Dimension: Conventions',
+            '* Current state and evidence: src/cache.js wraps fetch manually.',
+            '* What to remove or rework: Call retryWithBackoff directly.',
+            '* Impact: Cuts 20 lines.',
+            '* Resolution condition: Custom wrapper removed.',
+            '* Proposed destination: rpi-plan',
+            '* Smallest useful next action: Remove wrapper.',
+            '',
+            '## Parent Decision Record',
+            '### Decision History',
+            '| Event | Subject | Decision source | Status or value | Proposed destination | Final destination | Owner | More information needed | Smallest next action | Rationale |',
+            '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+            '| FD-001 | RF-001 | agent | accepted | rpi-plan | rpi-plan | rpi-plan | none | Remove wrapper | Simpler |',
+            '',
+        ].join('\n');
+        await fs.writeFile(path.join(dual, earlyRefinement), refinementText);
+        await fs.writeFile(path.join(dual, soloRefinement), refinementText);
+        await writeJson(dual, PATHS.rootState, {
+            ...ROOT_STATE,
+            documents: { ...documents, refinement: [earlyRefinement, soloRefinement] },
+        });
+        const loaded = await loadTask(await resolveWorkspace([dual]), PATHS.rootState, NOW);
+        const earlyLookEntries = loaded.session.documents.review.filter((entry) => entry.name === 'early-look');
+        const soloEntries = loaded.session.documents.review.filter((entry) => entry.name === 'tile-cache');
+        assert.equal(earlyLookEntries.length, 2, 'early-look refinement merges into early-look review snapshots without adding a third picker entry');
+        assert.deepEqual(earlyLookEntries[0].snapshot.review.findings.map((finding) => finding.id), ['RV-001', 'RV-002', 'RF-001']);
+        assert.equal(soloEntries.length, 1, 'a refinement-only earlier work still appears once');
+        assert.deepEqual(soloEntries[0].snapshot.review.findings.map((finding) => finding.id), ['RF-001']);
+    });
+
     it('keeps the current work\'s Provided research out of an earlier research document', async () => {
         const provided = path.join(tmp, 'provided-earlier');
         await writeFixtureWorkspace(provided);
