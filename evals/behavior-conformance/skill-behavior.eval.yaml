@@ -2,8 +2,8 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 339
-  stimuli, including engagement-reporting coverage, Outlook HTML guards, the
+  knowledge, tool-trigger, and bleed-detection stimulus shapes, including
+  engagement-reporting coverage, Outlook HTML guards, the
   conformance stimuli migrated from retired prompts, and complete branch
   coverage for the RPI, proposal-response, and
   outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
@@ -9178,3 +9178,125 @@ stimuli:
         name: skill-untrusted-content-boundary-authority-repo-config
         config:
           pattern: '(?is)\b(?:trusted\s+)?(?:repository|repo)\s+(?:configuration|config|settings)\b|\b(?:configuration|config|settings)\s+(?:in|of|from)\s+the\s+(?:repository|repo)\b'
+
+  - name: skill-rpi-refine-knowledge
+    prompt: |
+      Using the `rpi-refine` skill, name the canonical file suffix under
+      `.copilot-tracking/reviews/logs/<YYYY-MM-DD>/` that holds its record, the
+      finding ID prefix, and the Parent Decision Record event ID prefix.
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-refine
+      files:
+        - src: ../../.github/skills/rpi/rpi-refine
+          dest: .github/skills/rpi/rpi-refine
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: rpi-refine
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 4b65e98c8ab81d3b3da8c92879b1eb35ce9145b69007264ba44ffa9fca664b33
+    graders:
+      - type: output-matches
+        name: skill-rpi-refine-knowledge-artifact-and-ids
+        config:
+          pattern: '(?is)(?=[\s\S]*-refinement\.md)(?=[\s\S]*\bRF-)(?=[\s\S]*\bFD-)'
+      - type: output-matches
+        name: skill-rpi-refine-knowledge-scope-language
+        config:
+          pattern: '(?i)(subtractive|refinement|remove|simplify|rpi-refine)'
+
+  - name: skill-rpi-refine-tool-trigger
+    prompt: |
+      Implementation on our RPI task just finished. Beyond acceptance
+      conformance, we want a review focused on what can be removed, simplified,
+      or reworked across code, docs, domain language, tests, dependencies, error
+      boundaries, and configuration. Which skill under
+      `.github/skills/rpi/**/SKILL.md` applies and what helper subagent does it
+      prefer when subagent dispatch is available?
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-refine
+        - ../../.github/skills/rpi/rpi-review
+      files:
+        - src: ../../.github/skills/rpi/rpi-refine
+          dest: .github/skills/rpi/rpi-refine
+        - src: ../../.github/skills/rpi/rpi-review
+          dest: .github/skills/rpi/rpi-review
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: rpi-refine
+      shape: tool-trigger
+      advisory: "true"
+      prompt_sha256: a73909137ede6d7fce4dadd333e8f54df7d97cb12b4ca92ae2613bab3fdab624
+    graders:
+      - type: output-matches
+        name: skill-rpi-refine-tool-trigger-skill-and-subagent
+        config:
+          pattern: '(?is)(?=[\s\S]*(?:^|\W)rpi-refine(?:\W|$))(?=[\s\S]*\bRPI\s+Refiner\b)'
+      - type: output-matches
+        name: skill-rpi-refine-tool-trigger-scope-language
+        config:
+          pattern: '(?i)(remove|simplify|subtractive|refinement|fresh[-\s]context)'
+
+  - name: skill-rpi-refine-bleed-detection
+    prompt: |
+      We need to verify whether delivered behavior divergences from cited BRD
+      MUST constraints require a copy-ready Stakeholder Note Draft. Does
+      `rpi-refine` own that business-alignment comparison, or does another RPI
+      skill own it? Justify briefly.
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-refine
+        - ../../.github/skills/rpi/rpi-review
+      files:
+        - src: ../../.github/skills/rpi/rpi-refine
+          dest: .github/skills/rpi/rpi-refine
+        - src: ../../.github/skills/rpi/rpi-review
+          dest: .github/skills/rpi/rpi-review
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: rpi-refine
+      shape: bleed-detection
+      advisory: "true"
+      prompt_sha256: 0c306ef9a3c1d4692018123c779387313423e9ecd88de2b363ecee18769549f6
+    graders:
+      - type: output-matches
+        name: skill-rpi-refine-bleed-detection-skill-attribution
+        config:
+          pattern: '(?i)(?:^|\W)rpi-review(?:\W|$)'
+      - type: output-matches
+        name: skill-rpi-refine-bleed-detection-scope-language
+        config:
+          pattern: '(?i)(does\s+not|not\s+own|acceptance|business[-\s]alignment|stakeholder)'
+
+  - name: skill-rpi-refine-subagents-none-fallback
+    prompt: |
+      Using `rpi-refine` with `subagents=none`, does the review fail, skip its
+      four subtractive lenses, or assess all four lenses directly in the parent
+      context? Explain concisely.
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-refine
+      files:
+        - src: ../../.github/skills/rpi/rpi-refine
+          dest: .github/skills/rpi/rpi-refine
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: rpi-refine
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 3291de33aebf51c738f3e60da84522421994a077e05d2b2d0c57c1a8daec45c0
+    graders:
+      - type: output-matches
+        name: skill-rpi-refine-subagents-none-direct-parent-lenses
+        config:
+          pattern: '(?is)(?=[\s\S]*\b(?:direct|directly|parent|this\s+context|in[-\s]context)\b)(?=[\s\S]*\b(?:four|4|all)\b[\s\S]*\blenses\b)'
+      - type: output-matches
+        name: skill-rpi-refine-subagents-none-no-failure-or-skip
+        config:
+          pattern: '(?i)(does\s+not\s+fail|without\s+failing|not\s+skip|never\s+mandatory|optional)'
