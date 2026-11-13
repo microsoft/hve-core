@@ -47,7 +47,18 @@ export const LIMITS = Object.freeze({
 
 const ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$/;
 const SECTION_ID_RE = /^[a-z0-9][a-z0-9._-]{0,79}$/;
+/** Copilot session IDs are UUIDs, and each local session keeps its files in a folder named by one. */
 const COPILOT_SESSION_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Returns true for a syntactically valid Copilot session ID, in either case.
+ *
+ * @param {unknown} value
+ * @returns {value is string}
+ */
+export function isCopilotSessionId(value) {
+    return typeof value === 'string' && COPILOT_SESSION_RE.test(value);
+}
 
 /** Error with a stable code that the server and actions map to responses. */
 export class ModelError extends Error {
@@ -678,7 +689,7 @@ const DELIVERY_ROUTES = Object.freeze(['inbox', 'relay']);
 export function markDelivered(session, ids, mode, now, extra = {}) {
     const delivery = oneOf(mode, ['send'], 'mode');
     const route = extra.route === undefined ? null : oneOf(extra.route, DELIVERY_ROUTES, 'route');
-    const relayedVia = route === 'relay' && typeof extra.relayedVia === 'string' && COPILOT_SESSION_RE.test(extra.relayedVia) ? extra.relayedVia.toLowerCase() : null;
+    const relayedVia = route === 'relay' && isCopilotSessionId(extra.relayedVia) ? extra.relayedVia.toLowerCase() : null;
     const wanted = new Set(ids.map((id) => identifier(id, 'ids[]')));
     return mutate(session, now, (draft) => {
         const done = [];
@@ -743,7 +754,7 @@ export function markPickedUp(session, ids, pickup, now) {
  * @returns {{ sessionId: string, entryId: string, relayAfter: string }}
  */
 function handoffRecord(value) {
-    if (value === null || typeof value !== 'object' || typeof value.sessionId !== 'string' || !COPILOT_SESSION_RE.test(value.sessionId)) {
+    if (value === null || typeof value !== 'object' || !isCopilotSessionId(value.sessionId)) {
         fail('invalid_input', 'handoff.sessionId must be a Copilot session ID.');
     }
     if (typeof value.relayAfter !== 'string' || Number.isNaN(Date.parse(value.relayAfter))) {
@@ -806,7 +817,7 @@ export function claimDelivery(session, ids, now, options = {}) {
  * @param {{ sessionId?: string }} [options]
  */
 export function markDeliveryUncertain(session, ids, now, options = {}) {
-    const chat = typeof options.sessionId === 'string' && COPILOT_SESSION_RE.test(options.sessionId) ? options.sessionId.toLowerCase() : null;
+    const chat = isCopilotSessionId(options.sessionId) ? options.sessionId.toLowerCase() : null;
     const wanted = new Set(ids);
     const open = (item) => wanted.has(item.id) && item.state === 'queued' && !isDeliveryUncertain(item);
     if (!session.feedback.some(open)) {

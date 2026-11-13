@@ -7,7 +7,8 @@ import path from 'node:path';
 import { hasLiveProcess } from '../inbox.mjs';
 import { lineageStatusOf, phaseKey } from './assemble.mjs';
 import { parseArtifact } from './parse.mjs';
-import { parseWorkspaceYaml, readSmall, resolveSessionStateRoot, resolveSessionWorkspace, SESSION_ID_RE, WORKSPACE_FILE } from './sessions.mjs';
+import { isCopilotSessionId } from '../model.mjs';
+import { parseWorkspaceYaml, readSmall, resolveSessionStateRoot, resolveSessionWorkspace, WORKSPACE_FILE } from './sessions.mjs';
 import { loadState, readContained, resolveTask, SourceError } from './workspace.mjs';
 
 /** How many other sessions a listing examines when no limit is given: the most recently updated ones. */
@@ -101,7 +102,7 @@ async function sessionFoldersOf(api, root) {
         throw error;
     }
     const folders = await Promise.all(entries
-        .filter((entry) => entry.isDirectory() && SESSION_ID_RE.test(entry.name))
+        .filter((entry) => entry.isDirectory() && isCopilotSessionId(entry.name))
         .map(async (entry) => {
             const folder = path.join(root, entry.name);
             const text = await readSmall(api, path.join(folder, WORKSPACE_FILE));

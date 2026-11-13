@@ -17,8 +17,8 @@ import {
     discardFeedback,
     editFeedback,
     feedbackOverview,
+    isCopilotSessionId,
     LIMITS,
-    markDelivered,
     releaseDelivery,
     releaseHandoff,
     ModelError,
@@ -28,9 +28,9 @@ import {
     transitionFeedback,
 } from './model.mjs';
 import { loadSessionDocs } from './session-docs.mjs';
-import { isSessionId, resolveSessionWorkspace } from './source/sessions.mjs';
+import { resolveSessionWorkspace } from './source/sessions.mjs';
 import { agentTask } from './source/tree.mjs';
-import { CLAIM_WINDOW_MS, commitHandOff, hasLiveProcess } from './inbox.mjs';
+import { CLAIM_WINDOW_MS, commitHandOff, hasLiveProcess, recordSent } from './inbox.mjs';
 import { CANVAS_ID, panelInstanceId } from './panels.mjs';
 import { INBOX_MAX_ITEMS, preferencesPatch } from './store.mjs';
 import { EditorError } from './editor.mjs';
@@ -71,9 +71,6 @@ const HEARTBEAT_MS = 15000;
 const THEMES = new Set(['system', 'light', 'dark']);
 const CONTRASTS = new Set(['standard', 'more']);
 const USER_TRANSITIONS = Object.freeze({ draft: ['queued', 'dismissed'], queued: ['dismissed'], interpreted: ['corrected'], applied: ['corrected'] });
-const MARK_ATTEMPTS = 3;
-/** The pause before the first retry of recording a send; each later retry waits one step longer. */
-const MARK_RETRY_MS = 50;
 const TASK_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
 /** The routes a Send now can take, as the preview names them. */
 const ROUTE_KINDS = new Set(['own', 'inbox', 'relay']);
@@ -226,7 +223,6 @@ export function clientInfoFrom(body) {
  */
 export function createCanvasServer(deps) {
     const { store, getSessionId } = deps;
-    const markRetryMs = Number.isFinite(deps.markRetryMs) ? deps.markRetryMs : MARK_RETRY_MS;
     const claimWindowMs = Number.isFinite(deps.claimWindowMs) ? deps.claimWindowMs : CLAIM_WINDOW_MS;
     const getCanvas = deps.getCanvas ?? (() => null);
     // Every API call must carry this key, which only the page the host opens knows, so other
@@ -900,15 +896,7 @@ export function createCanvasServer(deps) {
             const unrecorded = [];
             let revision = null;
             for (const group of groups) {
-                let marked = null;
-                for (let attempt = 0; attempt < MARK_ATTEMPTS && !marked; attempt += 1) {
-                    try {
-                        marked = await store.update(group.id, (current) => markDelivered(current, group.ids, 'send', now(), { tasks: groups.length, messageId }), { by: 'user' });
-                    } catch (error) {
-                        log(`Sent, but the canvas could not record it for ${group.taskId} (attempt ${attempt + 1}): ${error instanceof Error ? error.message : 'error'}`, 'warning');
-                        await new Promise((resolve) => setTimeout(resolve, markRetryMs * (attempt + 1)));
-                    }
-                }
+                const marked = await recordSent(store, group.id, group.ids, { details: { tasks: groups.length, messageId }, now, retryMs: deps.markRetryMs, log, about: group.taskId });
                 if (marked) {
                     delivered.push(...marked.result);
                     if (group.id === getSessionId()) revision = marked.session.revision;
@@ -997,7 +985,7 @@ export function createCanvasServer(deps) {
         // Opens a Copilot session's RPI canvas in a new panel of this conversation. The session must be a local
         // session whose workspace resolves; the host opens or focuses the panel, or the agent is asked to when the host cannot.
         'POST /api/open-panel': async (body) => {
-            if (!isSessionId(body?.session)) throw new HttpError(400, 'invalid_input', 'session must be a Copilot session ID (a UUID).');
+            if (!isCopilotSessionId(body?.session)) throw new HttpError(400, 'invalid_input', 'session must be a Copilot session ID (a UUID).');
             const session = body.session.toLowerCase();
             try {
                 await resolveSession(session);
@@ -1023,7 +1011,7 @@ export function createCanvasServer(deps) {
 
         // Connects the canvas to a session's current RPI task, as show_task does with a session; the page refreshes on its reload.
         'POST /api/show-session': async (body) => {
-            if (!isSessionId(body?.session)) throw new HttpError(400, 'invalid_input', 'session must be a Copilot session ID (a UUID).');
+            if (!isCopilotSessionId(body?.session)) throw new HttpError(400, 'invalid_input', 'session must be a Copilot session ID (a UUID).');
             if (!deps.showSession) throw new HttpError(404, 'not_found', 'This canvas cannot show a session.');
             try {
                 const shown = await deps.showSession(body.session.toLowerCase());

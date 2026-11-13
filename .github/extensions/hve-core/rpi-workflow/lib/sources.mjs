@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { ModelError } from './model.mjs';
+import { isCopilotSessionId, ModelError } from './model.mjs';
 import { buildScenario, SCENARIO_ID, STAGES } from './scenario.mjs';
-import { isSessionId, resolveSessionStateRoot, resolveSessionWorkspace } from './source/sessions.mjs';
+import { resolveSessionStateRoot, resolveSessionWorkspace } from './source/sessions.mjs';
 import { agentTask, nextFollowTarget } from './source/tree.mjs';
 import { createFollower, listSessions, loadState, resolveState, resolveTask, resolveWorkspace, scanStates, sessionOf, sessionTreeOf } from './source/workspace.mjs';
 import { lineageStatusOf } from './source/assemble.mjs';
@@ -24,7 +24,7 @@ export const MAX_SESSIONS = 50;
  * @returns {string[]}
  */
 export function sessionListOf(value, makeError) {
-    if (!Array.isArray(value) || !value.every((item) => isSessionId(item))) {
+    if (!Array.isArray(value) || !value.every((item) => isCopilotSessionId(item))) {
         throw makeError('invalid_input', 'sessions must be a list of Copilot session IDs (UUIDs).');
     }
     if (value.length > MAX_SESSIONS) {
@@ -73,7 +73,7 @@ export function validateOpenInput(input, makeError) {
     if (value.task !== undefined && (typeof value.task !== 'string' || (value.task !== 'current' && !TASK_REF_RE.test(value.task)) || value.task === 'sample')) {
         throw makeError('invalid_input', 'task must be "current" or a task ID; omit it to open the sample.');
     }
-    if (value.session !== undefined && !isSessionId(value.session)) {
+    if (value.session !== undefined && !isCopilotSessionId(value.session)) {
         throw makeError('invalid_input', 'session must be a Copilot session ID (a UUID), as in the name of its folder under session-state.');
     }
     if (value.session !== undefined && (value.stage !== undefined || value.scenario !== undefined)) {

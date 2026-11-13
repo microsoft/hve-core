@@ -5,10 +5,9 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
+import { isCopilotSessionId } from '../model.mjs';
 import { SourceError, TRACKING_DIR } from './workspace.mjs';
 
-/** Copilot session IDs are UUIDs, and each local session keeps its files in a folder named by one. */
-export const SESSION_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SESSION_STATE_DIR = 'session-state';
 export const WORKSPACE_FILE = 'workspace.yaml';
 const MAX_WORKSPACE_BYTES = 64 * 1024;
@@ -28,16 +27,6 @@ class SessionError extends SourceError {
 }
 
 /**
- * Returns true for a syntactically valid Copilot session ID.
- *
- * @param {unknown} value
- * @returns {value is string}
- */
-export function isSessionId(value) {
-    return typeof value === 'string' && SESSION_ID_RE.test(value);
-}
-
-/**
  * Resolves the folder that holds one subfolder per local session. The order matches the
  * Session Log canvas: the parent of the joined session's workspace folder when it is a
  * session-state folder, then `COPILOT_HOME`, then `~/.copilot`.
@@ -54,7 +43,7 @@ export function resolveSessionStateRoot(options = {}) {
     if (typeof workspacePath === 'string' && workspacePath.length > 0) {
         const normalized = path.resolve(workspacePath);
         const parent = path.dirname(normalized);
-        if (path.basename(parent) === SESSION_STATE_DIR && isSessionId(path.basename(normalized))) {
+        if (path.basename(parent) === SESSION_STATE_DIR && isCopilotSessionId(path.basename(normalized))) {
             return { root: parent, source: 'workspace' };
         }
     }
@@ -127,7 +116,7 @@ export async function readSmall(api, file) {
  */
 export async function resolveSessionWorkspace(sessionId, options = {}) {
     const api = { ...fs, ...options.fs };
-    if (!isSessionId(sessionId)) {
+    if (!isCopilotSessionId(sessionId)) {
         throw new SessionError('session_invalid', 'session must be a Copilot session ID (a UUID), as in the name of its folder under session-state.');
     }
     const id = sessionId.toLowerCase();
