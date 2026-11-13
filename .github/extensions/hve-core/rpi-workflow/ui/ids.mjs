@@ -26,8 +26,10 @@ export const ID_KINDS = Object.freeze([
     { key: 'CH', hue: 'yellow', pattern: 'CH-\\d{3}', kind: 'Change', phase: 'implement', example: 'CH-007', description: 'A change the implementation made, from the changes record.' },
     { key: 'DS', hue: 'brown', pattern: 'DS-\\d{3}', kind: 'Discovery', phase: 'implement', example: 'DS-002', description: 'Something learned while implementing, and how it was handled.' },
     { key: 'AL', hue: 'pine', pattern: 'AL-\\d{3}', kind: 'Plan alignment', phase: 'implement', example: 'AL-001', description: 'How completed work lines up with what the plan or its sources asked for.' },
-    { key: 'RV', hue: 'red', pattern: 'RV-\\d{3}', kind: 'Review finding', phase: 'review', example: 'RV-005', description: 'A problem or observation the review recorded.' },
-    { key: 'RD', hue: 'auburn', pattern: 'RD-\\d{3}', kind: 'Review decision', phase: 'review', example: 'RD-012', description: 'A decision the review recorded, such as accepting work or starting a follow-up.' },
+    { key: 'RV', hue: 'red', pattern: 'RV-\\d{3}', kind: 'Acceptance review finding', phase: 'review', example: 'RV-005', description: 'A conformance gap or observation the acceptance review recorded.' },
+    { key: 'RD', hue: 'auburn', pattern: 'RD-\\d{3}', kind: 'Acceptance review decision', phase: 'review', example: 'RD-012', description: 'A decision the acceptance review recorded, such as accepting work or routing a fix.' },
+    { key: 'RF', hue: 'cobalt', pattern: 'RF-\\d{3}', kind: 'Refinement finding', phase: 'review', example: 'RF-002', description: 'Something completed work can remove, simplify, consolidate, or rework.' },
+    { key: 'FD', hue: 'ochre', pattern: 'FD-\\d{3}', kind: 'Refinement decision', phase: 'review', example: 'FD-004', description: 'A decision the refinement review recorded on a subtractive finding.' },
     { key: 'FU', hue: 'pink', pattern: 'FU-\\d{1,3}', kind: 'Follow-up', phase: 'followup', example: 'FU-2', description: 'Work ranked for after this task, and why.' },
     { key: 'FB', hue: 'plum', pattern: 'FB-\\d{3}', kind: 'Your item', phase: null, example: 'FB-003', description: 'Something you added in the canvas: an answer, comment, suggestion, or request.' },
 ]);

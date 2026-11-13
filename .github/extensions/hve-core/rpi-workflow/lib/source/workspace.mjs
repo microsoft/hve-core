@@ -28,7 +28,7 @@ export const SESSIONS_DIR = 'rpi-sessions';
 export const MAX_FILE_BYTES = 2 * 1024 * 1024;
 const MAX_STATE_FILES = 2000;
 const STATE_FILE_RE = /-state\.json$/;
-const ARTIFACT_KEYS = ['research', 'plan', 'critique', 'changes', 'review'];
+const ARTIFACT_KEYS = ['research', 'plan', 'critique', 'changes', 'review', 'refinement'];
 const SKIPPED_SHOWN = 5;
 
 const toPosix = (value) => value.split(path.sep).join('/');
@@ -561,6 +561,7 @@ const NAME_SUFFIX = Object.freeze({
     critique: /-plan-critique(?:-\d+)?$/,
     changes: /-changes$/,
     review: /-review(?:-\d+)?$/,
+    refinement: /-refinement(?:-review)?(?:-\d+)?$/,
 });
 
 /**
@@ -569,7 +570,7 @@ const NAME_SUFFIX = Object.freeze({
  * all name `task-board-polish`. A trailing number on a research document or plan stays in the name.
  *
  * @param {string} target workspace-relative path
- * @param {'research' | 'plan' | 'critique' | 'changes' | 'review'} key
+ * @param {'research' | 'plan' | 'critique' | 'changes' | 'review' | 'refinement'} key
  */
 export function documentName(target, key) {
     const base = target.split('/').pop().replace(/\.md$/i, '');
@@ -713,13 +714,21 @@ function earlierDocuments({ state, artifacts, files, earlier, input, findingOffs
         return assemblies.get(cacheKey);
     };
     const iso = (ms) => (Number.isFinite(ms) ? new Date(ms).toISOString() : null);
-    return Object.fromEntries(Object.entries(DOCUMENT_PHASES).map(([key, phase]) => [phase, listed[key].map((doc) => {
-        const entry = { n: doc.n, path: doc.path, name: doc.name, title: doc.parsed?.title || null, updatedAt: iso(doc.mtimeMs), current: doc.current, workTitle: ofWork('plan', doc.name)?.parsed.title || null };
+    const toDocEntry = (phase, doc, n) => {
+        const prefix = doc.key === 'refinement' && doc.parsed?.title ? `Refinement: ${doc.parsed.title}` : doc.parsed?.title || null;
+        const entry = { n, path: doc.path, name: doc.name, title: prefix, updatedAt: iso(doc.mtimeMs), current: doc.current, workTitle: ofWork('plan', doc.name)?.parsed.title || null };
         if (doc.current) return entry;
         if (!doc.parsed) return { ...entry, missing: true };
         const { session, parts, traces } = assembleWork(doc);
         return { ...entry, snapshot: snapshotOf(phase, session, traces, parts) };
-    })]));
+    };
+    const byPhase = Object.fromEntries(Object.entries(DOCUMENT_PHASES).map(([key, phase]) => [phase, listed[key].map((doc) => toDocEntry(phase, doc, doc.n))]));
+    if (listed.refinement.length) {
+        const extra = listed.refinement.filter((doc) => !byPhase.review.some((entry) => entry.name === doc.name && entry.current === doc.current));
+        const offset = byPhase.review.length;
+        byPhase.review.push(...extra.map((doc, index) => toDocEntry('review', doc, offset + index + 1)));
+    }
+    return byPhase;
 }
 
 /** What an earlier document's view shows, from its work's assembled session; trace strips sit on these IDs. */

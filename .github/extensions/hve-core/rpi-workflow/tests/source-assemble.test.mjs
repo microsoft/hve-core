@@ -21,9 +21,9 @@ import {
     routeOf,
     validationOf,
 } from '../lib/source/assemble.mjs';
-import { parseChanges, parseCritique, parsePlan, parseResearch, parseReview, parseState } from '../lib/source/parse.mjs';
+import { parseChanges, parseCritique, parsePlan, parseRefinement, parseResearch, parseReview, parseState } from '../lib/source/parse.mjs';
 import { installFakeDom } from './helpers/fake-dom.mjs';
-import { CHANGES, childSession, CRITIQUE, PATHS, PLAN, RESEARCH, REVIEW, ROOT_STATE, rootSession } from './helpers/rpi-fixture.mjs';
+import { CHANGES, childSession, CRITIQUE, PATHS, PLAN, REFINEMENT, RESEARCH, REVIEW, ROOT_STATE, rootSession } from './helpers/rpi-fixture.mjs';
 
 const NOW = '2026-01-15T12:00:00.000Z';
 
@@ -146,6 +146,47 @@ describe('assembled document', () => {
         const unfinished = { ...artifacts, changes: { ...artifacts.changes, status: { ...artifacts.changes.status, status: 'In progress' } }, review: { ...artifacts.review, execution: 'started' } };
         assert.deepEqual(statuses('Research', unfinished), ['active', 'done', 'active', 'active', 'done'], 'unfinished documents read in progress');
         assert.deepEqual(statuses('Plan', { research: artifacts.research, plan: artifacts.plan }), ['done', 'active', 'upcoming', 'upcoming', 'upcoming'], 'a later phase with no document has not started');
+    });
+
+    it('unifies acceptance and refinement reviews together and works when refinement runs alone', () => {
+        const state = parseState({
+            ...ROOT_STATE,
+            artifact_paths: { ...ROOT_STATE.artifact_paths, refinement: PATHS.refinement },
+            documents: { research: [PATHS.research], plan: [PATHS.plan], critique: [PATHS.critique], changes: [PATHS.changes], review: [PATHS.review], refinement: [PATHS.refinement] },
+        });
+        assert.deepEqual(state.warnings, []);
+        const combined = assembleSession({
+            id: 'rpi-trail-maps',
+            state,
+            artifacts: { research: parseResearch(RESEARCH), plan: parsePlan(PLAN), critique: parseCritique(CRITIQUE), changes: parseChanges(CHANGES), review: parseReview(REVIEW), refinement: parseRefinement(REFINEMENT) },
+            statePath: PATHS.rootState,
+            now: NOW,
+        }).session;
+        assert.ok(combined.sections['review-summary'] && combined.sections['refinement-summary']);
+        assert.equal(combined.review.passes.acceptance.findings, 2);
+        assert.equal(combined.review.passes.refinement.findings, 1);
+        assert.deepEqual(combined.review.findings.map((f) => [f.id, f.kind, f.decision, f.route]), [
+            ['RV-001', 'acceptance', 'resolved', 'rpi-implement'],
+            ['RV-002', 'acceptance', 'resolved', 'rpi-implement'],
+            ['RF-001', 'refinement', 'accepted', 'rpi-plan'],
+        ]);
+        assert.equal(combined.review.findings[2].dimension, 'Dependencies and SDKs');
+        assert.ok(combined.review.history.some((e) => e.id === 'FD-002'));
+        assert.ok(combined.records.review.some((r) => r.heading === 'Refinement: Refinement Record'));
+
+        const surfaceRefinement = parseRefinement(REFINEMENT.replace('* Review depth: standard', '* Review depth: surface'));
+        const refinementOnly = assembleSession({
+            id: 'rpi-trail-maps-refinement-only',
+            state: parseState({ ...ROOT_STATE, artifact_paths: { ...ROOT_STATE.artifact_paths, review: null, refinement: PATHS.refinement } }),
+            artifacts: { plan: parsePlan(PLAN), changes: parseChanges(CHANGES), refinement: surfaceRefinement },
+            statePath: PATHS.rootState,
+            now: NOW,
+        }).session;
+        assert.equal(refinementOnly.phases.review.status, 'done');
+        assert.equal(refinementOnly.phases.review.artifact, PATHS.refinement);
+        assert.equal(refinementOnly.review.passes.acceptance, null);
+        assert.equal(refinementOnly.review.passes.refinement.depth, 'surface');
+        assert.ok(refinementOnly.sections['review-summary']?.markdown);
     });
 });
 
