@@ -247,11 +247,11 @@ export function updatedMark(ctx, sectionId) {
 /** True for an unsent item you queued for the agent's next checkpoint; other loops' summaries carry a flag. */
 export const queuedForAgent = (item) => Boolean(item.queuedForAgentAt ?? item.queuedForAgent);
 
-/** Items you have not sent or queued yet, apart from any being sent right now. */
-export const pendingItems = (ctx) => ctx.data.session.feedback.filter((item) => item.state === 'queued' && !isSending(ctx, item) && !queuedForAgent(item));
+/** Items you have not sent or queued yet, apart from any being sent right now or left uncertain. */
+export const pendingItems = (ctx) => ctx.data.session.feedback.filter((item) => item.state === 'queued' && !isSending(ctx, item) && !isUncertain(item) && !queuedForAgent(item));
 
-/** Items you queued for the agent that it has not collected yet. */
-export const agentQueueItems = (ctx) => ctx.data.session.feedback.filter((item) => item.state === 'queued' && !isSending(ctx, item) && queuedForAgent(item));
+/** Items you queued for the agent that it has not collected yet, apart from any left uncertain. */
+export const agentQueueItems = (ctx) => ctx.data.session.feedback.filter((item) => item.state === 'queued' && !isSending(ctx, item) && !isUncertain(item) && queuedForAgent(item));
 
 /** Status of the shown task in its session tree, or from its own state. */
 const shownStatus = (ctx) => ctx.data.session.followUps?.tree?.tasks.find((task) => task.shown)?.status ?? (ctx.data.session.session.status === 'completed' ? 'completed' : null);
@@ -643,23 +643,53 @@ export function table(caption, headers, rows, options = {}) {
             h('tbody', null, rows.map((cells) => h('tr', null, cells.map((cell) => h('td', null, cell)))))));
 }
 
-/** Matches the model's claim window: a send holds its items for up to 10 minutes. */
-const isSending = (ctx, item) => item.state === 'queued' && Boolean(item.deliveringSince) && ctx.now - Date.parse(item.deliveringSince) < 10 * 60 * 1000;
+/** Matches the model's holds: a send holds its items for up to 10 minutes, and a handoff to another session until it settles. */
+const isSending = (ctx, item) => item.state === 'queued' && (Boolean(item.handoff) || (Boolean(item.deliveringSince) && ctx.now - Date.parse(item.deliveringSince) < 10 * 60 * 1000));
+/** Matches the model's uncertain items: a queued item whose delivery may have reached its session. Such items are only discarded. */
+const isUncertain = (item) => item.state === 'queued' && Boolean(item.deliveryUncertainAt);
+/** A sent item that this canvas's session relayed through its chat, and that the chat's agent has not picked up yet. */
+const isRelayPending = (item, own) => item.state === 'sent' && item.route === 'relay' && !item.pickedUpAt && Boolean(own) && item.relayedVia === own;
 const SENDING = Object.freeze({ icon: 'send', label: 'Sending', tone: 'accent' });
 const QUEUED = Object.freeze({ icon: 'clock', label: 'Queued for the agent', tone: 'agent' });
 const HAS_IT = Object.freeze({ icon: 'sparkle', label: 'The agent has it', tone: 'agent' });
+const MAY_HAVE_BEEN_SENT = Object.freeze({ icon: 'alert', label: 'May have been sent', tone: 'attention' });
 const DELIVERY_WORDS = Object.freeze({ send: 'as a chat message', queue: 'collected by the agent', attach: 'attached to a message' });
 const PICKUP_WORDS = Object.freeze({ steering: 'at its next step', idle: 'in a new turn', queued: 'after its turn', collected: 'collected from the canvas' });
+/** How a sent item reached its session: straight to the session's canvas, or relayed through this chat or the sending session's chat. */
+function routeWords(ctx, item) {
+    if (item.route === 'inbox') return 'direct to its session';
+    if (item.route !== 'relay') return null;
+    return item.relayedVia && item.relayedVia === ctx.data.ownSessionId ? 'relayed through this chat' : "relayed through the sending session's chat";
+}
+
+/**
+ * The chat that may hold an uncertain item's message, in words: this chat, the chat of the session
+ * the canvas sends to, another session's chat, or, when unknown, the chat it went to.
+ *
+ * @param {any} data the page state
+ * @param {string | null | undefined} chat the Copilot session ID the item records
+ */
+function uncertainChat(data, chat) {
+    if (!chat) return 'the chat it went to';
+    if (chat === data.ownSessionId) return 'this chat';
+    if (chat === data.delivery?.sessionId) return `the chat in ${routeName(data.delivery)}`;
+    return `the chat in session ${String(chat).slice(0, 8)}`;
+}
+/** How long another session's canvas has to take a hand-off before this chat's agent forwards it. Matches the server's claim window. */
+const CLAIM_WINDOW_SECONDS = 20;
+const joinWords = (...parts) => parts.filter(Boolean).join(', ') || null;
 
 /**
  * Where an item is and since when: its badge, the time it got there, and a few words on how.
  * Not sent, Queued for the agent, Sent, The agent has it, then Read back, Corrected, or Removed.
+ * An item whose delivery may have reached its session shows May have been sent until it is discarded.
  *
  * @param {any} ctx
  * @param {any} item
  * @returns {{ badge: { icon: string, label: string, tone: string }, at: string | null, words: string | null }}
  */
 export function stageOf(ctx, item) {
+    if (isUncertain(item)) return { badge: MAY_HAVE_BEEN_SENT, at: item.deliveryUncertainAt, words: `check ${uncertainChat(ctx.data, item.uncertainIn)}; not sent again` };
     if (isSending(ctx, item)) return { badge: SENDING, at: item.deliveringSince, words: null };
     if (item.state === 'queued') {
         return queuedForAgent(item)
@@ -667,9 +697,10 @@ export function stageOf(ctx, item) {
             : { badge: FEEDBACK_STATE.queued, at: item.updatedAt ?? item.createdAt ?? null, words: null };
     }
     if (item.state === 'sent') {
+        const route = routeWords(ctx, item);
         return item.pickedUpAt
-            ? { badge: HAS_IT, at: item.pickedUpAt, words: PICKUP_WORDS[item.pickedUpHow] ?? null }
-            : { badge: FEEDBACK_STATE.sent, at: item.sentAt ?? item.updatedAt ?? null, words: DELIVERY_WORDS[item.delivery] ?? null };
+            ? { badge: HAS_IT, at: item.pickedUpAt, words: joinWords(PICKUP_WORDS[item.pickedUpHow], route) }
+            : { badge: FEEDBACK_STATE.sent, at: item.sentAt ?? item.updatedAt ?? null, words: joinWords(DELIVERY_WORDS[item.delivery], route) };
     }
     if (item.state === 'interpreted') return { badge: FEEDBACK_STATE.interpreted, at: item.interpretation?.at ?? item.updatedAt ?? null, words: 'the change is not made yet' };
     if (item.state === 'corrected') {
@@ -779,6 +810,10 @@ function feedbackEditor(ctx, where, taskId, item) {
  */
 export function feedbackActions(ctx, where, group, item) {
     const keyOf = (name) => (where === 'dialog' ? `review-${name}-${group.taskId}-${item.id}` : `fb-${name}-${item.id}`);
+    // An item whose delivery may have reached its session is never sent again, so its only action is to discard it.
+    if (isUncertain(item)) {
+        return [confirmButton(ctx, { key: keyOf('discard'), label: 'Discard', armedLabel: `Discard ${item.id}?`, onConfirm: () => ctx.act.discardFeedback([{ taskId: group.taskId, id: item.id }]) })];
+    }
     const reachable = Boolean(item.target?.id);
     // Another loop's summaries list only unsent items, so they carry no state.
     const unsent = item.state === undefined || (item.state === 'queued' && !isSending(ctx, item));
@@ -802,7 +837,7 @@ function feedbackRow(ctx, item, group) {
     const kind = FEEDBACK_KIND[item.kind] ?? FEEDBACK_KIND.comment;
     const actions = [];
     const sending = isSending(ctx, item);
-    const queued = item.state === 'queued' && !sending && queuedForAgent(item);
+    const queued = item.state === 'queued' && !sending && !isUncertain(item) && queuedForAgent(item);
     const editing = editingHere(ctx, 'steer', group.taskId, item);
     let readBack = null;
     if (queued) {
@@ -817,13 +852,16 @@ function feedbackRow(ctx, item, group) {
     }
     const stage = stageOf(ctx, item);
     const tools = feedbackActions(ctx, 'steer', group, item);
+    // An item that may have been sent has one labeled action, which sits with the row's buttons; the others are icon buttons beside the stage chip.
+    const labeled = isUncertain(item) && !editing ? tools : [];
+    const iconTools = labeled.length ? [] : tools;
     return h('li', { class: 'fb-item', dataset: { item: item.id } },
-        h('div', { class: 'fb-head' }, icon(kind.icon), h('span', { class: 'fb-kind' }, kind.label, feedbackTarget(ctx, item)), badge(stage.badge), tools.length && !editing ? h('span', { class: 'fb-tools' }, tools) : null),
+        h('div', { class: 'fb-head' }, icon(kind.icon), h('span', { class: 'fb-kind' }, kind.label, feedbackTarget(ctx, item)), badge(stage.badge), iconTools.length && !editing ? h('span', { class: 'fb-tools' }, iconTools) : null),
         item.optionLabel ? h('p', { class: 'fb-text' }, h('strong', { text: item.optionLabel })) : null,
         editing ? feedbackEditor(ctx, 'steer', group.taskId, item) : item.text ? h('p', { class: 'fb-text', text: excerpt(item.text, 160) }) : null,
         item.interpretation ? h('p', { class: 'fb-interp' }, icon('sparkle'), h('span', { text: item.interpretation.text })) : null,
         h('p', { class: 'fb-meta meta' }, h('span', { class: 'id-chip', text: item.id }), ' ', timeEl(stage.at, ctx.now), stage.words ? ` · ${stage.words}` : ''),
-        actions.length ? h('div', { class: 'btn-row' }, actions) : null,
+        actions.length || labeled.length ? h('div', { class: 'btn-row' }, actions, labeled) : null,
         readBack);
 }
 
@@ -876,6 +914,7 @@ export function steerPanel(ctx) {
     const pending = pendingItems(ctx);
     const agentQueue = agentQueueItems(ctx);
     const inFlight = session.feedback.filter((item) => item.state === 'sent' || item.state === 'interpreted' || isSending(ctx, item));
+    const uncertain = session.feedback.filter(isUncertain);
     const earlier = session.feedback.filter((item) => ['applied', 'corrected', 'dismissed'].includes(item.state));
     const loop = { taskId: session.task.id, title: session.task.title, shown: true };
     const feedback = h('div', null,
@@ -884,12 +923,13 @@ export function steerPanel(ctx) {
             : h('p', { class: 'empty', text: agentQueue.length ? 'Nothing waits for you to send. What you queued is below.' : 'Nothing waiting to send. Your answers, comments, and suggested edits collect here until you send or queue them with Review and send at the top of the canvas.' }),
         agentQueue.length ? [h('h4', { class: 'group-title', text: `Queued for the agent (${agentQueue.length})` }), h('p', { class: 'meta group-hint', text: 'The agent collects these at its next checkpoint: when it changes phase, finishes a task, asks you something, or ends its turn.' }), h('ul', { class: 'fb-list' }, agentQueue.map((item) => feedbackRow(ctx, item, loop)))] : null,
         inFlight.length ? [h('h4', { class: 'group-title', text: `With the agent (${inFlight.length})` }), h('ul', { class: 'fb-list' }, inFlight.map((item) => feedbackRow(ctx, item, loop)))] : null,
+        uncertain.length ? [h('h4', { class: 'group-title', text: `May have been sent (${uncertain.length})` }), h('p', { class: 'meta group-hint', text: `Check ${uncertainWhere(ctx.data) ?? 'the chat each item names'} before you discard these. They are not sent again.` }), h('ul', { class: 'fb-list' }, uncertain.map((item) => feedbackRow(ctx, item, loop)))] : null,
         earlier.length ? disclosure(ctx, 'earlier-feedback', 'earlier', `Feedback history (${earlier.length})`, h('ul', { class: 'fb-list' }, earlier.slice().reverse().map((item) => feedbackRow(ctx, item, loop)))) : null);
 
     return [
         steerSection('needs', 'Needs your input', needsCount, needsCount ? needs : h('p', { class: 'empty', text: 'Nothing needs you right now. Decisions the agent asks you about appear here.' }), { iconName: 'hand', className: needsCount ? 'has-items' : null }),
         steerSection('decided', 'Recorded decisions', decidedCount, decidedCount ? decided : h('p', { class: 'empty', text: 'No recorded decisions yet.' }), { iconName: 'sparkle' }),
-        steerSection('feedback', 'Your feedback', pending.length + agentQueue.length + inFlight.length, feedback, { iconName: 'inbox' }),
+        steerSection('feedback', 'Your feedback', pending.length + agentQueue.length + inFlight.length + uncertain.length, feedback, { iconName: 'inbox' }),
         steerSection('add', 'Add input', null, composer(ctx), { iconName: 'plus' }),
     ].filter(Boolean);
 }
@@ -916,10 +956,184 @@ function composer(ctx) {
     h('p', { class: 'meta', text: 'What you add waits in Your feedback until you send or queue it with Review and send.' }));
 }
 
+/** Shown in the dialog after a send found that where the items go had changed; the route line gives where now. */
+export const ROUTE_CHANGED_NOTE = 'Where these items go has changed. Check where they go below, then send again.';
+
+/** The session a route sends to, as its tree names it or by its short ID; a generic name when no route is known. */
+export function routeName(route) {
+    if (route?.sessionName) return route.sessionName;
+    return route?.sessionId ? `session ${String(route.sessionId).slice(0, 8)}` : 'the other session';
+}
+
+/** Where Send now takes the items, in words: straight to another session's canvas, or relayed through this chat. Null when they stay in this canvas's own chat. */
+export function routeSentence(route) {
+    if (route?.kind === 'inbox') return `Goes straight to the agent in ${routeName(route)} through its canvas. If that canvas does not take them within ${CLAIM_WINDOW_SECONDS} seconds, this chat's agent forwards them instead.`;
+    if (route?.kind === 'relay') return `Goes to this chat's agent, which forwards them to ${routeName(route)}. No canvas is running for that session.`;
+    return null;
+}
+
+/** How many chat messages Send now takes for a preview: one for the canvas's own chat, or one for each task of a hand-off. */
+const messageCount = (preview) => (Array.isArray(preview?.messages) && preview.messages.length > 0 ? preview.messages.length : 1);
+
+/** What the dialog's route-dependent wording is built from, so the dialog is rebuilt when it changes. */
+export const sendShape = (preview) => JSON.stringify([preview?.route?.kind ?? 'own', routeName(preview?.route ?? null), messageCount(preview)]);
+
+/**
+ * What Send now does, in words, after its name: the canvas's own chat, another session's canvas, or this
+ * chat's agent, which forwards the items. A hand-off sends one chat message for each task, and each one
+ * starts with the canvas's handle as the chat shows it.
+ *
+ * @param {any} preview the preview the dialog shows, or null while it is prepared
+ * @param {{ handle?: string | null, items: number }} options the canvas handle and the number of items
+ * @returns {string}
+ */
+function sendNowWords(preview, { handle, items }) {
+    const name = `RPI canvas${handle ? ` ${handle}` : ''}`;
+    const route = preview?.route ?? null;
+    const message = messageCount(preview) > 1 ? 'one chat message for each task, each' : 'one chat message';
+    if (route?.kind === 'inbox') return ` gives the items to the canvas in ${routeName(route)}, which hands them to its agent as ${message} starting with “${name} in session”.`;
+    if (route?.kind === 'relay') return ` gives this chat's agent ${message} starting with “${name} has”, which asks it to forward them to ${routeName(route)}.`;
+    return ` gives ${items === 1 ? 'it' : 'them'} to the agent at its next step, even mid-task, as one chat message that starts with “${name}”.`;
+}
+
+/** The hint under the message box: where a note goes with each route, and what Queue does with it. */
+function noteHint(preview) {
+    const route = preview?.route ?? null;
+    if (route?.kind === 'inbox') return `With Send now, it goes to the agent in ${routeName(route)} as a comment with your items. With Queue, it waits with your items as a comment.`;
+    if (route?.kind === 'relay') return `With Send now, it goes to this chat's agent as a comment with your items, which forwards them to ${routeName(route)}. With Queue, it waits with your items as a comment.`;
+    return 'With Send now, it shows in the chat above the line that names this canvas. With Queue, it waits with your items as a comment.';
+}
+
+/** A route as a short phrase that follows "they now go", for the announcement that it changed. */
+const routeShort = (route) => {
+    if (route?.kind === 'inbox') return `to the agent in ${routeName(route)}, through its canvas`;
+    if (route?.kind === 'relay') return `to this chat's agent, to forward to ${routeName(route)}`;
+    return "to this chat's agent";
+};
+
+/** The route block of the dialog: the note when the route changed, then where Send now takes the items. */
+export function routeBlock(route, note) {
+    const sentence = routeSentence(route);
+    return [
+        note ? h('div', { class: 'notice tone-attention', id: 'send-route-note' }, h('p', { class: 'notice-title' }, icon('alert'), note)) : null,
+        sentence ? h('p', { class: 'send-route-line' }, icon('nodes'), h('span', { text: sentence })) : null,
+    ].filter(Boolean);
+}
+
+/** What a hand-off announces, by route: items handed to another session's canvas, or sent to this chat's agent to forward. */
+export function handAnnouncement(result) {
+    const count = (result.handedOff ?? []).reduce((sum, hand) => sum + hand.ids.length, 0);
+    if (result.route?.kind === 'relay') return `Sent ${plural(count, 'item')} to this chat's agent to forward to ${routeName(result.route)}.`;
+    return `Handed ${plural(count, 'item')} to the canvas in ${routeName(result.route)}. If it does not take them within ${CLAIM_WINDOW_SECONDS} seconds, this chat's agent forwards them.`;
+}
+
+/**
+ * What a send announces when its preview was out of date: the list, where the items go, or both.
+ *
+ * @param {{ listChanged: boolean, routeMoved: boolean, route: any, verb: 'send' | 'queue' }} change
+ */
+export function staleAnnouncement({ listChanged, routeMoved, route, verb }) {
+    const where = `they now go ${routeShort(route)}`;
+    if (routeMoved && listChanged) return `Your items changed, and where they go has changed: ${where}. Check the list, then ${verb} again.`;
+    if (routeMoved) return `Where these items go has changed: ${where}. Check it, then ${verb} again.`;
+    return `Your items changed since this opened. Check the list, then ${verb} again.`;
+}
+
+/**
+ * The request body Review and send posts: the previewed items and digest, the mode, the message,
+ * and for Send now the route the preview showed, so the server refuses a send that would go elsewhere.
+ *
+ * @param {any} preview the preview the dialog shows
+ * @param {{ taskId: string, id: string }[]} items
+ * @param {'send' | 'queue'} mode
+ * @param {string} note the message the person typed
+ */
+export function deliveryRequest(preview, items, mode, note) {
+    const route = mode === 'send' ? preview?.route?.kind : undefined;
+    return { items, digest: preview.digest, mode, ...(note.trim() ? { note } : {}), ...(route ? { route } : {}) };
+}
+
+const itemKey = (entry) => `${entry.taskId}:${entry.id}`;
+
+/** The items of the shown task that match `test`, then the IDs that each other task's summary lists under `key`, as `{ taskId, id }`. */
+function sessionFeedback(data, test, key) {
+    const shown = (data.session.feedback ?? []).filter(test).map((item) => ({ taskId: data.session.task.id, id: item.id }));
+    const others = (data.otherTasks ?? []).flatMap((task) => (task[key] ?? []).map((id) => ({ taskId: task.taskId, id })));
+    return [...shown, ...others];
+}
+
+/** Items that this canvas's session relayed and its chat's agent has not taken yet, across the session's tasks. */
+const relayedFeedback = (data) => sessionFeedback(data, (item) => isRelayPending(item, data.ownSessionId), 'relayed');
+
+/**
+ * Where the uncertain items of the shown session may be, in words, when they all name one chat;
+ * null when they name several or none.
+ *
+ * @param {any} data the page state
+ */
+function uncertainWhere(data) {
+    const chats = new Set([
+        ...(data.session.feedback ?? []).filter(isUncertain).map((item) => item.uncertainIn ?? null),
+        ...(data.otherTasks ?? []).flatMap((task) => (task.uncertain?.length ? task.uncertainIn ?? [null] : [])),
+    ]);
+    return chats.size === 1 ? uncertainChat(data, [...chats][0]) : null;
+}
+
+/** Items whose delivery may have reached their session, across the session's tasks. */
+export const uncertainFeedback = (data) => sessionFeedback(data, isUncertain, 'uncertain');
+
+/**
+ * The announcement for items whose delivery may have reached their session since the page last
+ * showed the session; null when there are none new.
+ *
+ * @param {any} previous the state the page showed before, or null
+ * @param {any} next the state it shows now
+ */
+export function uncertainAnnouncement(previous, next) {
+    const before = new Set(previous ? uncertainFeedback(previous).map(itemKey) : []);
+    const fresh = uncertainFeedback(next).filter((entry) => !before.has(itemKey(entry)));
+    if (!fresh.length) return null;
+    const where = uncertainWhere(next);
+    return `${plural(fresh.length, 'item')} may already have been sent. Check ${where ?? 'the chat each item names'}; ${fresh.length === 1 ? 'it is' : 'they are'} not sent again.`;
+}
+
+/** A status-area note for a delivery notice: its icon, its text, and its controls. */
+function deliveryNote(key, tone, iconName, text, controls) {
+    return h('div', { class: ['status-note', 'notice', `tone-${tone}`], dataset: { note: key } }, icon(iconName, { className: 'status-note-icon' }), h('p', { class: 'status-note-text', text }), controls);
+}
+
+/**
+ * The delivery notices that the status area shows above its other notes. Items that this canvas
+ * relayed through this chat show until the chat's agent takes them, and can be dismissed until
+ * the set of relayed items changes. Items whose delivery may have reached their session show until
+ * they are discarded, and offer Discard.
+ *
+ * @param {any} ctx
+ */
+export function deliveryNotices(ctx) {
+    const notices = [];
+    const name = routeName(ctx.data.delivery ?? null);
+    const relayed = relayedFeedback(ctx.data);
+    if (relayed.length) {
+        const signature = `relay:${relayed.map(itemKey).sort().join(',')}`;
+        if (!ctx.ui.dismissedNotices?.has(signature)) {
+            notices.push(deliveryNote(signature, 'accent', 'send', `Relayed to ${name}: ${plural(relayed.length, 'item')} went to this chat's agent, which forwards ${relayed.length === 1 ? 'it' : 'them'}.`,
+                button('Dismiss relay note', { iconName: 'x', hideLabel: true, title: 'Dismiss this note', attrs: { 'data-key': 'dismiss-relay' }, onClick: () => ctx.act.dismissDeliveryNotice(signature) })));
+        }
+    }
+    const uncertain = uncertainFeedback(ctx.data);
+    if (uncertain.length) {
+        const where = uncertainWhere(ctx.data);
+        notices.push(deliveryNote('uncertain', 'attention', 'alert', `May have been sent: ${plural(uncertain.length, 'item')}. Check ${where ?? 'the chat each item names'}. ${uncertain.length === 1 ? 'It is' : 'They are'} not sent again, so you can discard ${uncertain.length === 1 ? 'it' : 'them'} once you have checked.`,
+            confirmButton(ctx, { key: 'notice-discard-uncertain', label: `Discard ${plural(uncertain.length, 'item')}`, armedLabel: `Discard ${plural(uncertain.length, 'item')}?`, onConfirm: () => ctx.act.discardFeedback(uncertain) })));
+    }
+    return notices;
+}
+
 /**
  * Content of the Review and send dialog: every loop's unsent items under their loop, each
- * with Go to, Edit, and Discard, then an optional message, the exact text, Send, Discard
- * all, and Close. With nothing waiting it explains how to add something instead.
+ * with Go to, Edit, and Discard, then an optional message, the exact text, the route Send now
+ * takes, Send, Discard all, and Close. With nothing waiting it explains how to add something instead.
  *
  * @param {any} ctx
  */
@@ -948,23 +1162,25 @@ export function reviewSheet(ctx) {
     const fresh = pending.filter((item) => !queuedForAgent(item)).length;
     const busy = send.sending ? send.busy ?? 'send' : null;
     const them = (count) => (count === 1 ? 'it' : 'them');
+    const routeNodes = routeBlock(send.preview?.route, send.routeNote);
     return [head,
         h('p', { class: 'send-intro' }, ...from, ` has ${pending.length === 1 ? 'this item' : `these ${pending.length} items`}${loops > 1 ? ` from ${loops} loops of this session` : ''} for the agent. Check each one: go to it, change its words, or discard it. The agent ${rpi ? (loops > 1 ? "changes each loop's files" : "changes the task's files") : 'makes the changes'} and reads back how it understood each item.`),
         ...groups.map((group) => reviewGroup(ctx, group)),
         h('label', { class: 'field-label', for: 'send-note', text: 'Message to the agent (optional)' }),
         h('textarea', { id: 'send-note', class: 'note', rows: '3', 'aria-describedby': 'send-note-hint', oninput: (event) => ctx.act.setSendNote(event.target.value) }, send.note),
-        h('p', { class: 'meta', id: 'send-note-hint', text: 'With Send now, it shows in the chat above the line that names this canvas. With Queue, it waits with your items as a comment.' }),
+        h('p', { class: 'meta', id: 'send-note-hint', text: noteHint(send.preview) }),
         h('details', { class: 'send-exact' },
-            h('summary', { text: 'Exact message Send now delivers' }),
+            h('summary', { text: messageCount(send.preview) > 1 ? 'Exact messages Send now delivers' : 'Exact message Send now delivers' }),
             h('pre', { class: 'preview-text', id: 'send-preview', tabindex: '0', text: send.preview?.prompt ?? 'Preparing the message…' })),
         send.error ? h('div', { class: 'notice tone-danger', role: 'alert', id: 'send-error' }, h('p', { class: 'notice-title' }, icon('alert'), send.error)) : null,
-        h('ul', { class: 'send-modes', id: 'send-modes' },
-            h('li', null, icon('send'), h('span', null, h('strong', { text: 'Send now' }), ` gives ${them(pending.length)} to the agent at its next step, even mid-task, as one chat message that starts with “RPI canvas${handle ? ` ${handle}` : ''}”.`)),
+        h('div', { class: 'send-route', id: 'send-route', hidden: routeNodes.length === 0 }, routeNodes),
+        h('ul', { class: 'send-modes', id: 'send-modes', dataset: { sendShape: sendShape(send.preview) } },
+            h('li', null, icon('send'), h('span', null, h('strong', { text: 'Send now' }), sendNowWords(send.preview, { handle, items: pending.length }))),
             h('li', null, icon('clock'), h('span', null, h('strong', { text: 'Queue' }), fresh
                 ? ` keeps ${fresh === pending.length ? them(fresh) : `the ${plural(fresh, 'item')} not queued yet`} here until the agent's next checkpoint: when it changes phase, finishes a task, asks you something, or ends its turn. You can take ${them(fresh)} back until then.`
                 : ' is done: everything here waits for the agent\'s next checkpoint. Send now gives it to the agent sooner.'))),
         h('div', { class: 'btn-row send-actions' },
-            button(busy === 'send' ? 'Sending' : 'Send now', { kind: 'primary', iconName: 'send', disabled: send.sending || !send.preview, attrs: { 'data-key': 'send-confirm', id: 'send-confirm', 'aria-describedby': 'send-modes' }, onClick: () => ctx.act.send('send') }),
+            button(busy === 'send' ? 'Sending' : 'Send now', { kind: 'primary', iconName: 'send', disabled: send.sending || !send.preview, attrs: { 'data-key': 'send-confirm', id: 'send-confirm', 'aria-describedby': 'send-modes send-route' }, onClick: () => ctx.act.send('send') }),
             fresh ? button(busy === 'queue' ? 'Queueing' : 'Queue', { iconName: 'clock', disabled: send.sending || !send.preview, attrs: { 'data-key': 'send-queue', id: 'send-queue', 'aria-describedby': 'send-modes' }, onClick: () => ctx.act.send('queue') }) : null,
             confirmButton(ctx, { key: 'send-discard-all', label: 'Discard all', armedLabel: loops > 1 ? `Discard all ${noun} from ${loops} loops?` : `Discard all ${noun}?`, onConfirm: () => ctx.act.discardAll() }),
             button('Close', { attrs: { 'data-close': '', 'data-key': 'send-cancel' } }))].filter(Boolean);
@@ -1034,10 +1250,11 @@ export const TASK_STATUS = Object.freeze({
     stopped: { icon: 'pause', label: 'Stopped', tone: 'muted' },
 });
 
+
 /**
  * The session's tasks as nested lists, parent first, in the order the reader built them.
- * The shown task is marked; other tasks, and a parent in another session, offer Show when
- * the canvas reads real tracking files.
+ * The shown task is marked; other tasks offer Show when the canvas reads real tracking files.
+ * A task that continues a parent in another session folder names it above its card, with a Show.
  *
  * @param {any} ctx
  * @param {{ label: string, keyPrefix: string, onShow?: (task: any) => void }} options
@@ -1076,3 +1293,134 @@ export function sessionTree(ctx, options) {
     }
     return root;
 }
+
+/** The note for a session's canvas that did not open. */
+export const failedPanel = (title, reason) => ({ tone: 'danger', icon: 'alert', text: `Opening a canvas for ${title} failed: ${String(reason).replace(/\.$/, '')}.` });
+
+/**
+ * What an open-panel result says, in words: the note's tone and icon, and its text. A wait names the
+ * session only when the agent was asked about that same session; otherwise it names no session.
+ *
+ * @param {{ outcome: string, retryAfterMs?: number, sameSession?: boolean, reason?: string }} result
+ * @param {string} title the session the caller names
+ */
+export function panelOutcome(result, title) {
+    switch (result.outcome) {
+        case 'opened': return { tone: 'accent', icon: 'panel', text: `Opened a canvas for ${title} in a new panel.` };
+        case 'focused': return { tone: 'accent', icon: 'panel', text: `Focused the canvas for ${title}, which was already open in a panel.` };
+        case 'asked': return { tone: 'accent', icon: 'message', text: `Asked the agent to open a canvas for ${title}. Look for the line in the chat.` };
+        case 'wait': return { tone: 'attention', icon: 'info', text: `The agent was just asked to open a canvas for ${result.sameSession ? title : 'another session'}. Wait ${plural(Math.max(1, Math.ceil(result.retryAfterMs / 1000)), 'second')}, then try again.` };
+        default: return failedPanel(title, result.reason ?? 'the request was not sent');
+    }
+}
+
+/** Why a session the conversation started has no RPI work to show, in words. */
+const PROBLEM_WORDS = Object.freeze({
+    'no-rpi': 'No RPI work yet',
+    'not-found': 'Not on this machine',
+    'no-workspace': 'Records no workspace folder',
+    'no-tracking': 'Its workspace has no .copilot-tracking folder',
+});
+
+/** A session's name in the picker: its name, or the first eight characters of its ID. */
+export const sessionLabel = (entry) => entry.name ?? `Session ${entry.sessionId.slice(0, 8)}`;
+
+/**
+ * One row of the picker. A session with no RPI work says why and offers no controls. Otherwise the row has
+ * Show here, unless the canvas already shows the session, and Open in new panel; both name the session.
+ *
+ * @param {any} entry
+ * @param {boolean} shown the canvas shows this session
+ * @param {{ idPrefix: string, onShow: (entry: any) => void, onOpen: (ref: { session: string, title: string }) => void }} options
+ */
+function sessionRow(entry, shown, options) {
+    const name = sessionLabel(entry);
+    const where = [entry.repository, entry.branch].filter(Boolean).join(' · ');
+    const you = entry.own ? badge({ icon: 'message', label: 'This chat', tone: 'accent' }) : null;
+    const title = h('strong', { class: 'copilot-session-title', text: name });
+    const place = where ? h('p', { class: 'meta', text: where }) : null;
+    if (!entry.task) {
+        return h('li', { class: 'copilot-session', dataset: { session: entry.sessionId } },
+            h('div', { class: 'copilot-session-card' },
+                title,
+                place,
+                h('p', { class: 'meta copilot-reason' }, icon('info'), h('span', { text: PROBLEM_WORDS[entry.problem] ?? PROBLEM_WORDS['no-rpi'] })),
+                you ? h('div', { class: 'copilot-session-facts' }, you) : null));
+    }
+    const phase = PHASE_META[entry.task.phase]?.label ?? 'Phase not recorded';
+    const status = known(TASK_STATUS, entry.task.status)?.label ?? entry.task.status;
+    const id = entry.sessionId;
+    return h('li', { class: 'copilot-session', dataset: { session: id } },
+        h('div', { class: 'copilot-session-card' },
+            title,
+            place,
+            h('p', { class: 'meta copilot-task', text: [entry.task.title, phase, status].join(' · ') }),
+            h('div', { class: 'copilot-session-facts' },
+                you,
+                shown ? badge({ icon: 'eye', label: 'Shown', tone: 'accent' }) : null,
+                entry.live ? badge({ icon: 'live', label: 'Canvas running', tone: 'success' }) : badge({ icon: 'live-off', label: 'No canvas running', tone: 'muted' })),
+            h('div', { class: 'btn-row' },
+                shown ? null : button('Show here', { iconName: 'arrow-right', onClick: () => options.onShow(entry), attrs: { 'aria-label': `Show here: ${name}`, 'data-key': `${options.idPrefix}-show-${id}` } }),
+                button('Open in new panel', { iconName: 'panel', onClick: () => options.onOpen({ session: id, title: name }), attrs: { 'aria-label': `Open in new panel: ${name}`, 'data-key': `${options.idPrefix}-open-${id}` } }))));
+}
+
+/**
+ * The RPI sessions this conversation can show, as a group. It lists the sessions the conversation started
+ * first, then the other local sessions with RPI work. Each row names the session, its repository and branch,
+ * its task with phase and status in words, whether its canvas runs, and whether it is this chat or the one the
+ * canvas shows. Refresh fetches the list again. `model.note` is the outcome of the last Open in new panel and
+ * `model.showError` the failure of the last Show here; both show at the foot of the group.
+ *
+ * @param {{
+ *   loading: boolean, error: string | null, list: { sessions: any[], skipped: number } | null,
+ *   shown: string | null, showError: string | null, note: { tone: string, icon: string, text: string } | null,
+ * }} model
+ * @param {{ idPrefix: string, title: string, headingClass: string, onShow: (entry: any) => void, onOpen: (ref: { session: string, title: string }) => void, onRefresh: () => void }} options
+ */
+export function copilotSessionsPicker(model, options) {
+    const { idPrefix, title, headingClass } = options;
+    const titleId = `${idPrefix}-copilot-title`;
+    const sessions = model.list?.sessions ?? [];
+    const group = (key, heading, entries) => [
+        h('h4', { id: `${idPrefix}-${key}`, class: 'copilot-list-title', text: heading }),
+        h('ul', { class: 'copilot-session-list', 'aria-labelledby': `${idPrefix}-${key}` }, entries.map((entry) => sessionRow(entry, entry.sessionId === model.shown, options))),
+    ];
+    const started = sessions.filter((entry) => entry.mine);
+    const others = sessions.filter((entry) => !entry.mine);
+    return h('div', { class: 'copilot-sessions', role: 'group', 'aria-labelledby': titleId },
+        h('div', { class: 'copilot-head' },
+            h('h3', { id: titleId, class: headingClass, text: title }),
+            button('Refresh', { iconName: 'loop', onClick: options.onRefresh, attrs: { 'data-key': `${idPrefix}-sessions-refresh`, 'aria-disabled': model.loading ? 'true' : undefined } })),
+        model.loading ? h('p', { class: 'meta copilot-status', text: 'Looking for sessions…' }) : null,
+        model.error ? h('p', { class: 'field-error' }, icon('alert'), h('span', { text: `Sessions could not be listed: ${model.error}` })) : null,
+        model.list && !model.loading && sessions.length === 0 ? h('p', { class: 'meta', text: 'No sessions with RPI work were found on this machine.' }) : null,
+        started.length ? group('started', 'Sessions this chat started', started) : null,
+        others.length ? group('others', 'Other sessions with RPI work', others) : null,
+        model.showError ? h('p', { class: 'field-error', role: 'alert' }, icon('alert'), h('span', { text: model.showError })) : null,
+        model.note ? h('p', { class: ['copilot-note', 'notice', `tone-${model.note.tone}`] }, icon(model.note.icon, { className: 'status-note-icon' }), h('span', { text: model.note.text })) : null);
+}
+
+/**
+ * The session menu's content, in order: the session's name and follow state, its loops as a tree, the
+ * Copilot sessions group when the page passes its picker, then the workspace's other sessions for a real
+ * session, and the menu's note. A real session's other sessions come from the page.
+ *
+ * @param {any} ctx
+ * @param {{ following: boolean, onShow?: (task: any) => void, picker?: { model: any, onShow: (entry: any) => void, onOpen: (ref: any) => void, onRefresh: () => void } }} options
+ */
+export function sessionMenuNodes(ctx, options) {
+    const { session } = ctx.data;
+    const { tree } = session.followUps;
+    const rpi = session.source?.kind === 'rpi';
+    const where = [tree.key, rpi ? (options.following ? 'following the agent' : 'not following the agent') : 'sample session'].filter(Boolean).join(' · ');
+    return [
+        h('h2', { class: 'menu-title session-menu-title', id: 'sessionMenuTitle', tabindex: '-1' }, icon('nodes'), tree.name ? `Session: ${tree.name}` : 'This session'),
+        h('p', { class: 'meta session-menu-where', text: where }),
+        h('h3', { class: 'menu-subtitle', text: 'Loops in this session' }),
+        sessionTree(ctx, { label: `Loops in ${tree.name ?? 'this session'}, parent first`, keyPrefix: 'menu', onShow: options.onShow }),
+        options.picker ? copilotSessionsPicker(options.picker.model, { idPrefix: 'menu', title: 'Copilot sessions', headingClass: 'menu-subtitle', onShow: options.picker.onShow, onOpen: options.picker.onOpen, onRefresh: options.picker.onRefresh }) : null,
+        ...(rpi ? [h('h3', { class: 'menu-subtitle', text: 'Other sessions' }), h('div', { id: 'sessionList' })] : []),
+        h('p', { class: 'menu-note', text: rpi ? 'Choosing a loop, or a session under Other sessions, stops following the agent; choose Follow agent at the top to catch up with it.' : 'The sample has no other loops to show. Choose a session above to show its RPI work instead.' }),
+    ].filter(Boolean);
+}
+

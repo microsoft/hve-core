@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
@@ -9,15 +9,18 @@ import { fileURLToPath } from 'node:url';
 
 import {
     claimDelivery,
+    composeInboxDelivery,
+    composeRelayDelivery,
     composeSessionDelivery,
     createFeedback,
     deriveView,
     discardFeedback,
     editFeedback,
     feedbackOverview,
+    isCopilotSessionId,
     LIMITS,
-    markDelivered,
     releaseDelivery,
+    releaseHandoff,
     ModelError,
     queueForAgent,
     suggestEdit,
@@ -25,8 +28,11 @@ import {
     transitionFeedback,
 } from './model.mjs';
 import { loadSessionDocs } from './session-docs.mjs';
+import { resolveSessionWorkspace } from './source/sessions.mjs';
 import { agentTask } from './source/tree.mjs';
-import { preferencesPatch } from './store.mjs';
+import { CLAIM_WINDOW_MS, commitHandOff, hasLiveProcess, recordSent } from './inbox.mjs';
+import { CANVAS_ID, panelInstanceId } from './panels.mjs';
+import { INBOX_MAX_ITEMS, preferencesPatch } from './store.mjs';
 import { EditorError } from './editor.mjs';
 import { FileError, readWorkspaceFile } from './workspace-files.mjs';
 
@@ -65,10 +71,13 @@ const HEARTBEAT_MS = 15000;
 const THEMES = new Set(['system', 'light', 'dark']);
 const CONTRASTS = new Set(['standard', 'more']);
 const USER_TRANSITIONS = Object.freeze({ draft: ['queued', 'dismissed'], queued: ['dismissed'], interpreted: ['corrected'], applied: ['corrected'] });
-const MARK_ATTEMPTS = 3;
-/** The pause before the first retry of recording a send; each later retry waits one step longer. */
-const MARK_RETRY_MS = 50;
 const TASK_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
+/** The routes a Send now can take, as the preview names them. */
+const ROUTE_KINDS = new Set(['own', 'inbox', 'relay']);
+/** What a hand-off says when this canvas has no Copilot session to send from. */
+const HAND_OFF_UNAVAILABLE = 'The canvas is not connected to a Copilot session. Your items stay here; ask the agent to collect them with take_feedback.';
+/** Session errors that mean the session, or the RPI work in it, is not there; any other session error is a conflict. */
+const MISSING_SESSION_CODES = new Set(['session_not_found', 'source_not_found']);
 
 const STATUS_FOR = Object.freeze({
     invalid_input: 400,
@@ -104,6 +113,16 @@ export const CONNECT_REQUEST_INTERVAL_MS = 30000;
  */
 export function connectRequestText(handle) {
     return `${handle ? `RPI canvas ${handle}` : 'RPI canvas'}: connect this canvas to this conversation's RPI session.`;
+}
+
+/**
+ * The request a canvas sends its own chat when it cannot open a session's canvas in a new panel itself.
+ *
+ * @param {string | null | undefined} handle
+ * @param {string} session
+ */
+function panelRequestText(handle, session) {
+    return `${handle ? `RPI canvas ${handle}` : 'RPI canvas'}: open an RPI Workflow canvas for session ${session}.`;
 }
 
 /** Error that maps to a JSON error response. */
@@ -181,22 +200,30 @@ export function clientInfoFrom(body) {
  *   store: ReturnType<import('./store.mjs').createStore>,
  *   getSessionId: () => string,
  *   getCanvas?: () => { handle: string, instanceId: string } | null,
+ *   getJoinedSessionId?: () => string | null,
  *   deliver?: (request: { prompt: string, displayPrompt: string, ids: string[] }) => Promise<void>,
  *   log?: (message: string, level?: string) => void,
  *   now?: () => string,
- *   getSource?: () => { kind?: string, reason?: string, detail?: string | null, follow?: { paused: boolean }, follower?: { start: () => void, stop: () => void } } | undefined,
+ *   getSource?: () => { kind?: string, reason?: string, detail?: string | null, boundSession?: string | null, workspace?: { root: string } | null, follow?: { paused: boolean }, follower?: { start: () => void, stop: () => void } } | undefined,
  *   switchTask?: (ref: { taskId?: string, statePath?: string }, options?: { paused?: boolean }) => Promise<{ sessionId: string }>,
  *   switchSession?: (key: string, options?: { paused?: boolean }) => Promise<{ sessionId: string }>,
  *   resumeFollowing?: () => Promise<{ sessionId: string }>,
  *   pauseFollowing?: () => Promise<{ sessionId: string }>,
  *   listSessions?: () => Promise<{ sessions: any[], skipped: string[] }>,
+ *   listCopilotSessions?: () => Promise<{ sessions: import('./source/session-list.mjs').RpiSessionEntry[], skipped: number }>,
+ *   showSession?: (sessionId: string) => Promise<{ sessionId: string }>,
  *   showSample?: () => Promise<{ sessionId: string }>,
  *   markRetryMs?: number,
- * }} deps
+ *   claimWindowMs?: number,
+ *   wakeOutbox?: () => unknown,
+ *   resolveSession?: (sessionId: string) => Promise<{ root: string, tracking: string }>,
+ *   openPanel?: (request: { session: string }) => Promise<{ outcome: 'opened' | 'focused', instanceId: string }>,
+ *   getExtensionId?: () => string | null | undefined,
+ * }} deps `resolveSession` reads a local Copilot session's workspace, which open-panel requires before it asks for a panel.
  */
 export function createCanvasServer(deps) {
     const { store, getSessionId } = deps;
-    const markRetryMs = Number.isFinite(deps.markRetryMs) ? deps.markRetryMs : MARK_RETRY_MS;
+    const claimWindowMs = Number.isFinite(deps.claimWindowMs) ? deps.claimWindowMs : CLAIM_WINDOW_MS;
     const getCanvas = deps.getCanvas ?? (() => null);
     // Every API call must carry this key, which only the page the host opens knows, so other
     // local processes cannot read, change, or send through this canvas.
@@ -213,6 +240,7 @@ export function createCanvasServer(deps) {
     const deliver = deps.deliver ?? (async () => {
         throw new ModelError('delivery_unavailable', 'This canvas is not connected to a Copilot session.');
     });
+    const resolveSession = deps.resolveSession ?? ((sessionId) => resolveSessionWorkspace(sessionId));
     const log = deps.log ?? (() => {});
     const now = deps.now ?? (() => new Date().toISOString());
     /** @type {http.Server | null} */
@@ -228,6 +256,8 @@ export function createCanvasServer(deps) {
     let others = new Set();
     /** When Ask the agent last sent, so a double press does not send twice. */
     let lastConnectRequest = 0;
+    /** The session the canvas last asked its agent to open a canvas for, and when; every open-panel fallback waits on this one clock. */
+    let lastPanelAsk = null;
     /** False while the canvas shows no session, until the agent connects it. */
     const connected = () => deps.getSource?.()?.kind !== 'none';
     const notConnectedError = () => new HttpError(409, 'not_connected', 'This canvas is not connected to an RPI session. Ask the agent to connect it.');
@@ -362,7 +392,10 @@ export function createCanvasServer(deps) {
             canvas: getCanvas(),
             editor: getEditor() && deps.getSource?.()?.kind === 'rpi' ? { name: getEditor().name } : null,
             follow: source?.kind === 'rpi' ? { paused: Boolean(source.follow?.paused), agent: agentLoop(source.tasks) } : null,
-            otherTasks: docs.slice(1).map((doc) => ({ taskId: doc.taskId, title: doc.task?.title ?? doc.session.task.title, status: doc.task?.status ?? null, statePath: doc.task?.statePath ?? null, ...feedbackOverview(doc.session, at) })),
+            otherTasks: docs.slice(1).map((doc) => ({ taskId: doc.taskId, title: doc.task?.title ?? doc.session.task.title, status: doc.task?.status ?? null, statePath: doc.task?.statePath ?? null, ...feedbackOverview(doc.session, at, { viewer: ownSessionId() }) })),
+            delivery: deliveryTargetOf(session),
+            ownSessionId: ownSessionId(),
+            shownSession: shownSessionOf(),
         };
     }
 
@@ -408,11 +441,45 @@ export function createCanvasServer(deps) {
         return docs.filter((doc) => wanted.has(doc.taskId)).map((doc) => ({ ...doc, ids: wanted.get(doc.taskId) }));
     }
 
-    const compose = (groups, body) => composeSessionDelivery(groups.map((group) => ({ session: group.session, ids: group.ids })), now(), {
-        canvas: getCanvas(),
-        note: body?.note,
-        sessionName: groups[0]?.session.followUps?.tree?.name ?? null,
-    });
+    /** The Copilot session that holds the shown tasks, when it is not the canvas's own session; null otherwise. */
+    const otherSessionOf = () => {
+        const source = deps.getSource?.();
+        const bound = source?.kind === 'rpi' && typeof source.boundSession === 'string' ? source.boundSession : null;
+        const own = deps.getJoinedSessionId?.();
+        if (!bound || (typeof own === 'string' && own.toLowerCase() === bound.toLowerCase())) return null;
+        return { id: bound };
+    };
+
+    /** The canvas's own Copilot session, in lowercase; null before the canvas joins one. */
+    const ownSessionId = () => {
+        const id = deps.getJoinedSessionId?.();
+        return typeof id === 'string' && id ? id.toLowerCase() : null;
+    };
+
+    /** The Copilot session the canvas was connected to with its session input or Show here, in lowercase; null otherwise. */
+    const shownSessionOf = () => {
+        const source = deps.getSource?.();
+        return source?.kind === 'rpi' && typeof source.boundSession === 'string' ? source.boundSession.toLowerCase() : null;
+    };
+
+    /** The session that Send now takes the shown tasks to, named as the page names it; null when they are the canvas's own. */
+    const deliveryTargetOf = (session) => {
+        const target = otherSessionOf();
+        return target ? { sessionId: target.id.toLowerCase(), sessionName: session.followUps?.tree?.name ?? null } : null;
+    };
+
+    // The digest of another session's items also names that session, so a preview taken while the
+    // canvas showed a different session goes stale rather than sending where the preview did not say.
+    const compose = (groups, body) => {
+        const composed = composeSessionDelivery(groups.map((group) => ({ session: group.session, ids: group.ids })), now(), {
+            canvas: getCanvas(),
+            note: body?.note,
+            sessionName: groups[0]?.session.followUps?.tree?.name ?? null,
+        });
+        const target = otherSessionOf();
+        if (!target) return composed;
+        return { ...composed, digest: createHash('sha256').update(`${composed.digest}\n${target.id.toLowerCase()}`).digest('hex').slice(0, 32) };
+    };
 
     const sameItems = (a, b, ids) => ids.every((id) => JSON.stringify(a.feedback.find((item) => item.id === id)) === JSON.stringify(b.feedback.find((item) => item.id === id)));
 
@@ -451,6 +518,243 @@ export function createCanvasServer(deps) {
         }
         return { revision, queued };
     };
+
+    /** Whether another session has a canvas process that announced itself recently and speaks the inbox protocol. */
+    async function liveProcess(sessionId) {
+        const presence = await store.loadPresence(sessionId).catch((error) => {
+            log(`Could not read another session's presence: ${error instanceof Error ? error.message : 'error'}`, 'warning');
+            return null;
+        });
+        return hasLiveProcess(presence, Date.parse(now()));
+    }
+
+    /**
+     * The route Send now takes for the shown items: the canvas's own chat, the inbox of the session
+     * that holds them when one of its canvas processes is live, or the relay through the canvas's own
+     * chat when none is.
+     *
+     * @param {any[]} groups the tasks and their items
+     * @param {{ id: string } | null} target the session that holds the shown tasks, when it is not the canvas's own
+     */
+    async function routeFor(groups, target) {
+        const sessionName = groups[0]?.session.followUps?.tree?.name ?? null;
+        if (!target) return { kind: 'own', sessionId: deps.getJoinedSessionId?.() ?? null, sessionName };
+        const live = await liveProcess(target.id);
+        return { kind: live ? 'inbox' : 'relay', sessionId: target.id.toLowerCase(), sessionName };
+    }
+
+    /** The 409 that tells the page its preview is out of date, carrying the preview to show instead. */
+    const staleSend = (preview, text) => Object.assign(new HttpError(409, 'preview_stale', text), { detail: { preview } });
+
+    /**
+     * The parts a hand-off to another session writes, in the order the preview names them: each task
+     * with items, then the note. The note is a comment of the shown task, so it joins that task's part,
+     * or gets a part of its own when that task has no items. Parts with nothing to hand off are left out.
+     *
+     * @param {any[]} groups the tasks and their items, from `deliveryGroups`
+     * @param {any} body the request body
+     * @returns {Promise<{ note: string, parts: { id: string, taskId: string, session: any, ids: string[], note: boolean }[] }>}
+     */
+    async function handOffParts(groups, body) {
+        const note = typeof body?.note === 'string' ? body.note.trim() : '';
+        const parts = groups.map((group) => ({ id: group.id, taskId: group.taskId, session: group.session, ids: group.ids, note: false }));
+        if (note) {
+            const shown = await shownSession();
+            const own = parts.find((part) => part.id === shown.id);
+            if (own) own.note = true;
+            else parts.push({ id: shown.id, taskId: shown.task.id, session: shown, ids: [], note: true });
+        }
+        return { note, parts: parts.filter((part) => part.ids.length > 0 || part.note) };
+    }
+
+    /**
+     * The preview Send now shows for the route the items take. Its prompt and displayPrompt are the message
+     * that Send now delivers. On the own route, that is the canvas's chat message. On a hand-off, it is what
+     * the receiving canvas process sends into its chat, composed from the same parts that handOffGroups
+     * writes, so the preview and the message agree. The note is added to an in-memory copy only. With
+     * several tasks, `messages` holds one message for each, and the prompt lists them under headings.
+     * Without a Copilot session no hand-off can be sent, so the preview keeps the canvas's own message
+     * and Queue still works; Send now then reports why it cannot send.
+     *
+     * @param {any[]} groups the tasks and their items, from `deliveryGroups`
+     * @param {any} body the request body
+     * @param {{ kind: 'own' | 'inbox' | 'relay', sessionId?: string | null, sessionName?: string | null }} route
+     */
+    async function previewFor(groups, body, route) {
+        const composed = compose(groups, body);
+        if (route.kind === 'own') return { ...composed, route };
+        const sender = ownSessionId();
+        if (!sender) return { ...composed, route };
+        const handle = getCanvas()?.handle ?? null;
+        const at = now();
+        const { note, parts } = await handOffParts(groups, body);
+        const messages = parts.map((part) => {
+            const created = part.note ? createFeedback(part.session, { kind: 'comment', text: note }, at) : null;
+            const session = created ? created.session : part.session;
+            const ids = created ? [...part.ids, created.result.id] : part.ids;
+            const message = route.kind === 'inbox'
+                ? composeInboxDelivery(session, ids, { sessionId: sender, handle })
+                : composeRelayDelivery(session, ids, { handle, sessionId: route.sessionId }, { requireHold: false });
+            return { taskId: part.taskId, prompt: message.prompt, displayPrompt: message.displayPrompt };
+        });
+        if (messages.length === 1) {
+            return { ...composed, prompt: messages[0].prompt, displayPrompt: messages[0].displayPrompt, messages, route };
+        }
+        return {
+            ...composed,
+            prompt: messages.map((message, index) => `Message ${index + 1} of ${messages.length}, task ${message.taskId}:\n${message.prompt}`).join('\n\n'),
+            displayPrompt: messages.map((message) => message.displayPrompt).join(' / '),
+            messages,
+            route,
+        };
+    }
+
+    /** Asks this process's inbox runner to check its outbox now. Send does not wait for the check. */
+    function wakeRelays() {
+        new Promise((resolve) => resolve(deps.wakeOutbox?.())).catch((error) => log(`Could not check the outbox: ${error instanceof Error ? error.message : 'error'}`, 'warning'));
+    }
+
+    /**
+     * Undoes a hand-off that failed before it stood: before the target's inbox entries were written, or
+     * before its relay commit. Each part's items are released and its note is dismissed. The outbox
+     * entries are removed only when every release succeeded; an entry whose release failed stays pending,
+     * so the runner settles it after the claim window and nothing is sent meanwhile.
+     *
+     * @param {{ part: any, entryId: string }[]} entries the parts and the outbox entry each one recorded
+     * @param {string} sender the canvas's own session
+     */
+    async function undoHandOff(entries, sender) {
+        const warn = (what, error) => log(`Could not ${what}: ${error instanceof Error ? error.message : 'error'}`, 'warning');
+        let released = true;
+        for (const { part, entryId } of entries) {
+            try {
+                await store.update(part.id, (current) => releaseHandoff(current, entryId, now()), { by: 'user' });
+            } catch (error) {
+                released = false;
+                warn('release the items of a send that failed', error);
+            }
+        }
+        if (!released) return;
+        const ids = new Set(entries.map((entry) => entry.entryId));
+        await store.updateOutbox(sender, (current) => {
+            const kept = current.filter((entry) => !ids.has(entry.id));
+            return { entries: kept.length === current.length ? current : kept, result: null };
+        }).catch((error) => warn('remove outbox entries', error));
+    }
+
+    /**
+     * Hands the items of another session's tasks over, when Send now goes there. The hand-off is recorded
+     * in this order. The outbox first gets one pending entry per task, so no item is held without an entry
+     * that can settle it. Each task's items are then held with a handoff that names its entry; a note
+     * becomes a comment item of the shown task, held with that task's items. The inbox route then writes
+     * the target's inbox entries, and once they are written the hand-off stands, since a target process may
+     * send them. The outbox entries then commit, so the runner may relay them when due. A failure before the
+     * inbox entries are written, or on the relay route before the commit, undoes what was written and fails
+     * as Send now does. The response does not wait for the items to reach the agent.
+     *
+     * @param {any[]} groups the tasks and their items, from `deliveryGroups`
+     * @param {any} body the request body
+     * @param {{ kind: 'inbox' | 'relay', sessionId: string, sessionName: string | null }} route
+     */
+    async function handOffGroups(groups, body, route) {
+        const sender = deps.getJoinedSessionId?.();
+        if (typeof sender !== 'string' || !sender) {
+            throw new ModelError('delivery_unavailable', HAND_OFF_UNAVAILABLE);
+        }
+        const from = sender.toLowerCase();
+        const target = route.sessionId;
+        const handle = getCanvas()?.handle ?? null;
+        const { note, parts } = await handOffParts(groups, body);
+        if (parts.reduce((sum, part) => sum + part.ids.length, 0) + (note ? 1 : 0) > INBOX_MAX_ITEMS) {
+            throw new HttpError(400, 'invalid_input', `A send takes at most ${INBOX_MAX_ITEMS} items, counting the note.`);
+        }
+        const at = now();
+        const relayAfter = route.kind === 'inbox' ? new Date(Date.parse(at) + claimWindowMs).toISOString() : at;
+        const entries = parts.map((part) => ({ part, entryId: randomBytes(12).toString('hex') }));
+        const entryIds = entries.map((entry) => entry.entryId);
+        const holds = [];
+        let entriesWritten = false;
+        try {
+            await store.updateOutbox(from, (current) => ({
+                entries: [...current, ...entries.map(({ part, entryId }) => ({ id: entryId, taskDoc: part.id, target, handle, relayAfter, createdAt: at, state: 'pending' }))],
+                result: null,
+            }));
+            entriesWritten = true;
+            for (const { part, entryId } of entries) {
+                const { session, result } = await store.update(part.id, (current) => {
+                    if (!sameItems(current, part.session, part.ids)) {
+                        throw new HttpError(409, 'preview_stale', 'Your items changed since you opened this. Check the list, then send again.');
+                    }
+                    let next = current;
+                    const ids = [...part.ids];
+                    let noteId = null;
+                    if (part.note) {
+                        const created = createFeedback(next, { kind: 'comment', text: note }, at);
+                        next = created.session;
+                        noteId = created.result.id;
+                        ids.push(noteId);
+                    }
+                    return { session: claimDelivery(next, ids, at, { handoff: { sessionId: target, entryId, relayAfter }, note: noteId }).session, result: { ids } };
+                }, { by: 'user' });
+                holds.push({ id: part.id, taskId: part.taskId, entryId, ids: result.ids, revision: session.revision });
+            }
+            if (route.kind === 'inbox') {
+                await store.updateInbox(target, (current) => ({
+                    entries: [...current, ...holds.map((hold) => ({ id: hold.entryId, taskDoc: hold.id, itemIds: hold.ids, from: { sessionId: from, handle }, createdAt: at, state: 'waiting', owner: null }))],
+                    result: null,
+                }));
+            } else if (!(await commitHandOff(store, from, entryIds))) {
+                throw new ModelError('invalid_state', 'The hand-off was settled before it committed.');
+            }
+        } catch (error) {
+            if (entriesWritten) await undoHandOff(entries, from);
+            if (error instanceof ModelError && error.code === 'invalid_state') {
+                throw new HttpError(409, 'preview_stale', 'Some of these items were sent or removed meanwhile. Check the list, then send again.');
+            }
+            throw error;
+        }
+        if (route.kind === 'inbox') {
+            // The target's inbox holds the entries, so the hand-off stands even if this commit fails; the runner settles the entries.
+            await commitHandOff(store, from, entryIds).catch((error) => log(`Could not commit a hand-off to another session: ${error instanceof Error ? error.message : 'error'}`, 'warning'));
+        }
+        wakeRelays();
+        const shown = holds.find((hold) => hold.id === getSessionId());
+        return {
+            revision: shown?.revision ?? null,
+            delivered: [],
+            handedOff: holds.map((hold) => ({ taskId: hold.taskId, ids: hold.ids, entryId: hold.entryId })),
+            route,
+        };
+    }
+
+    /**
+     * The fallback when a session's canvas cannot open from here: the canvas's own chat gets one
+     * fixed line, at most once in each interval, asking the agent to open the canvas with the host's
+     * canvas tool. The result says whether the agent was asked, how long to wait, or why it was not sent.
+     * A wait says whether the earlier ask was for this same session, so the page names only that session.
+     *
+     * @param {string} session the lowercase Copilot session ID whose canvas is asked for
+     */
+    async function askForPanel(session) {
+        const at = Date.parse(now());
+        if (lastPanelAsk && at - lastPanelAsk.at < CONNECT_REQUEST_INTERVAL_MS) {
+            return { outcome: 'wait', retryAfterMs: CONNECT_REQUEST_INTERVAL_MS - (at - lastPanelAsk.at), sameSession: lastPanelAsk.session === session };
+        }
+        const instanceId = panelInstanceId(session);
+        const canvas = getCanvas();
+        const displayPrompt = panelRequestText(canvas?.handle, session);
+        const provider = deps.getExtensionId?.() ?? null;
+        const input = JSON.stringify({ session });
+        const prompt = `${displayPrompt}\n\nOpen it with the open_canvas tool: canvasId "${CANVAS_ID}", instanceId "${instanceId}", input ${input}${provider ? `, extensionId "${provider}"` : ''}. It opens in a new panel of this conversation, or focuses the panel already open. Then tell the user it is open, or why it could not be opened.`;
+        lastPanelAsk = { at, session };
+        try {
+            await deliver({ prompt, displayPrompt, ids: [] });
+        } catch (error) {
+            lastPanelAsk = null;
+            return { outcome: 'failed', reason: error instanceof Error ? error.message : 'The message could not be sent.' };
+        }
+        return { outcome: 'asked', retryAfterMs: CONNECT_REQUEST_INTERVAL_MS };
+    }
 
     const routes = {
         'GET /api/state': () => stateResponse(),
@@ -514,7 +818,10 @@ export function createCanvasServer(deps) {
 
         'POST /api/preferences': async (body) => ({ preferences: await store.savePreferences(preferencesPatch(body)) }),
 
-        'POST /api/delivery/preview': async (body) => compose(await deliveryGroups(body), body),
+        'POST /api/delivery/preview': async (body) => {
+            const groups = await deliveryGroups(body);
+            return previewFor(groups, body, await routeFor(groups, otherSessionOf()));
+        },
 
         // Sends the items the user reviewed, only when they still match the preview (by digest).
         // Queue marks them for the agent's next checkpoint; they stay in the canvas, and an
@@ -522,20 +829,34 @@ export function createCanvasServer(deps) {
         // message the agent reads at its next step. Each task's items are held first so a
         // concurrent take or send cannot repeat them; any failure before the message is handed
         // to the chat releases every hold. Once it is handed over, the items are marked sent,
-        // with the chat's message ID, and never released.
+        // with the chat's message ID, and never released. Items of another session's tasks go
+        // to that session instead, through its inbox or this canvas's relay (see handOffGroups).
+        // A Send now that names a route the preview did not show is refused before anything changes.
         'POST /api/delivery': async (body) => {
             const mode = body?.mode === undefined ? 'send' : body.mode;
             if (mode !== 'send' && mode !== 'queue') {
                 throw new HttpError(400, 'invalid_input', "mode is send, which the chat delivers at the agent's next step, or queue, which waits in the canvas for the agent's next checkpoint.");
             }
+            const named = body?.route === undefined || body.route === null ? null : body.route;
+            if (named !== null && !ROUTE_KINDS.has(named)) {
+                throw new HttpError(400, 'invalid_input', 'route is own, inbox, or relay: the route the preview showed.');
+            }
             const digest = typeof body?.digest === 'string' ? body.digest : '';
             const groups = await deliveryGroups(body);
             const message = compose(groups, body);
+            const target = otherSessionOf();
             if (message.digest !== digest) {
-                throw Object.assign(new HttpError(409, 'preview_stale', 'Your items changed since you opened this. Check the list, then send again.'), { detail: { preview: message } });
+                throw staleSend(await previewFor(groups, body, await routeFor(groups, target)), 'Your items changed since you opened this. Check the list, then send again.');
             }
             if (mode === 'queue') {
                 return queueGroups(groups, body);
+            }
+            const route = await routeFor(groups, target);
+            if (named !== null && named !== route.kind) {
+                throw staleSend(await previewFor(groups, body, route), 'Where these items go has changed since you opened this. Check the route, then send again.');
+            }
+            if (target) {
+                return handOffGroups(groups, body, route);
             }
             const held = [];
             const releaseAll = async () => {
@@ -575,15 +896,7 @@ export function createCanvasServer(deps) {
             const unrecorded = [];
             let revision = null;
             for (const group of groups) {
-                let marked = null;
-                for (let attempt = 0; attempt < MARK_ATTEMPTS && !marked; attempt += 1) {
-                    try {
-                        marked = await store.update(group.id, (current) => markDelivered(current, group.ids, 'send', now(), { tasks: groups.length, messageId }), { by: 'user' });
-                    } catch (error) {
-                        log(`Sent, but the canvas could not record it for ${group.taskId} (attempt ${attempt + 1}): ${error instanceof Error ? error.message : 'error'}`, 'warning');
-                        await new Promise((resolve) => setTimeout(resolve, markRetryMs * (attempt + 1)));
-                    }
-                }
+                const marked = await recordSent(store, group.id, group.ids, { details: { tasks: groups.length, messageId }, now, retryMs: deps.markRetryMs, log, about: group.taskId });
                 if (marked) {
                     delivered.push(...marked.result);
                     if (group.id === getSessionId()) revision = marked.session.revision;
@@ -667,6 +980,46 @@ export function createCanvasServer(deps) {
                 throw error;
             }
             return { sent: true, retryAfterMs: CONNECT_REQUEST_INTERVAL_MS };
+        },
+
+        // Opens a Copilot session's RPI canvas in a new panel of this conversation. The session must be a local
+        // session whose workspace resolves; the host opens or focuses the panel, or the agent is asked to when the host cannot.
+        'POST /api/open-panel': async (body) => {
+            if (!isCopilotSessionId(body?.session)) throw new HttpError(400, 'invalid_input', 'session must be a Copilot session ID (a UUID).');
+            const session = body.session.toLowerCase();
+            try {
+                await resolveSession(session);
+            } catch (error) {
+                throw new HttpError(404, 'not_found', error instanceof Error ? error.message : `Copilot session ${session} cannot be read.`);
+            }
+            if (deps.openPanel) {
+                try {
+                    const opened = await deps.openPanel({ session });
+                    return { outcome: opened.outcome, instanceId: opened.instanceId };
+                } catch (error) {
+                    log(`Could not open a canvas panel: ${error instanceof Error ? error.message : 'error'}`, 'warning');
+                }
+            }
+            return askForPanel(session);
+        },
+
+        // The local Copilot sessions whose RPI work the picker lists, for the sessions this conversation started and the others.
+        'GET /api/copilot-sessions': async () => {
+            if (!deps.listCopilotSessions) throw new HttpError(404, 'not_found', 'This canvas cannot list Copilot sessions.');
+            return deps.listCopilotSessions();
+        },
+
+        // Connects the canvas to a session's current RPI task, as show_task does with a session; the page refreshes on its reload.
+        'POST /api/show-session': async (body) => {
+            if (!isCopilotSessionId(body?.session)) throw new HttpError(400, 'invalid_input', 'session must be a Copilot session ID (a UUID).');
+            if (!deps.showSession) throw new HttpError(404, 'not_found', 'This canvas cannot show a session.');
+            try {
+                const shown = await deps.showSession(body.session.toLowerCase());
+                return { sessionId: shown.sessionId };
+            } catch (error) {
+                if (error instanceof ModelError) throw new HttpError(MISSING_SESSION_CODES.has(error.code) ? 404 : 409, error.code, error.message);
+                throw error;
+            }
         },
 
         'POST /api/source': async (body) => {
@@ -859,9 +1212,9 @@ export function createCanvasServer(deps) {
             return { delivered: clients.size > 0 };
         },
 
-        /** Tells the page that the selected session changed. */
-        notifyReload() {
-            broadcast('reload', { at: now() });
+        /** Tells the page that the selected session changed. `detail.sessions` says the picker's sessions changed, so an open picker fetches them again. */
+        notifyReload(detail = {}) {
+            broadcast('reload', { at: now(), ...detail });
         },
 
         /**

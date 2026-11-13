@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
 import { after, before, describe, it } from 'node:test';
 
 import { buildScenario } from '../lib/scenario.mjs';
@@ -122,6 +123,42 @@ describe('legend', () => {
         assert.match(section('legend-previews'), /In a pinned preview, hover or focus an ID to preview it too\./);
         assert.match(section('legend-map'), /it goes away when you move off\. Click the part, press Enter on it, or press the pin to pin it, then go to a task\./);
         assert.doesNotMatch(root.textContent, /\block(s|ed)?\b/i);
+    });
+});
+
+describe('phase status', () => {
+    it('gives Provided its word, a sprite icon, a legend entry, and a tooltip that says where the work came from', async () => {
+        const { legendContent } = await import('../ui/legend.mjs');
+        const { badge, PHASE_STATUS } = await import('../ui/dom.mjs');
+        const { tipText } = await import('../ui/tooltips.mjs');
+        const provided = PHASE_STATUS.provided;
+        assert.deepEqual([provided.label, provided.icon, provided.tip], ['Provided', 'nodes', 'Provided by the user or another session']);
+        const sprite = await fs.readFile(new URL('../ui/index.html', import.meta.url), 'utf8');
+        assert.ok(sprite.includes(`<symbol id="i-${provided.icon}"`), 'the icon is one the sprite already has');
+        const chip = badge(provided, { title: provided.tip });
+        assert.equal(chip.textContent, 'Provided');
+        assert.equal(tipText(chip), 'Provided by the user or another session');
+        const root = document.createElement('div');
+        for (const node of legendContent()) root.appendChild(node);
+        const section = elements(root).find((node) => node.getAttribute('aria-labelledby') === 'legend-phase');
+        assert.ok(section, 'the legend explains phase statuses');
+        assert.ok(elements(section).some((node) => node.localName === 'dt' && node.textContent.trim() === 'Provided'), 'the legend names the word');
+        assert.ok(iconsOf(section).includes('#i-nodes'), 'and shows its icon');
+        assert.match(section.textContent, /Provided by the user or another session\. A provided phase's Source section says where its work came from\. While the agent works in the phase, it shows In progress; once the session stops there, it shows Provided\./);
+    });
+
+    it('names a provided phase\'s tab, its tooltip, and its description, and keeps the other tabs as they were', async () => {
+        const { phaseTabText, PHASE_STATUS } = await import('../ui/dom.mjs');
+        assert.deepEqual(phaseTabText({ phase: 'research', meta: PHASE_STATUS.provided, active: false, needs: 0, key: null }), {
+            name: 'Research, Provided',
+            tooltip: 'Research, Provided. Provided by the user or another session',
+            description: 'Provided by the user or another session',
+        });
+        assert.deepEqual(phaseTabText({ phase: 'plan', meta: PHASE_STATUS.active, active: true, needs: 2, key: '2' }), {
+            name: 'Plan, In progress, agent is here, 2 items need you',
+            tooltip: 'Plan, In progress, agent is here, 2 items need you (2)',
+            description: null,
+        });
     });
 });
 
@@ -457,5 +494,159 @@ describe('change-map part previews', () => {
         assert.match(text, /Still needed/);
         assert.match(text, /No task in P03 names README\.md, so every task in it shows\./);
         assert.equal(await preview(ctx, 'part:after:missing'), null);
+    });
+});
+
+describe('session tree', () => {
+    const PROJECT_PATH = '.copilot-tracking/rpi-sessions/2026-01-14/project-x/project-x-state.json';
+
+    /**
+     * The Follow-up view of a session whose tree holds a parent continued from another session folder. The
+     * context's actions record what they are asked to show.
+     */
+    async function followUp({ continues = null, calls = [] }) {
+        const { PATHS, rootSession } = await import('./helpers/rpi-fixture.mjs');
+        const { session: shown } = rootSession();
+        shown.followUps.tree = {
+            key: '2026-01-15/trail-maps',
+            date: '2026-01-15',
+            name: 'Offline trail maps',
+            tasks: [
+                { id: 'trail-maps', title: 'Offline trail maps', status: 'completed', depth: 0, statePath: PATHS.rootState, parent: null, shown: true, continues },
+                { id: 'trail-maps-fixes', title: 'Offline trail maps review fixes', status: 'completed', depth: 1, statePath: PATHS.childState, parent: PATHS.rootState, shown: false, continues: null },
+            ],
+        };
+        const ctx = makeContext(shown, 'followup');
+        ctx.act = { showTask: (ref) => calls.push(ref) };
+        const view = await import('../ui/view-followup.mjs');
+        const root = document.createElement('div');
+        for (const node of [view.renderView(ctx)].flat(Infinity).filter(Boolean)) root.appendChild(node);
+        return { root, ctx, view, calls };
+    }
+
+    const textOf = (node) => node.textContent.replace(/\s+/g, ' ');
+    const itemFor = (root, id) => elements(root).find((node) => node.localName === 'li' && node.dataset?.task === id);
+
+    it('counts every loop of the session in the outline, and lists each one', async () => {
+        const { root, ctx, view } = await followUp({});
+        assert.equal(view.outline(ctx).find((item) => item.id === 'session-loops').count, 2);
+        assert.ok(itemFor(root, 'trail-maps'));
+        assert.ok(itemFor(root, 'trail-maps-fixes'));
+    });
+
+    it('offers Show on each loop that is not the shown one, and marks the shown loop with no control', async () => {
+        const { PATHS } = await import('./helpers/rpi-fixture.mjs');
+        const { root, calls } = await followUp({});
+        const show = elements(root).find((node) => node.getAttribute('data-key') === 'followup-show-trail-maps-fixes');
+        assert.equal(show.localName, 'button', 'a native button takes Enter and Space');
+        assert.equal(show.getAttribute('aria-label'), 'Show Offline trail maps review fixes');
+        show.listeners.click[0]({});
+        assert.deepEqual(calls, [{ statePath: PATHS.childState }]);
+        const shownCard = itemFor(root, 'trail-maps').childNodes.find((node) => node.classList?.contains('tree-card'));
+        assert.match(textOf(shownCard), /Shown/);
+        assert.equal(elements(shownCard).filter((node) => node.localName === 'button').length, 0, 'the shown loop has no Show');
+    });
+
+    it('names a parent continued from another session folder above its card, with a labeled Show', async () => {
+        const parent = { id: 'project-x', title: 'Project X', statePath: PROJECT_PATH, session: '2026-01-14/project-x', status: 'running' };
+        const { root, calls } = await followUp({ continues: parent });
+        const line = elements(root).find((node) => node.classList.contains('tree-continues'));
+        assert.match(textOf(line), /^Continues Project X from another session/);
+        const buttons = elements(line).filter((node) => node.localName === 'button');
+        assert.equal(buttons.length, 1, 'the parent offers Show');
+        assert.equal(buttons[0].getAttribute('aria-label'), 'Show Project X, from another session');
+        assert.deepEqual(calls, []);
+        for (const listener of buttons[0].listeners?.click ?? []) listener();
+        assert.deepEqual(calls, [{ statePath: PROJECT_PATH }], 'Show switches to the parent by its state path');
+    });
+});
+
+describe('panel outcomes', () => {
+    it('names the session in each outcome, and names no session in a wait the agent was not asked about', async () => {
+        const { panelOutcome } = await import('../ui/components.mjs');
+        assert.deepEqual(panelOutcome({ outcome: 'opened' }, 'Map API'), { tone: 'accent', icon: 'panel', text: 'Opened a canvas for Map API in a new panel.' });
+        assert.equal(panelOutcome({ outcome: 'focused' }, 'Map API').text, 'Focused the canvas for Map API, which was already open in a panel.');
+        assert.equal(panelOutcome({ outcome: 'asked' }, 'Map API').text, 'Asked the agent to open a canvas for Map API. Look for the line in the chat.');
+        assert.equal(panelOutcome({ outcome: 'failed', reason: 'The message could not be sent.' }, 'Map API').text, 'Opening a canvas for Map API failed: The message could not be sent.');
+        const same = panelOutcome({ outcome: 'wait', retryAfterMs: 20000, sameSession: true }, 'Map API');
+        assert.equal(same.text, 'The agent was just asked to open a canvas for Map API. Wait 20 seconds, then try again.');
+        assert.equal(same.tone, 'attention');
+        const other = panelOutcome({ outcome: 'wait', retryAfterMs: 20000, sameSession: false }, 'Map tiles');
+        assert.equal(other.text, 'The agent was just asked to open a canvas for another session. Wait 20 seconds, then try again.');
+        assert.doesNotMatch(other.text, /Map tiles/);
+    });
+});
+
+describe('session menu', () => {
+    const CHILD_PATH = '.copilot-tracking/rpi-sessions/2026-01-15/trail-maps/map-api-state.json';
+    const textOf = (node) => node.textContent.replace(/\s+/g, ' ');
+    const byKey = (root, key) => elements(root).find((node) => node.getAttribute('data-key') === key);
+
+    /**
+     * The session menu's content, as the page builds it, for a session with three loops: the shown one, and
+     * two others. The menu shows the session's loops, then the other sessions, and no group of child sessions.
+     */
+    async function menu({ onShow } = {}) {
+        const { sessionMenuNodes } = await import('../ui/components.mjs');
+        const { PATHS, rootSession } = await import('./helpers/rpi-fixture.mjs');
+        const { session: shown } = rootSession();
+        shown.followUps.tree = {
+            key: '2026-01-15/trail-maps',
+            date: '2026-01-15',
+            name: 'Offline trail maps',
+            tasks: [
+                { id: 'trail-maps', title: 'Offline trail maps', status: 'completed', depth: 0, statePath: PATHS.rootState, parent: null, shown: true, continues: null },
+                { id: 'map-api', title: 'Map API', status: 'running', depth: 1, statePath: CHILD_PATH, parent: PATHS.rootState, shown: false, continues: null },
+                { id: 'trail-maps-fixes', title: 'Offline trail maps review fixes', status: 'stopped', depth: 1, statePath: PATHS.childState, parent: PATHS.rootState, shown: false, continues: null },
+            ],
+        };
+        const calls = [];
+        const ctx = makeContext(shown, 'followup');
+        ctx.act = { showTask: (ref) => calls.push({ show: ref }) };
+        const root = document.createElement('div');
+        for (const node of sessionMenuNodes(ctx, { following: true, onShow })) root.appendChild(node);
+        return { root, calls, ctx };
+    }
+
+    it('lists this session\'s loops above the other sessions, with no group of child sessions', async () => {
+        const { root } = await menu();
+        const at = (test) => root.childNodes.findIndex(test);
+        const loops = at((node) => node.localName === 'h3' && textOf(node) === 'Loops in this session');
+        const others = at((node) => node.localName === 'h3' && textOf(node) === 'Other sessions');
+        assert.ok(loops >= 0 && others > loops, `loops ${loops}, other sessions ${others}`);
+        assert.equal(elements(root).filter((node) => node.classList.contains('child-sessions')).length, 0);
+    });
+
+    it('offers Show on each loop that is not the shown one, with its own key and name', async () => {
+        const { root, calls } = await menu();
+        const show = byKey(root, 'menu-show-map-api');
+        assert.equal(show.localName, 'button', 'a native button takes Enter and Space');
+        assert.equal(show.getAttribute('type'), 'button');
+        assert.notEqual(show.getAttribute('tabindex'), '-1', 'the control stays in the tab order');
+        assert.equal(show.getAttribute('aria-label'), 'Show Map API');
+        show.listeners.click[0]({});
+        assert.deepEqual(calls, [{ show: { statePath: CHILD_PATH } }]);
+        const shownCard = elements(root).find((node) => node.localName === 'li' && node.dataset?.task === 'trail-maps').childNodes.find((node) => node.classList?.contains('tree-card'));
+        assert.equal(elements(shownCard).filter((node) => node.localName === 'button').length, 0, 'the shown loop has no Show');
+    });
+
+    it('hands a loop\'s Show to the menu, which closes itself and shows the loop', async () => {
+        const chosen = [];
+        const { root, calls } = await menu({ onShow: (task) => chosen.push(task.id) });
+        byKey(root, 'menu-show-map-api').listeners.click[0]({});
+        assert.deepEqual(chosen, ['map-api']);
+        assert.deepEqual(calls, [], 'the menu, not the view, switches the canvas');
+    });
+
+    it('keeps every loop control in the tab order, with a key of its own, so focus returns to it after a re-render', async () => {
+        const { root } = await menu();
+        const controls = elements(root).filter((node) => node.localName === 'button');
+        assert.equal(controls.length, 2);
+        for (const control of controls) {
+            assert.equal(control.getAttribute('type'), 'button');
+            assert.notEqual(control.getAttribute('tabindex'), '-1');
+        }
+        const keys = elements(root).map((node) => node.getAttribute('data-key')).filter(Boolean);
+        assert.equal(new Set(keys).size, keys.length, keys.join(', '));
     });
 });

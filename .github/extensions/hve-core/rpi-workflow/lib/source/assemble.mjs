@@ -22,6 +22,9 @@ const PHASE_TITLES = { research: 'Research', plan: 'Plan', implement: 'Changes',
 const pad = (n) => String(n).padStart(3, '0');
 const fingerprint = (value) => createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value)).digest('hex').slice(0, 24);
 const NONE_RE = /^(?:none|none yet|not applicable|n\/a)\.?$/i;
+const UUID_IN_TEXT = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i;
+/** Decisions that record how a phase's work was done. They describe the work's current documents only. */
+const DISPOSITION_NAMES = Object.freeze(['Research disposition', 'Plan disposition']);
 
 /** Canvas phase key for a state's phase name, or null. */
 export const phaseKey = (value) => PHASE_NAMES[labelKey(value)] ?? null;
@@ -284,6 +287,41 @@ function sessionTree(tree, state, statePath, title) {
 }
 
 /**
+ * A state for a document its work did not produce, such as an earlier document of the session.
+ * The work's dispositions describe its current documents, so this state keeps none.
+ *
+ * @param {ReturnType<typeof import('./parse.mjs').parseState>} state
+ */
+export function withoutDispositions(state) {
+    const names = new Set(DISPOSITION_NAMES.map(labelKey));
+    return { ...state, decisions: state.decisions.filter((item) => !names.has(labelKey(item.decision))) };
+}
+
+/**
+ * The Source section of a phase the user or another session provided: where its work came
+ * from, then the decision's evidence as recorded. The evidence is state text, so the canvas
+ * renders it with the other text of a section, never as HTML.
+ *
+ * @param {string} subject How the sentence starts, such as `Research`.
+ * @param {{ evidence: string } | null} decision The phase's disposition decision.
+ * @param {boolean} [withPlan] Research that came with a provided plan, whose evidence starts with `Came with the provided plan`.
+ */
+function providedSource(subject, decision, withPlan = false) {
+    const evidence = (decision?.evidence ?? '').trim();
+    const session = UUID_IN_TEXT.exec(evidence)?.[0];
+    const sessionFrom = session ? `session ${session.slice(0, 8)}` : null;
+    let sentence;
+    if (withPlan && /^came with the provided plan/i.test(evidence)) {
+        const from = sessionFrom ? `from ${sessionFrom}` : /\buser\b/i.test(evidence) ? 'the user supplied' : '';
+        sentence = `${subject} came with the plan${from ? ` ${from}` : ''}.`;
+    } else {
+        const from = sessionFrom ?? (/\buser\b/i.test(evidence) ? 'the user' : 'the user or another session');
+        sentence = `${subject} came from ${from}.`;
+    }
+    return [sentence, inlineMarkdown(evidence)].filter(Boolean).join('\n\n');
+}
+
+/**
  * @typedef {object} AssembleInput
  * @property {string} id Session document ID.
  * @property {ReturnType<typeof import('./parse.mjs').parseState>} state
@@ -366,7 +404,9 @@ export function assembleSession(input) {
         addSection(`finding-f${findingOffset + index + 1}`, 'research', finding.title, finding.body, 'research');
         return { id: `F${findingOffset + index + 1}`, title: finding.title, state: state ?? 'unresolved', confidence: confidenceOf(finding.confidence), questions: finding.questions, evidence: finding.evidence };
     });
-    const researchReused = !research && (/reused|satisfied/i.test(stateDecision(state, 'Research disposition')?.status ?? '') || mismatched.some((item) => item.key === 'research'));
+    const researchProvided = lower(stateDecision(state, 'Research disposition')?.status) === 'provided';
+    const planProvided = lower(stateDecision(state, 'Plan disposition')?.status) === 'provided';
+    const researchReused = !research && !researchProvided && (/reused|satisfied/i.test(stateDecision(state, 'Research disposition')?.status ?? '') || mismatched.some((item) => item.key === 'research'));
     if (research) {
         addSection('research-summary', 'research', 'Summary', research.summary, 'research');
         addSection('research-unknowns', 'research', 'What you may not know', research.unknowns, 'research');
@@ -375,7 +415,10 @@ export function assembleSession(input) {
         const reused = mismatched.find((item) => item.key === 'research')?.path ?? state.artifacts.research;
         const note = stateDecision(state, 'Research disposition')?.evidence;
         addSection('research-summary', 'research', 'Summary', [`This task reused existing evidence instead of running new research${reused ? `: \`${reused}\`` : ''}.`, note ? `\n${note}` : ''].join(''), 'research');
+    } else if (researchProvided) {
+        addSection('research-summary', 'research', 'Summary', 'This task has no research document of its own; its research came with the provided plan. The Source section says where it came from.', 'research');
     }
+    if (researchProvided) addSection('research-source', 'research', 'Source', providedSource('Research', stateDecision(state, 'Research disposition'), true), 'state');
 
     // Plan
     const active = phaseKey(state.activePhase) ?? (review ? 'review' : changes ? 'implement' : plan ? 'plan' : 'research');
@@ -429,6 +472,7 @@ export function assembleSession(input) {
         addSection('plan-summary', 'plan', 'Summary', plan.summary, 'plan');
         addSection('plan-unknowns', 'plan', 'What you may not know', plan.unknowns, 'plan');
     }
+    if (planProvided) addSection('plan-source', 'plan', 'Source', providedSource('The plan', stateDecision(state, 'Plan disposition')), 'state');
 
     // Implementation
     const changeList = (changes?.entries ?? []).map((entry, index) => ({
@@ -544,12 +588,16 @@ export function assembleSession(input) {
             default: return null;
         }
     };
+    const providedPhase = (phase) => (phase === 'research' && researchProvided) || (phase === 'plan' && planProvided);
+    // The agent's phase shows In progress while the session runs in it, and Provided once the session stops there.
     const phaseStatus = (phase, index) => {
         if (index === activeIndex) {
             if (lower(state.status) === 'blocked') return 'blocked';
+            if (providedPhase(phase) && !running) return 'provided';
             if (completed && (phase !== 'followup' || !running)) return 'done';
             return 'active';
         }
+        if (providedPhase(phase)) return 'provided';
         if (phase === 'research' && researchReused) return 'skipped';
         if (phase === 'review' && reviewSkipped) return 'skipped';
         return documentStatus(phase, index) ?? (index < activeIndex ? 'done' : 'upcoming');

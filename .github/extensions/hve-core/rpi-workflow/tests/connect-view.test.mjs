@@ -80,6 +80,16 @@ describe('Not connected screen', () => {
         assert.deepEqual(calls, [['copy-details', details]]);
     });
 
+    it('explains a session the canvas could not use, and shows its path only on screen', () => {
+        const calls = [];
+        const root = render({ reason: 'session-no-tracking', detail: '/work/repo/.copilot-tracking' }, calls);
+        assert.match(textOf(root), /has no \.copilot-tracking folder/);
+        assert.equal(root.querySelector('.connect-path').textContent, '/work/repo/.copilot-tracking');
+        assert.doesNotMatch(root.querySelector('.connect-details').textContent, /copilot-tracking/, 'copied details carry no path');
+        assert.match(textOf(render({ reason: 'session-not-found', detail: '5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b' })), /is not in this machine's session data/);
+        assert.match(textOf(render({ reason: 'session-no-workspace', detail: null })), /records no workspace folder/);
+    });
+
     it('links to a prefilled bug report and the contributing guide without paths', () => {
         const links = render({ reason: 'missing-session', detail: MISSING }).querySelectorAll('a');
         assert.deepEqual(links.map((a) => a.textContent.replace(' (opens in a new tab)', '')), ['report a bug', 'contribute a fix']);

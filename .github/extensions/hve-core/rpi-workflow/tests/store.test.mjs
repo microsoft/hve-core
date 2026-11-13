@@ -214,3 +214,18 @@ describe('preferences', () => {
         store.close();
     });
 });
+
+describe('instance memory', () => {
+    it('keeps the bound session with the state path an instance shows, and drops it when the instance shows another', async () => {
+        const store = await fresh('instance-session');
+        const state = '.copilot-tracking/rpi-sessions/2026-01-15/trail-maps/trail-maps-state.json';
+        const session = '5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b';
+        await store.rememberInstance('panel', { kind: 'rpi', state, paused: true, session }, { hostSessionId: 'chat-1' });
+        const loaded = await store.loadInstance('panel', 'chat-1');
+        assert.deepEqual([loaded.kind, loaded.state, loaded.paused, loaded.session], ['rpi', state, true, session]);
+        await store.rememberInstance('panel', { kind: 'rpi', state, paused: false }, { hostSessionId: 'chat-1' });
+        assert.equal((await store.loadInstance('panel', 'chat-1')).session, undefined, 'a task of this session keeps no binding');
+        store.close();
+    });
+});
+

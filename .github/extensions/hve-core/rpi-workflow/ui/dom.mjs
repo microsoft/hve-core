@@ -155,7 +155,7 @@ export function decisionAlias(session, id, phase) {
     return local ? local.id : id;
 }
 
-const vocab = (entries) => Object.freeze(Object.fromEntries(entries.map(([key, iconName, label, tone]) => [key, Object.freeze({ icon: iconName, label, tone })])));
+const vocab = (entries) => Object.freeze(Object.fromEntries(entries.map(([key, iconName, label, tone, tip]) => [key, Object.freeze({ icon: iconName, label, tone, ...(tip ? { tip } : {}) })])));
 
 export const PHASE_STATUS = vocab([
     ['done', 'check-circle', 'Done', 'success'],
@@ -164,6 +164,7 @@ export const PHASE_STATUS = vocab([
     ['paused', 'pause', 'Paused for you', 'attention'],
     ['blocked', 'alert', 'Blocked', 'danger'],
     ['skipped', 'dash-circle', 'Skipped', 'muted'],
+    ['provided', 'nodes', 'Provided', 'teal', 'Provided by the user or another session'],
 ]);
 
 export const TASK_STATUS = vocab([
@@ -285,6 +286,19 @@ export const PHASE_META = Object.freeze({
     review: { icon: 'eye', label: 'Review', key: '4' },
     followup: { icon: 'loop', label: 'Follow-up', key: '5' },
 });
+
+/**
+ * A phase tab's accessible name, tooltip, and description. The name states the phase, its status,
+ * the agent marker, and the items that need the person. A status with a tip adds the tip to the
+ * tooltip; the description is the tip alone, so assistive technology does not repeat the name.
+ *
+ * @param {{ phase: string, meta: { label: string, tip?: string }, active: boolean, needs: number, key: string | null }} options `key` is the shortcut the tooltip names, or null.
+ */
+export function phaseTabText({ phase, meta, active, needs, key }) {
+    const name = [PHASE_META[phase].label, meta.label, active ? 'agent is here' : null, needs ? `${plural(needs, 'item')} ${needs === 1 ? 'needs' : 'need'} you` : null].filter(Boolean).join(', ');
+    const named = key ? `${name} (${key})` : name;
+    return { name, tooltip: meta.tip ? `${named}. ${meta.tip}` : named, description: meta.tip ?? null };
+}
 
 /**
  * The vocabulary entry for a key, a neutral entry that names an unrecognized key, or null

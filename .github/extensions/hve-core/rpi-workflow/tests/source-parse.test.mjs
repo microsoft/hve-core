@@ -104,6 +104,17 @@ describe('artifact kinds and state', () => {
         assert.deepEqual(state.warnings, ['parent_task names no task_id or state_path.', 'child_tasks entry 2 names no task_id or state_path.', 'child_tasks entry 4 names no task_id or state_path.']);
         assert.deepEqual(parseState({ task_id: 'x', child_tasks: 'not a list' }).warnings, ['child_tasks is not a list.']);
     });
+
+    it('ignores a session_id on a link, which reads as its task ID, slug, and state path only', () => {
+        const state = parseState({
+            task_id: 'linked',
+            parent_task: { task_id: 'root', state_path: '.copilot-tracking/rpi-sessions/2026-01-15/s/root-state.json', session_id: '3f2a6c1e-8d4b-4f7a-9c2e-1a2b3c4d5e6f' },
+            child_tasks: [{ task_id: 'kid', state_path: '.copilot-tracking/rpi-sessions/2026-01-15/k/kid-state.json', session_id: 42 }],
+        });
+        assert.deepEqual(state.parent, { taskId: 'root', taskSlug: 'root', statePath: '.copilot-tracking/rpi-sessions/2026-01-15/s/root-state.json' });
+        assert.deepEqual(state.children, [{ taskId: 'kid', taskSlug: 'kid', statePath: '.copilot-tracking/rpi-sessions/2026-01-15/k/kid-state.json' }]);
+        assert.deepEqual(state.warnings, []);
+    });
 });
 
 describe('research', () => {

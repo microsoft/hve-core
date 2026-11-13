@@ -1,9 +1,9 @@
 ---
 title: RPI Workflow Canvas
-description: Follow an RPI session phase by phase in a canvas beside the chat, answer the agent's decisions, and send it your input
+description: Follow an RPI session phase by phase in a canvas beside the chat, answer the agent's decisions, send it your input, and show other local sessions' RPI work from the session picker
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-13
 ms.topic: how-to
 keywords:
   - rpi workflow canvas
@@ -14,7 +14,9 @@ keywords:
   - feedback
   - review and send
   - github copilot
-estimated_reading_time: 11
+  - session picker
+  - copilot project
+estimated_reading_time: 15
 ---
 
 The RPI Workflow canvas shows the session the RPI Agent is working on, one phase at a time, in a panel beside the chat. You read the research and the plan as the agent writes them, answer the decisions it asks you about, watch tasks move during implementation, and work through review findings and follow-ups. Anything you add waits in the canvas until you send it, and the agent reads each item back so you can see how it understood you.
@@ -44,7 +46,7 @@ Run `/rpi` (or let the model discover the `rpi` skill) or select **RPI Agent** a
 
 You can also ask the agent to open the RPI Workflow canvas, or open it from the host's canvas list. In VS Code, that is **Add Context (+) > Canvas...** in the chat input or **New Chat (+) > Canvas** in the Chat view; in the Agents window, it is **Add Tab (+) > Canvas**.
 
-A canvas opened from a list doesn't know your session yet, so it shows Not connected:
+A canvas opened from a list doesn't know your session yet, so it shows Not connected, with your local sessions that have RPI work listed above the request:
 
 ![Screenshot of the Not connected page with Ask the agent, Copy request, and Show the sample session.](../docusaurus/static/img/rpi-workflow-canvas/not-connected.webp)
 
@@ -99,7 +101,7 @@ Answers, overrides, comments, and suggestions wait under **Your feedback** until
 
 **Send now** gives the items to the agent at its next step, even in the middle of a task, as one chat message. The chat shows a line such as "RPI canvas XWK0 sent 2 items: 1 answer and 1 comment." **Queue** keeps them in the canvas until the agent's next checkpoint: when it changes phase, finishes a task, asks you something, or ends its turn. Until then, you can take a queued item back.
 
-Before you send, you can edit or discard any item, add a message for the agent, and open the exact text Send now will deliver.
+Before you send, you can edit or discard any item, add a message for the agent, and open the exact text Send now will deliver. Items for another session's task take a different route. See [Follow Other Sessions](#follow-other-sessions).
 
 When the RPI Agent asks you a question in the chat, it also offers **Answered in the canvas**. Choose it after answering in the canvas, and the agent collects your answers before it goes on.
 
@@ -170,6 +172,52 @@ Follow-up ranks the work that remains. Required items keep the session open, and
 
 When one session takes on a new request, the new work gets its own research, plan, changes record, and review. A **Document** switcher in the context bar then lists each phase's earlier documents by title and time. An earlier document opens read-only, with a button back to the current one.
 
+## Follow Other Sessions
+
+Any chat can show another local session's RPI work and send input to that session's agent. A GitHub Copilot app Project is the usual case: the Project coordinates its sessions, each session runs RPI on its own when its work needs it, and you follow them all from the Project without switching chats.
+
+### Find a Session
+
+When the canvas has no session to show, it opens on the Not connected page, with the session picker above the request. The same picker appears in the session menu, under **Copilot sessions**, so you can switch sessions from a canvas that already shows one. It lists the local sessions on your machine that have RPI work, one per checkout.
+
+Sessions this chat started come first, under **Sessions this chat started**. A Project's agent passes the sessions it starts when it opens the canvas, or later. Other sessions with RPI work follow, under **Other sessions with RPI work**.
+
+Each row names its session and shows its repository, its branch, and its current task with the task's phase and status. **Canvas running** or **No canvas running** shows whether the canvas extension runs for that session, panel open or not; when it runs, Send now reaches that session's agent directly. **Shown** marks the session this canvas shows. A session this chat started that has no RPI work says why, for example **No RPI work yet**.
+
+### Show or Open a Session
+
+Choose **Show here** to bind this canvas to that session. The canvas shows the session's current task, which is the running task or else the most recently changed one, and it keeps following the agent.
+
+Choose **Open in new panel** to open that session's canvas in a new panel of this conversation. Each session has one panel, so choosing the button again focuses it, and this canvas stays as it is. When the host cannot open the panel, the canvas asks this chat's agent to open it, and the picker says so.
+
+### Where Your Input Goes
+
+Input for another session's task waits in **Review and send** like any other item. Before you send, the review names the route that Send now takes, and items for a task in another session go to that session:
+
+| Route the review names            | Where the items go                                                                                                                    |
+|-----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| The session's canvas is running   | Straight to that session's agent through its canvas. If that canvas does not take them soon, this chat's agent forwards them instead. |
+| No canvas running for the session | This chat's agent forwards them to the session.                                                                                       |
+
+If the route changes while the review is open, the review says so and asks you to check it again. Queue sends nothing; the items wait in the session's task until its agent collects them.
+
+After you send, each item shows whether it went direct or was relayed, and through which chat. Until this chat's agent takes relayed items, a notice at the bottom of the document begins with "Relayed to" and names the session. You can dismiss that notice.
+
+An item whose delivery may already have reached its chat shows **May have been sent**, and a notice names the chat to check. The canvas never sends that item again. Check that chat, then discard the item.
+
+### Provided Research and Plans
+
+The phase shows **Provided** when you or another session supplied its research or plan. Research that came with a provided plan also shows **Provided**, although it has no document of its own.
+While the agent works in that phase, it shows **In progress**; once the session stops there, it shows **Provided**. Its **Source** section names the session the work came from, or the user; for research that came with a plan, it says the research came with the plan. Research that the agent reused, or found already satisfied and skipped, still shows **Skipped**.
+
+### Limits
+
+* Only local sessions appear. A cloud session has no local workspace, so the picker never lists it, and the canvas cannot read its tasks.
+* Sessions that share a checkout share its RPI tasks, so the picker lists that checkout once.
+* Relayed items need a chat whose agent can message other sessions, such as a GitHub Copilot app Project.
+
+The [canvas README](https://github.com/microsoft/hve-core/blob/main/.github/extensions/hve-core/rpi-workflow/README.md) gives the exact limits, timers, and messages behind these features, with their storage and security rules.
+
 ## Themes, Accessibility, and Keyboard
 
 The **Appearance** menu in the header offers **System**, **Light**, and **Dark**, plus **More contrast**. System follows your editor or operating system:
@@ -209,7 +257,7 @@ Single-key shortcuts pause while you type, and the shortcut list has a switch th
 | No canvas menu, or the RPI Workflow canvas is not listed | Check `chat.canvases.enabled`, start a new session with the Copilot harness, and send a message. Install the hve-core plugin; the VS Code extension does not carry canvases. |
 | The RPI Agent did not open the canvas                    | Ask the agent to open the RPI Workflow canvas. If it never opens the canvas by itself, update the hve-core plugin, because an older RPI Agent may not.                       |
 | The host reports multiple matching canvas providers      | Ask the agent to retry lookup or opening with a host-reported `extensionId`, such as `project:rpi-workflow` when offered, and reuse that provider when reopening.            |
-| The canvas says Not connected                            | Choose **Ask the agent** or **Copy request**.                                                                                                                                |
+| The canvas says Not connected                            | Pick a session in the session picker, or choose **Ask the agent** or **Copy request**.                                                                                       |
 | The canvas stopped moving with the agent                 | Following stopped when you chose another phase or started typing. Press **Follow agent** or `f`.                                                                             |
 | Review and send says it cannot send                      | The host does not accept messages from extensions. Use **Queue**, and the agent collects your items at its next checkpoint.                                                  |
 | An item stays at Sent                                    | Some hosts do not report pickups. The read-back still arrives.                                                                                                               |

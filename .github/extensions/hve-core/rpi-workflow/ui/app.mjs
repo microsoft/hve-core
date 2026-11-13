@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, button, clear, decisionAlias, fullTime, h, icon, idTag, PHASE_META, PHASE_STATUS, plural, relTime, sr } from './dom.mjs';
-import { confirmPress, disclosure, filePreview, hasMarginHome, presentationControl, revealRow, reviewSheet, sendItems, sessionTree, steerPanel, waitingCount } from './components.mjs';
+import { badge, button, clear, decisionAlias, fullTime, h, icon, idTag, PHASE_META, PHASE_STATUS, phaseTabText, plural, relTime, sr } from './dom.mjs';
+import { confirmPress, copilotSessionsPicker, deliveryNotices, deliveryRequest, disclosure, failedPanel, filePreview, handAnnouncement, hasMarginHome, panelOutcome, presentationControl, revealRow, reviewSheet, ROUTE_CHANGED_NOTE, routeBlock, sendItems, sendShape, sessionLabel, sessionMenuNodes, staleAnnouncement, steerPanel, uncertainAnnouncement, waitingCount } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
 import { notConnectedView } from './connect-view.mjs';
@@ -26,9 +26,9 @@ const PHASES = ['research', 'plan', 'implement', 'review', 'followup'];
 const VIEWS = { research: researchView, plan: planView, implement: implementView, review: reviewView, followup: followupView };
 const $ = (id) => document.getElementById(id);
 
-/** The Review and send dialog's state: the person's message, the previewed text, and progress. */
+/** The Review and send dialog's state: the person's message, the previewed text, progress, and the note when the route changed. */
 function freshSend() {
-    return { note: '', preview: null, previewNote: null, sending: false, busy: null, error: null };
+    return { note: '', preview: null, previewNote: null, sending: false, busy: null, error: null, routeNote: null };
 }
 
 const state = {
@@ -47,6 +47,8 @@ const state = {
     notes: [],
     /** Sessions in the workspace, loaded when the session menu opens. */
     sessions: { loading: false, error: null, list: null, skipped: [] },
+    /** The local Copilot sessions the picker lists, fetched when a picker appears and on Refresh. `note` is the last Open in new panel outcome and `showError` the last Show here failure. */
+    copilot: { loading: false, error: null, list: null, note: null, showError: null },
     ui: {
         presentation: 'focused',
         phase: null,
@@ -55,6 +57,8 @@ const state = {
         expanded: new Set(),
         openEvidence: new Set(),
         send: freshSend(),
+        /** Delivery notices the person dismissed, by their signature; a notice returns when its items change. */
+        dismissedNotices: new Set(),
         composer: { text: '', anchor: null, part: null, quote: null, title: null },
         decisionDrafts: new Map(),
         corrections: new Map(),
@@ -139,6 +143,18 @@ function noteMoved(moved) {
     announce(`Moved to ${moved.title}, the loop the agent works in.`);
 }
 
+/** Says what an open-panel request did: in the picker it came from while a picker shows, otherwise as a status note. */
+function reportPanel(note) {
+    announce(note.text);
+    if (pickerShown()) {
+        state.copilot = { ...state.copilot, note };
+        renderCopilotPicker();
+        return;
+    }
+    state.notes = [...state.notes.filter((item) => item.kind !== 'panel'), { id: `note-${++noteSeq}`, kind: 'panel', tone: note.tone, icon: note.icon, text: note.text }].slice(-MAX_NOTES);
+    renderStatus();
+}
+
 function dismissNote(id) {
     const area = $('statusArea');
     const hadFocus = area.contains(document.activeElement);
@@ -154,11 +170,18 @@ function dismissNote(id) {
 
 function renderStatus() {
     const area = $('statusArea');
-    area.hidden = state.notes.length === 0;
-    area.replaceChildren(...state.notes.map((note) => h('div', { class: ['status-note', 'notice', `tone-${note.tone}`], dataset: { note: note.id } },
+    const notices = state.data && !state.notConnected ? deliveryNotices(context()) : [];
+    area.hidden = state.notes.length === 0 && notices.length === 0;
+    area.replaceChildren(...notices, ...state.notes.map((note) => h('div', { class: ['status-note', 'notice', `tone-${note.tone}`], dataset: { note: note.id } },
         icon(note.icon, { className: 'status-note-icon' }),
         h('p', { class: 'status-note-text', text: note.text }),
         button('Dismiss', { iconName: 'x', hideLabel: true, title: 'Dismiss this note', attrs: { 'data-key': `dismiss-${note.id}` }, onClick: () => dismissNote(note.id) }))));
+}
+
+/** Moves focus to the first control in the status area, or to the document when none is left. */
+function focusStatusArea() {
+    const first = $('statusArea').querySelector('button');
+    if (!first || !focusQuietly(first)) focusQuietly($('document'));
 }
 
 // Lookup and navigation
@@ -475,6 +498,8 @@ function announceChanges(previous, next, moved = false) {
     const read = (next.view.readBacks ?? []).filter((id) => !readBefore.has(id));
     for (const id of read) state.ui.revealed.add(id);
     if (read.length) messages.push(`The agent read back ${listIds(read)}. ${read.length === 1 ? 'It is' : 'They are'} in Your feedback, where you can correct ${read.length === 1 ? 'it' : 'them'}.`);
+    const uncertain = uncertainAnnouncement(previous, next);
+    if (uncertain) messages.push(uncertain);
     if (previous.session.session.activePhase !== next.session.session.activePhase) {
         messages.push(`The agent moved to ${PHASE_META[next.session.session.activePhase].label}${moved ? '; the canvas moved with it' : ''}.`);
     }
@@ -702,6 +727,7 @@ function connect() {
     stream.addEventListener('reload', (event) => {
         const data = event.data ? JSON.parse(event.data) : {};
         if (data.moved) noteMoved(data.moved);
+        if (data.sessions && pickerShown()) loadCopilotSessions();
         refresh();
     });
     stream.addEventListener('preferences', (event) => applyPreferences(JSON.parse(event.data)));
@@ -831,6 +857,35 @@ const act = {
         } catch (error) {
             reportFailure(`Could not show that session: ${error.message}`);
         }
+    },
+    /** Opens a session's canvas in a new panel, or asks the agent to; says what happened and leaves focus where it is. */
+    async openPanel(ref) {
+        try {
+            reportPanel(panelOutcome(await api('/api/open-panel', { session: ref.session }), ref.title));
+        } catch (error) {
+            reportPanel(failedPanel(ref.title, error.message));
+        }
+    },
+    /** Connects this canvas to a session's current RPI task, then shows it and says which session it shows. */
+    async showSession(entry) {
+        const name = sessionLabel(entry);
+        state.copilot = { ...state.copilot, showError: null };
+        try {
+            await api('/api/show-session', { session: entry.sessionId });
+            toggleSessionMenu(false);
+            await refresh();
+            announce(`Showing ${name}.`);
+            focusQuietly($('taskTitle'));
+        } catch (error) {
+            state.copilot = { ...state.copilot, showError: `Could not show that session: ${error.message}` };
+            renderCopilotPicker();
+        }
+    },
+    /** Fetches the picker's sessions again, unless a fetch is already running. */
+    refreshSessions() {
+        if (state.copilot.loading) return;
+        loadCopilotSessions();
+        renderCopilotPicker();
     },
     /** Follows the agent again: its running loop and the phase it works in. */
     resumeFollowing: () => startFollowing(),
@@ -1044,11 +1099,19 @@ const act = {
             reportFailure(`Request not added: ${error.message}`);
         }
     },
+    /** Hides a delivery notice until its items change, keeping focus in the status area when it had it. */
+    dismissDeliveryNotice(signature) {
+        const hadFocus = $('statusArea').contains(document.activeElement);
+        state.ui.dismissedNotices.add(signature);
+        renderStatus();
+        if (hadFocus) focusStatusArea();
+    },
     /** Opens Review and send from the header and prepares the exact text. */
     openSend() {
         const sheet = $('sendSheet');
         if (!state.data || sheet.open) return;
         state.ui.send.error = null;
+        state.ui.send.routeNote = null;
         sendOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         renderSendSheet();
         sheet.showModal();
@@ -1062,7 +1125,8 @@ const act = {
     },
     /**
      * Sends the listed items now as one chat message, or queues them for the agent's next
-     * checkpoint, after checking the list still matches the text prepared for it.
+     * checkpoint, after checking the list still matches the text prepared for it. Send now also
+     * names the route the preview showed, so a route that changed since is checked again.
      *
      * @param {'send' | 'queue'} [mode]
      */
@@ -1082,21 +1146,24 @@ const act = {
         send.error = null;
         renderSendSheet();
         try {
-            const result = await api('/api/delivery', { items, digest: send.preview.digest, mode, ...(send.note.trim() ? { note: send.note } : {}) });
+            const result = await api('/api/delivery', deliveryRequest(send.preview, items, mode, send.note));
             const handle = state.data.canvas?.handle;
             Object.assign(state.ui.send, freshSend());
             $('sendSheet').close();
             announce(mode === 'queue'
                 ? `Queued ${plural(result.queued.length, 'item')} for the agent. It collects them at its next checkpoint; until then, you can take them back from Your feedback.`
-                : result.warning ?? `Sent ${plural(result.delivered.length, 'item')} to the agent. Look for “RPI canvas${handle ? ` ${handle}` : ''} sent” in the chat.`);
+                : result.handedOff ? handAnnouncement(result) : (result.warning ?? `Sent ${plural(result.delivered.length, 'item')} to the agent. Look for “RPI canvas${handle ? ` ${handle}` : ''} sent” in the chat.`));
             await refresh();
         } catch (error) {
             send.sending = false;
             send.busy = null;
             if (error.code === 'preview_stale' && error.detail?.preview) {
+                const previous = send.preview;
                 send.preview = error.detail.preview;
                 send.previewNote = send.note;
-                announce(`Your items changed since this opened. Check the list, then ${mode === 'queue' ? 'queue' : 'send'} again.`);
+                const routeMoved = mode === 'send' && Boolean(previous?.route?.kind) && previous.route.kind !== send.preview.route?.kind;
+                if (routeMoved) send.routeNote = ROUTE_CHANGED_NOTE;
+                announce(staleAnnouncement({ listChanged: previewKey(previous) !== previewKey(send.preview), routeMoved, route: send.preview.route, verb: mode === 'queue' ? 'queue' : 'send' }));
             } else {
                 send.error = `${mode === 'queue' ? 'Not queued' : 'Not sent'}: ${error.message}`;
                 announce(send.error);
@@ -1328,7 +1395,9 @@ function renderHeader() {
     $('taskTitle').textContent = task.title;
     document.title = `RPI Workflow: ${task.title}`;
     const where = [task.repository, task.branch].filter(Boolean).join(' · ');
-    const parent = rpi && task.parent ? session.followUps.tree.tasks.find((item) => item.id === task.parent) ?? { id: task.parent, title: task.parent } : null;
+    const shownTask = rpi ? session.followUps.tree.tasks.find((item) => item.shown) : null;
+    // A parent in another session folder of this workspace reaches the header through the shown task's `continues`.
+    const parent = rpi && task.parent ? session.followUps.tree.tasks.find((item) => item.id === task.parent) ?? (shownTask?.continues?.id === task.parent ? shownTask.continues : null) ?? { id: task.parent, title: task.parent } : null;
     const handle = state.data.canvas?.handle ?? null;
     const named = handle ? ` Messages this canvas sends to the agent start with “RPI canvas ${handle}”.` : '';
     // The badge names the canvas the way its chat messages do; it has its own slot, so it is never clipped.
@@ -1339,7 +1408,8 @@ function renderHeader() {
     clear($('taskMeta')).append(...[
         rpi ? h('code', { class: 'task-id', title: `Task ID: ${task.id}`, text: task.id }) : null,
         where ? h('span', { class: 'task-where', title: where, text: where }) : null,
-        parent ? h('span', { class: 'task-parent' }, 'Child of ', h('button', { type: 'button', class: 'link-btn', title: `Show the parent task: ${parent.title}`, dataset: { key: 'header-parent' }, 'aria-label': `Child of ${parent.title}: show the parent task`, onclick: () => act.showTask(parent.statePath ? { statePath: parent.statePath } : parent.id) }, parent.title)) : null,
+        // A parent the canvas cannot read is named but not offered.
+        parent ? h('span', { class: 'task-parent' }, 'Child of ', parent.statePath ? h('button', { type: 'button', class: 'link-btn', title: `Show the parent task: ${parent.title}`, dataset: { key: 'header-parent' }, 'aria-label': `Child of ${parent.title}: show the parent task`, onclick: () => act.showTask({ statePath: parent.statePath }) }, parent.title) : parent.title) : null,
         session.scenario?.sample ? h('span', { class: 'badge tone-muted sample-badge', title: 'Mock data for the canvas preview' }, icon('info'), 'Sample session') : null,
     ].filter(Boolean));
     renderSessionControls();
@@ -1364,18 +1434,72 @@ function renderSessionControls() {
     btn.title = `Session “${name}”: ${plural(loops, 'loop')}${tree.key ? ` in ${tree.key}` : ''}`;
 }
 
-/** Opens or closes the session menu: this session's loops, then the workspace's other sessions. */
+/** Opens or closes the session menu: this session's loops, the picker of Copilot sessions, then the workspace's other sessions. */
 function toggleSessionMenu(open) {
     const menu = $('sessionMenu');
     const show = open ?? menu.hidden;
     if (show && !state.data) return;
     menu.hidden = !show;
     $('sessionBtn').setAttribute('aria-expanded', String(show));
+    state.copilot = { ...state.copilot, note: null };
     if (!show) return;
+    loadCopilotSessions();
     renderSessionMenu();
     focusQuietly($('sessionMenuTitle'));
     if (state.data.session.source?.kind === 'rpi') loadSessions();
 }
+
+/** The picker's latest request; an answer to an earlier one is dropped. */
+let copilotRequest = 0;
+
+/** Whether a picker is on screen: the Not connected screen, or the session menu of a connected canvas. */
+const pickerShown = () => Boolean(state.notConnected) || (Boolean(state.data) && !$('sessionMenu').hidden);
+
+/**
+ * Starts fetching the sessions the picker lists. The loading state is set at once, so the caller's next render
+ * shows it, and the answer re-renders the picker. The page does not poll.
+ */
+function loadCopilotSessions() {
+    const request = ++copilotRequest;
+    state.copilot = { ...state.copilot, loading: true, error: null };
+    return api('/api/copilot-sessions').then(
+        (result) => ({ list: { sessions: result.sessions ?? [], skipped: result.skipped ?? 0 }, error: null }),
+        (error) => ({ list: null, error: error.message }),
+    ).then((outcome) => {
+        if (request !== copilotRequest) return;
+        state.copilot = { ...state.copilot, loading: false, ...outcome };
+        renderCopilotPicker();
+    });
+}
+
+/** The picker's controls on screen, in order. */
+const pickerControls = () => [...document.querySelectorAll('.copilot-sessions button')];
+
+/**
+ * Renders the picker where it shows. Focus stays on the same control; when that control is gone, the control in
+ * the same place, or the last one, takes it.
+ */
+function renderCopilotPicker() {
+    const before = pickerControls();
+    const active = document.activeElement;
+    const index = before.indexOf(active);
+    const key = active?.dataset?.key ?? null;
+    if (state.notConnected) {
+        render();
+    } else if (state.data && !$('sessionMenu').hidden) {
+        renderSessionMenu();
+    }
+    if (index < 0) return;
+    const after = pickerControls();
+    const target = after.find((control) => control.dataset.key === key) ?? after[Math.min(index, after.length - 1)];
+    if (target) focusQuietly(target);
+}
+
+/** What the picker shows: its fetched list and last outcomes, and the Copilot session the canvas shows. */
+const pickerModel = () => ({ ...state.copilot, shown: state.data?.shownSession ?? null });
+
+/** What the picker's controls do, for either placement. */
+const pickerActions = () => ({ onShow: (entry) => act.showSession(entry), onOpen: (ref) => act.openPanel(ref), onRefresh: () => act.refreshSessions() });
 
 async function loadSessions() {
     state.sessions = { ...state.sessions, loading: true, error: null };
@@ -1392,25 +1516,16 @@ async function loadSessions() {
 function renderSessionMenu() {
     const menu = $('sessionMenu');
     const { session } = state.data;
-    const tree = session.followUps.tree;
-    const rpi = session.source?.kind === 'rpi';
-    const where = [tree.key, rpi ? (state.following === false ? 'not following the agent' : 'following the agent') : 'sample session'].filter(Boolean).join(' · ');
     const keepFocus = menu.contains(document.activeElement) ? document.activeElement.dataset.key ?? null : null;
-    menu.replaceChildren(
-        h('h2', { class: 'menu-title session-menu-title', id: 'sessionMenuTitle', tabindex: '-1' }, icon('nodes'), tree.name ? `Session: ${tree.name}` : 'This session'),
-        h('p', { class: 'meta session-menu-where', text: where }),
-        h('h3', { class: 'menu-subtitle', text: 'Loops in this session' }),
-        sessionTree(context(), {
-            label: `Loops in ${tree.name ?? 'this session'}, parent first`,
-            keyPrefix: 'menu',
-            onShow: (task) => {
-                toggleSessionMenu(false);
-                act.showTask({ statePath: task.statePath });
-            },
-        }),
-        ...(rpi ? [h('h3', { class: 'menu-subtitle', text: 'Other sessions' }), h('div', { id: 'sessionList' })] : []),
-        h('p', { class: 'menu-note', text: rpi ? 'Choosing a loop or session stops following the agent; choose Follow agent at the top to catch up with it.' : 'The sample has no other loops or sessions to show.' }));
-    if (rpi) renderSessionList();
+    menu.replaceChildren(...sessionMenuNodes(context(), {
+        following: state.following !== false,
+        onShow: (task) => {
+            toggleSessionMenu(false);
+            act.showTask({ statePath: task.statePath });
+        },
+        picker: { model: pickerModel(), ...pickerActions() },
+    }));
+    if (session.source?.kind === 'rpi') renderSessionList();
     if (keepFocus) menu.querySelector(`[data-key="${CSS.escape(keepFocus)}"]`)?.focus({ preventScroll: true });
 }
 
@@ -1443,12 +1558,12 @@ function renderRail() {
         const active = session.session.activePhase === phase;
         const selected = state.ui.phase === phase;
         const needs = view.needsYouByPhase[phase] ?? 0;
-        const label = [PHASE_META[phase].label, meta.label, active ? 'agent is here' : null, needs ? `${plural(needs, 'item')} ${needs === 1 ? 'needs' : 'need'} you` : null].filter(Boolean).join(', ');
+        const text = phaseTabText({ phase, meta, active, needs, key: state.ui.shortcuts ? PHASE_META[phase].key : null });
         if (index > 0) rail.append(h('span', { class: ['rail-seg', session.phases[PHASES[index - 1]].status === 'done' ? 'is-done' : null], 'aria-hidden': 'true' }));
         rail.append(h('button', {
             type: 'button', role: 'tab', class: ['rail-tab', `is-${status}`, active ? 'is-agent' : null], 'aria-selected': String(selected), tabindex: selected ? '0' : '-1',
-            'aria-label': label, 'aria-controls': 'document', 'aria-keyshortcuts': state.ui.shortcuts ? PHASE_META[phase].key : undefined, dataset: { phase },
-            title: state.ui.shortcuts ? `${label} (${PHASE_META[phase].key})` : label,
+            'aria-label': text.name, 'aria-description': text.description, 'aria-controls': 'document', 'aria-keyshortcuts': state.ui.shortcuts ? PHASE_META[phase].key : undefined, dataset: { phase },
+            title: text.tooltip,
             onclick: () => setPhase(phase),
             onkeydown: (event) => {
                 const moves = { ArrowRight: 1, ArrowLeft: -1, Home: -99, End: 99 };
@@ -1524,7 +1639,7 @@ function renderContextBar() {
         h('div', { class: 'context-main' },
             h('span', { class: 'history-nav', role: 'group', 'aria-label': 'Back and forward' }, travelButton('back', back), travelButton('forward', forward)),
             h('h2', { class: 'context-title' }, icon(PHASE_META[phase].icon), PHASE_META[phase].label),
-            badge(meta),
+            badge(meta, { title: meta.tip }),
             presentationControl(context()),
             documentSwitcher(phase),
             artifact && state.ui.presentation === 'focused' ? disclosure(context(), `source-${phase}`, 'context-source', 'Source file', artifact) : artifact,
@@ -1680,14 +1795,15 @@ async function refreshSendPreview() {
     updateSendPreview();
 }
 
-/** Updates the exact text and Send in place, so typing a message is never interrupted. */
+/** Updates the exact text, the route, and Send in place, so typing a message is never interrupted. */
 function updateSendPreview() {
     const sheet = $('sendSheet');
     if (!sheet.open) return;
     const pre = $('send-preview');
     const confirm = sheet.querySelector('[data-key="send-confirm"]');
     const error = $('send-error');
-    if (!pre || !confirm || Boolean(error) !== Boolean(state.ui.send.error)) {
+    // The route's wording and the number of messages are built into the dialog, so a change to either rebuilds it.
+    if (!pre || !confirm || Boolean(error) !== Boolean(state.ui.send.error) || $('send-modes')?.dataset.sendShape !== sendShape(state.ui.send.preview)) {
         renderSendSheet();
         return;
     }
@@ -1695,6 +1811,12 @@ function updateSendPreview() {
     confirm.disabled = state.ui.send.sending || !state.ui.send.preview;
     const queue = sheet.querySelector('[data-key="send-queue"]');
     if (queue) queue.disabled = confirm.disabled;
+    const route = $('send-route');
+    if (route) {
+        const block = routeBlock(state.ui.send.preview?.route, state.ui.send.routeNote);
+        route.hidden = block.length === 0;
+        clear(route).append(...block);
+    }
 }
 
 /** Rebuilds the open dialog, keeping focus, selection, and the exact-text disclosure where they were. */
@@ -1767,6 +1889,7 @@ function focusKey() {
     const fallback = {
         holder: holder ? (holder.dataset.item ? ['item', holder.dataset.item] : ['row', holder.dataset.row]) : null,
         heading: element.closest('.steer-section')?.getAttribute('aria-labelledby') ?? null,
+        status: Boolean(element.closest('.status-area')),
     };
     if (element.id) return { id: element.id, selection, ...fallback };
     if (element.dataset.key) return { dataKey: element.dataset.key, selection, ...fallback };
@@ -1796,11 +1919,12 @@ function restoreFocus(key) {
         if (key.selection && typeof element.setSelectionRange === 'function') element.setSelectionRange(key.selection[0], key.selection[1]);
         return;
     }
-    // The control went away: move to its card or row, then to its steering section heading.
+    // The control went away: move to its card or row, then to its steering section heading, or to the status area.
     const holder = key.holder ? document.querySelector(`[data-${key.holder[0]}="${CSS.escape(key.holder[1])}"]`) : null;
     if (holder && focusQuietly(holder)) return;
     const heading = key.heading ? $(key.heading) : null;
-    if (heading) focusQuietly(heading);
+    if (heading && focusQuietly(heading)) return;
+    if (key.status) focusStatusArea();
 }
 
 // Not connected
@@ -1812,6 +1936,8 @@ function showNotConnected(next) {
     state.data = null;
     state.error = null;
     applyPreferences(next.preferences);
+    // The picker fetches when the screen appears; later renders of the same screen keep its list.
+    if (entering) loadCopilotSessions();
     render();
     if (entering) announce('This canvas is not connected to an RPI session. Ask the agent to connect it.');
 }
@@ -1820,6 +1946,7 @@ function showNotConnected(next) {
 function leaveNotConnected() {
     state.notConnected = null;
     state.ui.connect = { asking: false, askedAt: 0, retryAfterMs: 30000, error: null, helpOpen: false };
+    state.copilot = { ...state.copilot, note: null, showError: null };
     document.body.classList.remove('is-not-connected');
     $('workspace').hidden = false;
     $('document').hidden = false;
@@ -1888,7 +2015,7 @@ function renderNotConnected() {
     $('sessionBtn').hidden = true;
     const view = $('connectView');
     view.hidden = false;
-    clear(view).append(notConnectedView({ ...answer.notConnected, handle, editor: answer.editor?.name ?? null, now: Date.now(), ui: state.ui.connect }, connectScreen));
+    clear(view).append(notConnectedView({ ...answer.notConnected, handle, editor: answer.editor?.name ?? null, now: Date.now(), ui: state.ui.connect, picker: pickerModel() }, { ...connectScreen, picker: pickerActions() }));
     if (focused) view.querySelector(`[data-key="${CSS.escape(focused)}"]`)?.focus({ preventScroll: true });
 }
 
@@ -1961,6 +2088,7 @@ function renderPage() {
     renderNavigator();
     renderContextBar();
     renderDocument();
+    renderStatus();
     renderSteer();
     watchOffsets();
     doc.scrollTop = scroll;

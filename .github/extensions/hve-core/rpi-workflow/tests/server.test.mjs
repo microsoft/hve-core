@@ -9,12 +9,18 @@ import path from 'node:path';
 import { after, afterEach, before, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { agentEditSection, createFeedback, ModelError, recordActivity, recordInterpretation, takeFeedback, upsertDecision } from '../lib/model.mjs';
+import { agentEditSection, CLAIM_STALE_MS, claimDelivery, createFeedback, markDelivered, markDeliveryUncertain, ModelError, recordActivity, recordInterpretation, takeFeedback, upsertDecision } from '../lib/model.mjs';
 import { buildScenario } from '../lib/scenario.mjs';
 import { clientInfoFrom, createCanvasServer as newServer, MAX_BODY, renderShell } from '../lib/server.mjs';
+import { createInboxRunner } from '../lib/inbox.mjs';
+import { CANVAS_ID, createPanelOpener, panelInstanceId } from '../lib/panels.mjs';
+import { createSourceController } from '../lib/sources.mjs';
+import { storeIdFor } from '../lib/source/workspace.mjs';
 import { createStore } from '../lib/store.mjs';
 import { stopTracked, track } from './helpers/cleanup.mjs';
-import { CHILD_TASK, childSession, ROOT_TASK, rootSession } from './helpers/rpi-fixture.mjs';
+import { hostCanvas } from './helpers/host-canvas.mjs';
+import { scratchFolder } from './helpers/scratch.mjs';
+import { CHILD_TASK, childSession, FIXTURE_ROOT, PATHS, ROOT_TASK, rootSession, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
 
 /** A canvas server that stops after the test even when an assertion fails. */
 const createCanvasServer = (deps) => track(newServer(deps));
@@ -358,10 +364,10 @@ describe('a session-wide send', () => {
      * A canvas showing the child loop of a two-task session, with both documents in the store.
      * `fail` decides, per store write, whether that write throws.
      */
-    async function sessionSetup(name, { fail = () => false, deliver } = {}) {
+    async function sessionSetup(name, { fail = () => false, deliver, joined } = {}) {
         const store = createStore({ root: path.join(tmp, name), pollMs: 20 });
-        const parent = await store.create(rootSession().session);
-        const child = await store.create(childSession().session);
+        const parent = await store.create({ ...rootSession().session, id: storeIdFor(ROOT_TASK, FIXTURE_ROOT) });
+        const child = await store.create({ ...childSession().session, id: storeIdFor(CHILD_TASK, FIXTURE_ROOT) });
         const flaky = Object.create(store);
         let writes = 0;
         flaky.update = (id, change, opts) => {
@@ -374,10 +380,11 @@ describe('a session-wide send', () => {
             store: flaky,
             getSessionId: () => child.id,
             getCanvas: () => ({ handle: '3WF0', instanceId: 'rpi-workflow-demo' }),
-            getSource: () => ({ kind: 'rpi', follow: { paused: false } }),
+            getSource: () => ({ kind: 'rpi', workspace: { root: FIXTURE_ROOT }, follow: { paused: false } }),
             deliver: deliver ?? (async (message) => {
                 sent.push(message);
             }),
+            ...(joined ? { getJoinedSessionId: () => joined } : {}),
             markRetryMs: 1,
         });
         const url = new URL(await server.start());
@@ -417,6 +424,24 @@ describe('a session-wide send', () => {
             const after = await item(store, docId, id);
             assert.deepEqual([after.state, after.deliveredWith, after.deliveringSince], ['sent', 2, undefined]);
         }
+        await server.stop();
+        store.close();
+    });
+
+    it('lists the other tasks\' items that may have been sent, and the relayed items the chat has not taken yet', async () => {
+        const own = '7b2e8f10-3c4d-4e5f-8a6b-1c2d3e4f5a6b';
+        const { store, server, url, parent } = await sessionSetup('session-overview', { joined: own.toUpperCase() });
+        const held = await addComment(store, parent.id, 'Held');
+        const relayed = await addComment(store, parent.id, 'Relayed');
+        const theirs = await addComment(store, parent.id, 'Relayed by another session');
+        const now = new Date().toISOString();
+        await store.update(parent.id, (current) => markDeliveryUncertain(claimDelivery(current, [held.id], now).session, [held.id], now, { sessionId: own }), { by: 'user' });
+        await store.update(parent.id, (current) => markDelivered(current, [relayed.id], 'send', now, { messageId: 'message-1', route: 'relay', relayedVia: own }), { by: 'user' });
+        await store.update(parent.id, (current) => markDelivered(current, [theirs.id], 'send', now, { messageId: 'message-2', route: 'relay', relayedVia: 'c0ffee00-1111-4222-8333-444455556666' }), { by: 'user' });
+        const state = await request(url, { pathname: '/api/state' });
+        const [task] = state.json.otherTasks;
+        assert.equal(state.json.ownSessionId, own, 'the page knows its own session, in lowercase');
+        assert.deepEqual([task.pending.map((entry) => entry.id), task.awaiting, task.relayed, task.uncertain, task.uncertainIn], [[], 2, [relayed.id], [held.id], [own]]);
         await server.stop();
         store.close();
     });
@@ -461,7 +486,7 @@ describe('a session-wide send', () => {
 
     it('releases every hold when a later claim fails, before anything is sent', async () => {
         let armed = false;
-        const { store, server, url, sent, parent, child } = await sessionSetup('session-claim-fails', { fail: (id) => armed && id === 'rpi-trail-maps' });
+        const { store, server, url, sent, parent, child } = await sessionSetup('session-claim-fails', { fail: (id) => armed && id === storeIdFor(ROOT_TASK, FIXTURE_ROOT) });
         const mine = await addComment(store, child.id, 'Child item');
         const theirs = await addComment(store, parent.id, 'Parent item');
         const items = [{ taskId: CHILD_TASK, id: mine.id }, { taskId: ROOT_TASK, id: theirs.id }];
@@ -482,7 +507,7 @@ describe('a session-wide send', () => {
     it('never releases once the message is handed over, and reports a mark that keeps failing', async () => {
         let marking = false;
         const { store, server, url, sent, parent, child } = await sessionSetup('session-mark-fails', {
-            fail: (id) => marking && id === 'rpi-trail-maps',
+            fail: (id) => marking && id === storeIdFor(ROOT_TASK, FIXTURE_ROOT),
             deliver: async (message) => {
                 sent.push(message);
                 marking = true;
@@ -516,6 +541,693 @@ describe('a session-wide send', () => {
     });
 });
 
+
+describe('a send to another session', () => {
+    const PROJECT = '7b2e8f10-3c4d-4e5f-8a6b-1c2d3e4f5a6b';
+    const CHILD = 'c4d5e6f7-0a1b-4c2d-9e3f-4a5b6c7d8e9f';
+    const SIBLING = 'd5e6f7a8-1b2c-4d3e-8f4a-5b6c7d8e9f0a';
+    const SESSION_NAME = 'Offline trail maps';
+
+    /** Checks `condition` (sync or async) every 20 ms until it holds, for up to 3 seconds. */
+    async function until(condition) {
+        const end = Date.now() + 3000;
+        while (!(await condition())) {
+            if (Date.now() > end) throw new Error('The condition was not met in time.');
+            await new Promise((resolve) => setTimeout(resolve, 20));
+        }
+    }
+
+    const addComment = async (store, id, text) => {
+        const { result } = await store.update(id, (current) => createFeedback(current, { kind: 'comment', text }, new Date().toISOString()), { by: 'user' });
+        return result;
+    };
+    const itemIn = async (store, docId, id) => (await store.load(docId)).feedback.find((entry) => entry.id === id);
+
+    /**
+     * A canvas that shows the child's task, bound to the child's session and joined to the Project's
+     * session. `childRunner` is the child's canvas process, and `source` is this canvas's own process
+     * for the Project's session. `shown` is what the canvas shows; a test can rebind its `boundSession`. `failWrites` decides which of the canvas's writes fail: it receives
+     * the number of each write, counted from 1 across task documents, the outbox, and the inbox, and
+     * returns true for a write that fails. Tests reassign `writes.failWrites` to let the canvas restart.
+     * `hooks.beforeInboxWrite`, when set, runs once before the source writes an inbox entry. `withParent`
+     * also stores the parent task's document, in the same session, and `joined` is the Copilot session
+     * this canvas joins, or null for none. `settleClock` gives the source process a clock the test moves
+     * (in `sourceClock.at`), so its claim window can pass without waiting.
+     */
+    async function crossSetup(name, { claimWindowMs, failWrites = () => false, withParent = false, joined = PROJECT, settleClock = false } = {}) {
+        const store = createStore({ root: path.join(tmp, name), pollMs: 20 });
+        const child = await store.create({ ...childSession().session, id: storeIdFor(CHILD_TASK, FIXTURE_ROOT) });
+        const parent = withParent ? await store.create({ ...rootSession().session, id: storeIdFor(ROOT_TASK, FIXTURE_ROOT) }) : null;
+        const writes = { count: 0, failWrites };
+        const flaky = Object.create(store);
+        for (const method of ['update', 'updateOutbox', 'updateInbox']) {
+            flaky[method] = (...args) => {
+                writes.count += 1;
+                if (writes.failWrites(writes.count)) {
+                    return Promise.reject(new ModelError('storage_failed', 'The write could not be saved.'));
+                }
+                return store[method](...args);
+            };
+        }
+        const hooks = { beforeInboxWrite: null };
+        const sourceStore = Object.create(store);
+        sourceStore.updateInbox = async (id, change, options) => {
+            const hook = hooks.beforeInboxWrite;
+            if (hook && id === CHILD) {
+                hooks.beforeInboxWrite = null;
+                await hook();
+            }
+            return store.updateInbox(id, change, options);
+        };
+        const chat = [];
+        const childChat = [];
+        const childRunner = createInboxRunner({ store, sessionId: CHILD, pid: 6161, pause: async () => {}, deliver: async (request) => {
+            childChat.push(request);
+            return { messageId: 'child-1' };
+        } });
+        const sourceClock = { at: Date.now() };
+        const source = createInboxRunner({ store: sourceStore, sessionId: PROJECT, pid: 5151, pause: async () => {}, now: settleClock ? () => sourceClock.at : undefined, deliver: async (request) => {
+            chat.push(request);
+            return { messageId: `relay-${chat.length}` };
+        } });
+        const shown = { kind: 'rpi', boundSession: CHILD, workspace: { root: FIXTURE_ROOT }, follow: { paused: false } };
+        const server = createCanvasServer({
+            store: flaky,
+            getSessionId: () => child.id,
+            getCanvas: () => ({ handle: 'K7QF', instanceId: 'rpi-workflow-demo' }),
+            getSource: () => shown,
+            getJoinedSessionId: () => joined,
+            deliver: async (request) => {
+                chat.push(request);
+                return { messageId: `own-${chat.length}` };
+            },
+            wakeOutbox: () => source.wakeOutbox(),
+            claimWindowMs,
+            markRetryMs: 1,
+        });
+        const url = new URL(await server.start());
+        return {
+            store, server, url, child, parent, chat, childChat, childRunner, source, shown, hooks, writes, sourceClock,
+            async stop() {
+                await server.stop();
+                await childRunner.stop();
+                await source.stop();
+                store.close();
+            },
+        };
+    }
+
+    /**
+     * Moves the source process's clock past the claim window of the pending hand-off that the Send wrote,
+     * then checks the outbox.
+     */
+    async function passClaimWindow(f) {
+        const [entry] = (await f.store.loadOutbox(PROJECT)).entries;
+        f.sourceClock.at = Date.parse(entry.createdAt) + CLAIM_STALE_MS + 1;
+        await f.source.checkOutbox();
+    }
+
+    /** Previews the items as the page does, then sends them with the previewed digest. */
+    async function sendItems(f, body) {
+        const preview = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body });
+        const sent = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { ...body, digest: preview.json.digest } });
+        return { preview, sent };
+    }
+
+    it('hands the items to a live canvas process of the target session, which sends them once and records the inbox route', async () => {
+        const f = await crossSetup('cross-live');
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const { preview, sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }] });
+            assert.deepEqual(preview.json.route, { kind: 'inbox', sessionId: CHILD, sessionName: SESSION_NAME });
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            assert.deepEqual([sent.json.delivered, sent.json.handedOff.map((hand) => [hand.taskId, hand.ids])], [[], [[CHILD_TASK, [mine.id]]]]);
+            assert.deepEqual(sent.json.route, preview.json.route);
+            assert.deepEqual([f.chat.length, f.childChat.length], [0, 0], 'nothing is sent yet, and the canvas\'s own chat gets nothing');
+            const [entry] = (await f.store.loadInbox(CHILD)).entries;
+            assert.deepEqual([entry.state, entry.from], ['waiting', { sessionId: PROJECT, handle: 'K7QF' }]);
+            await f.childRunner.checkInbox();
+            assert.equal(f.childChat.length, 1);
+            assert.equal(f.childChat[0].prompt.split('\n')[0], `RPI canvas K7QF in session ${PROJECT} sent 1 item for this task. They are the user's input from that canvas.`);
+            const after = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([after.state, after.route, after.messageId, after.handoff], ['sent', 'inbox', 'child-1', undefined]);
+            assert.deepEqual((await f.store.loadInbox(CHILD)).entries, []);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('relays through its own chat at once when no canvas process of the target session is live', async () => {
+        const f = await crossSetup('cross-relay');
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const { preview, sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }] });
+            assert.deepEqual(preview.json.route, { kind: 'relay', sessionId: CHILD, sessionName: SESSION_NAME });
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            assert.equal(sent.json.handedOff[0].ids[0], mine.id);
+            await until(async () => (await itemIn(f.store, f.child.id, mine.id)).state === 'sent' && (await f.store.loadOutbox(PROJECT)).entries.length === 0);
+            const { statePath } = (await f.store.load(f.child.id)).source;
+            assert.equal(f.chat.length, 1);
+            assert.equal(f.chat[0].prompt.split('\n')[0], `RPI canvas K7QF has 1 item for session ${CHILD} (task ${CHILD_TASK}, state ${statePath}).`);
+            assert.equal(f.chat[0].displayPrompt, 'RPI canvas K7QF: 1 item for another session to forward.');
+            assert.deepEqual(f.chat[0].ids, [mine.id]);
+            assert.deepEqual((await f.store.loadInbox(CHILD)).entries, [], 'no inbox entry is written');
+            const after = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([after.route, after.relayedVia, after.messageId, f.childChat.length], ['relay', PROJECT, 'relay-1', 0]);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('withdraws an entry that no process claimed within the claim window, then relays its items through its own chat', async () => {
+        const f = await crossSetup('cross-window', { claimWindowMs: 200 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const { preview, sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }] });
+            assert.equal(preview.json.route.kind, 'inbox');
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            assert.equal((await f.store.loadInbox(CHILD)).entries.length, 1);
+            await until(async () => {
+                await f.source.checkOutbox();
+                return (await itemIn(f.store, f.child.id, mine.id)).state === 'sent' && (await f.store.loadOutbox(PROJECT)).entries.length === 0;
+            });
+            assert.deepEqual((await f.store.loadInbox(CHILD)).entries, [], 'the unclaimed entry is withdrawn');
+            assert.equal(f.childChat.length, 0, 'the target process never sent the items');
+            assert.match(f.chat[0].prompt, /^RPI canvas K7QF has 1 item for session /);
+            assert.equal((await itemIn(f.store, f.child.id, mine.id)).route, 'relay');
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('sends the items once through the target process, and relays nothing, when the target claims its entry as the window ends', async () => {
+        const f = await crossSetup('cross-claim-at-end', { claimWindowMs: 0 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            f.hooks.beforeInboxWrite = () => f.childRunner.checkInbox();
+            const { sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }] });
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            await until(async () => (await itemIn(f.store, f.child.id, mine.id)).state === 'sent' && (await f.store.loadOutbox(PROJECT)).entries.length === 0);
+            assert.equal(f.childChat.length, 1, 'the target process sent the items');
+            assert.equal(f.chat.length, 0, 'the source relayed nothing');
+            assert.equal((await itemIn(f.store, f.child.id, mine.id)).route, 'inbox');
+            assert.deepEqual((await f.store.loadInbox(CHILD)).entries, []);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('asks the agent through the canvas\'s own chat, even while another session\'s canvas process is live', async () => {
+        const store = createStore({ root: path.join(tmp, 'cross-ask'), pollMs: 20 });
+        const chat = [];
+        const childRunner = createInboxRunner({ store, sessionId: CHILD, pid: 6161, pause: async () => {}, deliver: async () => ({ messageId: 'child-1' }) });
+        await childRunner.heartbeat();
+        const server = createCanvasServer({
+            store,
+            getSessionId: () => '',
+            getCanvas: () => ({ handle: 'K7QF', instanceId: 'rpi-workflow-demo' }),
+            getSource: () => ({ kind: 'none', reason: 'missing-session', detail: null }),
+            getJoinedSessionId: () => PROJECT,
+            deliver: async (request) => {
+                chat.push(request);
+                return { messageId: 'own-1' };
+            },
+        });
+        const url = new URL(await server.start());
+        const asked = await request(url, { method: 'POST', pathname: '/api/connect-request', body: {} });
+        assert.deepEqual([asked.status, asked.json.sent], [200, true]);
+        assert.equal(chat.length, 1);
+        assert.equal(chat[0].displayPrompt, "RPI canvas K7QF: connect this canvas to this conversation's RPI session.");
+        assert.deepEqual([(await store.loadInbox(CHILD)).entries, (await store.loadOutbox(PROJECT)).entries], [[], []]);
+        await server.stop();
+        await childRunner.stop();
+        store.close();
+    });
+
+    it('sends a note with the items as a comment of the shown task, held and handed off with them', async () => {
+        const f = await crossSetup('cross-note');
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const { sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }], note: 'Start with the header.' });
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            const [hand] = sent.json.handedOff;
+            assert.equal(hand.ids.length, 2);
+            const note = await itemIn(f.store, f.child.id, hand.ids[1]);
+            assert.deepEqual([note.kind, note.text, note.target, note.handoff.entryId === hand.entryId], ['comment', 'Start with the header.', null, true]);
+            await f.childRunner.checkInbox();
+            assert.equal(f.childChat.length, 1);
+            assert.match(f.childChat[0].prompt, /Comment on the session\n {3}Start with the header\./);
+            assert.equal(f.childChat[0].displayPrompt, 'RPI canvas K7QF sent 2 items: 2 comments.');
+            assert.deepEqual([(await itemIn(f.store, f.child.id, note.id)).state, (await itemIn(f.store, f.child.id, note.id)).route], ['sent', 'inbox']);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('undoes a hand-off whose inbox write fails: releases the holds, removes the entries, dismisses the note, and sends again on retry', async () => {
+        const f = await crossSetup('cross-undo-inbox', { failWrites: (n) => n === 3 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const body = { items: [{ taskId: CHILD_TASK, id: mine.id }], note: 'Also this.' };
+            const failed = await sendItems(f, body);
+            assert.equal(failed.sent.status, 500, JSON.stringify(failed.sent.json));
+            const held = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([held.state, held.handoff, held.deliveringSince], ['queued', undefined, undefined]);
+            assert.deepEqual((await f.store.load(f.child.id)).feedback.filter((entry) => entry.text === 'Also this.').map((entry) => entry.state), ['dismissed']);
+            assert.deepEqual([(await f.store.loadOutbox(PROJECT)).entries, (await f.store.loadInbox(CHILD)).entries, f.chat.length], [[], [], 0]);
+            const retried = await sendItems(f, body);
+            assert.equal(retried.sent.status, 200, JSON.stringify(retried.sent.json));
+            assert.equal(retried.sent.json.handedOff[0].ids.length, 2);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('a hand-off whose outbox write fails holds nothing, writes no note, and sends again on retry', async () => {
+        const f = await crossSetup('cross-undo-outbox', { failWrites: (n) => n === 1 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const body = { items: [{ taskId: CHILD_TASK, id: mine.id }], note: 'Also this.' };
+            const failed = await sendItems(f, body);
+            assert.equal(failed.sent.status, 500, JSON.stringify(failed.sent.json));
+            const held = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([held.state, held.handoff, held.deliveringSince], ['queued', undefined, undefined]);
+            assert.deepEqual((await f.store.load(f.child.id)).feedback.filter((entry) => entry.text === 'Also this.'), [], 'no note is written');
+            assert.deepEqual([(await f.store.loadOutbox(PROJECT)).entries, (await f.store.loadInbox(CHILD)).entries, f.chat.length], [[], [], 0]);
+            const retried = await sendItems(f, body);
+            assert.equal(retried.sent.status, 200, JSON.stringify(retried.sent.json));
+            assert.equal(retried.sent.json.handedOff[0].ids.length, 2);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('a canvas that stops after the holds are written and before the hand-off commits leaves items that the runner releases after the claim window, unsent; a retry sends them once', async () => {
+        // Every write from the commit on fails, as if the canvas had stopped there, so no undo runs.
+        const f = await crossSetup('cross-stop', { settleClock: true, failWrites: (n) => n >= 3 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const items = [{ taskId: CHILD_TASK, id: mine.id }];
+            const { sent } = await sendItems(f, { items });
+            assert.equal(sent.status, 500, JSON.stringify(sent.json));
+            const [entry] = (await f.store.loadOutbox(PROJECT)).entries;
+            assert.deepEqual([entry.state, (await itemIn(f.store, f.child.id, mine.id)).handoff.entryId], ['pending', entry.id], 'the items stay held by the pending entry');
+            await f.source.checkOutbox();
+            assert.deepEqual([f.chat.length, f.childChat.length, (await f.store.loadOutbox(PROJECT)).entries.length], [0, 0, 1], 'nothing is sent or released inside the claim window');
+            f.writes.failWrites = () => false;
+            await passClaimWindow(f);
+            const released = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([released.state, released.handoff, released.deliveringSince], ['queued', undefined, undefined]);
+            assert.deepEqual([(await f.store.loadOutbox(PROJECT)).entries, f.chat.length, f.childChat.length], [[], 0, 0], 'the runner released the items and sent nothing');
+            const retried = await sendItems(f, { items });
+            assert.equal(retried.sent.status, 200, JSON.stringify(retried.sent.json));
+            await until(async () => (await itemIn(f.store, f.child.id, mine.id)).state === 'sent' && (await f.store.loadOutbox(PROJECT)).entries.length === 0);
+            assert.equal(f.chat.length, 1, 'the retry relays the items once');
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('a hand-off whose undo cannot release its items leaves them to the runner: nothing is relayed, and after the claim window the runner releases them and dismisses the note', async () => {
+        // The commit and the undo's release both fail, so the undo stops with the items still held.
+        const f = await crossSetup('cross-release-fails', { settleClock: true, failWrites: (n) => n === 3 || n === 4 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const body = { items: [{ taskId: CHILD_TASK, id: mine.id }], note: 'Also this.' };
+            const failed = await sendItems(f, body);
+            assert.equal(failed.sent.status, 500, JSON.stringify(failed.sent.json));
+            assert.ok((await itemIn(f.store, f.child.id, mine.id)).handoff, 'the item is still held');
+            assert.deepEqual((await f.store.load(f.child.id)).feedback.filter((entry) => entry.text === 'Also this.').map((entry) => entry.state), ['queued'], 'the note is still held too');
+            assert.deepEqual([(await f.store.loadOutbox(PROJECT)).entries.map((entry) => entry.state), f.chat.length], [['pending'], 0]);
+            await f.source.checkOutbox();
+            assert.deepEqual([f.chat.length, f.childChat.length], [0, 0], 'nothing is relayed while the entry is pending');
+            f.writes.failWrites = () => false;
+            await passClaimWindow(f);
+            const released = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([released.state, released.handoff], ['queued', undefined]);
+            assert.deepEqual((await f.store.load(f.child.id)).feedback.filter((entry) => entry.text === 'Also this.').map((entry) => entry.state), ['dismissed']);
+            assert.deepEqual([f.chat.length, f.childChat.length], [0, 0], 'nothing is relayed');
+            const retried = await sendItems(f, body);
+            assert.equal(retried.sent.status, 200, JSON.stringify(retried.sent.json));
+            await until(async () => (await itemIn(f.store, f.child.id, mine.id)).state === 'sent' && (await f.store.loadOutbox(PROJECT)).entries.length === 0);
+            assert.equal(f.chat.length, 1, 'the retry relays the items once');
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('a hand-off whose inbox write and undo release both fail sends nothing, and the runner releases the items after the claim window', async () => {
+        const f = await crossSetup('cross-inbox-release-fails', { settleClock: true, failWrites: (n) => n === 3 || n === 4 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const items = [{ taskId: CHILD_TASK, id: mine.id }];
+            const failed = await sendItems(f, { items });
+            assert.equal(failed.sent.status, 500, JSON.stringify(failed.sent.json));
+            assert.deepEqual([(await f.store.loadInbox(CHILD)).entries, (await f.store.loadOutbox(PROJECT)).entries.map((entry) => entry.state)], [[], ['pending']]);
+            await f.childRunner.checkInbox();
+            assert.equal(f.childChat.length, 0, 'the target has no entry to send');
+            f.writes.failWrites = () => false;
+            await passClaimWindow(f);
+            assert.deepEqual([(await itemIn(f.store, f.child.id, mine.id)).handoff, (await f.store.loadOutbox(PROJECT)).entries], [undefined, []]);
+            await f.childRunner.checkInbox();
+            assert.deepEqual([f.childChat.length, f.chat.length], [0, 0], 'nothing is sent');
+            const retried = await sendItems(f, { items });
+            assert.equal(retried.sent.status, 200, JSON.stringify(retried.sent.json));
+            await f.childRunner.checkInbox();
+            assert.deepEqual([f.childChat.length, f.chat.length], [1, 0], 'the retry is delivered once, through the target');
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('a hand-off whose inbox write fails is never delivered, and the retry is delivered once through the target', async () => {
+        const f = await crossSetup('cross-inbox-fails', { failWrites: (n) => n === 3 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const items = [{ taskId: CHILD_TASK, id: mine.id }];
+            const failed = await sendItems(f, { items });
+            assert.equal(failed.sent.status, 500, JSON.stringify(failed.sent.json));
+            await f.childRunner.checkInbox();
+            await f.source.checkOutbox();
+            assert.deepEqual([f.chat.length, f.childChat.length, (await f.store.loadOutbox(PROJECT)).entries.length, (await f.store.loadInbox(CHILD)).entries.length], [0, 0, 0, 0]);
+            assert.equal((await itemIn(f.store, f.child.id, mine.id)).handoff, undefined);
+            const retried = await sendItems(f, { items });
+            assert.equal(retried.sent.status, 200, JSON.stringify(retried.sent.json));
+            assert.equal(retried.sent.json.route.kind, 'inbox');
+            await f.childRunner.checkInbox();
+            const after = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([f.childChat.length, after.state, after.route, f.chat.length], [1, 'sent', 'inbox', 0]);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('a commit that fails after the target\'s inbox entries are written leaves the hand-off standing: the target sends the items once, and the runner releases nothing', async () => {
+        const f = await crossSetup('cross-commit-fails', { settleClock: true, failWrites: (n) => n === 4 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const { sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }] });
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            assert.deepEqual((await f.store.loadOutbox(PROJECT)).entries.map((entry) => entry.state), ['pending']);
+            await f.childRunner.checkInbox();
+            const after = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([f.childChat.length, after.state, after.route], [1, 'sent', 'inbox']);
+            await passClaimWindow(f);
+            assert.deepEqual([(await f.store.loadOutbox(PROJECT)).entries, f.chat.length, f.childChat.length], [[], 0, 1], 'the items went once, through the target');
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('a commit that fails after the target\'s inbox entries are written, with no claim from the target, is committed once the claim window has passed, and relayed', async () => {
+        const f = await crossSetup('cross-commit-unclaimed', { settleClock: true, failWrites: (n) => n === 4 });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const { sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }] });
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            assert.equal((await f.store.loadInbox(CHILD)).entries.length, 1, 'the target has its entry, unclaimed');
+            await passClaimWindow(f);
+            assert.deepEqual((await f.store.loadOutbox(PROJECT)).entries.map((entry) => entry.state), ['committed']);
+            await f.source.checkOutbox();
+            assert.deepEqual([f.childChat.length, f.chat.length, (await f.store.loadInbox(CHILD)).entries.length, (await f.store.loadOutbox(PROJECT)).entries.length], [0, 1, 0, 0]);
+            const after = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([after.state, after.route], ['sent', 'relay']);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('reports the own route for the canvas\'s own tasks, with no session to name', async () => {
+        const { server, url, store } = await setup('route-own');
+        const a = await request(url, { method: 'POST', pathname: '/api/feedback', body: { kind: 'comment', text: 'First', target: { id: 'F1' } } });
+        const preview = await request(url, { method: 'POST', pathname: '/api/delivery/preview', body: { ids: [a.json.item.id] } });
+        assert.deepEqual([preview.json.route.kind, preview.json.route.sessionId], ['own', null]);
+        assert.match(preview.json.prompt, /^RPI canvas 3WF0 sent 1 item from the user about task /);
+        assert.equal(preview.json.messages, undefined, 'the own route is one chat message, as before');
+        await server.stop();
+        store.close();
+    });
+
+    it('names the session the shown tasks go to in the state, and none for the canvas\'s own tasks', async () => {
+        const f = await crossSetup('cross-state-delivery');
+        try {
+            const state = await request(f.url, { pathname: '/api/state' });
+            assert.deepEqual(state.json.delivery, { sessionId: CHILD, sessionName: SESSION_NAME });
+        } finally {
+            await f.stop();
+        }
+        const own = await setup('state-delivery-own');
+        assert.equal((await request(own.url, { pathname: '/api/state' })).json.delivery, null);
+        await own.server.stop();
+        own.store.close();
+    });
+
+    it('refuses a Send now whose route changed since the preview, changes nothing, and sends once the new route is named', async () => {
+        const f = await crossSetup('cross-route-changed');
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const items = [{ taskId: CHILD_TASK, id: mine.id }];
+            const preview = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items } });
+            assert.equal(preview.json.route.kind, 'inbox');
+            await f.childRunner.stop();
+            const refused = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items, digest: preview.json.digest, route: 'inbox' } });
+            assert.equal(refused.status, 409, JSON.stringify(refused.json));
+            assert.equal(refused.json.error.code, 'preview_stale');
+            assert.deepEqual(refused.json.error.preview.route, { kind: 'relay', sessionId: CHILD, sessionName: SESSION_NAME });
+            assert.equal(refused.json.error.preview.digest, preview.json.digest, 'the list is the same; only the route moved');
+            const relayed = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items } });
+            assert.deepEqual([refused.json.error.preview.prompt, refused.json.error.preview.displayPrompt], [relayed.json.prompt, relayed.json.displayPrompt], 'the refusal shows the relay message');
+            assert.notEqual(refused.json.error.preview.prompt, preview.json.prompt, 'and not the inbox message the page had');
+            const held = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([held.state, held.handoff, held.deliveringSince, held.route], ['queued', undefined, undefined, undefined]);
+            assert.deepEqual([(await f.store.loadInbox(CHILD)).entries, (await f.store.loadOutbox(PROJECT)).entries, f.chat.length, f.childChat.length], [[], [], 0, 0]);
+            const sent = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items, digest: refused.json.error.preview.digest, route: refused.json.error.preview.route.kind } });
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            assert.equal(sent.json.route.kind, 'relay');
+            await until(async () => (await itemIn(f.store, f.child.id, mine.id)).state === 'sent' && (await f.store.loadOutbox(PROJECT)).entries.length === 0);
+            assert.equal((await itemIn(f.store, f.child.id, mine.id)).route, 'relay');
+            assert.equal(f.chat.length, 1, 'the items went once, through the relay the page named');
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('refuses a Send now whose preview showed another session that shares the checkout, and changes nothing', async () => {
+        const f = await crossSetup('cross-rebound');
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const items = [{ taskId: CHILD_TASK, id: mine.id }];
+            const preview = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items } });
+            assert.equal(preview.json.route.sessionId, CHILD);
+            f.shown.boundSession = SIBLING;
+            const refused = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items, digest: preview.json.digest, route: preview.json.route.kind } });
+            assert.deepEqual([refused.status, refused.json.error.code], [409, 'preview_stale'], JSON.stringify(refused.json));
+            assert.deepEqual([refused.json.error.preview.route.kind, refused.json.error.preview.route.sessionId], [preview.json.route.kind, SIBLING], 'only the session moved');
+            const held = await itemIn(f.store, f.child.id, mine.id);
+            assert.deepEqual([held.state, held.handoff], ['queued', undefined]);
+            assert.deepEqual([(await f.store.loadOutbox(PROJECT)).entries, f.chat.length, f.childChat.length], [[], 0, 0]);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('sends a Send now that names the route its preview showed, and checks no route when none is named', async () => {
+        const f = await crossSetup('cross-route-match');
+        try {
+            const first = await addComment(f.store, f.child.id, 'First.');
+            const second = await addComment(f.store, f.child.id, 'Second.');
+            await f.childRunner.heartbeat();
+            const firstItems = [{ taskId: CHILD_TASK, id: first.id }];
+            const preview = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items: firstItems } });
+            const matched = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items: firstItems, digest: preview.json.digest, route: 'inbox' } });
+            assert.equal(matched.status, 200, JSON.stringify(matched.json));
+            assert.deepEqual([matched.json.route.kind, matched.json.handedOff.map((hand) => hand.ids)], ['inbox', [[first.id]]]);
+            const older = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: second.id }] });
+            assert.equal(older.sent.status, 200, JSON.stringify(older.sent.json));
+            assert.deepEqual(older.sent.json.handedOff.map((hand) => hand.ids), [[second.id]], 'a body without a route is sent as before');
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('refuses a route the server does not know, and leaves Queue alone, whichever route it names', async () => {
+        const f = await crossSetup('cross-route-invalid');
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const items = [{ taskId: CHILD_TASK, id: mine.id }];
+            const preview = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items } });
+            const invalid = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items, digest: preview.json.digest, route: 'elsewhere' } });
+            assert.deepEqual([invalid.status, invalid.json.error.code], [400, 'invalid_input']);
+            assert.deepEqual([(await f.store.loadInbox(CHILD)).entries.length, (await itemIn(f.store, f.child.id, mine.id)).state], [0, 'queued']);
+            const queued = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items, digest: preview.json.digest, mode: 'queue', route: 'relay' } });
+            assert.equal(queued.status, 200, JSON.stringify(queued.json));
+            assert.deepEqual(queued.json.queued, [{ taskId: CHILD_TASK, id: mine.id }]);
+            assert.deepEqual([(await f.store.loadInbox(CHILD)).entries.length, f.chat.length], [0, 0]);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('previews the inbox message the target canvas sends into its chat, which is the message the chat gets', async () => {
+        const f = await crossSetup('cross-preview-inbox');
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const { preview, sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }] });
+            assert.equal(preview.json.route.kind, 'inbox');
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            await f.childRunner.checkInbox();
+            const [message] = f.childChat;
+            assert.deepEqual([preview.json.prompt, preview.json.displayPrompt], [message.prompt, message.displayPrompt]);
+            assert.deepEqual(preview.json.messages, [{ taskId: CHILD_TASK, prompt: message.prompt, displayPrompt: message.displayPrompt }]);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('previews the relay message this chat sends, which is the message the chat gets', async () => {
+        const f = await crossSetup('cross-preview-relay');
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const { preview, sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }] });
+            assert.equal(preview.json.route.kind, 'relay');
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            await until(async () => (await itemIn(f.store, f.child.id, mine.id)).state === 'sent' && (await f.store.loadOutbox(PROJECT)).entries.length === 0);
+            const [message] = f.chat;
+            assert.deepEqual([preview.json.prompt, preview.json.displayPrompt], [message.prompt, message.displayPrompt]);
+            assert.deepEqual(preview.json.messages, [{ taskId: CHILD_TASK, prompt: message.prompt, displayPrompt: message.displayPrompt }]);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('puts a note in the inbox preview as a comment that the message carries, stores nothing until sent, and keeps the digest', async () => {
+        const f = await crossSetup('cross-preview-note-inbox');
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const items = [{ taskId: CHILD_TASK, id: mine.id }];
+            const stored = (await f.store.load(f.child.id)).feedback.length;
+            const plain = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items } });
+            const noted = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items, note: 'Start with the header.' } });
+            assert.equal(noted.json.digest, plain.json.digest, 'typing a note does not stale a preview');
+            assert.equal((await f.store.load(f.child.id)).feedback.length, stored, 'the preview stores no note');
+            assert.match(noted.json.prompt, /Comment on the session\n {3}Start with the header\./);
+            const sent = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items, note: 'Start with the header.', digest: noted.json.digest } });
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            assert.equal(sent.json.handedOff[0].ids.length, 2);
+            await f.childRunner.checkInbox();
+            assert.deepEqual([f.childChat[0].prompt, f.childChat[0].displayPrompt], [noted.json.prompt, noted.json.displayPrompt]);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('puts a note in the relay preview as a comment that the relayed message carries', async () => {
+        const f = await crossSetup('cross-preview-note-relay');
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const { preview, sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }], note: 'Start with the header.' });
+            assert.equal(preview.json.route.kind, 'relay');
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            await until(async () => (await itemIn(f.store, f.child.id, mine.id)).state === 'sent' && (await f.store.loadOutbox(PROJECT)).entries.length === 0);
+            const [message] = f.chat;
+            assert.match(message.prompt, /Comment on the session\n {3}Start with the header\./);
+            assert.deepEqual([preview.json.prompt, preview.json.displayPrompt], [message.prompt, message.displayPrompt]);
+            assert.deepEqual(message.ids, sent.json.handedOff[0].ids);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('previews one message for each task under its heading, and each message is the one its canvas process sends', async () => {
+        const f = await crossSetup('cross-preview-two-tasks', { withParent: true });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const theirs = await addComment(f.store, f.parent.id, 'Check the legend too.');
+            await f.childRunner.heartbeat();
+            const { preview, sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }, { taskId: ROOT_TASK, id: theirs.id }] });
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            const [first, second] = preview.json.messages;
+            assert.deepEqual(preview.json.messages.map((message) => message.taskId), [CHILD_TASK, ROOT_TASK]);
+            assert.equal(preview.json.prompt, `Message 1 of 2, task ${CHILD_TASK}:\n${first.prompt}\n\nMessage 2 of 2, task ${ROOT_TASK}:\n${second.prompt}`);
+            assert.equal(preview.json.displayPrompt, `${first.displayPrompt} / ${second.displayPrompt}`);
+            await f.childRunner.checkInbox();
+            assert.deepEqual(f.childChat.map((message) => [message.prompt, message.displayPrompt]), [[first.prompt, first.displayPrompt], [second.prompt, second.displayPrompt]]);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('previews one relay message for each task, and this chat sends each of them in that order', async () => {
+        const f = await crossSetup('cross-preview-relay-two-tasks', { withParent: true });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const theirs = await addComment(f.store, f.parent.id, 'Check the legend too.');
+            const { preview, sent } = await sendItems(f, { items: [{ taskId: CHILD_TASK, id: mine.id }, { taskId: ROOT_TASK, id: theirs.id }] });
+            assert.equal(preview.json.route.kind, 'relay');
+            assert.equal(sent.status, 200, JSON.stringify(sent.json));
+            await until(async () => (await itemIn(f.store, f.child.id, mine.id)).state === 'sent' && (await itemIn(f.store, f.parent.id, theirs.id)).state === 'sent' && (await f.store.loadOutbox(PROJECT)).entries.length === 0);
+            const [first, second] = preview.json.messages;
+            assert.deepEqual(f.chat.map((message) => [message.prompt, message.displayPrompt]), [[first.prompt, first.displayPrompt], [second.prompt, second.displayPrompt]]);
+            assert.equal(preview.json.prompt, `Message 1 of 2, task ${CHILD_TASK}:\n${first.prompt}\n\nMessage 2 of 2, task ${ROOT_TASK}:\n${second.prompt}`);
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('gives the 409 for changed items the text of the route the preview named, and sends nothing', async () => {
+        const f = await crossSetup('cross-stale-items');
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            await f.childRunner.heartbeat();
+            const items = [{ taskId: CHILD_TASK, id: mine.id }];
+            const preview = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items } });
+            const edited = await request(f.url, { method: 'POST', pathname: '/api/feedback/edit', body: { taskId: CHILD_TASK, id: mine.id, text: 'Keep the header row and the footer.' } });
+            assert.equal(edited.status, 200, JSON.stringify(edited.json));
+            const stale = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items, digest: preview.json.digest, route: 'inbox' } });
+            assert.deepEqual([stale.status, stale.json.error.code], [409, 'preview_stale']);
+            const fresh = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items } });
+            assert.equal(stale.json.error.preview.route.kind, 'inbox');
+            assert.equal(stale.json.error.preview.prompt, fresh.json.prompt);
+            assert.match(stale.json.error.preview.prompt, /Comment on the session\n {3}Keep the header row and the footer\./);
+            assert.deepEqual([(await f.store.loadInbox(CHILD)).entries, (await f.store.loadOutbox(PROJECT)).entries, f.chat.length, f.childChat.length], [[], [], 0, 0]);
+            assert.equal((await itemIn(f.store, f.child.id, mine.id)).handoff, undefined, 'the item is not held');
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('keeps Queue working while the canvas has no Copilot session, and refuses Send now with the reason', async () => {
+        const f = await crossSetup('cross-preview-no-session', { joined: null });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const items = [{ taskId: CHILD_TASK, id: mine.id }];
+            const preview = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items } });
+            assert.equal(preview.status, 200, JSON.stringify(preview.json));
+            const sent = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items, digest: preview.json.digest, mode: 'send' } });
+            assert.deepEqual([sent.status, sent.json.error.code], [503, 'delivery_unavailable']);
+            assert.equal((await itemIn(f.store, f.child.id, mine.id)).handoff, undefined, 'nothing is held');
+            const queued = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items, digest: preview.json.digest, mode: 'queue' } });
+            assert.equal(queued.status, 200, JSON.stringify(queued.json));
+            assert.ok((await itemIn(f.store, f.child.id, mine.id)).queuedForAgentAt, 'Queue still marks the item for the agent');
+        } finally {
+            await f.stop();
+        }
+    });
+});
 
 describe('client info', () => {
     it('keeps a render failure, capped, so get_state can report a blank page', () => {
@@ -669,6 +1381,346 @@ describe('a canvas that shows no session', () => {
         const state = await request(url, { pathname: '/api/state' });
         assert.deepEqual([state.json.connected, state.json.session.scenario.sample], [undefined, true]);
         assert.equal((await request(url, { method: 'POST', pathname: '/api/connect-request', body: {} })).status, 409);
+        await server.stop();
+        store.close();
+    });
+});
+
+describe('the picker and panels of a canvas that shows no session', () => {
+    const OWN = '0c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f';
+    const SESSION = 'c4d5e6f7-0a1b-4c2d-9e3f-4a5b6c7d8e9f';
+    const UNKNOWN = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
+    const NO_TRACKING = 'b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e';
+    const NO_RPI = 'e6f7a8b9-0c1d-4e2f-8a3b-4c5d6e7f8a9b';
+    const BROKEN = 'f7a8b9c0-1d2e-4f3a-9b4c-5d6e7f8a9b0c';
+    const LISTED = [{ sessionId: SESSION, name: 'Offline trail maps', repository: 'microsoft/trails', branch: 'main', mine: true, own: false, live: false, task: { taskId: ROOT_TASK, title: 'Offline trail maps', phase: 'followup', status: 'completed', statePath: PATHS.rootState }, problem: null }];
+    const notConnectedSource = { kind: 'none', reason: 'no-input', detail: null };
+
+    /** A canvas that shows no session; `deps` adds or replaces the picker's and the panel's dependencies. */
+    async function unconnected(name, deps = {}) {
+        const store = createStore({ root: path.join(tmp, name), pollMs: 20 });
+        const server = createCanvasServer({
+            store,
+            getSessionId: () => '',
+            getCanvas: () => ({ handle: '3WF0', instanceId: 'rpi-workflow-demo' }),
+            getSource: () => notConnectedSource,
+            deliver: async () => {},
+            ...deps,
+        });
+        const url = new URL(await server.start());
+        return { store, server, url };
+    }
+
+    it('lists the Copilot sessions while the canvas is not connected, and reads them only on request', async () => {
+        const calls = [];
+        const { server, url, store } = await unconnected('picker-list', {
+            listCopilotSessions: async () => {
+                calls.push('list');
+                return { sessions: LISTED, skipped: 2 };
+            },
+        });
+        assert.equal((await request(url, { pathname: '/api/state' })).json.connected, false);
+        assert.deepEqual(calls, [], 'the state read lists no sessions');
+        const listed = await request(url, { pathname: '/api/copilot-sessions' });
+        assert.deepEqual([listed.status, listed.json], [200, { sessions: LISTED, skipped: 2 }]);
+        assert.deepEqual(calls, ['list']);
+        await server.stop();
+        store.close();
+    });
+
+    it('answers a listing or a show that the canvas cannot make with not found, and refuses a body that is not a session ID', async () => {
+        const { server, url, store } = await unconnected('picker-absent');
+        assert.equal((await request(url, { pathname: '/api/copilot-sessions' })).status, 404);
+        assert.equal((await request(url, { method: 'POST', pathname: '/api/show-session', body: { session: SESSION } })).status, 404);
+        for (const body of [{}, { session: 'not-a-session' }, { session: 42 }, { session: `${SESSION}/..` }]) {
+            const refused = await request(url, { method: 'POST', pathname: '/api/show-session', body });
+            assert.deepEqual([refused.status, refused.json.error.code], [400, 'invalid_input'], JSON.stringify(body));
+        }
+        await server.stop();
+        store.close();
+    });
+
+    it('shows a session from its ID in any letter case, and answers each session error with its code and message', async () => {
+        const shown = [];
+        const failures = new Map([
+            [UNKNOWN, [404, 'session_not_found', new ModelError('session_not_found', `No Copilot session ${UNKNOWN} was found.`)]],
+            [NO_TRACKING, [409, 'session_no_tracking', new ModelError('session_no_tracking', `Copilot session ${NO_TRACKING} has no .copilot-tracking folder.`)]],
+            [NO_RPI, [404, 'source_not_found', new ModelError('source_not_found', 'No RPI session state was found.')]],
+            [BROKEN, [500, 'internal_error', new Error('disk failure')]],
+        ]);
+        const { server, url, store } = await unconnected('picker-show', {
+            showSession: async (session) => {
+                shown.push(session);
+                if (failures.has(session)) throw failures.get(session)[2];
+                return { sessionId: session };
+            },
+        });
+        const ok = await request(url, { method: 'POST', pathname: '/api/show-session', body: { session: SESSION.toUpperCase() } });
+        assert.deepEqual([ok.status, ok.json], [200, { sessionId: SESSION }]);
+        assert.deepEqual(shown, [SESSION], 'the session is passed in lowercase');
+        for (const [session, [status, code, error]] of failures) {
+            const failed = await request(url, { method: 'POST', pathname: '/api/show-session', body: { session } });
+            assert.deepEqual([failed.status, failed.json.error.code], [status, code], session);
+            if (error instanceof ModelError) assert.equal(failed.json.error.message, error.message);
+        }
+        await server.stop();
+        store.close();
+    });
+
+    it('binds the canvas to the session\'s current task as show_task does, and names the session the page shows', async () => {
+        const scratch = await scratchFolder('picker-bind');
+        try {
+            const stateRoot = path.join(scratch, 'session-state');
+            const repo = await writeFixtureWorkspace(path.join(scratch, 'trails'));
+            await fs.mkdir(path.join(stateRoot, SESSION), { recursive: true });
+            await fs.writeFile(path.join(stateRoot, SESSION, 'workspace.yaml'), `cwd: ${repo}\ngit_root: ${repo}\n`);
+            const store = createStore({ root: path.join(tmp, 'picker-bind-store'), pollMs: 20 });
+            const sources = createSourceController({ store, sessionRoot: () => stateRoot, ownSessionId: () => OWN, intervalMs: 60000 });
+            const record = { instanceId: 'rpi-workflow-demo', sessionId: '', source: notConnectedSource, server: null };
+            const server = createCanvasServer({
+                store,
+                getSessionId: () => record.sessionId,
+                getCanvas: () => ({ handle: '3WF0', instanceId: 'rpi-workflow-demo' }),
+                getSource: () => record.source,
+                getJoinedSessionId: () => OWN,
+                deliver: async () => {},
+                listCopilotSessions: async () => ({ sessions: [], skipped: 0 }),
+                showSession: (session) => sources.show(record, { session }, { candidates: [] }),
+            });
+            record.server = server;
+            const url = new URL(await server.start());
+            const shown = await request(url, { method: 'POST', pathname: '/api/show-session', body: { session: SESSION } });
+            assert.deepEqual(shown.json, { sessionId: record.sessionId }, 'the page refreshes from the document it now shows');
+            assert.deepEqual([record.source.kind, record.source.boundSession, record.source.taskId], ['rpi', SESSION, ROOT_TASK]);
+            const state = await request(url, { pathname: '/api/state' });
+            assert.deepEqual([state.json.shownSession, state.json.session.task.id], [SESSION, ROOT_TASK]);
+            await sources.settled(record);
+            const remembered = await store.loadInstance('rpi-workflow-demo');
+            assert.deepEqual([remembered.kind, remembered.state, remembered.session], ['rpi', PATHS.rootState, SESSION], 'the instance returns to the session when the host reopens it');
+            await server.stop();
+            store.close();
+        } finally {
+            await fs.rm(scratch, { recursive: true, force: true });
+        }
+    });
+
+    it('opens a session\'s canvas in a new panel while the canvas shows no session', async () => {
+        const opened = [];
+        const { server, url, store } = await unconnected('picker-panel', {
+            resolveSession: async (session) => {
+                if (session !== SESSION) throw new Error(`No Copilot session ${session} was found.`);
+                return { root: FIXTURE_ROOT, tracking: path.join(FIXTURE_ROOT, '.copilot-tracking') };
+            },
+            openPanel: async ({ session }) => {
+                opened.push(session);
+                return { outcome: 'opened', instanceId: panelInstanceId(session) };
+            },
+        });
+        const panel = await request(url, { method: 'POST', pathname: '/api/open-panel', body: { session: SESSION } });
+        assert.deepEqual([panel.status, panel.json], [200, { outcome: 'opened', instanceId: panelInstanceId(SESSION) }]);
+        assert.deepEqual(opened, [SESSION]);
+        await server.stop();
+        store.close();
+    });
+
+    it('tells the page that the picker\'s sessions changed, through a reload event that carries the flag', async () => {
+        const { server, url, store } = await unconnected('picker-reload');
+        const frame = await new Promise((resolve, reject) => {
+            let text = '';
+            let notified = false;
+            const req = http.get({ host: '127.0.0.1', port: url.port, path: `/api/events?k=${url.searchParams.get('k')}` }, (res) => {
+                res.setEncoding('utf8');
+                res.on('data', (chunk) => {
+                    text += chunk;
+                    if (!notified && text.includes('event: revision')) {
+                        notified = true;
+                        server.notifyReload({ sessions: true });
+                    }
+                    if (text.includes('event: reload')) {
+                        req.destroy();
+                        resolve(text.slice(text.indexOf('event: reload')));
+                    }
+                });
+            });
+            req.on('error', (error) => (error.code === 'ECONNRESET' ? null : reject(error)));
+        });
+        assert.match(frame, /^event: reload\ndata: \{"at":"[^"]+","sessions":true\}/);
+        await server.stop();
+        store.close();
+    });
+});
+
+describe('opening a session in a new panel', () => {
+    const PROVIDER = 'project:rpi-workflow';
+    const SESSION = 'c4d5e6f7-0a1b-4c2d-9e3f-4a5b6c7d8e9f';
+    const OTHER_SESSION = 'd5e6f7a8-1b2c-4d3e-8f4a-5b6c7d8e9f0a';
+    const UNKNOWN = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
+    const INSTANCE = 'rpi-c4d5e6f7';
+    const NOW = Date.parse('2026-01-15T12:00:00.000Z');
+    const OPEN = { session: SESSION };
+    const FIXED_LINE = `RPI canvas K7QF: open an RPI Workflow canvas for session ${SESSION}.`;
+
+    /**
+     * A canvas that opens panels through `rpc` as the joined session does, or has no opener when `opener` is false.
+     * Only SESSION and OTHER_SESSION have a workspace that reads; any other session is not found. Its clock is the
+     * test's, so the ask interval can be checked.
+     */
+    async function panelSetup(name, { rpc, deliver, opener = true } = {}) {
+        const store = createStore({ root: path.join(tmp, name), pollMs: 20 });
+        const session = await store.create({ ...rootSession().session, id: storeIdFor(ROOT_TASK, FIXTURE_ROOT) });
+        const sent = [];
+        let clock = NOW;
+        const server = createCanvasServer({
+            store,
+            getSessionId: () => session.id,
+            getCanvas: () => ({ handle: 'K7QF', instanceId: 'rpi-workflow-demo' }),
+            getSource: () => ({ kind: 'rpi', workspace: { root: FIXTURE_ROOT }, follow: { paused: false } }),
+            getExtensionId: () => PROVIDER,
+            resolveSession: async (sessionId) => {
+                if (sessionId !== SESSION && sessionId !== OTHER_SESSION) throw new Error(`No Copilot session ${sessionId} was found.`);
+                return { root: FIXTURE_ROOT, tracking: path.join(FIXTURE_ROOT, '.copilot-tracking') };
+            },
+            ...(opener ? { openPanel: createPanelOpener({ rpc: () => rpc, extensionId: () => PROVIDER, canvasId: CANVAS_ID }) } : {}),
+            deliver: deliver ?? (async (message) => {
+                sent.push(message);
+            }),
+            now: () => new Date(clock).toISOString(),
+        });
+        const url = new URL(await server.start());
+        return { store, server, url, sent, advance: (ms) => { clock += ms; } };
+    }
+
+    const askPanel = (url, body = OPEN) => request(url, { method: 'POST', pathname: '/api/open-panel', body });
+
+    it('opens the session\'s canvas in a new panel of the host, bound to the session, and reports it opened', async () => {
+        const host = hostCanvas();
+        const { server, url, store, sent } = await panelSetup('panel-opened', { rpc: host });
+        const opened = await askPanel(url);
+        assert.deepEqual([opened.status, opened.json], [200, { outcome: 'opened', instanceId: INSTANCE }]);
+        assert.deepEqual(host.opens, [{ extensionId: PROVIDER, canvasId: 'hve-core-rpi-workflow', instanceId: INSTANCE, input: { session: SESSION } }]);
+        assert.deepEqual(sent, [], 'no message goes to the agent when the host opens the panel');
+        await server.stop();
+        store.close();
+    });
+
+    it('reports focused, and opens nothing new, when the host already lists that panel open', async () => {
+        const host = hostCanvas({ listed: [{ instanceId: INSTANCE, extensionId: PROVIDER, canvasId: 'hve-core-rpi-workflow' }] });
+        const { server, url, store } = await panelSetup('panel-focused', { rpc: host });
+        const focused = await askPanel(url);
+        assert.deepEqual([focused.status, focused.json], [200, { outcome: 'focused', instanceId: INSTANCE }]);
+        assert.equal(host.opens.length, 1, 'the host focuses the panel it already has for that instance');
+        await server.stop();
+        store.close();
+    });
+
+    it('still opens the panel when the host cannot list its canvases', async () => {
+        const host = hostCanvas({ listError: new Error('Listing is not available.') });
+        const { server, url, store } = await panelSetup('panel-no-list', { rpc: host });
+        assert.equal((await askPanel(url)).json.outcome, 'opened');
+        await server.stop();
+        store.close();
+    });
+
+    it('asks the agent with one fixed line when the host refuses to open the panel, and says it did', async () => {
+        const host = hostCanvas({ openError: new Error('Canvases cannot open from this session.') });
+        const { server, url, store, sent } = await panelSetup('panel-refused', { rpc: host });
+        const asked = await askPanel(url);
+        assert.deepEqual(asked.json, { outcome: 'asked', retryAfterMs: 30000 });
+        assert.equal(sent.length, 1);
+        assert.equal(sent[0].displayPrompt, FIXED_LINE, 'the page cannot change the text');
+        assert.ok(sent[0].prompt.startsWith(FIXED_LINE));
+        assert.ok(sent[0].prompt.includes(`canvasId "hve-core-rpi-workflow", instanceId "${INSTANCE}", input ${JSON.stringify({ session: SESSION })}, extensionId "${PROVIDER}"`), sent[0].prompt);
+        assert.equal(sent[0].mode, undefined, 'the message waits for the agent\'s turn, as Ask the agent does');
+        await server.stop();
+        store.close();
+    });
+
+    it('asks the agent when the host has no canvas API, or the canvas has no panel opener', async () => {
+        const noApi = await panelSetup('panel-no-api', { rpc: {} });
+        assert.equal((await askPanel(noApi.url)).json.outcome, 'asked');
+        const noOpener = await panelSetup('panel-no-opener', { opener: false });
+        assert.equal((await askPanel(noOpener.url)).json.outcome, 'asked');
+        assert.equal(noOpener.sent.length, 1);
+        await noApi.server.stop();
+        noApi.store.close();
+        await noOpener.server.stop();
+        noOpener.store.close();
+    });
+
+    it('waits 30 seconds between asks, and says how long is left', async () => {
+        const { server, url, store, sent, advance } = await panelSetup('panel-wait', { rpc: {} });
+        assert.deepEqual((await askPanel(url)).json, { outcome: 'asked', retryAfterMs: 30000 });
+        advance(10000);
+        assert.deepEqual((await askPanel(url)).json, { outcome: 'wait', retryAfterMs: 20000, sameSession: true });
+        assert.equal(sent.length, 1, 'the agent is asked once in the interval');
+        advance(20000);
+        assert.deepEqual((await askPanel(url)).json, { outcome: 'asked', retryAfterMs: 30000 });
+        assert.equal(sent.length, 2);
+        await server.stop();
+        store.close();
+    });
+
+    it('keeps one wait for every session: a wait for a different session names that it is not the session asked about', async () => {
+        const { server, url, store, sent, advance } = await panelSetup('panel-two-sessions', { rpc: {} });
+        const other = { session: OTHER_SESSION };
+        assert.deepEqual((await askPanel(url)).json, { outcome: 'asked', retryAfterMs: 30000 }, 'the first session is asked');
+        advance(5000);
+        assert.deepEqual((await askPanel(url, other)).json, { outcome: 'wait', retryAfterMs: 25000, sameSession: false }, 'the second session waits on the same clock');
+        assert.deepEqual((await askPanel(url)).json, { outcome: 'wait', retryAfterMs: 25000, sameSession: true }, 'the first session is still the one asked about');
+        assert.equal(sent.length, 1, 'the agent is not asked twice in the interval');
+        advance(25000);
+        assert.deepEqual((await askPanel(url, other)).json, { outcome: 'asked', retryAfterMs: 30000 });
+        assert.equal(sent.length, 2);
+        assert.ok(sent[1].prompt.includes(`instanceId "${panelInstanceId(OTHER_SESSION)}"`), sent[1].prompt);
+        await server.stop();
+        store.close();
+    });
+
+    it('does not hold back panels by the ask interval, since opening a panel sends nothing to the agent', async () => {
+        const host = hostCanvas();
+        const { server, url, store, sent } = await panelSetup('panel-no-wait', { rpc: host });
+        assert.equal((await askPanel(url)).json.outcome, 'opened');
+        assert.equal((await askPanel(url)).json.outcome, 'focused', 'the second request finds the panel listed open');
+        assert.deepEqual(sent, []);
+        await server.stop();
+        store.close();
+    });
+
+    it('reports a failed message with its reason, and lets the next request ask at once', async () => {
+        let failing = true;
+        const { server, url, store, sent } = await panelSetup('panel-send-fails', {
+            rpc: {},
+            deliver: async (message) => {
+                if (failing) throw new ModelError('delivery_unavailable', 'This host cannot take messages from the canvas.');
+                sent.push(message);
+            },
+        });
+        assert.deepEqual((await askPanel(url)).json, { outcome: 'failed', reason: 'This host cannot take messages from the canvas.' });
+        failing = false;
+        assert.deepEqual((await askPanel(url)).json, { outcome: 'asked', retryAfterMs: 30000 });
+        assert.equal(sent.length, 1);
+        await server.stop();
+        store.close();
+    });
+
+    it('refuses a session that is not a session ID or does not resolve, and opens nothing', async () => {
+        const host = hostCanvas();
+        const { server, url, store, sent } = await panelSetup('panel-refused-session', { rpc: host });
+        for (const [body, status, code] of [[{ session: UNKNOWN }, 404, 'not_found'], [{ session: 42 }, 400, 'invalid_input'], [{ session: 'not-a-session' }, 400, 'invalid_input'], [{}, 400, 'invalid_input']]) {
+            const refused = await askPanel(url, body);
+            assert.deepEqual([refused.status, refused.json.error.code], [status, code], JSON.stringify(body));
+        }
+        assert.deepEqual([host.opens, sent], [[], []]);
+        await server.stop();
+        store.close();
+    });
+
+    it('matches the session ID whatever its letter case, and opens it under the lowercase ID', async () => {
+        const host = hostCanvas();
+        const { server, url, store } = await panelSetup('panel-case', { rpc: host });
+        assert.equal((await askPanel(url, { session: SESSION.toUpperCase() })).json.outcome, 'opened');
+        assert.equal(host.opens[0].input.session, SESSION);
+        assert.equal(host.opens[0].instanceId, INSTANCE);
         await server.stop();
         store.close();
     });
