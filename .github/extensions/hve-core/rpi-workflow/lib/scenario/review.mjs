@@ -58,7 +58,7 @@ export const review = {
             route: 'rpi-implement', decision: 'accepted', related: ['P01-T01', 'CH-001'],
         },
         {
-            id: 'RF-002', kind: 'refinement', dimension: 'Documents and language', severity: 'low', title: 'Two offline sync notes duplicate the conflict rules in different folders',
+            id: 'RF-002', kind: 'refinement', dimension: 'Documents and domain language', severity: 'low', title: 'Two offline sync notes duplicate the conflict rules in different folders',
             summary: 'Both docs/offline-notes.md and src/inspections/README.md restate merge precedence with slightly different wording.',
             expected: 'docs/offline-notes.md was added alongside src/inspections/README.md during P02.',
             observed: 'Remove docs/offline-notes.md and keep merge rules once in src/inspections/README.md.',
