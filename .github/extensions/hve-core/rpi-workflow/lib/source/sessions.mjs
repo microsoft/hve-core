@@ -9,13 +9,13 @@ import { SourceError, TRACKING_DIR } from './workspace.mjs';
 
 /** Copilot session IDs are UUIDs, and each local session keeps its files in a folder named by one. */
 export const SESSION_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export const SESSION_STATE_DIR = 'session-state';
+const SESSION_STATE_DIR = 'session-state';
 export const WORKSPACE_FILE = 'workspace.yaml';
 const MAX_WORKSPACE_BYTES = 64 * 1024;
 const KEY_RE = /^([A-Za-z_][A-Za-z0-9_-]*):(?:\s(.*))?$/;
 
 /** A session that cannot be resolved. `detail` names the session, file, or folder the reason is about. */
-export class SessionError extends SourceError {
+class SessionError extends SourceError {
     /**
      * @param {string} code
      * @param {string} message

@@ -124,7 +124,7 @@ export function connectRequestText(handle) {
  * @param {string | null | undefined} handle
  * @param {string} session
  */
-export function panelRequestText(handle, session) {
+function panelRequestText(handle, session) {
     return `${handle ? `RPI canvas ${handle}` : 'RPI canvas'}: open an RPI Workflow canvas for session ${session}.`;
 }
 
@@ -532,14 +532,6 @@ export function createCanvasServer(deps) {
         return hasLiveProcess(presence, Date.parse(now()));
     }
 
-    /**
-     * The route Send now takes for the shown items: the canvas's own chat, the inbox of the session
-     * that holds them when one of its canvas processes is live, or the relay through the canvas's own
-     * chat when none is.
-     *
-     * @param {any[]} groups the tasks and their items
-     * @param {{ id: string } | null} target the session that holds the shown tasks, when it is not the canvas's own
-     */
     /**
      * The route Send now takes for the shown items: the canvas's own chat, the inbox of the session
      * that holds them when one of its canvas processes is live, or the relay through the canvas's own

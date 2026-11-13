@@ -669,7 +669,7 @@ function routeWords(ctx, item) {
  * @param {any} data the page state
  * @param {string | null | undefined} chat the Copilot session ID the item records
  */
-export function uncertainChat(data, chat) {
+function uncertainChat(data, chat) {
     if (!chat) return 'the chat it went to';
     if (chat === data.ownSessionId) return 'this chat';
     if (chat === data.delivery?.sessionId) return `the chat in ${routeName(data.delivery)}`;
@@ -987,7 +987,7 @@ export const sendShape = (preview) => JSON.stringify([preview?.route?.kind ?? 'o
  * @param {{ handle?: string | null, items: number }} options the canvas handle and the number of items
  * @returns {string}
  */
-export function sendNowWords(preview, { handle, items }) {
+function sendNowWords(preview, { handle, items }) {
     const name = `RPI canvas${handle ? ` ${handle}` : ''}`;
     const route = preview?.route ?? null;
     const message = messageCount(preview) > 1 ? 'one chat message for each task, each' : 'one chat message';
@@ -997,7 +997,7 @@ export function sendNowWords(preview, { handle, items }) {
 }
 
 /** The hint under the message box: where a note goes with each route, and what Queue does with it. */
-export function noteHint(preview) {
+function noteHint(preview) {
     const route = preview?.route ?? null;
     if (route?.kind === 'inbox') return `With Send now, it goes to the agent in ${routeName(route)} as a comment with your items. With Queue, it waits with your items as a comment.`;
     if (route?.kind === 'relay') return `With Send now, it goes to this chat's agent as a comment with your items, which forwards them to ${routeName(route)}. With Queue, it waits with your items as a comment.`;
@@ -1063,7 +1063,7 @@ function sessionFeedback(data, test, key) {
 }
 
 /** Items that this canvas's session relayed and its chat's agent has not taken yet, across the session's tasks. */
-export const relayedFeedback = (data) => sessionFeedback(data, (item) => isRelayPending(item, data.ownSessionId), 'relayed');
+const relayedFeedback = (data) => sessionFeedback(data, (item) => isRelayPending(item, data.ownSessionId), 'relayed');
 
 /**
  * Where the uncertain items of the shown session may be, in words, when they all name one chat;
@@ -1250,8 +1250,6 @@ export const TASK_STATUS = Object.freeze({
     stopped: { icon: 'pause', label: 'Stopped', tone: 'muted' },
 });
 
-/** The ref the page sends to show a task: its state path. */
-export const taskRef = (task) => ({ statePath: task.statePath });
 
 /**
  * The session's tasks as nested lists, parent first, in the order the reader built them.
@@ -1267,7 +1265,7 @@ export function sessionTree(ctx, options) {
     const root = h('ol', { class: 'session-tree', 'aria-label': options.label });
     const stack = [root];
     let last = null;
-    const show = (task) => (options.onShow ? options.onShow(task) : ctx.act.showTask(taskRef(task)));
+    const show = (task) => (options.onShow ? options.onShow(task) : ctx.act.showTask({ statePath: task.statePath }));
     const agentPath = ctx.data.follow?.agent?.statePath ?? null;
     for (const task of tree.tasks) {
         const depth = Math.max(0, Math.min(task.depth, stack.length));

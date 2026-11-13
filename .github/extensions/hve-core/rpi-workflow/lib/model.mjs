@@ -660,7 +660,7 @@ export function takeFeedback(session, now, options = {}) {
 }
 
 /** How a sent item reached its agent: through the inbox of the session that holds it, or relayed through the chat of the canvas that sent it. */
-export const DELIVERY_ROUTES = Object.freeze(['inbox', 'relay']);
+const DELIVERY_ROUTES = Object.freeze(['inbox', 'relay']);
 
 /**
  * Marks specific pending items as sent in a message from the canvas. `tasks` is how many
