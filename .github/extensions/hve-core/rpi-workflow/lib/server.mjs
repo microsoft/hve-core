@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
@@ -445,13 +445,13 @@ export function createCanvasServer(deps) {
         return docs.filter((doc) => wanted.has(doc.taskId)).map((doc) => ({ ...doc, ids: wanted.get(doc.taskId) }));
     }
 
-    /** The Copilot session and workspace root that hold the shown tasks, when they are not the canvas's own session; null otherwise. */
+    /** The Copilot session that holds the shown tasks, when it is not the canvas's own session; null otherwise. */
     const otherSessionOf = () => {
         const source = deps.getSource?.();
         const bound = source?.kind === 'rpi' && typeof source.boundSession === 'string' ? source.boundSession : null;
         const own = deps.getJoinedSessionId?.();
         if (!bound || (typeof own === 'string' && own.toLowerCase() === bound.toLowerCase())) return null;
-        return { id: bound, root: typeof source.workspace?.root === 'string' ? source.workspace.root : null };
+        return { id: bound };
     };
 
     /** The canvas's own Copilot session, in lowercase; null before the canvas joins one. */
@@ -472,12 +472,18 @@ export function createCanvasServer(deps) {
         return target ? { sessionId: target.id.toLowerCase(), sessionName: session.followUps?.tree?.name ?? null } : null;
     };
 
-    const compose = (groups, body) => composeSessionDelivery(groups.map((group) => ({ session: group.session, ids: group.ids })), now(), {
-        canvas: getCanvas(),
-        note: body?.note,
-        sessionName: groups[0]?.session.followUps?.tree?.name ?? null,
-        otherSession: otherSessionOf(),
-    });
+    // The digest of another session's items also names that session, so a preview taken while the
+    // canvas showed a different session goes stale rather than sending where the preview did not say.
+    const compose = (groups, body) => {
+        const composed = composeSessionDelivery(groups.map((group) => ({ session: group.session, ids: group.ids })), now(), {
+            canvas: getCanvas(),
+            note: body?.note,
+            sessionName: groups[0]?.session.followUps?.tree?.name ?? null,
+        });
+        const target = otherSessionOf();
+        if (!target) return composed;
+        return { ...composed, digest: createHash('sha256').update(`${composed.digest}\n${target.id.toLowerCase()}`).digest('hex').slice(0, 32) };
+    };
 
     const sameItems = (a, b, ids) => ids.every((id) => JSON.stringify(a.feedback.find((item) => item.id === id)) === JSON.stringify(b.feedback.find((item) => item.id === id)));
 

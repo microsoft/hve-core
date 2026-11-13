@@ -253,40 +253,6 @@ describe('delivery composition', () => {
         assert.equal(artifactFor(base(), 'research'), null);
     });
 
-    it('names the session and workspace root for a task of another session, and leaves the own session unchanged', () => {
-        const other = { id: '5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b', root: '/work/child' };
-        let s = base();
-        s.feedback = [];
-        s.source = { kind: 'rpi', statePath: '.copilot-tracking/rpi-sessions/2026-10-26/s/t-state.json', artifacts: { research: '.copilot-tracking/research/2026-10-26/t-research.md', plan: null, critique: null, changes: null, review: null } };
-        s = createFeedback(s, { kind: 'comment', target: { id: 'F1' }, text: 'Check the quota.' }, NOW).session;
-        const ids = s.feedback.map((item) => item.id);
-        const away = composeDelivery(s, ids, NOW, { canvas, otherSession: other });
-        assert.match(away.prompt, /\nTask files, in session 5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b at workspace root \/work\/child; paths are relative to that root:\n- State: \.copilot-tracking\/rpi-sessions\/2026-10-26\/s\/t-state\.json\n- Research: \.copilot-tracking\/research\/2026-10-26\/t-research\.md\n\nItems:/);
-        assert.doesNotMatch(away.prompt, /Task files:/);
-        const home = composeDelivery(s, ids, NOW, { canvas });
-        assert.match(home.prompt, /\nTask files:\n- State: /);
-        assert.doesNotMatch(home.prompt, /in session/);
-        assert.notEqual(away.digest, home.digest, 'the digest covers the session and root');
-        assert.ok(composeDelivery(s, ids, NOW, { canvas, otherSession: { id: other.id, root: null } }).prompt.includes(`Task files, in session ${other.id}:\n- State: `), 'a session without a root names only the session');
-        assert.equal(composeDelivery(s, ids, NOW, { canvas, otherSession: other }).digest, away.digest, 'the same session gives the same message');
-    });
-
-    it('names the session on each task of a message that spans tasks of another session', () => {
-        const other = { id: '5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b', root: '/work/child' };
-        const rpi = (id) => {
-            const s = base();
-            s.feedback = [];
-            s.task = { ...s.task, id, title: `Title ${id}` };
-            s.source = { kind: 'rpi', statePath: `.copilot-tracking/rpi-sessions/2026-10-26/s/${id}-state.json`, artifacts: { research: null, plan: null, critique: null, changes: null, review: null } };
-            return createFeedback(s, { kind: 'comment', target: { id: 'F1' }, text: `About ${id}` }, NOW).session;
-        };
-        const child = rpi('child');
-        const sibling = rpi('sibling');
-        const both = composeSessionDelivery([{ session: child, ids: [child.feedback[0].id] }, { session: sibling, ids: [sibling.feedback[0].id] }], NOW, { canvas, otherSession: other });
-        assert.equal(both.prompt.split(`Task files, in session ${other.id} at workspace root /work/child; paths are relative to that root:`).length - 1, 2);
-        assert.doesNotMatch(both.prompt, /Task files:/);
-    });
-
     it('accepts comments on the Decisions rows and names their file', () => {
         let s = base();
         s.feedback = [];
