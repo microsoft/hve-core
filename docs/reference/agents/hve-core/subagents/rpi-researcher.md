@@ -1,9 +1,9 @@
 ---
 title: RPI Researcher
 description: "Gathers candidate sources for one bounded research question and returns source pointers, exact locations, contract excerpts, and brief relevance notes as suggestions for the calling agent to verify. Use during research when isolating source gathering would help."
-sidebar_position: 3
+sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-19
+ms.date: 2026-11-12
 ms.topic: reference
 keywords:
   - agent

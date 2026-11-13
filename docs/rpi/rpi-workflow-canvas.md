@@ -3,7 +3,7 @@ title: RPI Workflow Canvas
 description: Follow an RPI session phase by phase in a canvas beside the chat, answer the agent's decisions, send it your input, and show a Project's sessions from the session picker
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-11-11
+ms.date: 2026-11-12
 ms.topic: how-to
 keywords:
   - rpi workflow canvas
@@ -154,11 +154,11 @@ Below the board, **Phases and tasks** shows the work in progress by default, wit
 
 ### Review
 
-Review shows the assessment with a count of findings by severity, then each finding with what was expected and what was observed side by side:
+Review represents both acceptance review (`rpi-review`) and subtractive refinement review (`rpi-refine`) together in one view, whether one ran alone or both ran together. It opens with their assessment summaries, depths (`surface`, `standard`, or `deep`), and severity counts, then lists `RV-xxx` acceptance findings (`Expected` and `Observed` side by side) alongside `RF-xxx` refinement findings (`Current state` and `Remove or rework` side by side, tagged by subtractive dimension):
 
 ![Screenshot of a review finding with Expected and Observed side by side and the agent's decision with Question this decision.](../docusaurus/static/img/rpi-workflow-canvas/review-findings.webp)
 
-The card beside each finding gives the decision on it and where the work goes next. **Question this decision** starts a comment about that finding. The decision history follows the findings.
+The card beside each finding gives the decision (`RD-xxx` or `FD-xxx`) and where the work goes next (`rpi-plan` follow-up phases, `rpi-implement`, `rpi-research`, or follow-up). **Question this decision** starts a comment about that finding. The unified decision history follows the findings.
 
 ### Follow-up
 

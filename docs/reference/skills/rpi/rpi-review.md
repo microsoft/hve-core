@@ -1,9 +1,9 @@
 ---
 title: rpi-review
 description: "Compare RPI planning and implementation evidence, record review findings, and route follow-up work. Use when an implementation needs acceptance review."
-sidebar_position: 6
+sidebar_position: 7
 author: Microsoft
-ms.date: 2026-10-14
+ms.date: 2026-11-12
 ms.topic: reference
 keywords:
   - skill
@@ -28,16 +28,19 @@ Compare RPI planning and implementation evidence, record review findings, and ro
 
 ## When to use it
 
-Use `rpi-review` after implementation finishes when you want an acceptance review; the review is optional. It compares the plan, the critique when one ran, the changes record, and validation evidence against the accepted requirements. The skill initializes one record under `.copilot-tracking/reviews/logs/`, compares the evidence in one marker-driven pass, and writes the findings itself. If a session ends mid-review, run it again and it continues from the saved record.
+Use `rpi-review` after implementation finishes to reconcile the plan, the critique when one ran, the changes record, and validation evidence against the accepted requirements.
+In an [rpi](rpi) session it runs alongside [rpi-refine](rpi-refine), which handles subtractive simplification in its own record, and both reviews appear together in the RPI Workflow canvas Review view. The skill initializes one record under `.copilot-tracking/reviews/logs/`, compares the evidence in one marker-driven pass, and writes the findings itself. If a session ends mid-review, run it again and it continues from the saved record.
 
 A helper such as [RPI Reviewer](../../agents/hve-core/subagents/rpi-reviewer) is optional: the review parent may assign it one bounded, context-heavy comparison and receive candidate findings with evidence locations, then verifies each one, or investigates further itself, before recording an `RV-xxx`. The review parent owns the final outcome and every route in `## Parent Decision Record`.
 
 For a large review, the parent splits context-heavy comparisons into independent lanes and runs them in parallel, each at the effort its work needs: `low` for checks a tool answers completely, such as matching checked tasks to changes entries, `high` for comparing work against written requirements, and `max` for judging runtime behavior, security, or irreversible changes.
 A lane must name where each requirement it calls consistent is met, or the parent treats that requirement as not assessed. Set `effort=` for one level across lanes, or pass `subagents=none` to keep the whole comparison in the parent.
 
-The record keeps execution status (`Complete`, `Partial`, `Blocked`) separate from outcome (`Conformant`, `Conformant with justified divergence`, `Defects found`, `Residual work`, `Not accepted`). Each accepted finding routes once: defects to a later `rpi-implement`, decision gaps to `rpi-plan`, evidence gaps to `rpi-research`, residual work to a distinct follow-up. A later fix does not require another review; when you ask for a new review, it writes a separate record with a numbered suffix.
+The record keeps execution status (`Complete`, `Partial`, `Blocked`) separate from outcome (`Conformant`, `Conformant with justified divergence`, `Defects found`, `Residual work`, `Not accepted`).
+Each accepted finding routes once: defects to a later `rpi-implement`, decision or multi-step planning gaps to `rpi-plan` (as new `Pxx` phases or a separate RPI session), evidence gaps to `rpi-research`, residual work to a distinct follow-up.
+Remediation of its findings does not automatically start another full review; a repeated loop in the same session that introduces significant changes runs `depth=surface` at a numbered path, and an explicit request for a new review also writes a numbered record.
 
-In a standalone review you walk through each actionable finding with a suggested action, gather-more-information, skip, and finish choices. Inside an automatic `RPI Agent` session the parent decides routes from evidence unless you explicitly retain Review decisions. Pass `depth=deep` only when you want broader evidence tracing; `standard` completely assesses the material boundary by default.
+In a standalone review you walk through each actionable finding with a suggested action, gather-more-information, skip, and finish choices. Inside an automatic `RPI Agent` session the parent decides routes from evidence unless you explicitly retain Review decisions. `standard` depth completely assesses the material boundary by default, `surface` checks only latest-loop changes after significant same-session rework, and `deep` requires explicit direction.
 
 When the plan cites a BRD, PRD, or ADR, or the changes log has Business Alignment entries, the review also checks delivered work against those sources.
 Severity depends on what is at stake and on whether the source's owner knows, not on the document type.
@@ -55,6 +58,7 @@ Nothing is sent or posted for you.
 
 Reach for a different asset when:
 
+* You want to identify what can be removed, simplified, consolidated, or redesigned across touched code, docs, tests, and config. Use [rpi-refine](rpi-refine).
 * You are reviewing a pull request rather than RPI artifacts. Use the [Code Review](../../agents/coding-standards/code-review) agent.
 * You want to assess a plan before implementation. Use [rpi-plan-critique](rpi-plan-critique).
 

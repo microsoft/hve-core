@@ -3,7 +3,7 @@ title: Why the RPI Workflow Works
 description: The psychology and principles behind the evidence-led RPI lifecycle and its entry surfaces
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-12
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -45,7 +45,8 @@ RPI keeps Research, Plan, Implement, Review, and Follow-up distinct so a task us
 * `/rpi-research` investigates a demonstrated gap and produces evidence for planning readiness.
 * `/rpi-plan` owns one task-centered implementation plan and records independent critique.
 * `/rpi-implement` directly executes approved work, records changes and validation, and returns material discoveries for plan reconciliation.
-* `/rpi-review` creates one evidence-reconciliation record and routes defects, decision gaps, research gaps, and residual work.
+* `/rpi-review` creates one acceptance-reconciliation record (`RV-xxx`) and routes defects, decision gaps, research gaps, and residual work.
+* `/rpi-refine` creates one subtractive-refinement record (`RF-xxx`) identifying what can be removed, simplified, consolidated, or redesigned across code, tests, docs, domain language, dependencies, error boundaries, performance, language versions, and configuration.
 
 When a long lifecycle needs a fresh context, durable artifacts preserve the task identity, evidence, decisions, and next action. A reset can reduce accumulated context, but it does not require a new research stage or a fresh run of every lifecycle concept.
 
@@ -96,13 +97,12 @@ The plan becomes a contract. When implementation begins, the AI follows the plan
 * Descriptive change evidence and truthful validation establish what happened.
 * A significant discovery updates the affected plan after its required decision and pauses only dependent work; a follow-up critique runs only when you ask for one.
 
-### Review Phase: Validating, Not Assuming
+### Review Phase: Validating and Simplifying
 
-`/rpi-review` writes one record that reconciles implementation against documented evidence:
+Review pairs two read-only perspectives that appear together in the RPI Workflow canvas:
 
-* Compares the task-centered plan, critique, changes, and validation evidence in one pass and writes the findings itself, then decides the outcome and every route.
-* Separates execution status from outcome and records validation as passed, failed, skipped, or unavailable.
-* Routes defects to implementation, decision gaps to planning, research gaps to research, and residual work to follow-up.
+* `/rpi-review` compares the task-centered plan, critique, business alignment, changes, and validation evidence in one pass, separates execution status from outcome, and routes defects and gaps.
+* `/rpi-refine` uses fresh-context `RPI Refiner` lenses to strip avoidable complexity, dead scaffolding, redundant tests, misplaced docs, AI-sounding prose, and architectural workarounds, feeding accepted rework into new `Pxx` plan phases or a separate RPI session.
 
 ### Follow-up: Routing, Not Relabeling
 
@@ -146,7 +146,7 @@ Select `RPI Agent` when you want a user-selected lifecycle wrapper. It activates
 
 ### Direct Phase Skills
 
-Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when the next responsible lifecycle action is known.
+Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, `/rpi-review`, or `/rpi-refine` when the next responsible lifecycle action is known.
 
 ### Matching the Entry Surface to the Task
 
