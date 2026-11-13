@@ -3,7 +3,7 @@ title: Using RPI Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-11-04
+ms.date: 2026-11-12
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -12,6 +12,7 @@ keywords:
   - rpi plan
   - rpi implement
   - rpi review
+  - rpi refine
   - complete workflow
   - follow-up
   - automatic mode
@@ -23,12 +24,12 @@ This guide walks through an evidence-led RPI lifecycle for a complex task. `RPI 
 ## The Complete Workflow
 
 ```text
-┌────────────────────┐     ┌─────────────────────┐     ┌────────────────────┐     ┌────────────────────┐
-│ Research readiness │ ──→ │ Plan                │ ──→ │ Implement          │ ──→ │ Review             │
-│                    │     │ rpi-plan            │     │ rpi-implement      │     │ rpi-review         │
-│ Reuse evidence or  │     │ Goals, task context,│     │ Direct execution,  │     │ One reconciliation │
-│ research a gap     │     │ critique            │     │ changes, validation│     │ record and routing │
-└────────────────────┘     └─────────────────────┘     └────────────────────┘     └────────────────────┘
+┌────────────────────┐     ┌─────────────────────┐     ┌────────────────────┐     ┌──────────────────────┐
+│ Research readiness │ ──→ │ Plan                │ ──→ │ Implement          │ ──→ │ Review               │
+│                    │     │ rpi-plan            │     │ rpi-implement      │     │ rpi-review +         │
+│ Reuse evidence or  │     │ Goals, task context,│     │ Direct execution,  │     │ rpi-refine           │
+│ research a gap     │     │ critique            │     │ changes, validation│     │ Acceptance + refine  │
+└────────────────────┘     └─────────────────────┘     └────────────────────┘     └──────────────────────┘
      │                                                                    │
      │ demonstrated gap                                                   │ routes open work
      ▼                                                                    ▼
@@ -243,7 +244,7 @@ If implementation requires a significant departure from the approved plan, recor
 
 When a completed task creates something a later task needs, such as a new class or contract path the plan did not name, implementation adds a `Guidance:` block to that later task so the next agent does not have to rediscover it.
 
-1. When the in-scope implementation is ready for review, hand off the plan, critique disposition, and changes record. Review is optional; skip it when you do not need an acceptance record:
+1. When the in-scope implementation is ready for review, hand off the plan, critique disposition, and changes record:
 
 ```text
 Implementation complete!
@@ -265,20 +266,18 @@ Ready for review.
 ### Review
 
 1. Open or reference the complete evidence set. Begin a fresh context only when it will help evidence reconciliation.
-2. Use `/rpi-review` to reconcile the implementation:
+2. Use `/rpi-review` and `/rpi-refine` to evaluate acceptance conformance and subtractive simplification:
 
    ```text
    /rpi-review task=blob-storage
+   /rpi-refine task=blob-storage
    ```
 
-3. `/rpi-review` creates or updates one review record:
+3. `/rpi-review` creates the acceptance record (`-review.md`), while `/rpi-refine` creates the subtractive refinement record (`-refinement.md`):
 
-   * Locates research, the task-centered plan, plan critique, changes, and validation evidence
-   * Compares each `Pxx` and `Pxx-Txx` item with completion and change evidence in one marker-driven pass; helpers such as `RPI Reviewer` may take context-heavy comparisons in parallel lanes and return candidate findings that the review verifies before recording
-   * Assesses implementation-time plan updates, critique dispositions, and plan follow-up items
-   * Records severity-graded `RV-xxx` findings, separate execution status and outcome, validation evidence or `Unavailable`, and proposed routing
-   * Keeps final outcome and route decisions in `## Parent Decision Record`; in a standalone review you walk through each actionable finding and choose its route
-   * Checks delivered work against any cited BRD, PRD, or ADR, routes needed source updates to their owners, and, when you accept, drafts a copy-ready note to the source owner
+   * `/rpi-review` compares each `Pxx` and `Pxx-Txx` item against completion, business alignment, and validation evidence, recording severity-graded `RV-xxx` findings and `RD-xxx` parent decisions
+   * `/rpi-refine` inspects touched code, tests, docs, domain language, SDKs, assumptions, error boundaries, performance, language versions, and configuration through fresh-context `RPI Refiner` lenses to identify what can be removed, consolidated, or redesigned (`RF-xxx` findings and `FD-xxx` parent decisions)
+   * Both records appear together in the RPI Workflow canvas Review view and route accepted work into `rpi-plan` (as new `Pxx` follow-up phases or a separate RPI session), `rpi-implement`, `rpi-research`, or follow-up
 
 4. Review the findings:
 
@@ -327,14 +326,15 @@ Review routes work rather than silently looping it through a generic chain:
 
 After completing RPI, you have:
 
-| Artifact               | Location                                                                        | Purpose                                                  |
-|------------------------|---------------------------------------------------------------------------------|----------------------------------------------------------|
-| Research, when it runs | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`           | Evidence and recommendations                             |
-| Plan                   | `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`                  | Goals, task context, requirements, decisions, and status |
-| Plan critique          | `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md` | Independent planning credibility assessment              |
-| Changes                | `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`             | Implementation, validation, and handoff evidence         |
-| Review                 | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`         | Reconciliation, `RV-xxx` findings, outcome, and routing  |
-| Code                   | Your source directories                                                         | Working implementation                                   |
+| Artifact               | Location                                                                        | Purpose                                                             |
+|------------------------|---------------------------------------------------------------------------------|---------------------------------------------------------------------|
+| Research, when it runs | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`           | Evidence and recommendations                                        |
+| Plan                   | `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`                  | Goals, task context, requirements, decisions, and status            |
+| Plan critique          | `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md` | Independent planning credibility assessment                         |
+| Changes                | `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`             | Implementation, validation, and handoff evidence                    |
+| Acceptance review      | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`         | Requirement reconciliation, `RV-xxx` findings, outcome, and routing |
+| Refinement review      | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-refinement.md`     | Subtractive simplification, `RF-xxx` findings, outcome, and routing |
+| Code                   | Your source directories                                                         | Working implementation                                              |
 
 ## Common Patterns
 
@@ -381,16 +381,15 @@ The Review concept routes findings to the earliest responsible lifecycle concept
 
 ### Defect Flow
 
-When `/rpi-review` identifies Critical or High findings:
+When `/rpi-review` or `/rpi-refine` identifies implementation findings:
 
-1. Open the review log in your editor.
-2. Use `/rpi-implement` to address implementation findings.
-3. Preserve the relevant changes and validation evidence.
-4. Preserve the implementation and validation evidence; the original Review remains the task's review record.
+1. Open the review or refinement log in your editor.
+2. Feed accepted findings into `/rpi-plan` (as a new `Pxx` follow-up phase) or `/rpi-implement` for localized fixes.
+3. Preserve the implementation and validation evidence; localized fixes do not start another review unless you request one or introduce significant cross-cutting changes (`surface` depth).
 
 ### Research and Planning Flow
 
-When `/rpi-review` identifies research or planning gaps:
+When `/rpi-review` or `/rpi-refine` identifies research or planning gaps:
 
 1. Open the review log and the referenced task artifacts.
 2. Choose the appropriate direct phase skill:
@@ -400,13 +399,13 @@ When `/rpi-review` identifies research or planning gaps:
 
 ## Quick Reference
 
-| Lifecycle concept     | Direct skill       | Output                                                                |
-|-----------------------|--------------------|-----------------------------------------------------------------------|
-| Research, when needed | `/rpi-research`    | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md` |
-| Plan                  | `/rpi-plan`        | Task-centered plan and critique                                       |
-| Implement             | `/rpi-implement`   | Source changes and changes evidence                                   |
-| Review                | `/rpi-review`      | One review record with status, outcome, and routing                   |
-| Follow-up             | Routed from review | Earliest responsible stage or a distinct next item                    |
+| Lifecycle concept     | Direct skill                    | Output                                                                |
+|-----------------------|---------------------------------|-----------------------------------------------------------------------|
+| Research, when needed | `/rpi-research`                 | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md` |
+| Plan                  | `/rpi-plan`                     | Task-centered plan and critique                                       |
+| Implement             | `/rpi-implement`                | Source changes and changes evidence                                   |
+| Review                | `/rpi-review` and `/rpi-refine` | Acceptance (`RV-xxx`) and refinement (`RF-xxx`) records and routing   |
+| Follow-up             | Routed from review              | New `Pxx` plan phases, a separate RPI session, or a distinct item     |
 
 > [!TIP]
 > `RPI Agent` is a lifecycle entry surface for the phase skills. It uses research readiness and does not require fresh research or every lifecycle concept in one conversation.
@@ -440,11 +439,11 @@ In manual mode, the agent stays in the active phase until you ask for the next p
 
 In automatic mode, the agent moves through the phases without routine approval prompts, up to the boundary you chose. It still stops for blockers and required human review, and it asks before destructive, hard-to-reverse, shared-system, or externally visible actions.
 
-Whatever the mode, the plan critique and Review each run once per session, in the first task. Ask to skip either one or to run more.
+On the session's initial pass, Planning runs `rpi-plan-critique` and Review runs both `/rpi-review` and `/rpi-refine` (unless you or a coordinating Project select one review skill or skip a step). When a Project coordinates the session and the changes are significant enough to benefit from dedicated review sessions, the session sends a `handoff` report so the coordinator can run or delegate the reviews across its sessions.
 
-After Review, or after Implement when you skip Review, an automatic session assesses follow-up work. When the agent owns follow-up selection, it starts the highest-ranked required item in a child task and keeps going until your acceptance criteria are met. When you keep that choice, it shows the ranked follow-ups with **Stop automatic session** and **Switch to manual mode**.
+After Review, an automatic session reconciles `RV-xxx` and `RF-xxx` findings. Accepted work that continues in the same session feeds into `rpi-plan` as new `Pxx` planning phases on the active plan and runs `rpi-implement`; broader redesigns can start a separate RPI session with standard RPI rules. When you retain follow-up selection, the session shows the ranked choices alongside **Stop automatic session** and **Switch to manual mode**.
 
-A child task starts from Research with the completed task recorded as its parent. It skips the critique and Review unless you ask for them on follow-up work.
+To prevent back-and-forth looping between Review and Implement in the same session, follow-up loops after the session's first Review skip another review when fixes stay localized to accepted finding targets, run a bounded `surface`-depth check when the loop introduced significant architectural, contract, domain, or cross-cutting changes, and run another full review only when you ask for one.
 
 Both modes persist one JSON state record with the task identity, mode, active phase, artifact pointers, decisions, blockers, and ranked follow-ups, so a later conversation can resume from the recorded phase.
 

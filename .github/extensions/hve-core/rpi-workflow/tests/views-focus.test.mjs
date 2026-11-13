@@ -173,4 +173,20 @@ describe('focused presentation', () => {
         assert.match(rowById(optional, 'followups').textContent, /optional/);
         assert.equal(folded(optional, 'session-loops'), true);
     });
+
+    it('renders acceptance and refinement assessments together with tailored columns and RF history chips', async () => {
+        const session = buildScenario('review', NOW);
+        const root = await render(session, 'review', 'full');
+        assert.ok(rowById(root, 'review-summary'));
+        assert.ok(rowById(root, 'refinement-summary'));
+        assert.match(rowById(root, 'review-summary').textContent, /Acceptance: 5 · Refinement: 2/);
+        const rfRow = rowById(root, 'RF-001');
+        assert.ok(rfRow);
+        assert.match(rfRow.textContent, /Refinement/);
+        assert.match(rfRow.textContent, /Dependencies and SDKs/);
+        assert.match(rfRow.textContent, /Current state/);
+        assert.match(rfRow.textContent, /Remove or rework/);
+        const historyRow = rowById(root, 'history');
+        assert.ok(elements(historyRow).some((el) => el.classList.contains('id-chip') && el.textContent.includes('RF-001')));
+    });
 });

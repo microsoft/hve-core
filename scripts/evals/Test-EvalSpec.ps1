@@ -965,7 +965,9 @@ function Get-NewParentAgentSlugFromGit {
         [string]$RepoRoot,
 
         [Parameter(Mandatory = $true)]
-        [string]$BaseRef
+        [string]$BaseRef,
+
+        [string]$AgentsRoot = '.github/agents'
     )
 
     Push-Location -LiteralPath $RepoRoot
@@ -979,16 +981,23 @@ function Get-NewParentAgentSlugFromGit {
 
     if ($gitExit -ne 0 -or $null -eq $output) { return @() }
 
+    $parentSlugs = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($entry in @(Get-ParentAgentInventoryForCoverage -RepoRoot $RepoRoot -AgentsRoot $AgentsRoot)) {
+        [void]$parentSlugs.Add([string]$entry.slug)
+    }
+
     $slugs = [System.Collections.Generic.List[string]]::new()
-    foreach ($line in $output) {
-        $trimmed = ([string]$line).Trim()
+    foreach ($line in @($output)) {
+        $trimmed = ([string]$line).Trim().Replace('\', '/')
         if ([string]::IsNullOrWhiteSpace($trimmed)) { continue }
+        if ($trimmed -match '(?:^|/)subagents/') { continue }
         $name = [System.IO.Path]::GetFileName($trimmed)
         if (-not $name.EndsWith('.agent.md')) { continue }
         $slug = $name.Substring(0, $name.Length - '.agent.md'.Length)
+        if ($parentSlugs.Count -gt 0 -and -not $parentSlugs.Contains($slug)) { continue }
         $slugs.Add($slug)
     }
-    return $slugs.ToArray()
+    return ,$slugs.ToArray()
 }
 
 function Test-AgentBehaviorCoverage {
@@ -1125,8 +1134,8 @@ if ($MyInvocation.InvocationName -ne '.') {
     if (-not $SkipAgentCoverage) {
         $restrictSlugs = $null
         if ($NewAgentsOnly) {
-            $restrictSlugs = Get-NewParentAgentSlugFromGit -RepoRoot $resolvedRepoRoot -BaseRef $BaseRef
-            if ($null -eq $restrictSlugs -or $restrictSlugs.Count -eq 0) {
+            $restrictSlugs = @(Get-NewParentAgentSlugFromGit -RepoRoot $resolvedRepoRoot -BaseRef $BaseRef -AgentsRoot $AgentsRoot)
+            if ($restrictSlugs.Count -eq 0) {
                 Write-Host "Agent behavior coverage: -NewAgentsOnly set, but no newly-added parent agents detected vs '$BaseRef'. Skipping coverage check."
             }
         }

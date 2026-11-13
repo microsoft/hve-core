@@ -28,28 +28,31 @@ User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Fo
 
 ## When to use it
 
-Select `RPI Agent` from the chat agent picker when you want a dedicated agent entry point that preloads the [rpi](../../skills/rpi/rpi.md) skill to coordinate Research, Plan, Implement, Review, and Follow-up with a durable state record and one stable task identity.
-You can also invoke the [rpi](../../skills/rpi/rpi.md) skill directly as `/rpi` or let the model load it on demand without switching agents.
-Both entry surfaces follow the `rpi` skill instructions, activate the matching phase skills ([rpi-research](../../skills/rpi/rpi-research), [rpi-plan](../../skills/rpi/rpi-plan), [rpi-implement](../../skills/rpi/rpi-implement), [rpi-review](../../skills/rpi/rpi-review)), and open and use the RPI Workflow canvas (`hve-core-rpi-workflow`) when available.
+Select `RPI Agent` from the chat agent picker when you want a dedicated agent entry point that preloads the [rpi](../../skills/rpi/rpi) skill to coordinate Research, Plan, Implement, Review, and Follow-up with a durable state record and one stable task identity.
+You can also invoke the [rpi](../../skills/rpi/rpi) skill directly as `/rpi` or let the model load it on demand without switching agents.
+Both entry surfaces follow the `rpi` skill instructions, activate the matching phase skills ([rpi-research](../../skills/rpi/rpi-research), [rpi-plan](../../skills/rpi/rpi-plan), [rpi-implement](../../skills/rpi/rpi-implement), [rpi-review](../../skills/rpi/rpi-review), and [rpi-refine](../../skills/rpi/rpi-refine)), and open and use the RPI Workflow canvas (`hve-core-rpi-workflow`) when available.
 
-It persists mode, active phase, artifact pointers, decisions, blockers, and ranked follow-ups in one JSON state record per task so a later conversation can resume from the recorded phase. Every task a conversation works on keeps its state in one session folder, `.copilot-tracking/rpi-sessions/<date>/<session>/<task>-state.json`, named after the session, and parent and child state files link to each other. Research, plans, critiques, changes, and reviews stay in their own dated folders.
+It persists mode, active phase, artifact pointers (`research`, `plan`, `critique`, `changes`, `review`, and `refinement`), decisions, blockers, and ranked follow-ups in one JSON state record per task so a later conversation can resume from the recorded phase.
+Every task a conversation works on keeps its state in one session folder, `.copilot-tracking/rpi-sessions/<date>/<session>/<task>-state.json`, named after the session. Research, plans, critiques, changes, acceptance reviews, and refinement reviews stay in their own dated folders.
 
-When the host offers the RPI Workflow canvas, the agent opens it once per conversation to show the session, the canvas follows each new loop in the same panel, and what you send from the canvas reaches the agent as your direction. The [RPI Workflow Canvas](../../../rpi/rpi-workflow-canvas) guide shows how to use it. When the host can rename chats, the agent names the chat after the session.
-
-Child tasks inherit your participation preferences and unresolved work, but own fresh phase artifacts. They skip the plan critique and Review unless you ask for them on follow-up work. If a state write fails, progression pauses; recovery reconciles the recorded transition before starting work, without creating a duplicate child.
+When the host offers the RPI Workflow canvas, the agent opens it once per conversation to show the session, the canvas follows each loop in the same panel, and both `rpi-review` and `rpi-refine` appear together in the Review view. What you send from the canvas reaches the agent as your direction. The [RPI Workflow Canvas](../../../rpi/rpi-workflow-canvas) guide shows how to use it.
 
 It offers two modes:
 
-| Mode        | Behavior                                                                                                                                                                                                                                                                                                                  |
-|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `manual`    | Walks you through the active phase's artifacts and waits for an explicit next-phase request or a `/rpi-*` command. You own every material decision.                                                                                                                                                                       |
-| `automatic` | An explicit automatic request, such as "full auto", starts automatic progression without another mode question. The agent makes ordinary decisions and runs required in-scope follow-ups through new RPI loops until the requested outcome is complete. Explicitly retained decisions and progression limits still apply. |
+| Mode        | Behavior                                                                                                                                                                                                                                                                                                                       |
+|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `manual`    | Walks you through the active phase's artifacts and waits for an explicit next-phase request or a `/rpi-*` command. You own every material decision.                                                                                                                                                                            |
+| `automatic` | An explicit automatic request, such as "full auto", starts automatic progression without another mode question. The agent makes ordinary decisions and runs required in-scope follow-ups through repeated RPI loops until the requested outcome is complete. Explicitly retained decisions and progression limits still apply. |
 
 Both modes stop for blockers, required human review, and destructive, hard-to-reverse, or externally visible actions.
 
-The plan critique and Review each run once per session by default, in the first task, in both modes; plan changes and review-driven follow-ups do not start another unless you ask. Ask to skip either one, and the agent records the skip and moves to the next step: Planning finishes without the critique, and a skipped Review moves from Implement to Follow-up.
+On the session's initial pass, Planning runs `rpi-plan-critique` and Review runs both [rpi-review](../../skills/rpi/rpi-review) and [rpi-refine](../../skills/rpi/rpi-refine); you or a coordinating Project can also select one review skill or skip a step.
+When another session (such as a Project coordinator) coordinates the session and the completed changes are significant enough to benefit from coordinator-managed review across dedicated sessions, the agent sends a `handoff` report with the state, plan, and changes paths so the coordinator can run or delegate the reviews and provide the resulting records back.
 
-You can also set the reasoning effort of research or review helper lanes, or of the plan critique's lenses, as one level or for specific lane kinds, topics, or lenses. Subagents stay optional in every phase: say how phases should use them, including not at all, and the agent records that direction and passes it to each phase. The agent passes these settings to the matching phase.
+Accepted findings from `rpi-review` (`RV-xxx`) and `rpi-refine` (`RF-xxx`) either feed into `rpi-plan` as new `Pxx` planning phases on the active plan for a repeated loop in the same session, or start a separate RPI session with standard RPI rules.
+After the session's first Review completes, follow-up loops in the same session skip another review when fixes stay localized to accepted finding targets, run a `surface`-depth check when the loop introduced significant architectural, contract, domain, or cross-cutting changes, and run another full review only when you explicitly ask for one.
+
+You can also set the reasoning effort of research or review helper lanes, or of the plan critique's lenses, as one level or for specific lane kinds, topics, or lenses. Subagents stay optional in every phase: say how phases should use them, including not at all, and the agent records that direction and passes it to each phase.
 
 Reach for a different asset when:
 
@@ -63,7 +66,7 @@ Reach for a different asset when:
 3. In manual mode, the agent walks you through each phase's artifacts and asks whether to refine the work or advance. Request the next phase in your answer or invoke the matching `/rpi-*` command.
 4. To switch to automatic mode, ask for "full auto" or ask the agent to automatically iterate through RPI until the work is finished. No second confirmation is needed. When intent is unspecified, choose one of the four options below. Every question includes freeform input.
 5. When a retained decision or exceptional confirmation pauses the session, answer the question; the session resumes automatically.
-6. In automatic mode, the agent continues required in-scope follow-ups from Research in a child task, honoring your decision preferences. Each child has its own plan and implementation evidence, and runs no critique or Review unless you ask. Optional improvements stay unselected. The session stops when acceptance criteria are met, or pauses when a blocker prevents progress.
+6. In automatic mode, the agent feeds required in-scope follow-ups into `rpi-plan` as new `Pxx` planning phases (or into a separate RPI session when broader rework warrants it), honoring your decision preferences. Optional improvements stay unselected. The session stops when acceptance criteria are met, or pauses when a blocker prevents progress.
 
 The opening question is "How would you like us to work on this?":
 
@@ -107,18 +110,17 @@ To delegate progression and ordinary decisions explicitly:
 Use automatic mode. Make the decisions and keep iterating through RPI loops until the storage output and its required tests are complete.
 ```
 
-After Review identifies a required test gap, the agent records the decision and continues without a follow-up question:
+After `rpi-review` and `rpi-refine` identify a missing emulator test and a duplicate retry helper, the agent appends a follow-up planning phase without a prompt:
 
 ```text
-* Mode: automatic; session: running; task blob-storage: completed; phase: Follow-up
-* Review: Complete; outcome Residual work; RV-001 routed to follow-up
+* Mode: automatic; session: running; task blob-storage: active; phase: Follow-up
+* Acceptance review: Complete (Defects found, RV-001); Refinement review: Complete (Refinements identified, RF-001)
 
 Selected required follow-up:
-1. Add integration tests against the storage emulator (required by the acceptance criteria; RV-001).
+1. Add emulator integration test (RV-001) and replace custom retry loop with shared backoff helper (RF-001).
 
-Starting child task blob-storage-integration-tests from Research, reusing the existing storage findings; the session's one critique and Review have run, so the child skips both.
-Optional retry-helper cleanup remains unselected.
+Transitioning to Plan to append P04 for RV-001 and RF-001; localized fixes in P04 will be validated without repeating full Review.
 ```
 
-Once required work has passing validation, with the session's Review for the first task and implementation evidence for child work, the agent stops the automatic session and reports completion, naming any child changes that were validated but not reviewed.
-A child's changes must account for affected earlier acceptance checks. A repeated unresolved finding without measurable progress or a materially different evidence-backed corrective approach pauses as a no-progress blocker; file changes alone do not justify another loop.
+Once required work has passing validation, the agent stops the automatic session and reports completion, noting when follow-up changes after the initial Review were validated without a repeat review.
+A repeated unresolved finding without measurable progress or a materially different evidence-backed corrective approach pauses as a no-progress blocker; file changes alone do not justify another loop.
