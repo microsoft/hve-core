@@ -83,7 +83,7 @@ When a ledger is needed, derive `{{task_slug}}` in lower-kebab-case from the pri
 
 ## Handoff
 
-* In a standalone walkthrough, recommend the exact applicable `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` command only for a ledger entry handed off to RPI work or still requiring downstream work. Do not invoke it. Otherwise state the explicit no-handoff reason.
+* In a standalone walkthrough, recommend the exact applicable `/rpi-research`, `/rpi-plan`, `/rpi-implement`, `/rpi-review`, or `/rpi-refine` command only for a ledger entry handed off to RPI work or still requiring downstream work. Do not invoke it. Otherwise state the explicit no-handoff reason.
 * In an active confirmed automatic RPI Agent context, return the relevant ledger and evidence to the parent and state that it selects eligible continuation.
 
 ## Final response
