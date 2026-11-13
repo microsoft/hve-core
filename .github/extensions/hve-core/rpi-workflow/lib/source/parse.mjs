@@ -35,6 +35,7 @@ const KINDS = [
     ['plan', 'rpi plan:'],
     ['research', 'task research:'],
     ['changes', 'rpi changes:'],
+    ['refinement', 'refinement review:'],
     ['review', 'review:'],
 ];
 
@@ -45,14 +46,14 @@ const OPTION_RE = /^([A-Z])\s*(\([Rr]ecommended\))?\s*:\s*([\s\S]+)$/;
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)+$/;
 const QUESTION_ID = /^Q\d{1,3}$/;
 const TASK_ID = /^P\d{2}-T\d{2}$/;
-const PLAN_ID = /^(?:P\d{2}(?:-T\d{2})?|FR-\d{3}|NFR-\d{3}|PC-\d{3}|CH-\d{3}|DS-\d{3})$/;
+const PLAN_ID = /^(?:P\d{2}(?:-T\d{2})?|FR-\d{3}|NFR-\d{3}|PC-\d{3}|CH-\d{3}|DS-\d{3}|RV-\d{3}|RF-\d{3})$/;
 const NONE_RE = /^(?:none|none yet|not applicable|n\/a)\.?$/i;
 
 /**
  * The artifact kind named by the first H1 heading, or null.
  *
  * @param {string} text
- * @returns {'research' | 'plan' | 'critique' | 'changes' | 'review' | null}
+ * @returns {'research' | 'plan' | 'critique' | 'changes' | 'review' | 'refinement' | null}
  */
 export function artifactKind(text) {
     const title = labelKey(titleOf(parseDocument(text)));
@@ -189,7 +190,7 @@ function taskLink(value) {
     return { taskId, taskSlug: str(link.task_slug) ?? taskId, statePath };
 }
 
-const ARTIFACT_KINDS = Object.freeze(['research', 'plan', 'critique', 'changes', 'review']);
+const ARTIFACT_KINDS = Object.freeze(['research', 'plan', 'critique', 'changes', 'review', 'refinement']);
 
 /**
  * Every document of each kind, in creation order. `artifact_paths` names the document the
@@ -622,27 +623,18 @@ export function parseChanges(text) {
     };
 }
 
-/** @param {string} text */
-export function parseReview(text) {
-    const doc = parseDocument(text);
-    const summary = labeledFields(bodyOfH2(doc, 'Executive Summary'));
-    const record = h2(doc, 'Parent Decision Record');
-    const dispositionSection = record ? findSection(doc, 'Current Disposition', { level: 3, within: record }) : null;
+function reviewDepthOf(doc, summary) {
+    const direct = plainText(field(summary, 'Review depth'));
+    if (direct) return direct.split(';')[0].trim();
+    const scope = findSection(doc, 'Scope and Evidence');
+    if (!scope) return '';
+    const scopeFields = labeledFields(bodyOf(doc, scope));
+    return plainText(field(scopeFields, 'Review depth and provenance') || field(scopeFields, 'Review depth')).split(';')[0].trim();
+}
+
+function decisionHistoryOf(doc, record) {
     const historySection = record ? findSection(doc, 'Decision History', { level: 3, within: record }) : null;
-    const findings = markedFindings(doc, 'review', 'Findings and Proposed Routes').map(({ id, severity, title, fields }) => ({
-        id,
-        severity,
-        title,
-        relatedText: field(fields, 'Related scope'),
-        related: idsIn(field(fields, 'Related scope'), PLAN_ID),
-        expected: field(fields, 'Expected behavior'),
-        observed: field(fields, 'Observed behavior and evidence'),
-        impact: field(fields, 'Impact'),
-        resolution: field(fields, 'Resolution condition'),
-        destination: plainText(field(fields, 'Proposed destination')),
-        next: field(fields, 'Smallest useful next action'),
-    }));
-    const history = (historySection ? tableWith(bodyOf(doc, historySection), ['Event', 'Subject'])?.rows ?? [] : []).map((row) => ({
+    return (historySection ? tableWith(bodyOf(doc, historySection), ['Event', 'Subject'])?.rows ?? [] : []).map((row) => ({
         id: plainText(row.event),
         subject: plainText(row.subject),
         source: plainText(row['decision source']),
@@ -651,22 +643,73 @@ export function parseReview(text) {
         next: row['smallest next action'] ?? '',
         rationale: row.rationale ?? '',
     }));
+}
+
+function parseReviewPass(text, kind, emptyNoun, mapFinding, extra = {}) {
+    const doc = parseDocument(text);
+    const summary = labeledFields(bodyOfH2(doc, 'Executive Summary'));
+    const record = h2(doc, 'Parent Decision Record');
+    const dispositionSection = record ? findSection(doc, 'Current Disposition', { level: 3, within: record }) : null;
+    const findings = markedFindings(doc, kind, 'Findings and Proposed Routes').map(({ id, severity, title, fields }) => ({
+        id,
+        severity,
+        title,
+        relatedText: field(fields, 'Related scope'),
+        related: idsIn(field(fields, 'Related scope'), PLAN_ID),
+        ...mapFinding(fields),
+        impact: field(fields, 'Impact'),
+        resolution: field(fields, 'Resolution condition'),
+        destination: plainText(field(fields, 'Proposed destination')),
+        next: field(fields, 'Smallest useful next action'),
+    }));
+    const history = decisionHistoryOf(doc, record);
     return {
-        kind: 'review',
+        kind,
         title: afterColon(titleOf(doc)),
         summary: bodyOfH2(doc, 'Executive Summary'),
         assessment: field(summary, 'Assessment'),
         execution: plainText(field(summary, 'Review execution')),
         outcome: plainText(field(summary, 'Assessed outcome')),
+        depth: reviewDepthOf(doc, summary),
         unknowns: bodyOfH2(doc, 'What You May Not Know'),
         findings,
         disposition: dispositionSection ? bodyOf(doc, dispositionSection) : '',
         history,
         validation: (tableWith(bodyOfH2(doc, 'Validation Evidence'), ['Command', 'Status'])?.rows ?? []).map((row) => ({ check: plainText(row.command), scope: plainText(row.scope), status: plainText(row.status), summary: row.summary ?? '' })),
-        followUps: (tableWith(text, ['Follow-up item', 'Owner or next action'])?.rows ?? []).map((row) => ({ item: row['follow-up item'], why: row['why outside immediate scope'] ?? '', owner: plainText(row['owner or next action']), route: plainText(row['assessment and route']) })),
+        ...extra,
         other: others(doc, ['Executive Summary', 'What You May Not Know', 'Findings and Proposed Routes', 'Parent Decision Record', 'Validation Evidence']),
-        warnings: findings.length || history.length ? [] : ['The review has no findings or decision history.'],
+        warnings: findings.length || history.length ? [] : [`The ${emptyNoun} has no findings or decision history.`],
     };
+}
+
+/** @param {string} text */
+export function parseReview(text) {
+    return parseReviewPass(
+        text,
+        'review',
+        'review',
+        (fields) => ({
+            expected: field(fields, 'Expected behavior'),
+            observed: field(fields, 'Observed behavior and evidence'),
+        }),
+        {
+            followUps: (tableWith(text, ['Follow-up item', 'Owner or next action'])?.rows ?? []).map((row) => ({
+                item: row['follow-up item'],
+                why: row['why outside immediate scope'] ?? '',
+                owner: plainText(row['owner or next action']),
+                route: plainText(row['assessment and route']),
+            })),
+        },
+    );
+}
+
+/** @param {string} text */
+export function parseRefinement(text) {
+    return parseReviewPass(text, 'refinement', 'refinement review', (fields) => ({
+        dimension: plainText(field(fields, 'Dimension')),
+        current: field(fields, 'Current state and evidence'),
+        rework: field(fields, 'What to remove or rework'),
+    }));
 }
 
 /**
@@ -681,6 +724,7 @@ export function parseArtifact(text) {
         case 'critique': return parseCritique(text);
         case 'changes': return parseChanges(text);
         case 'review': return parseReview(text);
+        case 'refinement': return parseRefinement(text);
         default: return null;
     }
 }
