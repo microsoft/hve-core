@@ -10,7 +10,7 @@ keywords:
   - Section 508
   - getting started
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-11-12
 ms.topic: tutorial
 estimated_reading_time: 5
 ---
@@ -53,7 +53,12 @@ Phases 4 and 5 classify the plan-level risk tier and build the evidence register
 
 ## Step 5: Hand off the backlog
 
-At Phase 6, the planner renders the work-item seeds into dual-format ADO and GitHub backlog files, attaches autonomy tiers, sanitizes content, and emits the planning disclaimer. Import the format that matches your tracking system.
+At Phase 6, the planner asks which tracking system to render for (ADO, GitHub, or both) unless your preferences already record one. It then renders the work-item seeds, attaches autonomy tiers, sanitizes content, and emits the planning disclaimer. The backlog files land in:
+
+* ADO: `.copilot-tracking/workitems/backlog/{project-slug}-a11y/work-items.md`
+* GitHub: `.copilot-tracking/github-issues/discovery/{project-slug}-a11y/issues-plan.md`
+
+Import the format that matches your tracking system. The phase closes only after you confirm the rendered backlog.
 
 ## Next Steps
 
