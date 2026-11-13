@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Understanding the RPI Workflow"
 pagination_label: Understanding the RPI Workflow
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-12
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -16,6 +16,7 @@ keywords:
   - rpi plan
   - rpi implement
   - rpi review
+  - rpi refine
   - rpi walkthrough
   - follow-up
   - github copilot
@@ -86,15 +87,19 @@ Implementation records material work and truthful validation in:
 
 Completion checkboxes change only after evidence exists. If implementation needs a significant departure from the approved plan, it records the discovery in the changes record, updates the affected plan tasks after the required decision, and pauses only dependent work until the plan is current. The existing critique remains historical evidence; a follow-up critique runs only when you ask for one.
 
-### ✅ Review with rpi-review
+### ✅ Review with rpi-review and rpi-refine
 
-Use `/rpi-review` when the implementation evidence is ready for acceptance review. Review is optional; skip it when you do not need an acceptance record. Review does not modify the sources under review. It compares requirements, acceptance criteria, plan and task completion, critique dispositions, implementation-time plan updates, changes, and validation evidence in one record, and records the final outcome and routing:
+Review splits post-implementation assessment across two complementary skills that remain read-only with respect to the files under review and appear together in the [RPI Workflow canvas](rpi-workflow-canvas) Review view:
+
+* `/rpi-review` reconciles requirements, acceptance criteria, plan and task completion, critique dispositions, implementation-time plan updates, business-source alignment, changes, and validation evidence in one acceptance record (`RV-xxx` findings and `RD-xxx` decisions).
+* `/rpi-refine` inspects touched code, tests, documents, domain language, conventions, SDKs and libraries, base assumptions, error boundaries, runtime performance, language versions, and configuration for what can be removed, simplified, consolidated, or redesigned in one subtractive refinement record (`RF-xxx` findings and `FD-xxx` decisions), preferring parallel fresh-context `RPI Refiner` lenses when subagents are available.
 
 ```text
 .copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md
+.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-refinement.md
 ```
 
-Substantive findings receive severity-graded `RV-xxx` identifiers and explicit destinations. Review keeps execution status (`Complete`, `Partial`, or `Blocked`) separate from outcome (`Conformant`, `Conformant with justified divergence`, `Defects found`, `Residual work`, or `Not accepted`). This distinction prevents completed execution from being mistaken for accepted work.
+Both skills keep execution status (`Complete`, `Partial`, or `Blocked`) separate from outcome so completed execution is never mistaken for accepted work, and both can run together in `/rpi` or standalone. After a session's initial Review, repeated loops in the same session restrict additional reviews to avoid review-and-implement ping-pong, running a bounded `surface`-depth check only when a repeated loop introduces significant architectural, contract, or cross-cutting changes.
 
 ### ➡️ Follow-up
 
@@ -104,16 +109,17 @@ Follow-up does not rename or repeat another lifecycle concept. It routes defects
 
 Choose the smallest entry surface that owns the next action:
 
-| Entry surface      | Use it when                                                   | Contract                                                                                                        |
-|--------------------|---------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| `/rpi`             | You want multi-phase RPI session coordination                 | User-invocable and model-discoverable skill that coordinates the RPI phases, session state, and workflow canvas |
-| `RPI Agent`        | You want a user-selected lifecycle wrapper in the picker      | Preloads the `rpi` skill to coordinate the applicable RPI phases with one task identity and the workflow canvas |
-| `/rpi-research`    | A demonstrated evidence gap blocks credible progress          | Produces research evidence without planning or implementation                                                   |
-| `/rpi-plan`        | Adequate evidence needs an implementation strategy            | Produces the task-centered plan and critique disposition                                                        |
-| `/rpi-implement`   | Approved work is ready to execute                             | Produces source changes, change evidence, and validation                                                        |
-| `/rpi-review`      | Implementation evidence is ready for reconciliation           | Produces one review record and routes open work                                                                 |
-| `/rpi-challenger`  | You want to expose assumptions before acting                  | Asks adaptive skeptical questions and records unresolved items                                                  |
-| `/rpi-walkthrough` | You want to understand code or artifacts before changing them | Explains one segment at a time and captures requested changes when needed                                       |
+| Entry surface      | Use it when                                                    | Contract                                                                                                        |
+|--------------------|----------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `/rpi`             | You want multi-phase RPI session coordination                  | User-invocable and model-discoverable skill that coordinates the RPI phases, session state, and workflow canvas |
+| `RPI Agent`        | You want a user-selected lifecycle wrapper in the picker       | Preloads the `rpi` skill to coordinate the applicable RPI phases with one task identity and the workflow canvas |
+| `/rpi-research`    | A demonstrated evidence gap blocks credible progress           | Produces research evidence without planning or implementation                                                   |
+| `/rpi-plan`        | Adequate evidence needs an implementation strategy             | Produces the task-centered plan and critique disposition                                                        |
+| `/rpi-implement`   | Approved work is ready to execute                              | Produces source changes, change evidence, and validation                                                        |
+| `/rpi-review`      | Implementation evidence is ready for acceptance reconciliation | Produces one acceptance review record (`RV-xxx`) and routes open work                                           |
+| `/rpi-refine`      | Completed work needs subtractive simplification and rework     | Produces one subtractive refinement record (`RF-xxx`) and routes removals or redesigns                          |
+| `/rpi-challenger`  | You want to expose assumptions before acting                   | Asks adaptive skeptical questions and records unresolved items                                                  |
+| `/rpi-walkthrough` | You want to understand code or artifacts before changing them  | Explains one segment at a time and captures requested changes when needed                                       |
 
 Select `RPI Agent` when you want a user-selected lifecycle wrapper that activates these same skills. Unless your request already says how to proceed, it asks how you want to work: end to end, automatically with check-ins, research and planning with you before it stops, or one phase at a time. `RPI Agent` is an entry surface, not an autonomous dispatcher of specialized task workers. See [Using RPI Together](using-together#manual-and-automatic-mode-in-rpi-agent) for the mode details.
 
@@ -150,7 +156,7 @@ Use research when readiness identifies a gap. Otherwise, select the smallest lif
 2. Assess research readiness and use `/rpi-research` only if a demonstrated gap remains.
 3. Plan with `/rpi-plan` when durable planning is needed.
 4. Implement approved work with `/rpi-implement`.
-5. Review with `/rpi-review`, then route defects, decisions, evidence gaps, or residual work through Follow-up.
+5. Review with `/rpi-review` and `/rpi-refine`, then route defects, simplifications, redesigns, evidence gaps, or residual work through Follow-up (`Pxx` follow-up phases or a separate RPI session).
 
 > [!TIP]
 > Select `RPI Agent` when you want a lifecycle entry surface. Use a direct phase skill when the required next action is already clear.
