@@ -873,6 +873,10 @@ Describe 'Invoke-MarkdownLinkCheck' -Tag 'Unit' {
     Context 'Quiet mode base arguments' {
         It 'Passes -q flag when Quiet switch is set' {
             Mock Get-MarkdownTarget { return @('file.md') }
+            $realTestPath = Get-Command -Name Test-Path -CommandType Cmdlet
+            $realResolvePath = Get-Command -Name Resolve-Path -CommandType Cmdlet
+            Mock Test-Path { & $realTestPath @PesterBoundParameters }
+            Mock Resolve-Path { & $realResolvePath @PesterBoundParameters }
             Mock Test-Path { return $true } -ParameterFilter { $LiteralPath -and $LiteralPath -like '*markdown-link-check*' }
             Mock Resolve-Path { return [PSCustomObject]@{ Path = "$TestDrive/file.md" } } -ParameterFilter { $LiteralPath -eq 'file.md' }
             Mock Write-Host { }

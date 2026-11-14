@@ -49,6 +49,23 @@ One entry per plan update, under a descriptive heading. The plan holds current s
 
 For a follow-up-only update, record why the item is outside immediate scope and its owner or next action here and in `## Follow-Up Items`. Keep it outside active `Pxx` and `Pxx-Txx` implementation, completion, and acceptance claims.
 
+## Business Alignment
+
+<!-- Replace None with one entry per affected source requirement when a plan update changes, or completed behavior differs from, a requirement that cites a BRD, PRD, or ADR. Review reads this section; keep the heading and field names. -->
+
+* None
+
+### {{source_id_and_short_change_heading}}
+
+* Source document: {{workspace_relative_path_or_unresolved_citation}} ({{document_id}}, status {{status}})
+* Cited requirement IDs: {{FR_NFR_BR_GOAL_AC_or_ADR_ids}}
+* Owner or deciders: {{from_frontmatter_or_not_recorded_in_path}}
+* Related plan update or marker: {{Pxx_Pxx_Txx_or_update_heading}}
+* What changed: {{behavior_difference_from_the_cited_requirement}}
+* Why: {{rationale_and_evidence}}
+* User decision: {{none_or_decision}}
+* Alignment: {{clarification_divergence-confirmed_source-gap_or_pending-decision}}
+
 ## Validation Record
 
 | Check     | Scope     | Status                                   | Evidence or reason     |
@@ -82,6 +99,7 @@ For a follow-up-only update, record why the item is outside immediate scope and 
 * Validation coverage: {{validation_summary}}
 * Blockers: {{none_or_blocker_summary}}
 * Current plan updates: {{none_or_descriptive_update_summary}}
+* Business alignment entries: {{none_or_entry_summary_with_source_and_alignment_calling_out_pending-decision}}
 * Planning and critique state: {{current_ready_or_awaiting_state_with_relevant_PC_xxx_when_applicable}}
 * Follow-up items: {{none_or_follow_up_summary}}
 * Review readiness or no-handoff reason: {{ready_for_review_or_explicit_reason}}

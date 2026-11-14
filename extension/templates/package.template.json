@@ -6,7 +6,7 @@
     "ui"
   ],
   "version": "3.2.2",
-  "description": "AI-powered chat agents, prompts, and instructions for hybrid virtual environments",
+  "description": "AI-powered chat agents, skills, and instructions for hybrid virtual environments",
   "publisher": "ise-hve-essentials",
   "repository": {
     "type": "git",

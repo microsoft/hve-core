@@ -1,0 +1,25 @@
+{
+  "maintenance": {
+    "runs_on": "ubuntu-24.04",
+    "disabled_jobs": [
+      "apply_safe_outputs"
+    ]
+  },
+  "action_pins": {
+    "actions/github-script@v9": "actions/github-script@v9.0.0"
+  },
+  "container_pins": {
+    "ghcr.io/github/gh-aw-mcpg:v0.5.0": {
+      "image": "ghcr.io/github/gh-aw-mcpg:v0.5.0",
+      "digest": "sha256:d3544a4222e7efeeeb38669d8a1af0c72691c55b8f6506b15aa5920f7f31b7bc"
+    },
+    "ghcr.io/github/github-mcp-server:v2.0.3": {
+      "image": "ghcr.io/github/github-mcp-server:v2.0.3",
+      "digest": "sha256:250bc6ce70788207608ef74cef4397230ff2e8481218da74d6093e4bd9101132"
+    },
+    "ghcr.io/github/gh-aw-node": {
+      "image": "ghcr.io/github/gh-aw-node",
+      "digest": "sha256:11c2c544876cdbaffefe0f7f1283b74838c209654b4934a78e23ed11f750490f"
+    }
+  }
+}

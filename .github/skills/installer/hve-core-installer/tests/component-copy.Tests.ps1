@@ -574,8 +574,8 @@ Describe 'component-copy production manifest selection' -Tag 'Unit' {
         # manifest itself gates the selection rather than a test-local recipe.
         $script:ProductionSelection = @(
             'agents/hve-core/rpi-agent.md'
-            'commands/hve-core/rpi.md'
             'rules/hve-core/hve-builder.instructions.md'
+            'skills/hve-core/git-commit'
             'skills/rpi/rpi-plan'
         )
         $script:ProductionTarget = Join-Path $TestDrive 'production-selection'
@@ -587,7 +587,7 @@ Describe 'component-copy production manifest selection' -Tag 'Unit' {
             -SelectionName 'starter' -Component $script:ProductionSelection 6>&1 | Out-Null
 
         Test-Path -LiteralPath (Join-Path $script:ProductionTarget '.github/agents/hve-core/rpi-agent.agent.md') | Should -BeTrue
-        Test-Path -LiteralPath (Join-Path $script:ProductionTarget '.github/prompts/hve-core/rpi.prompt.md') | Should -BeTrue
+        Test-Path -LiteralPath (Join-Path $script:ProductionTarget '.github/skills/hve-core/git-commit/SKILL.md') | Should -BeTrue
         Test-Path -LiteralPath (Join-Path $script:ProductionTarget '.github/instructions/hve-core/hve-builder.instructions.md') | Should -BeTrue
         Test-Path -LiteralPath (Join-Path $script:ProductionTarget '.github/skills/rpi/rpi-plan/SKILL.md') | Should -BeTrue
     }
@@ -620,7 +620,7 @@ Describe 'component-copy production manifest selection' -Tag 'Unit' {
             -SelectionName 'starter' -Component $script:ProductionSelection | Out-Null
         $LASTEXITCODE | Should -Be 0
 
-        Test-Path -LiteralPath (Join-Path $bashTarget '.github/prompts/hve-core/rpi.prompt.md') | Should -BeTrue
+        Test-Path -LiteralPath (Join-Path $bashTarget '.github/skills/hve-core/git-commit/SKILL.md') | Should -BeTrue
         Test-Path -LiteralPath (Join-Path $bashTarget '.github/instructions/hve-core/hve-builder.instructions.md') | Should -BeTrue
 
         $manifest = Get-Content -LiteralPath (Join-Path $bashTarget '.hve-tracking.json') -Raw | ConvertFrom-Json -AsHashtable
@@ -959,6 +959,8 @@ Describe 'component-copy source and manifest link refusal' -Tag 'Unit' {
         Remove-Item -LiteralPath $manifestLink -Force
         $danglingTarget = Join-Path $script:linkOutside 'dangling-manifest.json'
         New-Item -ItemType SymbolicLink -Path $manifestLink -Target $danglingTarget -ErrorAction Stop | Out-Null
+        $realTestPath = Get-Command -Name Test-Path -CommandType Cmdlet
+        Mock Test-Path { & $realTestPath @PesterBoundParameters }
         Mock Test-Path { return $false } -ParameterFilter { $LiteralPath -like '*.hve-tracking.json' }
 
         { Invoke-ComponentCopy -Fixture $script:linkFixture -Component @('agents/hve-core/rpi-agent.md') } |

@@ -779,13 +779,26 @@ def test_given_many_schema_errors_when_validated_then_iteration_stops(
     assert errors[-1] == validator_module.TRUNCATION_DIAGNOSTIC
 
 
+# Interpreter nesting limits drift: CPython 3.14 replaced the fixed C recursion
+# limit with stack-based protection, so a 10000-deep document now parses. Nest
+# as deep as the input byte limit allows, the deepest document run() will parse.
+_SECRET_LEAF = '"synthetic-secret"'
+_MAX_INPUT_DEPTH = (validator_module.MAX_INPUT_BYTES - len(_SECRET_LEAF)) // 2
+
+
 @pytest.mark.parametrize(
-    "text",
-    ["[" * 10000 + '"synthetic-secret"' + "]" * 10000, "9" * 5000],
+    ("text", "error_name"),
+    [
+        (
+            "[" * _MAX_INPUT_DEPTH + _SECRET_LEAF + "]" * _MAX_INPUT_DEPTH,
+            "RecursionError",
+        ),
+        ("9" * 5000, "ValueError"),
+    ],
     ids=["parser-depth", "integer-digits"],
 )
 def test_given_parser_resource_failure_when_run_then_returns_sanitized_error(
-    text: str, tmp_path, capsys
+    text: str, error_name: str, tmp_path, capsys
 ) -> None:
     # Arrange
     json_path, csv_path = _write_pair(tmp_path, _valid_dataset())
@@ -798,7 +811,7 @@ def test_given_parser_resource_failure_when_run_then_returns_sanitized_error(
     captured = capsys.readouterr()
     assert result == 2
     assert captured.out == ""
-    assert captured.err.startswith("validate_evaluation_dataset: ")
+    assert captured.err == f"validate_evaluation_dataset: {error_name}\n"
     assert "synthetic-secret" not in captured.err
 
 

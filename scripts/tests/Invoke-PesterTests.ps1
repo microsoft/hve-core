@@ -133,7 +133,8 @@ if ($PSBoundParameters.ContainsKey('ExcludeTag')) {
 
 $configuration = & $configScript @configArgs
 
-# Ensure PassThru and file output are enabled regardless of CI flag
+# The wrapper must write authoritative reports before choosing its exit code.
+$configuration.Run.Exit = $false
 $configuration.Run.PassThru = $true
 
 Write-Host "🧪 Running Pester tests..." -ForegroundColor Cyan
@@ -213,7 +214,7 @@ if ($failures.Count -eq 0 -and $result.FailedCount -gt 0) {
     $failures = @(Get-FailedTests -Blocks $result.Containers)
 }
 
-$failures | ConvertTo-Json -Depth 5 | Out-File -FilePath $failuresPath -Encoding utf8
+ConvertTo-Json -InputObject @($failures) -Depth 5 | Out-File -FilePath $failuresPath -Encoding utf8
 
 # Report
 if ($result.FailedCount -gt 0) {

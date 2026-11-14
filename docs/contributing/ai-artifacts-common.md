@@ -3,7 +3,7 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-31
 ms.topic: reference
 keywords:
   - contributing
@@ -11,11 +11,11 @@ keywords:
   - standards
 ---
 
-This document defines shared standards, conventions, and quality gates that apply to **all** AI artifact contributions to hve-core (agents, prompts, instructions, and skills).
+This document defines shared standards, conventions, and quality gates that apply to **all** AI artifact contributions to hve-core (agents, instructions, and skills). HVE Core no longer accepts prompt files; a reusable slash command is contributed as a user-invocable skill, as [Contributing Slash Commands](prompts.md) explains.
 
 ## Asset Reference Documentation
 
-Every documentable agent, prompt, instruction, and skill MUST include its paired
+Every documentable agent, instruction, and skill MUST include its paired
 page under `docs/reference/**`. Follow the
 [asset reference documentation guide](asset-docs.md) to generate the page, preserve
 the generator-owned regions, author the usage sections, and satisfy the local and
@@ -89,7 +89,7 @@ Focus on agents that:
 
 ## Model Version Requirements
 
-All AI artifacts (agents, instructions, prompts) **MUST** target models listed in the model catalog (`scripts/linting/model-catalog.json`). The catalog defines which models are available in GitHub Copilot and which providers are accepted via the `providerAllowlist` field.
+Every `model` value in agent frontmatter **MUST** name a model listed in the model catalog (`scripts/linting/model-catalog.json`). Instruction and skill frontmatter has no `model` field. The catalog defines which models are available in GitHub Copilot and which providers are accepted via the `providerAllowlist` field.
 
 ### Accepted Models
 
@@ -104,37 +104,25 @@ Any model in the catalog whose provider appears in `providerAllowlist` and whose
 
 ### Model Name Format
 
-Model references in frontmatter use the VS Code display name with vendor suffix:
+Model references in frontmatter use the VS Code display name with vendor suffix, as a single scalar string:
 
 ```yaml
-# Single model
 model: Claude Haiku 4.5 (copilot)
-
-# Prioritized fallback array (system tries each in order)
-model:
-  - Claude Haiku 4.5 (copilot)
-  - GPT-5.4 mini (copilot)
 ```
 
-The `(copilot)` suffix is required. Run `npm run lint:models` to validate all model references against the catalog.
+The `(copilot)` suffix is required. Do not use an array of fallback models. Copilot CLI versions before the fix for [github/copilot-cli#2133](https://github.com/github/copilot-cli/issues/2133) rejected an array and dropped the agent, and HVE Core keeps a single value so every client loads it. Run `npm run lint:models` to validate all model references against the catalog; it also reports an array-form `model` on an agent as an error.
 
 ### Model Selection (Optional)
 
-The `model` frontmatter property is **optional**. When omitted, the agent or prompt inherits the user's session model (whatever is selected in the VS Code model picker).
+The `model` frontmatter property is **optional**. When omitted, a subagent inherits the invoking parent's model, and a directly invoked agent uses the current session or model-picker selection.
 
 Use explicit model selection for cost optimization:
 
-| Tier     | Multiplier  | Use When                                                | Example Models                 |
-|----------|-------------|---------------------------------------------------------|--------------------------------|
-| Fast     | 0.25x–0.33x | Read-only research, mechanical file ops, classification | Claude Haiku 4.5, GPT-5.4 mini |
-| Standard | 1x          | Code generation, architecture, complex synthesis        | Claude Sonnet 4.6, GPT-5.4     |
-| Premium  | 3x–15x      | Vision-capable tasks, complex architectural decisions   | Claude Opus 4.6, GPT-5.5       |
-
-### Cost Tier Constraint
-
-The `model` property is a **preference hint**, not a hard constraint. VS Code never fails a prompt or agent invocation due to model unavailability. When a specified model is unavailable or exceeds the cost tier of the parent model, VS Code falls back through the array entries in order, then to the session model (model picker selection).
-
-VS Code enforces that subagent models cannot exceed the cost tier of the parent model. If the user selects Sonnet (standard) in the model picker, subagents can use Haiku (fast) but not Opus (premium). Fallback arrays provide resilience when the preferred model is unavailable or exceeds the cost tier. A single-model string is equally safe: it falls back to the session model when the specified model cannot be used.
+| Tier     | Multiplier     | Use When                                                | Example Models                 |
+|----------|----------------|---------------------------------------------------------|--------------------------------|
+| Fast     | 0.25x to 0.33x | Read-only research, mechanical file ops, classification | Claude Haiku 4.5, GPT-5.4 mini |
+| Standard | 1x             | Code generation, architecture, complex synthesis        | Claude Sonnet 4.6, GPT-5.4     |
+| Premium  | 3x to 15x      | Vision-capable tasks, complex architectural decisions   | Claude Opus 4.6, GPT-5.5       |
 
 ### Model Catalog Validation
 
@@ -159,11 +147,10 @@ npm run lint:models:refresh
 Root `plugin.json` is the distribution authority for the single `hve-core` plugin and VSIX. `npm run plugin:sync` derives repository-relative membership from tracked package-scoped artifacts under `.github`:
 
 * Agents under `.github/agents/<package>/**/*.agent.md`
-* Prompts under `.github/prompts/<package>/**/*.prompt.md`
 * Instructions under `.github/instructions/<package>/**/*.instructions.md`
 * Skills with `.github/skills/<package>/<skill>/SKILL.md` unless the skill's top-level license has a noncommercial qualifier
 
-Root-level repository-only artifacts are excluded. The manifest declares no hooks. `.github/plugin/marketplace.json` contains one `hve-core` entry with the relative source `.` and no component recipe.
+The sync still maps prompt files under `.github/prompts/<package>/` to the manifest's `commands` array, which stays empty because HVE Core no longer accepts prompt files. Root-level repository-only artifacts are excluded. The manifest declares no hooks. `.github/plugin/marketplace.json` contains one `hve-core` entry with the relative source `.` and no component recipe.
 
 ## Extension Packaging
 
@@ -411,8 +398,11 @@ npm run spell-check
 # Validate all links
 npm run lint:md-links
 
-# Validate model references in agent/prompt frontmatter
+# Validate model references in agent frontmatter
 npm run lint:models
+
+# Flag workspace-root .github paths and #file: directives in distributed artifacts
+npm run lint:artifact-portability
 
 # PowerShell analysis (if applicable)
 npm run lint:ps
@@ -541,7 +531,6 @@ When filing issues against hve-core, use Conventional Commit-style title prefixe
 |----------------------|-----------------------|-------------------------------------------------|
 | Bug reports          | `fix:`                | `fix: validation script fails on Windows paths` |
 | Agent requests       | `feat(agents):`       | `feat(agents): add Azure cost analysis agent`   |
-| Prompt requests      | `feat(prompts):`      | `feat(prompts): add PR description generator`   |
 | Instruction requests | `feat(instructions):` | `feat(instructions): add Go language standards` |
 | Skill requests       | `feat(skills):`       | `feat(skills): add diagram generation skill`    |
 | General features     | `feat:`               | `feat: support multi-root workspaces`           |
@@ -556,7 +545,7 @@ When filing issues against hve-core, use Conventional Commit-style title prefixe
 
 ### Reference
 
-See [commit-message.instructions.md](https://github.com/microsoft/hve-core/blob/main/.github/instructions/hve-core/commit-message.instructions.md) for the complete list of types and scopes.
+See the [commit message conventions in the `git-commit` skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/git-commit/references/commit-message.md) for the complete list of types and scopes.
 
 ## Getting Help
 
@@ -564,11 +553,11 @@ When contributing AI artifacts:
 
 ### Review Examples
 
-| Artifact Type | Location                                                                  |
-|---------------|---------------------------------------------------------------------------|
-| Agents        | Files in `.github/agents/{package-id}/` (the conventional location)       |
-| Prompts       | Files in `.github/prompts/{package-id}/` (the conventional location)      |
-| Instructions  | Files in `.github/instructions/{package-id}/` (the conventional location) |
+| Artifact Type | Location                                                                                                                                                         |
+|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Agents        | Files in `.github/agents/{package-id}/` (the conventional location)                                                                                              |
+| Instructions  | Files in `.github/instructions/{package-id}/` (the conventional location)                                                                                        |
+| Skills        | Folders in `.github/skills/{package-id}/{skill-name}/` (the conventional location); user-invocable skills such as `git-commit` show how a slash command is built |
 
 ### Check Repository Standards
 
@@ -585,7 +574,8 @@ When contributing AI artifacts:
 ### Common Resources
 
 * [Contributing Custom Agents](custom-agents.md) - Agent configurations
-* [Contributing Prompts](prompts.md) - Workflow guidance
+* [Contributing Skills](skills.md) - Skill packages and slash commands
+* [Contributing Slash Commands](prompts.md) - Why reusable slash commands are contributed as skills
 * [Contributing Instructions](instructions.md) - Technology standards
 * [Pull Request Template](https://github.com/microsoft/hve-core/blob/main/.github/PULL_REQUEST_TEMPLATE.md) - Submission checklist
 

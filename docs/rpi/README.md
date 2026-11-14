@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Understanding the RPI Workflow"
 pagination_label: Understanding the RPI Workflow
 author: Microsoft
-ms.date: 2026-10-06
+ms.date: 2026-11-13
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -68,7 +68,7 @@ The skill creates or revises the plan and, unless you skip the critique, a criti
 .copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md
 ```
 
-The task-centered plan uses stable `Pxx` phase IDs and `Pxx-Txx` task IDs with matching `<!-- rpi:... -->` markers. It opens with an executive summary and a Phase Checklist that starts with a Mermaid diagram of the overall change; each phase repeats that diagram with its own portion highlighted.
+The task-centered plan uses stable `Pxx` phase IDs and `Pxx-Txx` task IDs with matching `<!-- rpi:... -->` markers. It opens with an executive summary and a Phase Checklist that starts with a change map: a Mermaid diagram of the result, grouped by where changes land, with arrows that read from each part to what it uses and each change tagged by the phases that make it, plus a Before diagram when the plan changes how parts connect. Each phase names its parts of the map in one line.
 
 Every task carries labeled `Goals:`, `Requirements:`, `Details:`, `References:`, and `Dependencies:` blocks, with backticks around code and commands and Markdown links to the files it touches. The `Requirements:` block is the checkable record for the task; how to verify it is left to the implementer.
 
@@ -84,7 +84,7 @@ Implementation records material work and truthful validation in:
 .copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md
 ```
 
-Completion checkboxes change only after evidence exists. If implementation needs a significant departure from the approved plan, it records the discovery in the changes record, updates the affected plan tasks after the required decision, and pauses only dependent work until the plan is current. The existing critique remains historical evidence; a follow-up critique is optional.
+Completion checkboxes change only after evidence exists. If implementation needs a significant departure from the approved plan, it records the discovery in the changes record, updates the affected plan tasks after the required decision, and pauses only dependent work until the plan is current. The existing critique remains historical evidence; a follow-up critique runs only when you ask for one.
 
 ### ✅ Review with rpi-review
 
@@ -104,17 +104,21 @@ Follow-up does not rename or repeat another lifecycle concept. It routes defects
 
 Choose the smallest entry surface that owns the next action:
 
-| Entry surface      | Use it when                                                   | Contract                                                                                            |
-|--------------------|---------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
-| `RPI Agent`        | You want a user-selected lifecycle wrapper                    | Activates the applicable RPI skills with one task identity; manual by default, Full Auto on request |
-| `/rpi-research`    | A demonstrated evidence gap blocks credible progress          | Produces research evidence without planning or implementation                                       |
-| `/rpi-plan`        | Adequate evidence needs an implementation strategy            | Produces the task-centered plan and critique disposition                                            |
-| `/rpi-implement`   | Approved work is ready to execute                             | Produces source changes, change evidence, and validation                                            |
-| `/rpi-review`      | Implementation evidence is ready for reconciliation           | Produces one review record and routes open work                                                     |
-| `/rpi-challenger`  | You want to expose assumptions before acting                  | Asks adaptive skeptical questions and records unresolved items                                      |
-| `/rpi-walkthrough` | You want to understand code or artifacts before changing them | Explains one segment at a time and captures requested changes when needed                           |
+| Entry surface      | Use it when                                                   | Contract                                                                                                        |
+|--------------------|---------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `/rpi`             | You want multi-phase RPI session coordination                 | User-invocable and model-discoverable skill that coordinates the RPI phases, session state, and workflow canvas |
+| `RPI Agent`        | You want a user-selected lifecycle wrapper in the picker      | Preloads the `rpi` skill to coordinate the applicable RPI phases with one task identity and the workflow canvas |
+| `/rpi-research`    | A demonstrated evidence gap blocks credible progress          | Produces research evidence without planning or implementation                                                   |
+| `/rpi-plan`        | Adequate evidence needs an implementation strategy            | Produces the task-centered plan and critique disposition                                                        |
+| `/rpi-implement`   | Approved work is ready to execute                             | Produces source changes, change evidence, and validation                                                        |
+| `/rpi-review`      | Implementation evidence is ready for reconciliation           | Produces one review record and routes open work                                                                 |
+| `/rpi-challenger`  | You want to expose assumptions before acting                  | Asks adaptive skeptical questions and records unresolved items                                                  |
+| `/rpi-walkthrough` | You want to understand code or artifacts before changing them | Explains one segment at a time and captures requested changes when needed                                       |
 
-Select `RPI Agent` when you want a user-selected lifecycle wrapper that activates these same skills. It runs in manual mode until you confirm an automatic session, which then completes the remaining phases through Review and offers ranked follow-up work. `RPI Agent` is an entry surface, not an autonomous dispatcher of specialized task workers. See [Using RPI Together](using-together#manual-and-automatic-mode-in-rpi-agent) for the mode details.
+Select `RPI Agent` when you want a user-selected lifecycle wrapper that activates these same skills. Unless your request already says how to proceed, it asks how you want to work: end to end, automatically with check-ins, research and planning with you before it stops, or one phase at a time. `RPI Agent` is an entry surface, not an autonomous dispatcher of specialized task workers. See [Using RPI Together](using-together#manual-and-automatic-mode-in-rpi-agent) for the mode details.
+
+> [!TIP]
+> When your host shows canvases, the RPI Agent opens the [RPI Workflow canvas](rpi-workflow-canvas) beside the chat. You follow the session phase by phase there, answer the agent's decisions, and send it comments that it reads back.
 
 ## Managing Context Between Lifecycle Concepts
 
@@ -160,6 +164,7 @@ Use research when readiness identifies a gap. Otherwise, select the smallest lif
 * [Context Engineering](context-engineering) - Why context management matters
 * [Share Work for Another Contributor](shared-work-handoff) - Publish optional minimized continuation context
 * [RPI Walkthrough](rpi-walkthrough) - Explore code or artifacts through a guided explanation
+* [RPI Workflow Canvas](rpi-workflow-canvas) - Follow and steer a session phase by phase beside the chat
 * [Agents Reference](../reference/agents/) - All available agents
 * [Agent Systems Catalog](../agents/) - Browse all agent families beyond RPI
 

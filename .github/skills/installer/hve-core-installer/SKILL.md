@@ -1,24 +1,26 @@
 ---
 name: hve-core-installer
-description: 'Decision-driven HVE-Core installer with multiple clone-based and extension install methods, environment detection, and selective component installation'
+description: 'Decision-driven HVE-Core installer for the Copilot harness: the plugin, a team default in repository settings, a full component copy into the repository, the VS Code extension, and clone-based storage, with environment detection, validation, and MCP setup'
 compatibility: 'Requires VS Code or VS Code Insiders. Clone-based methods require git on PATH and network access. The Bash component scripts require jq.'
 license: MIT
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-08-13"
+  last_updated: "2026-11-06"
 ---
 
 # HVE-Core Installer Skill
 
-Decision-driven installer for HVE-Core with environment detection, 6 clone-based installation methods, extension quick-install, validation, MCP configuration, and selective component installation workflows.
+Decision-driven installer for HVE-Core in VS Code's Copilot agent harness. It recommends the HVE-Core plugin first, then a team default in `.github/copilot/settings.json`, then native repository adoption, which copies every HVE-Core component into the project's own `.github` folders.
+
+The VS Code extension remains an editor option. A clone is a storage choice that Copilot uses as a plugin from source or, for a copy inside the project's checkout, through folders declared in `.github/copilot/settings.json`. The skill also validates the result and configures MCP servers.
 
 ## Role Definition
 
 Operate as two collaborating personas:
 
-* The **Installer** persona detects the environment, guides method selection, and executes installation steps
-* The **Validator** persona verifies installation success by checking paths, settings, and agent accessibility
+* The **Installer** persona detects the environment, guides route selection, and executes installation steps
+* The **Validator** persona verifies installed folders and repository settings, then has the user confirm that HVE-Core agents and skills appear in Copilot Chat
 
 The Installer persona handles all detection and execution. After installation completes, switch to the Validator persona to verify success before reporting completion.
 
@@ -26,24 +28,30 @@ The Installer persona handles all detection and execution. After installation co
 
 ## Required Phases
 
-| Phase | Name                                    | Purpose                                                             |
-|-------|-----------------------------------------|---------------------------------------------------------------------|
-| 1     | Environment Detection                   | Obtain consent and detect user's environment                        |
-| 2     | Installation Path Selection             | Choose between Extension (quick) or Clone-based installation        |
-| 3     | Environment Detection & Decision Matrix | For clone path: detect environment and recommend method             |
-| 4     | Installation Methods                    | Execute the selected installation method                            |
-| 5     | Validation                              | Verify installation success and configure settings                  |
-| 6     | Post-Installation Setup                 | Configure gitignore and present MCP guidance                        |
-| 7     | Component Installation                  | Optional: copy selected components for local use (clone-based only) |
+| Phase | Name                                    | Purpose                                                                                      |
+|-------|-----------------------------------------|----------------------------------------------------------------------------------------------|
+| 1     | Environment Detection                   | Obtain consent and check for earlier HVE-Core installs                                       |
+| 2     | Install Route Selection                 | Choose the plugin, team default, native adoption, extension, or clone route                  |
+| 3     | Environment Detection & Decision Matrix | For native adoption and clones: detect the environment and recommend where to keep the clone |
+| 4     | Installation Methods                    | Clone HVE-Core and, for the clone route, connect the clone to Copilot                        |
+| 5     | Validation                              | Verify the clone before it is used                                                           |
+| 6     | Post-Installation Setup                 | Configure gitignore and MCP servers, then reload the window and check Copilot Chat           |
+| 7     | Component Installation                  | Native adoption: copy every component into the project's `.github` folders                   |
 
-**Flow paths:**
+Flow paths:
 
-* Extension path: Phase 1 → Phase 2 → Phase 6 → Complete
-* Clone-based path: Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Complete
+* Plugin, team default, and extension routes: Phase 1 → Phase 2 → Phase 6 → Complete
+* Native adoption: Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 7 → Phase 6 → Complete
+* Clone route: Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Complete
+
+For native adoption from a clone the user already has, skip Phases 3 and 4 and validate that clone in Phase 5.
+
+> [!IMPORTANT]
+> Install HVE-Core through one route at a time. Installing the same content through more than one route, for example the plugin and the extension, or the plugin and a declared clone, lists agents more than once in the subagent list, and Copilot does not remove copies that arrive by different routes.
 
 ## Phase 1: Environment Detection
 
-Before presenting options, detect the user's environment to filter applicable installation methods.
+Before presenting options, obtain consent and check what is already installed.
 
 ### Checkpoint 1: Initial Consent
 
@@ -52,93 +60,162 @@ Present the following and await explicit consent:
 ```text
 🚀 HVE-Core Installer
 
-I'll help you install HVE-Core agents, prompts, instructions and skills.
+I'll help you install HVE-Core agents, instructions and skills.
 
 Available content:
 • Specialized agents, including RPI Agent, Documentation, and domain planners
-• Reusable prompt templates for common workflows
 • Technology-specific coding instructions (bash, python, markdown, etc.)
 • Domain-specific skills (pr-reference, etc.)
 
-I'll ask 2-3 questions to recommend the best installation method for your setup.
+I'll recommend an install route. If your route needs a clone, I'll ask 2-3 questions about your setup first.
 
 Would you like to proceed?
 ```
 
 If user declines, respond: "Installation cancelled. You can invoke this skill anytime to restart."
 
-Upon consent, proceed to Phase 2 to offer the installation path choice.
+### Existing Install Check
 
-## Phase 2: Installation Path Selection
+Upon consent, look for HVE-Core content that is already installed:
 
-Present the installation path choice before environment detection. Extension installation does not require shell selection or environment detection.
+* `.hve-tracking.json` at the workspace root means components were copied into the repository. Offer to upgrade them through native adoption, which runs Phase 7 in upgrade mode.
+* `.github/copilot/settings.json` that enables `hve-core@hve-core` or declares folders from an HVE-Core clone means the team default or a declared clone is in place.
+* Ask whether the user has installed the HVE-Core plugin or the HVE Core extension.
+* VS Code settings that list HVE-Core folders come from an earlier version of this installer. Note the files that hold them. Phase 6 offers the cleanup below once the user confirms HVE-Core in a Copilot session.
 
-### Checkpoint 2: Installation Path Choice
+When a route is already active, ask whether to keep it or replace it before installing another. Then proceed to Phase 2.
+
+### Earlier Location Settings Cleanup
+
+Earlier versions of this installer added HVE-Core folders to `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, `chat.agentSkillsLocations`, `chat.promptFilesLocations`, and `chat.hookFilesLocations`. Those settings are editor-only: VS Code forwards files from those locations, but Copilot CLI and the GitHub Copilot app do not read them. Kept beside a new route, they deliver the same content twice.
+
+HVE-Core supports only the Copilot harness. VS Code's Local harness doesn't load the `skills:` preloads that HVE-Core agents depend on, and removing these settings while the user still works in Local hides the agents Local found through them. Offer the cleanup only after the user confirms both of these:
+
+* Their chat sessions use the Copilot harness. VS Code shows the harness at the start of the chat title.
+* A Copilot session shows HVE-Core, using the agent and skill checks from the final completion report in Phase 6.
+
+When the user is still on Local, explain that HVE-Core supports only the Copilot harness and that they switch by starting a new chat and selecting **Copilot** in the **Session Target** control before the first prompt. Keep the settings until the user confirms both points, and report "⏭️ Kept earlier location settings until a Copilot session shows HVE-Core".
+
+Look in `.vscode/settings.json`, any `.code-workspace` file, and the `customizations.vscode.settings` block of `.devcontainer/devcontainer.json` for entries whose paths point into an HVE-Core clone, such as `../hve-core`, `.hve-core`, `/workspaces/hve-core`, or `lib/hve-core`. For each file with such entries:
+
+1. Show the user the HVE-Core entries it holds.
+2. Get approval under Checkpoint 3 (see Authorization Guardrails).
+3. Remove only the HVE-Core entries. Remove a setting only when it has no entries left, and leave unrelated entries alone.
+4. Report "✅ Removed earlier HVE-Core location settings from [file]", or "⏭️ Kept earlier location settings in [file]" when the user declines.
+
+After removing entries, ask the user to run **Developer: Reload Window** and repeat the agent and skill checks, so they confirm that the installed route, not the old settings, delivers HVE-Core.
+
+## Phase 2: Install Route Selection
+
+Present the route choice before any environment detection. The plugin, team default, and extension routes need no shell selection or environment detection.
+
+### Checkpoint 2: Install Route Choice
 
 Present the following choice:
 
-<!-- <extension-quick-install-checkpoint> -->
+<!-- <install-route-checkpoint> -->
 ```text
-🚀 Choose Your Installation Path
+🚀 Choose How to Install HVE-Core
 
-**Option 1: Quick Install (Recommended)**
-Install the HVE Core extension from VS Code Marketplace.
-• ⏱️ Takes about 10 seconds
-• 🔄 Automatic updates
-• ✅ No configuration needed
+**Option 1: Plugin (Recommended)**
+Install the HVE-Core plugin with two commands in Copilot Chat.
+• 📦 All agents, skills, and instructions
+• 🔄 Updates from the Plugins page
 
-**Option 2: Clone-Based Installation**
-Clone HVE-Core repository for customization.
-• 🎨 Full customization support
-• 📁 Files visible in your workspace
-• 🤝 Team version control options
+**Option 2: Team Default**
+I add .github/copilot/settings.json so Copilot offers the plugin
+to everyone who opens this repository.
 
-Which would you prefer? (1/2 or quick/clone)
+**Option 3: Copy into This Repository**
+I copy every HVE-Core agent, skill, and instruction into your
+.github folders. Your repository owns the copies.
+
+**Option 4: VS Code Extension**
+Install from the VS Code Marketplace. Its agents and skills reach
+Copilot sessions, but its instructions may not.
+
+**Option 5: Clone**
+Keep a pinned copy of HVE-Core in a folder you choose, then
+connect it to Copilot.
+
+Use one route at a time. Which would you prefer? (1-5)
 ```
-<!-- </extension-quick-install-checkpoint> -->
+<!-- </install-route-checkpoint> -->
 
 User input handling:
 
-* "1", "quick", "extension", "marketplace" → Execute Extension Installation
-* "2", "clone", "custom", "team" → Continue to Phase 3 (Environment Detection)
+* "1", "plugin" → Plugin Route
+* "2", "team", "team default" → Team Default Route
+* "3", "copy", "adopt", "native", "components" → Native adoption: continue to Shell Selection and Prerequisites
+* "4", "extension", "vsix" → Extension Installation Execution
+* "5", "clone", "submodule" → Clone route: continue to Shell Selection and Prerequisites
 * Unclear response → Ask for clarification
 
-If user selects Option 1 (Quick Install):
+Recommend a route other than the plugin when:
 
-1. Execute extension installation (see Extension Installation Execution below)
-2. Validate installation success
-3. Display success report or offer fallback options
+* A team wants Copilot to offer HVE-Core to everyone who opens the repository (Option 2)
+* The repository should own and customize its copy of HVE-Core (Option 3)
+* The user needs a pinned copy of HVE-Core or plans to edit HVE-Core itself (Option 5)
 
-If user selects Option 2 (Clone-Based):
+### Plugin Route
 
-* Ask: "Which shell would you prefer? (powershell/bash)"
-* Shell detection rules:
-  * "powershell", "pwsh", "ps1", "ps" → PowerShell
-  * "bash", "sh", "zsh" → Bash
-  * Unclear response → Windows = PowerShell, macOS/Linux = Bash
-* Continue to Prerequisites Check, then Environment Detection Script and Phase 3 workflow
+The plugin carries the full set: agents, skills, and path-specific instructions. Slash commands and editor controls need the user, so present these steps and wait for confirmation:
 
-**When to choose Clone over Extension:**
+<!-- <plugin-install-steps> -->
+```text
+📦 Install the HVE-Core Plugin
 
-* Need to customize agents, prompts, instructions, or skills
-* Team requires version-controlled HVE-Core
-* Offline or air-gapped environment
+In Copilot Chat with the Copilot harness, send these commands one at a time:
+  /plugin marketplace add microsoft/hve-core
+  /plugin install hve-core@hve-core
 
-### Prerequisites Check
+Or open the Agent Customizations editor, select Plugins, add the
+microsoft/hve-core marketplace, and install hve-core.
 
-Before clone-based installation, verify git is available:
+With Copilot CLI, run these commands in a terminal instead:
+  copilot plugin marketplace add microsoft/hve-core
+  copilot plugin install hve-core@hve-core
+VS Code discovers plugins that Copilot CLI installs.
 
-* Run: `git --version`
-* If fails: "Git is required for clone-based installation. Install git or choose Extension Quick Install."
+Reply "done" when the plugin is installed.
+```
+<!-- </plugin-install-steps> -->
 
-When the user selects Bash, also verify `jq` is available:
+Run the Copilot CLI commands only when the user asks you to. After the user confirms, proceed to Phase 6.
 
-* Run: `jq --version`
-* If fails: "jq is required by the Bash component scripts. Install jq or choose PowerShell."
+Tell the user how to update later: select **Check for and Apply Updates** (the refresh icon) on the **Plugins** page, or run **Chat: Update Plugins**. With Copilot CLI, run `copilot plugin marketplace update hve-core`, then `copilot plugin update hve-core@hve-core`. After any update, run **Developer: Reload Window**.
+
+### Team Default Route
+
+A project can commit `.github/copilot/settings.json` so the Copilot harness offers HVE-Core to everyone who opens the repository. Each person can turn optional plugins off on the **Plugins** page, and enterprise-managed settings take precedence over these defaults.
+
+Get approval under Checkpoint 3, then create `.github/copilot/settings.json` with the content below. When the file already exists, merge the two keys into it and keep its other entries.
+
+<!-- <team-default-settings> -->
+```json
+{
+  "extraKnownMarketplaces": {
+    "hve-core": {
+      "source": {
+        "source": "github",
+        "repo": "microsoft/hve-core"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "hve-core@hve-core": true
+  }
+}
+```
+<!-- </team-default-settings> -->
+
+The marketplace key must match the marketplace name, `hve-core`. Report "✅ Added the HVE-Core plugin default to .github/copilot/settings.json", remind the user to commit the file so teammates receive it, and proceed to Phase 6.
 
 ### Extension Installation Execution
 
-When user selects Quick Install, first ask which VS Code variant they are using:
+The `ise-hve-essentials.hve-core` extension is an editor option. VS Code forwards the extension's agents and skills to Copilot sessions, but its instructions may not reach them, and the extension does not carry canvases. Recommend the plugin when the user needs the instructions.
+
+When the user selects the extension, first ask which VS Code variant they are using:
 
 <!-- <vscode-variant-prompt> -->
 ```text
@@ -201,10 +278,9 @@ The HVE Core extension has been installed from the VS Code Marketplace.
 • rpi-agent, documentation, backlog-manager, and adr-creation
 • code-review, security-planner, ux-ui-designer, and more!
 
-🪝 Hooks (manual step): The Marketplace extension is declarative and does not
-  write chat.hookFilesLocations. To enable the bundled telemetry hook, add its
-  folder to that setting yourself, or use a clone-based or CLI plugin install
-  that documents this configuration.
+ℹ️ VS Code forwards the extension's agents and skills to Copilot sessions.
+   Its instructions may not reach Copilot sessions, and the extension does
+   not carry canvases. Use the plugin when you need the instructions.
 
 📋 Configuring optional settings...
 ```
@@ -219,19 +295,41 @@ If extension installation fails, provide targeted guidance:
 <!-- <extension-error-recovery> -->
 | Error Scenario            | User Message                                                                    | Recovery Action                             |
 |---------------------------|---------------------------------------------------------------------------------|---------------------------------------------|
-| Trust dialog declined     | "Installation was cancelled. You may have declined the publisher trust prompt." | Offer retry or switch to clone method       |
+| Trust dialog declined     | "Installation was cancelled. You may have declined the publisher trust prompt." | Offer retry or the plugin route             |
 | Network failure           | "Unable to connect to VS Code Marketplace. Check your network connection."      | Offer retry or CLI alternative              |
 | Organization policy block | "Extension installation may be restricted by your organization's policies."     | Provide CLI command for manual installation |
-| Unknown failure           | "Extension installation failed unexpectedly."                                   | Offer clone-based installation as fallback  |
+| Unknown failure           | "Extension installation failed unexpectedly."                                   | Offer the plugin route as a fallback        |
 <!-- </extension-error-recovery> -->
 
 **Flow Control After Failure:**
 
 If extension installation fails and user cannot resolve:
 
-* Offer: "Would you like to try a clone-based installation method instead? (yes/no)"
-* If yes: Continue to Environment Detection Script and Phase 3 workflow
+* Offer: "Would you like to install the HVE-Core plugin instead? (yes/no)"
+* If yes: Continue to the Plugin Route
 * If no: End session with manual installation instructions
+
+### Shell Selection and Prerequisites
+
+Native adoption and the clone route run scripts, so ask for a shell first:
+
+* Ask: "Which shell would you prefer? (powershell/bash)"
+* Shell detection rules:
+  * "powershell", "pwsh", "ps1", "ps" → PowerShell
+  * "bash", "sh", "zsh" → Bash
+  * Unclear response → Windows = PowerShell, macOS/Linux = Bash
+
+Before cloning, verify git is available:
+
+* Run: `git --version`
+* If fails: "Git is required to clone HVE-Core. Install git, or choose the plugin route instead."
+
+When the user selects Bash, also verify `jq` is available:
+
+* Run: `jq --version`
+* If fails: "jq is required by the Bash component scripts. Install jq or choose PowerShell."
+
+Then run the Environment Detection Script and continue to Phase 3.
 
 ### Environment Detection Script
 
@@ -243,7 +341,11 @@ Run the appropriate detection script based on the user's shell:
 
 ## Phase 3: Environment Detection & Decision Matrix
 
-Based on detected environment, ask the following questions to determine the recommended method.
+Phase 3 recommends where to keep the clone. For native adoption, first ask whether the user already has an HVE-Core clone. When they do, use its path as the copy source and skip to Phase 5.
+
+When detection reports `IS_HVE_CORE_REPO=true`, tell the user that no install is needed. Copilot discovers the repository's own `.github/agents`, `.github/skills`, and `.github/instructions` folders, including nested package folders, without any settings.
+
+Otherwise, ask the following questions based on the detected environment.
 
 ### Question 1: Environment Confirmation
 
@@ -302,21 +404,24 @@ How would you like to receive updates? (auto/controlled)
 
 ## Decision Matrix
 
-Use this matrix to determine the recommended method:
+Use this matrix to recommend where to keep the clone and how Copilot uses it. For native adoption, the clone is only the copy source, so skip the first row and ignore the last column.
 
 <!-- <decision-matrix> -->
-| Environment                | Team | Updates    | **Recommended Method**                                  |
-|----------------------------|------|------------|---------------------------------------------------------|
-| Any (simplest)             | Any  | -          | **Extension Quick Install** (works in all environments) |
-| Local (no container)       | Solo | -          | **Method 1: Peer Clone**                                |
-| Local (no container)       | Team | Controlled | **Method 6: Submodule**                                 |
-| Local devcontainer         | Solo | Auto       | **Method 2: Git-Ignored**                               |
-| Local devcontainer         | Team | Controlled | **Method 6: Submodule**                                 |
-| Codespaces only            | Solo | Auto       | **Method 4: Codespaces**                                |
-| Codespaces only            | Team | Controlled | **Method 6: Submodule**                                 |
-| Both local + Codespaces    | Any  | Any        | **Method 5: Multi-Root Workspace**                      |
-| HVE-Core repo (Codespaces) | -    | -          | **Method 4: Codespaces** (already configured)           |
+| Environment             | Team | Updates    | **Recommended Method**                 | Copilot Uses It Through                               |
+|-------------------------|------|------------|----------------------------------------|-------------------------------------------------------|
+| Any (simplest)          | Any  | -          | **Plugin** (Option 1, no clone needed) | The plugin                                            |
+| Local (no container)    | Solo | -          | **Method 1: Peer Clone**               | Plugin from source                                    |
+| Local (no container)    | Team | Controlled | **Method 6: Submodule**                | `.github/copilot/settings.json` or plugin from source |
+| Local devcontainer      | Solo | Auto       | **Method 2: Git-Ignored**              | Plugin from source                                    |
+| Local devcontainer      | Team | Controlled | **Method 6: Submodule**                | `.github/copilot/settings.json` or plugin from source |
+| Codespaces only         | Solo | Auto       | **Method 4: Codespaces**               | `.github/copilot/settings.json`                       |
+| Codespaces only         | Team | Controlled | **Method 6: Submodule**                | `.github/copilot/settings.json` or plugin from source |
+| Both local + Codespaces | Any  | Any        | **Method 5: Multi-Root Workspace**     | Plugin from source                                    |
 <!-- </decision-matrix> -->
+
+Folders declared in `.github/copilot/settings.json` must sit inside the project's checkout. Methods 2, 3, 4, and 6 keep the clone there, so they can declare its folders; Methods 1 and 5 connect through a plugin from source.
+
+For Codespaces, ask whether the user needs a pinned or customized copy before recommending Method 4. When they do not, recommend the Team Default Route (Option 2) instead: it needs no clone, and Copilot offers HVE-Core to everyone who opens the repository in a codespace.
 
 ### Method Selection Logic
 
@@ -342,53 +447,41 @@ Based on your answers:
 * [Benefit 2 matching their requirements]
 * [Benefit 3 matching their requirements]
 
+**How Copilot uses it:** [Plugin from source, folders declared in .github/copilot/settings.json, or copy source for native adoption]
+
 Would you like to proceed with this method, or see alternatives?
 ```
 <!-- </recommendation-template> -->
 
 ## Phase 4: Installation Methods
 
-Each supported installation path is documented end to end in [references/installation-methods.md](references/installation-methods.md). Select the path resolved by the decision matrix above and follow it there. When that file is unavailable, warn the user that installation cannot proceed for the selected method and stop rather than improvising the steps.
+Each clone method, and both ways to connect a clone to Copilot, are documented end to end in [references/installation-methods.md](references/installation-methods.md). Follow the method resolved by the decision matrix there. For native adoption, clone the source and leave it unconnected. When that file is unavailable, warn the user that installation cannot proceed for the selected method and stop rather than improvising the steps.
 
 ## Phase 5: Validation (Validator Persona)
 
-After installation completes, switch to the **Validator** persona and verify the installation.
+After installation completes, switch to the **Validator** persona and verify the clone.
 
 > [!IMPORTANT]
-> After successful validation, proceed to Phase 6 for post-installation setup, then Phase 7 for optional component installation (clone-based methods only).
-
-### Checkpoint 3: Settings Authorization
-
-Before modifying settings.json, present the following:
-
-```text
-⚙️ VS Code Settings Update
-
-I will now update your VS Code settings to add HVE-Core paths.
-
-Changes to be made:
-• [List paths based on selected method]
-
-⚠️ Authorization Required: Do you authorize these settings changes? (yes/no)
-```
-
-If user declines: "Installation cancelled. No settings changes were made."
+> After successful validation, run Phase 7 for native adoption and then Phase 6. For the clone route, proceed to Phase 6.
 
 ### Validation Workflow
 
 Run validation based on the selected method. Set the base path variable before running:
 
-| Method | Base Path              |
-|--------|------------------------|
-| 1      | `../hve-core`          |
-| 2      | `.hve-core`            |
-| 3, 4   | `/workspaces/hve-core` |
-| 5      | Check workspace file   |
-| 6      | `lib/hve-core`         |
+| Method  | Base Path            |
+|---------|----------------------|
+| 1       | `../hve-core`        |
+| 2, 3, 4 | `.hve-core`          |
+| 5       | Check workspace file |
+| 6       | `lib/hve-core`       |
+
+For a clone the user already had, use its path as the base path with method `1`, which checks only the agents, instructions, and skills folders.
 
 **PowerShell:** Run [scripts/validate-installation.ps1](scripts/validate-installation.ps1) with the `method` and `basePath` variables set.
 
 **Bash:** Run [scripts/validate-installation.sh](scripts/validate-installation.sh) with the method number and base path as arguments.
+
+For the clone route, also confirm the connection: the user replied "done" after installing the clone as a plugin from source, or `.github/copilot/settings.json` declares the clone's three folders.
 
 ### Success Report
 
@@ -401,7 +494,7 @@ Upon successful validation, display:
 Method [N]: [Name] installed successfully.
 
 📍 Location: [path based on method]
-⚙️ Settings: [settings file or workspace file]
+🔌 Connected through: [plugin from source or .github/copilot/settings.json]
 📖 Documentation: https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/[method-doc].md
 
 🧪 Available Agents:
@@ -412,6 +505,8 @@ Method [N]: [Name] installed successfully.
 ```
 <!-- </success-report> -->
 
+For native adoption, skip this report. Display "✅ HVE-Core source ready at [path]" and proceed to Phase 7.
+
 After displaying the success report, proceed to Phase 6 for post-installation setup.
 
 ## Phase 6: Post-Installation Setup
@@ -420,37 +515,92 @@ Read [references/post-installation-setup.md](references/post-installation-setup.
 
 ## Phase 7: Component Installation and Upgrade
 
-Read [references/component-installation.md](references/component-installation.md) and follow its component installation and upgrade procedures exactly, including every confirmation gate it defines. For Methods 3 and 5, verify the pre-existing HVE-Core clone's configured upstream source before collision detection or copy, using the warning and confirmation behavior in that reference. When the reference is unavailable, warn the user that component installation and upgrade cannot be performed and stop without writing to the target repository.
+Read [references/component-installation.md](references/component-installation.md) and follow its component installation and upgrade procedures exactly, including every confirmation gate it defines. Phase 7 runs only for native adoption, including upgrade mode when `.hve-tracking.json` exists.
+
+For Methods 3 and 5, and for a clone the user already had, verify the pre-existing HVE-Core clone's configured upstream source before collision detection or copy, using the warning and confirmation behavior in that reference. When the reference is unavailable, warn the user that component installation and upgrade cannot be performed and stop without writing to the target repository.
 
 ## Error Recovery
 
 Provide targeted guidance when steps fail:
 
 <!-- <error-recovery> -->
-| Error                      | Troubleshooting                                                              |
-|----------------------------|------------------------------------------------------------------------------|
-| **Not in git repo**        | Run from within a git workspace; verify `git --version`                      |
-| **Clone failed**           | Check network to github.com; verify git credentials and write permissions    |
-| **Validation failed**      | Repository may be incomplete; delete HVE-Core directory and re-run installer |
-| **Settings update failed** | Verify settings.json is valid JSON; check permissions; try closing VS Code   |
+| Error                            | Troubleshooting                                                                                                          |
+|----------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| **Not in git repo**              | Run from within a git workspace; verify `git --version`                                                                  |
+| **Clone failed**                 | Check network to github.com; verify git credentials and write permissions                                                |
+| **Validation failed**            | Repository may be incomplete; delete HVE-Core directory and re-run installer                                             |
+| **Settings update failed**       | Verify `.github/copilot/settings.json` is valid JSON and check write permissions                                         |
+| **Declared folders not loading** | Trust the workspace folder; declared folders load only in a trusted folder and must be literal paths inside the checkout |
+| **Agents listed twice**          | More than one route is installed; keep one route and remove the others                                                   |
+| **Agents or skills missing**     | Confirm the chat uses the Copilot harness, run **Developer: Reload Window**, then start a new chat session               |
 <!-- </error-recovery> -->
 
 ## Rollback
 
-To remove a failed or unwanted installation:
+To remove a failed or unwanted installation. The methods that delete a working
+tree are gated by Checkpoint 4 below. The others skip that checkpoint only;
+they still follow the general authorization rules, including Checkpoint 3 for
+any settings or devcontainer edit.
 
-| Method                   | Cleanup                                                    |
-|--------------------------|------------------------------------------------------------|
-| Extension                | VS Code → Extensions → HVE Core → Uninstall                |
-| 1 (Peer Clone)           | `rm -rf ../hve-core`                                       |
-| 2 (Git-Ignored)          | `rm -rf .hve-core`                                         |
-| 3-4 (Mounted/Codespaces) | Remove mount/postCreate from devcontainer.json             |
-| 5 (Multi-Root)           | Delete `.code-workspace` file                              |
-| 6 (Submodule)            | `git submodule deinit lib/hve-core && git rm lib/hve-core` |
+### Cleanup that needs no Checkpoint 4
 
-Then remove HVE-Core paths from `.vscode/settings.json`.
+These do not delete a working tree, so Checkpoint 4 does not apply. Every other
+authorization rule still does: editing `.github/copilot/settings.json`,
+`devcontainer.json`, or a `.code-workspace` file still requires Checkpoint 3.
 
-If you used Phase 7 component installation, also delete `.hve-tracking.json` and any copied `.github/agents/`, `.github/prompts/`, `.github/instructions/`, or `.github/skills/` content you no longer need.
+| Route or Method | Cleanup                                                                                                                                                    |
+|-----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Plugin          | Manage `hve-core` on the **Plugins** page of the Agent Customizations editor                                                                               |
+| Team default    | Remove the `hve-core` entries from `extraKnownMarketplaces` and `enabledPlugins` in `.github/copilot/settings.json`                                        |
+| Native adoption | Delete `.hve-tracking.json` and any copied `.github/agents/`, `.github/prompts/`, `.github/instructions/`, or `.github/skills/` content you no longer need |
+| Extension       | VS Code → Extensions → HVE Core → Uninstall                                                                                                                |
+| 3 (Mounted)     | Remove the mount from devcontainer.json and rebuild the container                                                                                          |
+| 5 (Multi-Root)  | Delete `.code-workspace` file                                                                                                                              |
+
+### Destructive cleanup — requires Checkpoint 4
+
+These remove a working tree. Methods 1 and 2 delete the clone the installer
+invites users to customize, so any uncommitted local edits are lost
+permanently and `rm -rf` has no undo.
+
+| Method          | Cleanup                                                                                               | What is lost                                   |
+|-----------------|-------------------------------------------------------------------------------------------------------|------------------------------------------------|
+| 1 (Peer Clone)  | `rm -rf ../hve-core`                                                                                  | The peer clone and any local customizations    |
+| 2 (Git-Ignored) | `rm -rf .hve-core`                                                                                    | The in-repo clone and any local customizations |
+| 4 (Codespaces)  | Remove the `postCreateCommand` from devcontainer.json, rebuild the container, then delete `.hve-core` | The in-repo clone and any local customizations |
+| 6 (Submodule)   | `git submodule deinit lib/hve-core && git rm lib/hve-core`                                            | The submodule working tree and its gitlink     |
+
+Before running any row in this table, obtain Checkpoint 4 authorization. Prefer
+the non-destructive alternative where it is sufficient: renaming the directory
+(`mv ../hve-core ../hve-core.bak`) keeps the content recoverable and can be
+undone.
+
+### Checkpoint 4: Rollback Authorization
+
+Before any destructive rollback, inspect the target and present the following.
+Run `git status --porcelain` inside the target directory first so the uncommitted
+count is real rather than assumed:
+
+```text
+🗑️ Rollback — Destructive
+
+I will permanently delete:
+• [absolute path of the target directory]
+
+This includes [N] uncommitted change(s) in that directory, which cannot be recovered.
+
+Non-destructive alternative: rename it instead, with
+  mv [target] [target].bak
+
+⚠️ Authorization Required: Do you authorize deleting [target]? (yes/no)
+```
+
+If user declines: "Rollback cancelled. Nothing was deleted."
+
+If the target is not a directory, or is not the path recorded for the selected
+method, stop and report it rather than deleting anything.
+
+For a clone, also undo its connection: manage a plugin installed from source on the **Plugins** page, or remove the clone's folders from `agentDirectories`, `skillDirectories`, and `instructionDirectories` in `.github/copilot/settings.json`. When an earlier installer version added HVE-Core entries to the `chat.*Locations` settings, remove them as described in Earlier Location Settings Cleanup. Then run **Developer: Reload Window**.
 
 ## Authorization Guardrails
 
@@ -458,8 +608,30 @@ Never modify files without explicit user authorization. Always explain changes b
 
 Checkpoints requiring authorization:
 
-1. Initial Consent (Phase 1) - before starting detection
-2. Settings Authorization (Phase 5, Checkpoint 3) - before editing settings/devcontainer
+1. Initial Consent (Phase 1), before starting detection
+2. File Change Authorization (Checkpoint 3), before writing `.github/copilot/settings.json`, `devcontainer.json`, or a `.code-workspace` file, and before removing earlier location settings
+3. Rollback Authorization (Checkpoint 4), before any destructive rollback
+
+### Checkpoint 3: File Change Authorization
+
+Before each of those changes, present the following:
+
+```text
+⚙️ File Update
+
+I will now update [file] for HVE-Core.
+
+Changes to be made:
+• [Each key, path, or entry to add or remove]
+
+⚠️ Authorization Required: Do you authorize these changes? (yes/no)
+```
+
+If the user declines, respond "No changes were made to [file]." Then skip the change and explain how the route is affected, or stop when the route cannot work without it.
+
+Never run a destructive rollback command as part of error recovery. "Delete the
+HVE-Core directory and re-run" in the troubleshooting table is advice to the
+user, not an action to take unprompted; it still requires Checkpoint 4.
 
 ## Output Format Requirements
 
@@ -486,6 +658,6 @@ Use these exact emojis for consistency:
 
 ## Success Criteria
 
-**Success:** Environment detected, method selected, HVE-Core directories validated (agents, prompts, instructions, skills), settings configured, user directed to reload.
+The installation succeeds when the user has one install route in place, every file change was authorized, any clone passed validation, the user ran **Developer: Reload Window**, and the agent and skill checks for that route passed in Copilot Chat.
 
-**Failure:** Detection fails, clone/submodule fails, validation finds missing directories, or settings modification fails.
+It fails when detection fails, a clone or submodule fails, validation finds missing directories, a settings or copy step fails, or the agent and skill checks still fail after a reload.

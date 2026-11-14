@@ -3,7 +3,7 @@ title: "Tutorial: Handing Off from DT to RPI"
 description: Step-by-step tutorial for performing Design Thinking to RPI handoffs at each exit point
 sidebar_position: 15
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-10-31
 ms.topic: tutorial
 keywords:
   - design thinking
@@ -49,27 +49,28 @@ When you review the handoff before activating `rpi-research`, pay attention to i
 After completing Method 9, ask the coach to assess readiness:
 
 ```text
-/dt-method-next
+We've finished Method 9. Assess where we are and recommend the next step.
 ```
 
 The coach reviews the completed Implementation Space work and confirms that the handoff is ready for `rpi-research`.
 
 ### Step 2: Generate the Handoff Artifact
 
-Start a new chat session and run the Implementation Space handoff prompt:
+In the same DT Coach session, ask the coach to package the Implementation Space for RPI:
 
 ```text
-/dt-handoff-implementation-space project-slug=factory-floor-maintenance
+Prepare the Implementation Space handoff to RPI for project
+factory-floor-maintenance.
 ```
 
-The prompt compiles the available DT artifacts, applies the current handoff contract, and produces two files in `.copilot-tracking/dt/{project-slug}/`:
+The coach follows the Implementation Space exit procedure from the `dt-rpi-integration` skill. Your request counts as the explicit handoff choice. The coach compiles the available DT artifacts, applies the current handoff contract, and produces two files:
 
-* `handoff-summary.md`: The structured handoff metadata with confidence markers
-* `rpi-handoff-implementation-space.md`: A self-contained document for `rpi-research`
+* `.copilot-tracking/dt/{project-slug}/handoff-summary-implementation-space.md`: The structured handoff metadata with the exit tier and confidence markers
+* `.copilot-tracking/research/{project-slug}-research-topic.md`: A self-contained document for `rpi-research`
 
 ### Step 3: Review the Artifact
 
-Open `rpi-handoff-implementation-space.md` and verify that it includes:
+Open `.copilot-tracking/research/factory-floor-maintenance-research-topic.md` and verify that it includes:
 
 * A clear problem framing and implementation context
 * Stakeholder context, constraints, and assumptions with confidence markers
@@ -78,15 +79,16 @@ Open `rpi-handoff-implementation-space.md` and verify that it includes:
 
 ### Step 4: Hand Off to rpi-research
 
-Clear your chat context, open the generated handoff file in your editor, and
-invoke the Research phase skill:
+Clear your chat context, then invoke the Research phase skill with the path to the generated handoff file:
 
 ```text
 /clear
 /rpi-research Research implementation options for the voice-guided
-repair system based on the DT handoff artifact that is open in the
-editor at docs/design-thinking/factory-floor-maintenance/rpi-handoff-implementation-space.md
+repair system based on the DT handoff artifact at
+.copilot-tracking/research/factory-floor-maintenance-research-topic.md
 ```
+
+With the plugin installed in VS Code, the Research skill appears as `/hve-core:rpi-research`.
 
 `rpi-research` uses the handoff to:
 
@@ -105,18 +107,20 @@ After research completes, continue with the standard RPI phases:
 
 The research artifact carries the validated DT context into planning and implementation rather than recreating it from scratch.
 
+Each phase ends with a Next Steps section that names the exact command to run next. To have one agent carry the work through the phases instead, select **RPI Agent** in the agent picker and point it at the research artifact.
+
 ## When RPI Returns to DT
 
 The handoff is not one-way. `rpi-research` can recommend returning to DT coaching when research reveals issues that trace back to DT assumptions. When that happens, open a new DT Coach session, restate the finding that invalidated the assumption, and resume from the earlier method that needs revision.
 
 ## Quick Reference
 
-| Action                              | Command or Step                                                                    |
-|-------------------------------------|------------------------------------------------------------------------------------|
-| Check readiness                     | `/dt-method-next` in the DT Coach session                                          |
-| Generate the implementation handoff | `/dt-handoff-implementation-space project-slug=...`                                |
-| Switch to RPI                       | `/clear`, open the handoff artifact, then invoke `/rpi-research`                   |
-| Return to DT from RPI               | Start a new `@dt-coach` session and describe the finding that triggered the return |
+| Action                              | Command or Step                                                                            |
+|-------------------------------------|--------------------------------------------------------------------------------------------|
+| Check readiness                     | Ask DT Coach to assess readiness and recommend the next step                               |
+| Generate the implementation handoff | Ask DT Coach to prepare the Implementation Space handoff to RPI                            |
+| Switch to RPI                       | `/clear`, then run `/rpi-research` with the path to the handoff artifact                   |
+| Return to DT from RPI               | Select **DT Coach** in the agent picker and describe the finding that triggered the return |
 
 ## Related Resources
 

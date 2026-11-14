@@ -13,6 +13,68 @@
 
 Set-StrictMode -Version Latest
 
+$script:VallyTrialErrorCategories = @('none', 'timeout', 'authentication', 'rate-limited', 'connection', 'model-unavailable', 'cancelled', 'unknown')
+$script:VallyShellTools = @('bash', 'powershell', 'shell')
+$script:VallyFailureCodeVocabulary = [System.Collections.Generic.Dictionary[string, string[]]]::new([StringComparer]::Ordinal)
+foreach ($stateGrader in @('data-science-rpi-blocked-state-preserves-job', 'data-science-rpi-produced-pointers-preserve-job')) {
+    $script:VallyFailureCodeVocabulary[$stateGrader] = @('read-error', 'oversized-input', 'invalid-yaml', 'ambiguous-input', 'state-mismatch',
+        'missing-blocked-record', 'extension-mismatch', 'pointer-mismatch')
+}
+$script:VallyFailureCodeVocabulary['experiment-outcome-separates-status-and-verdict'] = @('read-error', 'oversized-input', 'ambiguous-input',
+    'invalid-measurement', 'invalid-review-record', 'missing-h1-verdict', 'conflicting-h1-verdict', 'wrong-verdict',
+    'missing-downstream-decision', 'conflicting-downstream-decision', 'wrong-decision',
+    'missing-review-execution', 'conflicting-review-execution', 'review-execution-mismatch',
+    'missing-review-outcome', 'conflicting-review-outcome', 'review-outcome-mismatch',
+    'missing-latency-reduction', 'conflicting-latency-reduction', 'latency-reduction-mismatch',
+    'missing-sample-size', 'conflicting-sample-size', 'sample-size-mismatch',
+    'missing-error-rate', 'conflicting-error-rate', 'error-rate-mismatch',
+    'anomaly-mismatch', 'missing-confidence', 'criteria-mismatch')
+
+function Test-VallyBoundedCodeList {
+    [OutputType([bool])]
+    param([AllowNull()]$Value, [string[]]$Allowed)
+
+    if ($Value -isnot [array] -or $Value.Count -gt $Allowed.Count) { return $false }
+    $previous = $null
+    foreach ($code in $Value) {
+        if ($code -isnot [string] -or $code -cnotin $Allowed) { return $false }
+        if ($null -ne $previous -and [string]::CompareOrdinal($previous, $code) -ge 0) { return $false }
+        $previous = $code
+    }
+    return $true
+}
+
+function ConvertTo-VallyFailureCodeList {
+    # Only allowlisted program graders may report codes; anything else normalizes to null.
+    param([string]$GraderName, [AllowNull()]$Detail, [AllowNull()]$Passed)
+
+    if (-not $script:VallyFailureCodeVocabulary.ContainsKey($GraderName) -or $null -eq $Detail -or
+        -not $Detail.PSObject.Properties['metadata'] -or $Detail.metadata -isnot [pscustomobject] -or
+        -not $Detail.metadata.PSObject.Properties['failureCodes']) { return $null }
+    $raw = $Detail.metadata.failureCodes
+    $vocabulary = $script:VallyFailureCodeVocabulary[$GraderName]
+    if ($raw -isnot [array] -or $raw.Count -gt $vocabulary.Count) { return $null }
+    $codes = [System.Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
+    foreach ($code in $raw) {
+        if ($code -isnot [string] -or $code -cnotin $vocabulary) { return $null }
+        [void]$codes.Add($code)
+    }
+    if ($Passed -eq $true -and $codes.Count -gt 0) { return $null }
+    return , ([string[]]@($codes))
+}
+
+function Get-VallyTrialErrorCategory {
+    param([string]$ExecutionStatus, [AllowNull()]$ErrorText)
+
+    if ($ExecutionStatus -ceq 'success') { return 'none' }
+    if ($ExecutionStatus -ceq 'cancelled') { return 'cancelled' }
+    if ($ErrorText -isnot [string] -or [string]::IsNullOrWhiteSpace($ErrorText)) { return 'unknown' }
+    $bounded = $ErrorText.Substring(0, [Math]::Min(4096, $ErrorText.Length))
+    $category = Get-VallyExitCategory -ExitCode 1 -OutputText $bounded
+    if ($category -ceq 'unknown' -and $bounded -match '(?i)\b(cancell?ed|aborted)\b') { return 'cancelled' }
+    return $category
+}
+
 function Resolve-VallyRunDir {
     <#
     .SYNOPSIS
@@ -255,7 +317,7 @@ function Test-VallyDiagnosticEvidence {
         if ($data -isnot [System.Collections.IDictionary] -or
             @($required | Where-Object { -not $data.Contains($_) }).Count -gt 0 -or
             @($data.Keys | Where-Object { $_ -cnotin $required }).Count -gt 0 -or
-            $data.schemaVersion -cne '1.0.0' -or ($RunKey -and $data.runKey -cne $RunKey)) {
+            $data.schemaVersion -cne '2.0.0' -or ($RunKey -and $data.runKey -cne $RunKey)) {
             throw 'Invalid diagnostic contract.'
         }
         if ($data.configurationStatus -cne 'available') { [void]$issues.Add('configuration-unavailable') }
@@ -319,7 +381,7 @@ function Test-VallyDiagnosticEvidence {
             $scores = @{}
             foreach ($trial in $attempt.trials) {
                 $trialFields = @('stimulusName', 'trialIndex', 'itemIdDigest', 'identitySource', 'executionStatus', 'score',
-                    'thresholdPassed', 'allGradersPassed', 'gradeStatus', 'graders')
+                    'thresholdPassed', 'allGradersPassed', 'gradeStatus', 'graders', 'errorCategory', 'elapsedMs', 'observedShellTools')
                 $completionFields = @('endReason', 'configuredTurns', 'observedTurns', 'responseTurns', 'wallTimeMs')
                 $presentCompletionFields = @($completionFields | Where-Object { $trial.Contains($_) })
                 if (@($trialFields | Where-Object { -not $trial.Contains($_) }).Count -gt 0 -or
@@ -328,6 +390,12 @@ function Test-VallyDiagnosticEvidence {
                 if ($trial.executionStatus -cnotin @('success', 'error', 'skipped', 'cancelled', 'unknown', 'invalid') -or
                     $trial.gradeStatus -cnotin @('success', 'error', 'missing', 'invalid') -or
                     $trial.identitySource -cnotin @('native-item-id', 'stimulus-trial-index', 'missing')) { throw 'Invalid trial category.' }
+                if ($trial.errorCategory -cnotin $script:VallyTrialErrorCategories -or
+                    ($trial.errorCategory -ceq 'none') -ne ($trial.executionStatus -ceq 'success')) { throw 'Invalid error category.' }
+                if ($null -ne $trial.elapsedMs -and
+                    (($trial.elapsedMs -isnot [long] -and $trial.elapsedMs -isnot [int]) -or $trial.elapsedMs -lt 0)) { throw 'Invalid elapsed time.' }
+                if ($null -ne $trial.observedShellTools -and
+                    -not (Test-VallyBoundedCodeList -Value $trial.observedShellTools -Allowed $script:VallyShellTools)) { throw 'Invalid shell observation.' }
                 if ($presentCompletionFields.Count -eq $completionFields.Count) {
                     if ($null -ne $trial.endReason -and $trial.endReason -cnotin @('completed', 'agent_timeout', 'simulation_cap', 'invalid')) {
                         throw 'Invalid trajectory end reason.'
@@ -381,10 +449,14 @@ function Test-VallyDiagnosticEvidence {
                 if (@($trial.graders).Count -ne @($expected.graders).Count) { $checksPass = $false }
                 $graderIndex = 0
                 foreach ($grader in $trial.graders) {
-                    $graderFields = @('name', 'graderType', 'score', 'passed', 'status')
+                    $graderFields = @('name', 'graderType', 'score', 'passed', 'status', 'failureCodes')
                     if (@($graderFields | Where-Object { -not $grader.Contains($_) }).Count -gt 0 -or
                         @($grader.Keys | Where-Object { $_ -cnotin $graderFields }).Count -gt 0) { throw 'Invalid grader contract.' }
                     if ($grader.status -cnotin @('success', 'error', 'missing', 'duplicate', 'invalid')) { throw 'Invalid grader category.' }
+                    if ($null -ne $grader.failureCodes -and
+                        (-not $script:VallyFailureCodeVocabulary.ContainsKey([string]$grader.name) -or
+                        -not (Test-VallyBoundedCodeList -Value $grader.failureCodes -Allowed $script:VallyFailureCodeVocabulary[[string]$grader.name]) -or
+                        ($grader.passed -eq $true -and $grader.failureCodes.Count -gt 0))) { throw 'Invalid failure codes.' }
                     if ($graderIndex -ge @($expected.graders).Count -or
                         $grader.name -cne $expected.graders[$graderIndex].name -or $grader.graderType -cne $expected.graders[$graderIndex].type) {
                         [void]$attemptIssues.Add('grader-population-mismatch')
@@ -444,6 +516,97 @@ function Test-VallyDiagnosticEvidence {
         integrityPassed = $contractValid -and $selectedValid -and $issues.Count -eq 0
         allChecksPassed = $allChecksPassed -and $issues.Count -eq 0
         issues = @($issues | Sort-Object)
+    }
+}
+
+function Test-VallyAdvisoryIntegrityTolerance {
+    <#
+    .SYNOPSIS
+    Decides whether an advisory-only spec's integrity gap is a few non-systematic errored trials.
+    .DESCRIPTION
+    Advisory verdicts never block a merge, so a spec whose selected stimuli are all advisory
+    reports, rather than blocks on, an evidence gap left only by trials that errored before
+    producing a verdict. Missing, duplicate, or malformed evidence, grading problems on graded
+    trials, more errored trials than the allowance, and a stimulus that errored in every trial
+    still fail integrity.
+    .PARAMETER Diagnostics
+    Versioned diagnostic projection emitted by Invoke-VallySpec.
+    .PARAMETER Integrity
+    Test-VallyDiagnosticEvidence result for the same diagnostics.
+    .PARAMETER AdvisoryMap
+    Per-stimulus advisory flags keyed by stimulus name, as a dictionary or deserialized object.
+    .PARAMETER MaxErroredFraction
+    Largest share of the configured trial population that may have errored. At least one
+    errored trial is always allowed.
+    .OUTPUTS
+    [hashtable] tolerated, reason, erroredTrials, and expectedTrials.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)][AllowNull()]$Diagnostics,
+        [Parameter(Mandatory = $true)][AllowNull()]$Integrity,
+        [AllowNull()]$AdvisoryMap,
+        [ValidateRange(0.0, 1.0)][double]$MaxErroredFraction = 0.2
+    )
+
+    $verdict = @{ tolerated = $false; reason = 'invalid-contract'; erroredTrials = 0; expectedTrials = 0 }
+    $erroredTrialIssues = @('execution-error', 'grading-error', 'invalid-trial-score', 'invalid-grader-result')
+    $isUnitScore = {
+        param($Value)
+        $null -ne $Value -and $Value -isnot [string] -and $Value -isnot [bool] -and
+            [double]::IsFinite([double]$Value) -and $Value -ge 0 -and $Value -le 1
+    }
+    try {
+        $evidence = $Integrity | ConvertTo-Json -Depth 5 -Compress | ConvertFrom-Json -AsHashtable
+        if ($evidence -isnot [System.Collections.IDictionary] -or $evidence['contractValid'] -ne $true) { return $verdict }
+        if ($evidence['integrityPassed'] -eq $true) { $verdict.reason = 'integrity-passed'; return $verdict }
+        if (@($evidence['issues'] | Where-Object { $_ -cnotin $erroredTrialIssues }).Count -gt 0) { $verdict.reason = 'structural-issue'; return $verdict }
+
+        $advisory = @{}
+        if ($AdvisoryMap -is [System.Collections.IDictionary]) {
+            foreach ($key in $AdvisoryMap.Keys) { $advisory[[string]$key] = $AdvisoryMap[$key] }
+        }
+        elseif ($null -ne $AdvisoryMap) {
+            foreach ($property in $AdvisoryMap.PSObject.Properties) { $advisory[$property.Name] = $property.Value }
+        }
+        $data = $Diagnostics | ConvertTo-Json -Depth 50 -Compress | ConvertFrom-Json -AsHashtable -Depth 50
+        $expected = $data['expectedStimuli']
+        if ($expected.Count -eq 0 -or
+            @($expected.Keys | Where-Object { $advisory[$_] -isnot [bool] -or -not $advisory[$_] }).Count -gt 0) {
+            $verdict.reason = 'not-wholly-advisory'
+            return $verdict
+        }
+
+        $selected = @($data['attempts'] | Where-Object { $_['selected'] -eq $true })
+        if ($selected.Count -ne 1) { return $verdict }
+        foreach ($entry in $expected.Values) { $verdict.expectedTrials += [int]$entry['runs'] }
+        $erroredByStimulus = @{}
+        foreach ($trial in @($selected[0]['trials'])) {
+            if ($null -eq $trial['thresholdPassed']) {
+                if ($trial['executionStatus'] -cnotin @('error', 'cancelled')) { $verdict.reason = 'unexplained-missing-verdict'; return $verdict }
+                $verdict.erroredTrials++
+                $erroredByStimulus[[string]$trial['stimulusName']] = 1 + [int]$erroredByStimulus[[string]$trial['stimulusName']]
+                continue
+            }
+            $gradedCleanly = $trial['executionStatus'] -ceq 'success' -and $trial['gradeStatus'] -ceq 'success' -and (& $isUnitScore $trial['score']) -and
+                @($trial['graders'] | Where-Object { $_['status'] -cne 'success' -or $_['passed'] -isnot [bool] -or -not (& $isUnitScore $_['score']) }).Count -eq 0
+            if (-not $gradedCleanly) { $verdict.reason = 'graded-trial-issue'; return $verdict }
+        }
+        if ($verdict.erroredTrials -eq 0) { $verdict.reason = 'no-errored-trials'; return $verdict }
+        $allowance = [math]::Max(1, [int][math]::Floor($MaxErroredFraction * $verdict.expectedTrials))
+        if ($verdict.erroredTrials -gt $allowance) { $verdict.reason = 'too-many-errored-trials'; return $verdict }
+        foreach ($name in $erroredByStimulus.Keys) {
+            if ($erroredByStimulus[$name] -ge [int]$expected[$name]['runs']) { $verdict.reason = 'stimulus-errored-every-trial'; return $verdict }
+        }
+        $verdict.tolerated = $true
+        $verdict.reason = 'errored-trials-within-allowance'
+        return $verdict
+    }
+    catch {
+        $verdict.tolerated = $false
+        $verdict.reason = 'invalid-contract'
+        return $verdict
     }
 }
 
@@ -710,12 +873,14 @@ function Read-VallyResultsJsonl {
                             $detailScore = $numericScore
                         }
                     }
+                    $detailPassed = if ($detail -and $detail.PSObject.Properties['passed'] -and $detail.passed -is [bool]) { $detail.passed } else { $null }
                     [ordered]@{
                         name = [string]$configured.name
                         graderType = [string]$configured.type
                         score = $detailScore
-                        passed = if ($detail -and $detail.PSObject.Properties['passed'] -and $detail.passed -is [bool]) { $detail.passed } else { $null }
+                        passed = $detailPassed
                         status = $detailStatus
+                        failureCodes = ConvertTo-VallyFailureCodeList -GraderName ([string]$configured.name) -Detail $detail -Passed $detailPassed
                     }
                 }
             }
@@ -741,6 +906,25 @@ function Read-VallyResultsJsonl {
         elseif ([string]$obj.status -cin @('success', 'error', 'skipped', 'cancelled')) { [string]$obj.status }
         else { 'invalid' }
         $trajectory = if ($obj.PSObject.Properties['trajectory']) { $obj.trajectory } else { $null }
+        $errorText = if ($obj.PSObject.Properties['error']) { $obj.error } else { $null }
+        $errorCategory = Get-VallyTrialErrorCategory -ExecutionStatus $executionStatus -ErrorText $errorText
+        $elapsedMs = $null
+        if ($obj.PSObject.Properties['durationMs'] -and ($obj.durationMs -is [long] -or $obj.durationMs -is [int]) -and $obj.durationMs -ge 0) {
+            $elapsedMs = [long]$obj.durationMs
+        }
+        $observedShellTools = $null
+        if ($trajectory -and $trajectory.PSObject.Properties['events'] -and $trajectory.events -is [array]) {
+            $shells = [System.Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
+            foreach ($trajectoryEvent in $trajectory.events) {
+                if ($trajectoryEvent -is [pscustomobject] -and $trajectoryEvent.PSObject.Properties['type'] -and
+                    $trajectoryEvent.type -ceq 'tool_call' -and $trajectoryEvent.PSObject.Properties['data'] -and
+                    $trajectoryEvent.data -is [pscustomobject] -and $trajectoryEvent.data.PSObject.Properties['toolName'] -and
+                    $trajectoryEvent.data.toolName -is [string] -and $trajectoryEvent.data.toolName -cin $script:VallyShellTools) {
+                    [void]$shells.Add($trajectoryEvent.data.toolName)
+                }
+            }
+            $observedShellTools = [string[]]@($shells)
+        }
         $endReason = $null
         $configuredTurns = $null
         $observedTurns = [System.Collections.Generic.HashSet[int]]::new()
@@ -794,6 +978,9 @@ function Read-VallyResultsJsonl {
             observedTurns = $observedTurns.Count
             responseTurns = $responseTurns.Count
             wallTimeMs = $trialWallMs
+            errorCategory = $errorCategory
+            elapsedMs = $elapsedMs
+            observedShellTools = $observedShellTools
         })
 
         if ($trialErrored -or -not $trialPassed) {
@@ -1263,6 +1450,427 @@ function Invoke-VallyCompareShard {
     return $attempts.ToArray()
 }
 
+function Get-ErroredTrialRecord {
+    <#
+    .SYNOPSIS
+        Lists the executor-errored trials in a run's results.jsonl.
+    .DESCRIPTION
+        A trial that errored before the agent produced a trajectory leaves a hole in
+        every population the evidence gates reconcile. Only `trial-result` records with
+        `status: error`, a stimulus name, and an integer trial index are returned;
+        graded failures and malformed lines stay with the existing gates.
+    .PARAMETER RunDir
+        Run directory holding results.jsonl, or null when the run produced none.
+    .OUTPUTS
+        [pscustomobject[]] Stimulus and TrialIndex for each errored trial.
+    #>
+    [CmdletBinding()]
+    [OutputType([pscustomobject[]])]
+    param(
+        [Parameter(Mandatory)]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$RunDir
+    )
+
+    if ([string]::IsNullOrWhiteSpace($RunDir)) { return @() }
+    $path = Join-Path $RunDir 'results.jsonl'
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { return @() }
+
+    $errored = [System.Collections.Generic.List[object]]::new()
+    foreach ($line in [System.IO.File]::ReadLines($path)) {
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+        try {
+            $record = ConvertFrom-Json -InputObject $line -AsHashtable -Depth 100 -ErrorAction Stop
+        }
+        catch {
+            continue
+        }
+        if ($record -isnot [System.Collections.IDictionary] -or $record['type'] -cne 'trial-result' -or $record['status'] -cne 'error') { continue }
+        $stimulus = $record['stimulus']
+        $trialIndex = $record['trialIndex']
+        if ($stimulus -isnot [string] -or [string]::IsNullOrWhiteSpace($stimulus)) { continue }
+        if ($trialIndex -isnot [int] -and $trialIndex -isnot [long]) { continue }
+        $errored.Add([pscustomobject]@{ Stimulus = $stimulus; TrialIndex = [int]$trialIndex })
+    }
+    return $errored.ToArray()
+}
+
+function New-RecoveryEvalSpec {
+    <#
+    .SYNOPSIS
+        Writes a copy of an eval spec that keeps only the named stimuli.
+    .DESCRIPTION
+        Vally selects stimuli by tag, not by name, so recovery runs a filtered copy of
+        the variant spec. The copy sits beside the source because stimulus file sources
+        resolve relative to the spec. It is serialized as JSON, which YAML parsers read
+        unchanged, so anchors are already resolved and scalar types survive exactly.
+    .PARAMETER SpecPath
+        Source eval spec path.
+    .PARAMETER StimulusName
+        Stimulus names to keep.
+    .PARAMETER Label
+        File-name-safe label that makes the copy unique.
+    .OUTPUTS
+        [string] Path of the written spec.
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$SpecPath,
+
+        [Parameter(Mandatory)]
+        [string[]]$StimulusName,
+
+        [Parameter(Mandatory)]
+        [ValidatePattern('^[A-Za-z0-9._-]+$')]
+        [string]$Label
+    )
+
+    Import-Module powershell-yaml -ErrorAction Stop | Out-Null
+    $spec = ConvertFrom-Yaml (Get-Content -LiteralPath $SpecPath -Raw -Encoding utf8) -Ordered
+    $wanted = [System.Collections.Generic.HashSet[string]]::new([string[]]@($StimulusName), [System.StringComparer]::Ordinal)
+    $kept = @(@($spec['stimuli']) | Where-Object { $_ -is [System.Collections.IDictionary] -and $wanted.Contains([string]$_['name']) })
+    if ($kept.Count -ne $wanted.Count) {
+        throw "Recovery spec could not find every requested stimulus in '$SpecPath'."
+    }
+    $spec['stimuli'] = $kept
+    $path = Join-Path (Split-Path -Parent $SpecPath) ".recovery-$Label.eval.yaml"
+    if ($PSCmdlet.ShouldProcess($path, 'Write recovery eval spec')) {
+        [System.IO.File]::WriteAllText($path, ($spec | ConvertTo-Json -Depth 100), [System.Text.UTF8Encoding]::new($false))
+    }
+    return $path
+}
+
+function Merge-RecoveredTrial {
+    <#
+    .SYNOPSIS
+        Copies a run directory with errored trials replaced by recovered ones.
+    .DESCRIPTION
+        Each errored trial-result line is replaced by an unused successful trial for the
+        same stimulus from the recovery run. The replacement keeps its own trajectory and
+        grades and takes the errored trial's run, item, file, and trial identity, so every
+        population the evidence gates reconcile stays the one the run declared. Unrecovered
+        errored lines stay in place, and the run-summary line stops reporting execution
+        errors only when none remain.
+    .PARAMETER RunDir
+        Run directory whose errored trials are replaced.
+    .PARAMETER RecoveryRunDir
+        Run directory of the filtered recovery eval, or null when it produced none.
+    .PARAMETER DestinationDir
+        Directory that receives the merged run; replaced when it exists.
+    .OUTPUTS
+        [hashtable] RunDir, Replaced, and Remaining.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RunDir,
+
+        [Parameter(Mandatory)]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$RecoveryRunDir,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$DestinationDir
+    )
+
+    $replacements = @{}
+    $recoveryPath = if ([string]::IsNullOrWhiteSpace($RecoveryRunDir)) { $null } else { Join-Path $RecoveryRunDir 'results.jsonl' }
+    if ($recoveryPath -and (Test-Path -LiteralPath $recoveryPath -PathType Leaf)) {
+        foreach ($line in [System.IO.File]::ReadLines($recoveryPath)) {
+            if ([string]::IsNullOrWhiteSpace($line)) { continue }
+            try {
+                $record = ConvertFrom-Json -InputObject $line -AsHashtable -Depth 100 -ErrorAction Stop
+            }
+            catch {
+                continue
+            }
+            if ($record -isnot [System.Collections.IDictionary] -or $record['type'] -cne 'trial-result' -or
+                $record['status'] -cne 'success' -or $record['stimulus'] -isnot [string] -or
+                $record['trajectory'] -isnot [System.Collections.IDictionary]) { continue }
+            if (-not $replacements.ContainsKey($record['stimulus'])) {
+                $replacements[$record['stimulus']] = [System.Collections.Generic.Queue[string]]::new()
+            }
+            $replacements[$record['stimulus']].Enqueue($line)
+        }
+    }
+
+    $jsonOptions = [System.Text.Json.JsonSerializerOptions]::new()
+    $jsonOptions.Encoder = [System.Text.Encodings.Web.JavaScriptEncoder]::UnsafeRelaxedJsonEscaping
+    $merged = [System.Collections.Generic.List[string]]::new()
+    $summaryIndex = -1
+    $replaced = 0
+    $remaining = 0
+    foreach ($line in [System.IO.File]::ReadLines((Join-Path $RunDir 'results.jsonl'))) {
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+        try {
+            $record = ConvertFrom-Json -InputObject $line -AsHashtable -Depth 100 -ErrorAction Stop
+        }
+        catch {
+            $merged.Add($line)
+            continue
+        }
+        if ($record -is [System.Collections.IDictionary] -and $record['type'] -ceq 'run-summary') {
+            $summaryIndex = $merged.Count
+        }
+        elseif ($record -is [System.Collections.IDictionary] -and $record['type'] -ceq 'trial-result' -and $record['status'] -ceq 'error') {
+            $queue = $replacements[[string]$record['stimulus']]
+            $trialIndex = $record['trialIndex']
+            if ($queue -and $queue.Count -gt 0 -and ($trialIndex -is [int] -or $trialIndex -is [long])) {
+                $node = [System.Text.Json.Nodes.JsonNode]::Parse($queue.Dequeue())
+                foreach ($field in @('runId', 'itemId', 'evalFilePath')) {
+                    if ($record[$field] -is [string]) { $node[$field] = [System.Text.Json.Nodes.JsonValue]::Create([string]$record[$field]) }
+                }
+                $node['trialIndex'] = [System.Text.Json.Nodes.JsonValue]::Create([int]$trialIndex)
+                if ($record['totalTrials'] -is [int] -or $record['totalTrials'] -is [long]) {
+                    $node['totalTrials'] = [System.Text.Json.Nodes.JsonValue]::Create([int]$record['totalTrials'])
+                }
+                $merged.Add($node.ToJsonString($jsonOptions))
+                $replaced++
+                continue
+            }
+            $remaining++
+        }
+        $merged.Add($line)
+    }
+
+    if ($summaryIndex -ge 0 -and $replaced -gt 0 -and $remaining -eq 0) {
+        $summary = [System.Text.Json.Nodes.JsonNode]::Parse($merged[$summaryIndex])
+        $summary['hadExecutionErrors'] = [System.Text.Json.Nodes.JsonValue]::Create($false)
+        $evals = $summary['evals']
+        if ($evals -is [System.Text.Json.Nodes.JsonArray]) {
+            foreach ($entry in $evals) {
+                if ($entry -is [System.Text.Json.Nodes.JsonObject]) { $entry['hadExecutionErrors'] = [System.Text.Json.Nodes.JsonValue]::Create($false) }
+            }
+        }
+        $merged[$summaryIndex] = $summary.ToJsonString($jsonOptions)
+    }
+
+    if (Test-Path -LiteralPath $DestinationDir) {
+        Remove-Item -LiteralPath $DestinationDir -Recurse -Force
+    }
+    Copy-Item -LiteralPath $RunDir -Destination $DestinationDir -Recurse
+    [System.IO.File]::WriteAllLines((Join-Path $DestinationDir 'results.jsonl'), $merged, [System.Text.UTF8Encoding]::new($false))
+    return @{ RunDir = $DestinationDir; Replaced = $replaced; Remaining = $remaining }
+}
+
+function Invoke-ErroredTrialRecovery {
+    <#
+    .SYNOPSIS
+        Re-runs executor-errored trials and splices successful ones into a run copy.
+    .DESCRIPTION
+        Transient executor failures such as rate limits and dropped sessions leave trials
+        without a trajectory, and every population the evidence gates reconcile then reports
+        a hole. When the errored share is at most MaxErroredFraction of the expected
+        trials, only the affected stimuli are re-run through a filtered copy of the spec,
+        and each errored trial is replaced by a successful recovery trial, for at most
+        MaxRounds rounds. A larger share points at the run rather than a transient fault,
+        so it stays with the existing gates. Recovery never fails the caller: an
+        unexpected error leaves the last complete run directory in place.
+    .PARAMETER RunDir
+        Run directory to repair, or null when the run produced none.
+    .PARAMETER Arguments
+        The `vally eval` arguments that produced the run.
+    .PARAMETER SpecPath
+        Absolute path of the spec those arguments name.
+    .PARAMETER WorkRoot
+        Directory that receives recovery runs and merged run copies.
+    .PARAMETER Phase
+        Eval phase that produced the run.
+    .PARAMETER Worker
+        Worker label for progress records.
+    .PARAMETER ExpectedTrials
+        Trial population the run declared.
+    .PARAMETER LogPath
+        Log that recovery invocations append to.
+    .PARAMETER HeartbeatIntervalSeconds
+        Trusted heartbeat interval.
+    .PARAMETER Command
+        Vally command the recovery invocations run.
+    .PARAMETER MaxRounds
+        Recovery rounds allowed.
+    .PARAMETER MaxErroredFraction
+        Largest errored share of ExpectedTrials that is treated as transient.
+    .OUTPUTS
+        [hashtable] RunDir, Errored, Recovered, Remaining, and Attempts.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$RunDir,
+
+        [Parameter(Mandatory)]
+        [string[]]$Arguments,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$SpecPath,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$WorkRoot,
+
+        [Parameter(Mandatory)]
+        [ValidateSet('ordinary-eval', 'baseline-eval', 'customized-eval')]
+        [string]$Phase,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Worker,
+
+        [Parameter(Mandatory)]
+        [int]$ExpectedTrials,
+
+        [string]$LogPath,
+
+        [ValidateRange(1, 3600)]
+        [int]$HeartbeatIntervalSeconds = 60,
+
+        [ValidateNotNullOrEmpty()]
+        [string]$Command = 'vally',
+
+        [ValidateRange(1, 5)]
+        [int]$MaxRounds = 2,
+
+        [ValidateRange(0.0, 1.0)]
+        [double]$MaxErroredFraction = 0.2
+    )
+
+    $errored = @(Get-ErroredTrialRecord -RunDir $RunDir)
+    $result = @{ RunDir = $RunDir; Errored = $errored.Count; Recovered = 0; Remaining = $errored.Count; Attempts = @() }
+    if ($errored.Count -eq 0) { return $result }
+    if ($ExpectedTrials -le 0 -or ($errored.Count / $ExpectedTrials) -gt $MaxErroredFraction) {
+        Write-Host "   Trial recovery: $($errored.Count) errored trial(s) exceed the recovery limit; leaving them to the gates" -ForegroundColor Yellow
+        return $result
+    }
+
+    $attempts = [System.Collections.Generic.List[object]]::new()
+    $currentDir = $RunDir
+    $safeWorker = ($Worker -replace '[^A-Za-z0-9._-]', '_')
+    for ($round = 1; $round -le $MaxRounds -and $errored.Count -gt 0; $round++) {
+        $groups = @($errored | Group-Object -Property Stimulus)
+        $runs = [int](($groups | Measure-Object -Property Count -Maximum).Maximum)
+        $outputDir = Join-Path $WorkRoot "$Phase-recovery-$round"
+        $specCopy = $null
+        try {
+            $specCopy = New-RecoveryEvalSpec -SpecPath $SpecPath -StimulusName @($groups.Name) -Label "$Phase-$safeWorker-$round"
+            $recoveryArguments = [System.Collections.Generic.List[string]]::new()
+            for ($i = 0; $i -lt $Arguments.Count; $i++) {
+                $recoveryArguments.Add($Arguments[$i])
+                if ($i + 1 -lt $Arguments.Count -and $Arguments[$i] -ceq '--eval-spec') { $recoveryArguments.Add($specCopy); $i++ }
+                elseif ($i + 1 -lt $Arguments.Count -and $Arguments[$i] -ceq '--output-dir') { $recoveryArguments.Add($outputDir); $i++ }
+            }
+            $recoveryArguments.Add('--runs')
+            $recoveryArguments.Add([string]$runs)
+            Write-Host "   Trial recovery: re-running $($errored.Count) errored trial(s) across $($groups.Count) stimulus/stimuli (round $round)" -ForegroundColor Yellow
+            $process = Invoke-VallyProcess `
+                -Command $Command `
+                -Arguments $recoveryArguments.ToArray() `
+                -LogPath $LogPath `
+                -AppendLog `
+                -Phase $Phase `
+                -Worker "${Worker}:recovery" `
+                -Attempt $round `
+                -HeartbeatIntervalSeconds $HeartbeatIntervalSeconds
+            $attempts.Add([ordered]@{
+                    phase          = $Phase
+                    worker         = $process.Worker
+                    attempt        = $round
+                    elapsedSeconds = [math]::Round($process.ElapsedMilliseconds / 1000, 3)
+                    exitCategory   = $process.ExitCategory
+                })
+            $recoveryRunDir = Resolve-VallyRunDir -OutputDir $outputDir
+            if ($recoveryRunDir) {
+                $merge = Merge-RecoveredTrial -RunDir $currentDir -RecoveryRunDir $recoveryRunDir -DestinationDir (Join-Path $WorkRoot "$Phase-recovered-$round")
+                $currentDir = $merge.RunDir
+                $result.Recovered += $merge.Replaced
+            }
+        }
+        catch {
+            Write-Host "   Trial recovery stopped: $($_.Exception.Message)" -ForegroundColor Yellow
+            break
+        }
+        finally {
+            if ($specCopy -and (Test-Path -LiteralPath $specCopy)) { Remove-Item -LiteralPath $specCopy -Force -ErrorAction SilentlyContinue }
+        }
+        $errored = @(Get-ErroredTrialRecord -RunDir $currentDir)
+    }
+
+    $result.RunDir = $currentDir
+    $result.Remaining = $errored.Count
+    $result.Attempts = $attempts.ToArray()
+    Write-Host "   Trial recovery: $($result.Recovered) of $($result.Errored) errored trial(s) recovered" -ForegroundColor DarkGray
+    return $result
+}
+
+function Get-VallyRecoveredExitCode {
+    <#
+    .SYNOPSIS
+        Returns the exit code a run reports once recovery replaced its errored trials.
+    .DESCRIPTION
+        `vally eval` exits nonzero when any trial errors, so a run whose errored trials
+        were all replaced would otherwise keep a stale failing code. The code is cleared
+        only when recovery replaced every errored trial and the merged run-summary reports
+        no execution, grading, or eval errors. Any other nonzero exit is kept.
+    .PARAMETER ExitCode
+        Exit code of the original `vally eval` invocation.
+    .PARAMETER Recovery
+        Result of Invoke-ErroredTrialRecovery for that run.
+    .PARAMETER RunDir
+        Run directory the recovery returned.
+    .OUTPUTS
+        [int] The effective exit code.
+    #>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [Parameter(Mandatory)]
+        [int]$ExitCode,
+
+        [Parameter(Mandatory)]
+        [AllowNull()]
+        [hashtable]$Recovery,
+
+        [Parameter(Mandatory)]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$RunDir
+    )
+
+    if ($ExitCode -eq 0 -or $null -eq $Recovery -or [int]$Recovery.Recovered -le 0 -or [int]$Recovery.Remaining -gt 0) { return $ExitCode }
+    if ([string]::IsNullOrWhiteSpace($RunDir)) { return $ExitCode }
+    $path = Join-Path $RunDir 'results.jsonl'
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { return $ExitCode }
+    foreach ($line in [System.IO.File]::ReadLines($path)) {
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+        try {
+            $record = ConvertFrom-Json -InputObject $line -AsHashtable -Depth 100 -ErrorAction Stop
+        }
+        catch {
+            continue
+        }
+        if ($record -isnot [System.Collections.IDictionary] -or $record['type'] -cne 'run-summary') { continue }
+        if ($record['hadExecutionErrors'] -ne $false -or $record['hadGradingErrors'] -eq $true) { return $ExitCode }
+        foreach ($entry in @($record['evals'])) {
+            if ($entry -is [System.Collections.IDictionary] -and ($entry['hadExecutionErrors'] -eq $true -or $entry['hadGradingErrors'] -eq $true -or $null -ne $entry['error'])) {
+                return $ExitCode
+            }
+        }
+        return 0
+    }
+    return $ExitCode
+}
+
 function Invoke-VallySpec {
     <#
     .SYNOPSIS
@@ -1374,11 +1982,27 @@ function Invoke-VallySpec {
             })
 
         $runDir = Resolve-VallyRunDir -OutputDir $attemptOutput
+        $expectedTrials = 0
+        foreach ($expected in @($configuration.stimuli.Values)) { $expectedTrials += [int]$expected.runs }
+        $recovery = Invoke-ErroredTrialRecovery `
+            -RunDir $runDir `
+            -Arguments $vallyArgs `
+            -SpecPath $SpecPath `
+            -WorkRoot (Join-Path $attemptOutput 'recovery') `
+            -Phase 'ordinary-eval' `
+            -Worker $Worker `
+            -ExpectedTrials $expectedTrials `
+            -LogPath $LogPath `
+            -HeartbeatIntervalSeconds $HeartbeatIntervalSeconds `
+            -Command $VallyCommand
+        foreach ($recoveryAttempt in @($recovery.Attempts)) { $phaseTimings.Add($recoveryAttempt) }
+        $runDir = $recovery.RunDir
+        $attemptExitCode = Get-VallyRecoveredExitCode -ExitCode $processResult.ExitCode -Recovery $recovery -RunDir $runDir
         $aggregate = Read-VallyResultsJsonl -RunDir $runDir -Threshold $threshold -ExpectedStimuli $configuration.stimuli
 
         $candidate = @{
             attempt   = $attempt
-            exitCode  = $processResult.ExitCode
+            exitCode  = $attemptExitCode
             runDir    = $runDir
             aggregate = $aggregate
             elapsedMs = [int]$processResult.ElapsedMilliseconds
@@ -1465,7 +2089,7 @@ function Invoke-VallySpec {
         perStimulus      = $aggregate.perStimulus
         failedOrErroredTrials = $aggregate.failedOrErroredTrials
         diagnostics = [ordered]@{
-            schemaVersion = '1.0.0'
+            schemaVersion = '2.0.0'
             runKey = $RunKey
             configurationStatus = $configuration.status
             specDigest = $configuration.specDigest
@@ -2227,6 +2851,7 @@ Export-ModuleMember -Function @(
     'Get-VallyDiagnosticConfiguration',
     'Get-VallyInputDigest',
     'Test-VallyDiagnosticEvidence',
+    'Test-VallyAdvisoryIntegrityTolerance',
     'Read-VallyResultsJsonl',
     'Get-VallyExitCategory',
     'Resolve-VallyCommandPath',
@@ -2234,6 +2859,11 @@ Export-ModuleMember -Function @(
     'Get-VallyComparisonRecordCount',
     'Test-VallyCompareRetryEligibility',
     'Invoke-VallyCompareShard',
+    'Get-ErroredTrialRecord',
+    'New-RecoveryEvalSpec',
+    'Merge-RecoveredTrial',
+    'Invoke-ErroredTrialRecovery',
+    'Get-VallyRecoveredExitCode',
     'Invoke-VallySpec',
     'Test-SpecInputModeration',
     'Test-SpecOutputModerationBatch',

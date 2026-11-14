@@ -3,7 +3,7 @@ title: Mounted Directory Installation
 description: Advanced devcontainer setup mounting HVE Core from host filesystem
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-11-10
 ms.topic: how-to
 keywords:
   - mounted directory
@@ -11,10 +11,11 @@ keywords:
   - github copilot
   - devcontainer
   - advanced
-estimated_reading_time: 8
+  - copilot settings
+estimated_reading_time: 7
 ---
 
-Mounted Directory installation shares a single HVE Core clone across multiple devcontainer projects by mounting a peer directory from the host filesystem. This is an **advanced method** requiring container rebuilds.
+Mounted Directory installation shares one HVE Core clone on your host across several devcontainer projects. Each project mounts the clone into a git-ignored folder inside its workspace folder and declares the mounted folders in `.github/copilot/settings.json`. This is an **advanced method** requiring container rebuilds.
 
 ## When to Use This Method
 
@@ -27,6 +28,7 @@ Mounted Directory installation shares a single HVE Core clone across multiple de
 
 ❌ **Consider alternatives when:**
 
+* You don't need a shared clone → the `hve-core` plugin ([Quick Start](#quick-start))
 * You use Codespaces → [GitHub Codespaces](codespaces.md) (mounts don't work)
 * You want simpler setup → [Git-Ignored Folder](git-ignored.md)
 * Your team needs version control → [Submodule](submodule.md)
@@ -38,27 +40,33 @@ Mounted Directory installation shares a single HVE Core clone across multiple de
 
 **Requires container rebuild.** After adding the mount, you must rebuild the devcontainer before HVE Core becomes accessible.
 
+**Mount inside the workspace folder.** The settings file can declare only folders inside your project's checkout, so a mount target outside the workspace folder, such as `/workspaces/hve-core`, cannot be declared.
+
 ## How It Works
 
-HVE Core is cloned on your **host machine** as a sibling to your project. The devcontainer mounts this directory into the container at `/workspaces/hve-core`.
+HVE Core is cloned on your **host machine** as a sibling to your project. The devcontainer mounts that clone at `.hve-core/` inside the project's workspace folder, and the project's `.github/copilot/settings.json` declares the mounted `agents`, `skills`, and `instructions` folders.
 
 ```text
 Host File System:
 projects/
 ├── my-project/                    # Your project (workspace)
-│   └── .devcontainer/
-│       └── devcontainer.json      # Contains mount configuration
+│   ├── .devcontainer/
+│   │   └── devcontainer.json      # Contains mount configuration
+│   ├── .github/
+│   │   └── copilot/
+│   │       └── settings.json      # Declares the mounted folders
+│   └── .gitignore                 # Lists .hve-core/
 │
 └── hve-core/                      # Peer directory on HOST
     └── .github/
         ├── agents/
-        ├── prompts/
-        └── instructions/
+        ├── instructions/
+        └── skills/
 
 Inside Container (after rebuild):
 /workspaces/
-├── my-project/                    # Mounted workspace
-└── hve-core/                      # Mounted peer directory
+└── my-project/                    # Mounted workspace
+    └── .hve-core/                 # Mounted peer directory (git-ignored)
 ```
 
 ## Installation Workflow
@@ -73,7 +81,7 @@ This method requires a multi-phase workflow:
 │          ↓                                                  │
 │ Phase 3: Rebuild container (1-3 minutes)                    │
 │          ↓                                                  │
-│ Phase 4: Configure VS Code settings                         │
+│ Phase 4: Declare folders in .github/copilot/settings.json   │
 │          ↓                                                  │
 │ Phase 5: Validate installation                              │
 └─────────────────────────────────────────────────────────────┘
@@ -81,9 +89,17 @@ This method requires a multi-phase workflow:
 
 ## Quick Start
 
-Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided installation-method selection, MCP configuration, or selective clone adoption, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below for direct configuration.
+If you don't need one clone shared across projects, install the `hve-core` plugin instead, as described in [Install the Plugin](../install#install-the-plugin). To offer the plugin to everyone who opens your repository, commit the defaults described in [Offer the Plugin to Your Team](../install#offer-the-plugin-to-your-team).
+
+To copy HVE Core into your repository's own `.github` folders, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below for the mounted setup.
 
 ## Manual Setup
+
+Use one install route at a time: when HVE Core arrives by more than one route, for example the plugin and the VS Code extension, or the plugin and a declared clone, Copilot lists its agents more than once in the subagent list.
+
+> [!NOTE]
+> If you added `chat.*Locations` settings for HVE Core, such as `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, or `chat.agentSkillsLocations`, remove them from `.vscode/settings.json` and from `customizations.vscode.settings` in `devcontainer.json`. Copilot does not need them, and VS Code still forwards files from those locations, which adds a second route.
+> Switch to the Copilot harness and confirm HVE Core loads there before you remove them, as [Use One Route at a Time](../install#use-one-route-at-a-time) describes.
 
 ### Phase 1: Clone HVE Core on Host
 
@@ -109,14 +125,14 @@ projects/
 
 ### Phase 2: Add Mount to devcontainer.json
 
-Update `.devcontainer/devcontainer.json`:
+Mount the host clone at `.hve-core` inside the container's workspace folder. Update `.devcontainer/devcontainer.json`:
 
 ```jsonc
 {
   // ... existing configuration ...
 
   "mounts": [
-    "source=${localWorkspaceFolder}/../hve-core,target=/workspaces/hve-core,type=bind,readonly=true,consistency=cached"
+    "source=${localWorkspaceFolder}/../hve-core,target=${containerWorkspaceFolder}/.hve-core,type=bind,readonly=true,consistency=cached"
   ]
 }
 ```
@@ -129,10 +145,19 @@ Update `.devcontainer/devcontainer.json`:
     {
       "type": "bind",
       "source": "${localWorkspaceFolder}/../hve-core",
-      "target": "/workspaces/hve-core"
+      "target": "${containerWorkspaceFolder}/.hve-core"
     }
   ]
 }
+```
+
+#### Ignore the mount folder
+
+Add the mount folder to your project's `.gitignore` so Git does not pick up the mounted copy:
+
+```text
+# Shared HVE Core mount (local only)
+.hve-core/
 ```
 
 ### Phase 3: Rebuild Container
@@ -150,114 +175,42 @@ Update `.devcontainer/devcontainer.json`:
 * Extensions reinstall
 * Lifecycle scripts re-run
 
-### Phase 4: Configure VS Code Settings
+### Phase 4: Declare the Mounted Folders
 
-After rebuild, update `.vscode/settings.json`:
+After the rebuild, create `.github/copilot/settings.json` in your project, or add these keys to the existing file:
 
 ```json
 {
-  "chat.agentFilesLocations": {
-    "/workspaces/hve-core/.github/agents/ado": true,
-    "/workspaces/hve-core/.github/agents/data-science": true,
-    "/workspaces/hve-core/.github/agents/design-thinking": true,
-    "/workspaces/hve-core/.github/agents/github": true,
-    "/workspaces/hve-core/.github/agents/project-planning": true,
-    "/workspaces/hve-core/.github/agents/hve-core": true,
-    "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
-    "/workspaces/hve-core/.github/agents/security": true
-  },
-  "chat.promptFilesLocations": {
-    "/workspaces/hve-core/.github/prompts/ado": true,
-    "/workspaces/hve-core/.github/prompts/design-thinking": true,
-    "/workspaces/hve-core/.github/prompts/github": true,
-    "/workspaces/hve-core/.github/prompts/hve-core": true,
-    "/workspaces/hve-core/.github/prompts/security": true
-  },
-  "chat.instructionsFilesLocations": {
-    "/workspaces/hve-core/.github/instructions/ado": true,
-    "/workspaces/hve-core/.github/instructions/coding-standards": true,
-    "/workspaces/hve-core/.github/instructions/github": true,
-    "/workspaces/hve-core/.github/instructions/hve-core": true,
-    "/workspaces/hve-core/.github/instructions/shared": true
-  },
-  "chat.agentSkillsLocations": {
-    "/workspaces/hve-core/.github/skills": true,
-    "/workspaces/hve-core/.github/skills/accessibility": true,
-    "/workspaces/hve-core/.github/skills/shared": true,
-    "/workspaces/hve-core/.github/skills/coding-standards": true,
-    "/workspaces/hve-core/.github/skills/data-science": true,
-    "/workspaces/hve-core/.github/skills/design-thinking": true,
-    "/workspaces/hve-core/.github/skills/hve-core": true,
-    "/workspaces/hve-core/.github/skills/installer": true,
-    "/workspaces/hve-core/.github/skills/project-planning": true,
-    "/workspaces/hve-core/.github/skills/rai": true,
-    "/workspaces/hve-core/.github/skills/rpi": true,
-    "/workspaces/hve-core/.github/skills/security": true
-  }
+  "agentDirectories": [".hve-core/.github/agents"],
+  "skillDirectories": [".hve-core/.github/skills"],
+  "instructionDirectories": [".hve-core/.github/instructions"]
 }
 ```
 
-**Or add to devcontainer.json** (recommended for team sharing):
+The settings file has these limits:
 
-```jsonc
-{
-  "customizations": {
-    "vscode": {
-      "settings": {
-        "chat.agentFilesLocations": {
-          "/workspaces/hve-core/.github/agents/ado": true,
-          "/workspaces/hve-core/.github/agents/data-science": true,
-          "/workspaces/hve-core/.github/agents/design-thinking": true,
-          "/workspaces/hve-core/.github/agents/github": true,
-          "/workspaces/hve-core/.github/agents/project-planning": true,
-          "/workspaces/hve-core/.github/agents/hve-core": true,
-          "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
-          "/workspaces/hve-core/.github/agents/security": true
-        },
-        "chat.promptFilesLocations": {
-          "/workspaces/hve-core/.github/prompts/ado": true,
-          "/workspaces/hve-core/.github/prompts/design-thinking": true,
-          "/workspaces/hve-core/.github/prompts/github": true,
-          "/workspaces/hve-core/.github/prompts/hve-core": true,
-          "/workspaces/hve-core/.github/prompts/security": true
-        },
-        "chat.instructionsFilesLocations": {
-          "/workspaces/hve-core/.github/instructions/ado": true,
-          "/workspaces/hve-core/.github/instructions/coding-standards": true,
-          "/workspaces/hve-core/.github/instructions/github": true,
-          "/workspaces/hve-core/.github/instructions/hve-core": true,
-          "/workspaces/hve-core/.github/instructions/shared": true
-        },
-        "chat.agentSkillsLocations": {
-          "/workspaces/hve-core/.github/skills": true,
-          "/workspaces/hve-core/.github/skills/accessibility": true,
-          "/workspaces/hve-core/.github/skills/shared": true,
-          "/workspaces/hve-core/.github/skills/coding-standards": true,
-          "/workspaces/hve-core/.github/skills/data-science": true,
-          "/workspaces/hve-core/.github/skills/design-thinking": true,
-          "/workspaces/hve-core/.github/skills/hve-core": true,
-          "/workspaces/hve-core/.github/skills/installer": true,
-          "/workspaces/hve-core/.github/skills/project-planning": true,
-          "/workspaces/hve-core/.github/skills/rai": true,
-          "/workspaces/hve-core/.github/skills/rpi": true,
-          "/workspaces/hve-core/.github/skills/security": true
-        }
-      }
-    }
-  }
-}
-```
+* Paths must be literal folders inside the checkout. Absolute paths, `~`, environment variables, globs, and paths that leave the checkout are rejected.
+* The folders load only when the workspace folder is trusted.
+* Copilot finds agents and skills nested by package under each folder, and inlines instructions that have no `applyTo`.
+* Whether path-specific instructions (those with `applyTo`) load from these folders is not confirmed yet. Use the plugin when you need them.
+
+#### Install the mount as a plugin instead
+
+HVE Core keeps `plugin.json` at its repository root, so the mounted folder is also a plugin folder. Instead of declaring its folders, you can install it as a plugin from source. Run **Chat: Open Customizations** to open the Agent Customizations editor, select **Plugins**, select the add (`+`) button next to **User** or **Workspace**, and enter the mount path, such as `/workspaces/my-project/.hve-core`. **Chat: Install Plugin from Source** in the Command Palette does the same.
+
+How this route behaves inside a container is not confirmed, so check that `hve-core` appears on the **Plugins** page before you rely on it. If you use this route, skip the settings file.
 
 ### Phase 5: Validate Installation
 
-1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Click the agent picker dropdown
-3. Verify `RPI Agent` and `Documentation` appear, then confirm `/rpi-research` is available
+1. Open GitHub Copilot Chat (`Ctrl+Alt+I`) with the Copilot agent harness, which is the default.
+2. Open the agent picker and confirm `RPI Agent` is listed.
+3. Type `/` and confirm skills such as `/rpi-research` or `/hve-core:rpi-research` appear. If you installed the mount as a plugin, skills carry the plugin prefix, as in `/hve-core:rpi-research`.
 
 #### Verify mount from container terminal
 
 ```bash
-ls /workspaces/hve-core/.github/agents
+# From the project folder
+ls .hve-core/.github/agents
 ```
 
 ## Complete Devcontainer Example
@@ -268,55 +221,12 @@ ls /workspaces/hve-core/.github/agents
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
 
   "mounts": [
-    "source=${localWorkspaceFolder}/../hve-core,target=/workspaces/hve-core,type=bind,readonly=true,consistency=cached"
-  ],
-
-  "customizations": {
-    "vscode": {
-      "settings": {
-        "chat.agentFilesLocations": {
-          "/workspaces/hve-core/.github/agents/ado": true,
-          "/workspaces/hve-core/.github/agents/data-science": true,
-          "/workspaces/hve-core/.github/agents/design-thinking": true,
-          "/workspaces/hve-core/.github/agents/github": true,
-          "/workspaces/hve-core/.github/agents/project-planning": true,
-          "/workspaces/hve-core/.github/agents/hve-core": true,
-          "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
-          "/workspaces/hve-core/.github/agents/security": true
-        },
-        "chat.promptFilesLocations": {
-          "/workspaces/hve-core/.github/prompts/ado": true,
-          "/workspaces/hve-core/.github/prompts/design-thinking": true,
-          "/workspaces/hve-core/.github/prompts/github": true,
-          "/workspaces/hve-core/.github/prompts/hve-core": true,
-          "/workspaces/hve-core/.github/prompts/security": true
-        },
-        "chat.instructionsFilesLocations": {
-          "/workspaces/hve-core/.github/instructions/ado": true,
-          "/workspaces/hve-core/.github/instructions/coding-standards": true,
-          "/workspaces/hve-core/.github/instructions/github": true,
-          "/workspaces/hve-core/.github/instructions/hve-core": true,
-          "/workspaces/hve-core/.github/instructions/shared": true
-        },
-        "chat.agentSkillsLocations": {
-          "/workspaces/hve-core/.github/skills": true,
-          "/workspaces/hve-core/.github/skills/accessibility": true,
-          "/workspaces/hve-core/.github/skills/shared": true,
-          "/workspaces/hve-core/.github/skills/coding-standards": true,
-          "/workspaces/hve-core/.github/skills/data-science": true,
-          "/workspaces/hve-core/.github/skills/design-thinking": true,
-          "/workspaces/hve-core/.github/skills/hve-core": true,
-          "/workspaces/hve-core/.github/skills/installer": true,
-          "/workspaces/hve-core/.github/skills/project-planning": true,
-          "/workspaces/hve-core/.github/skills/rai": true,
-          "/workspaces/hve-core/.github/skills/rpi": true,
-          "/workspaces/hve-core/.github/skills/security": true
-        }
-      }
-    }
-  }
+    "source=${localWorkspaceFolder}/../hve-core,target=${containerWorkspaceFolder}/.hve-core,type=bind,readonly=true,consistency=cached"
+  ]
 }
 ```
+
+Pair it with the `.hve-core/` entry in `.gitignore` and the `.github/copilot/settings.json` file from Phase 4.
 
 ## Updating HVE Core
 
@@ -327,7 +237,7 @@ cd /path/to/projects/hve-core
 git pull
 ```
 
-Changes are immediately available in all containers using the mount. No rebuild required for content updates.
+Every container that uses the mount sees the new files without a rebuild. Run **Developer: Reload Window** in each open VS Code window so new chat sessions pick up the change.
 
 ## Troubleshooting
 
@@ -365,38 +275,47 @@ ls /path/to/projects/hve-core/.github
 #### Check mount is working
 
 ```bash
-# Inside container
-ls /workspaces/hve-core/.github/agents
+# Inside container, from the project folder
+ls .hve-core/.github/agents
 ```
 
-#### Check settings paths match
+#### Check the settings file
 
-Settings must use absolute container paths (`/workspaces/hve-core/...`), not relative paths.
+Declared paths must be relative folders inside the checkout, such as `.hve-core/.github/agents`. Absolute container paths such as `/workspaces/hve-core/.github/agents` are rejected. The workspace folder must also be trusted.
+
+### Path-Specific Instructions Not Applied
+
+Copilot inlines instructions without `applyTo` from declared folders, but whether it loads path-specific instructions from them is not confirmed. If you need them, use the `hve-core` plugin from the [Quick Start](#quick-start).
+
+### Agents Appear More Than Once
+
+HVE Core is arriving by more than one route. Look for the VS Code extension, for a plugin install alongside the declared folders, and for the old editor settings described in the note under [Manual Setup](#manual-setup), then remove all but one.
 
 ### Doesn't Work in Codespaces
 
 This is expected. Codespaces doesn't support `${localWorkspaceFolder}` or host bind mounts.
 
-**Solution:** Use [postCreateCommand](codespaces.md) for Codespaces, or [Multi-Root Workspace](multi-root.md) for dual-environment support.
+**Solution:** For Codespaces, follow [GitHub Codespaces](codespaces.md), which commits plugin defaults to the repository. For dual-environment support, see [Multi-Root Workspace](multi-root.md).
 
 ## Limitations
 
-| Aspect              | Status                                   |
-|---------------------|------------------------------------------|
-| Devcontainers       | ✅  Full support                          |
-| Codespaces          | ❌  Not supported (no host access)        |
-| Team sharing        | ⚠️  Each developer clones on their host  |
-| Portable paths      | ⚠️  Absolute container paths             |
-| Version pinning     | ⚠️  Manual (use git checkout on host)    |
-| Shared installation | ✅  One clone serves all projects         |
-| Setup complexity    | ⚠️  High (multi-phase, requires rebuild) |
-| Update process      | ✅  Just git pull on host                 |
+| Aspect                     | Status                                                  |
+|----------------------------|---------------------------------------------------------|
+| Devcontainers              | ✅  Full support                                        |
+| Codespaces                 | ❌  Not supported (no host access)                      |
+| Team sharing               | ⚠️  Each developer clones on their host                 |
+| Portable paths             | ✅  Relative paths inside the checkout                  |
+| Path-specific instructions | ⚠️  Not confirmed from declared folders; use the plugin |
+| Version pinning            | ⚠️  Manual (use git checkout on host)                   |
+| Shared installation        | ✅  One clone serves all projects                       |
+| Setup complexity           | ⚠️  High (multi-phase, requires rebuild)                |
+| Update process             | ✅  git pull on host, then reload the window            |
 
 ## Next Steps
 
 * [Your First Workflow](../first-workflow.md) - Try HVE Core with a real task
 * [Multi-Root Workspace](multi-root.md) - Simpler portable solution
-* [postCreateCommand](codespaces.md) - If you also need Codespaces support
+* [GitHub Codespaces](codespaces.md) - If you also need Codespaces support
 
 ---
 

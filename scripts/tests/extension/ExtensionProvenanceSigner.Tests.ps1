@@ -220,7 +220,7 @@ Describe 'Immutable extension provenance signer' -Tag 'Unit' {
     It 'Has one caller pinned to the merged signer revision' {
         $Callers = @(Get-ChildItem -LiteralPath (Join-Path $script:RepositoryRoot '.github/workflows') -Filter '*.yml' |
                 Where-Object { $_.FullName -ne $script:SignerPath } |
-                Select-String -Pattern 'uses:\s+microsoft/hve-core/\.github/workflows/extension-provenance-signer\.yml@3a09401536cef0c4559db1aa64b7d1010638fd67\s+# PR #2823 squash\s*$')
+                Select-String -Pattern 'uses:\s+microsoft/hve-core/\.github/workflows/extension-provenance-signer\.yml@3b36a825662603c0d564eb0f3b98ce5ba53857da\s+# snapshot-20260908\s*$')
         $Callers | Should -HaveCount 1
         Split-Path -Path $Callers[0].Path -Leaf | Should -BeExactly 'release-vsix-publish.yml'
     }
@@ -254,7 +254,7 @@ Describe 'Immutable extension provenance signer' -Tag 'Unit' {
         [string]$script:Signer['jobs']['authorize']['permissions']['contents'] | Should -BeExactly 'read'
         $Token = @($script:Signer['jobs']['authorize']['steps'] |
             Where-Object { [string]$_['name'] -eq 'Generate governance-read Release App token' })[0]
-        [string]$Token['with']['permission-administration'] | Should -BeExactly 'read'
+        $Token['with'].Contains('permission-administration') | Should -BeFalse
         [string]$Token['with']['permission-contents'] | Should -BeExactly 'read'
         [string]$Token['with']['private-key'] | Should -BeExactly '${{ secrets.RELEASE_APP_PRIVATE_KEY }}'
         $AuthorizeText = Get-SignerStepText -JobName 'authorize'
@@ -275,11 +275,12 @@ Describe 'Immutable extension provenance signer' -Tag 'Unit' {
                 'compare/\$EVENT_SHA\.\.\.\$BRANCH_SHA'
                 'release-tags-creation-by-release-app'
                 'release-tags-immutable'
-                'bypass_actors'
+                'current_user_can_bypass == "always"'
+                'current_user_can_bypass == "never"'
+                '\(\.bypass_actors // \[\]\)'
                 'actor_type == "Integration"'
                 'actor_id == 2646666'
-                'bypass_mode == "always"'
-                'and \.bypass_actors == \[\]')) {
+                'bypass_mode == "always"')) {
             $AuthorizeText | Should -Match $Contract
         }
     }
@@ -363,8 +364,8 @@ Describe 'Immutable extension provenance signer' -Tag 'Unit' {
                 REPOSITORY        = 'microsoft/hve-core'
             }
             $script:RulesetList = '[{"id":101,"name":"release-tags-creation-by-release-app"},{"id":102,"name":"release-tags-immutable"}]'
-            $script:CreationRuleset = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","bypass_actors":[{"actor_id":2646666,"actor_type":"Integration","bypass_mode":"always"}],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"creation"}]}'
-            $script:ImmutableRuleset = '{"id":102,"name":"release-tags-immutable","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","bypass_actors":[],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"update"},{"type":"deletion"},{"type":"non_fast_forward"}]}'
+            $script:CreationRuleset = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","current_user_can_bypass":"always","bypass_actors":[{"actor_id":2646666,"actor_type":"Integration","bypass_mode":"always"}],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"creation"}]}'
+            $script:ImmutableRuleset = '{"id":102,"name":"release-tags-immutable","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","current_user_can_bypass":"never","bypass_actors":[],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"update"},{"type":"deletion"},{"type":"non_fast_forward"}]}'
         }
 
         It 'Accepts the exact Release App, release, containment, and governance state' -Skip:$script:SkipShellFixtureTests {

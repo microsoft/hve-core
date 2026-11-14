@@ -2,7 +2,7 @@
 title: Build System and Validation
 description: Understand plugin manifest synchronization, schema validation, npm scripts, and CI checks for customizing HVE Core
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-31
 ms.topic: how-to
 keywords:
   - build system
@@ -17,9 +17,9 @@ estimated_reading_time: 8
 
 Root `plugin.json` is the deterministic distribution manifest for the one `hve-core` plugin and VSIX. Its component paths are repository-relative, while discovery remains scoped to eligible package directories under `.github`.
 
-`npm run plugin:sync` runs `Sync-PluginManifest.ps1`, which derives agents, prompts, instructions, and distributable skills from git-tracked package-scoped paths. It preserves plugin metadata, synchronizes the repository version, and declares no hooks.
+`npm run plugin:sync` runs `Sync-PluginManifest.ps1`, which derives the manifest's `agents`, `rules` (instruction files), `skills` (distributable skills), and `extensions` (canvas packages) arrays from git-tracked package-scoped paths. It maps prompt files to `commands`, which stays empty because HVE Core ships no prompt files. It preserves plugin metadata, takes the version from root `package.json`, and declares no hooks.
 
-`npm run plugin:validate` runs manifest check mode followed by hook validation. Check mode writes nothing and verifies deterministic membership, the one-entry `.github` locator, metadata parity, source containment, and declared component coverage.
+`npm run plugin:validate` runs manifest check mode followed by hook validation. Check mode writes nothing and verifies deterministic membership, the one-entry locator in `.github/plugin/marketplace.json`, metadata parity, source containment, and declared component coverage.
 
 Synchronize after a distributable artifact changes:
 
@@ -53,6 +53,12 @@ determine which schema applies to each file.
 | `base-frontmatter.schema.json`           | Default fallback                  |
 
 :::
+
+The Copilot harness does not load prompt files, and the repository has no prompt
+or chat mode files, so the `prompt-frontmatter` and `chatmode-frontmatter`
+mappings match nothing. `agent-frontmatter.schema.json` rejects `handoffs`,
+`agents`, and `argument-hint`, which the Copilot harness does not support on
+agents.
 
 ### Pattern Mapping
 
@@ -105,23 +111,26 @@ for the complete set.
 
 ### Linting
 
-| Script                     | Command                            | Description                                |
-|----------------------------|------------------------------------|--------------------------------------------|
-| `validate:local`           | `npm run validate:local`           | Runs the local-safe validation aggregate   |
-| `lint:md`                  | `npm run lint:md`                  | Markdown linting via markdownlint-cli2     |
-| `lint:md:fix`              | `npm run lint:md:fix`              | Markdown linting with auto-fix             |
-| `lint:ps`                  | `npm run lint:ps`                  | PowerShell analysis via PSScriptAnalyzer   |
-| `lint:yaml`                | `npm run lint:yaml`                | YAML syntax and structure validation       |
-| `lint:links`               | `npm run lint:links`               | Link language checking                     |
-| `lint:md-links`            | `npm run lint:md-links`            | Markdown link target validation            |
-| `lint:frontmatter`         | `npm run lint:frontmatter`         | Frontmatter schema validation              |
-| `lint:json`                | `npm run lint:json`                | JSON syntax validation                     |
-| `lint:adr-consistency`     | `npm run lint:adr-consistency`     | ADR structure and consistency checks       |
-| `lint:plugin-manifest`     | `npm run lint:plugin-manifest`     | Plugin manifest and locator drift check    |
-| `lint:hooks`               | `npm run lint:hooks`               | Hook manifest validation                   |
-| `lint:version-consistency` | `npm run lint:version-consistency` | GitHub Action version consistency          |
-| `lint:permissions`         | `npm run lint:permissions`         | Workflow permissions validation            |
-| `lint:models`              | `npm run lint:models`              | Model reference validation against catalog |
+| Script                          | Command                                 | Description                                                                                   |
+|---------------------------------|-----------------------------------------|-----------------------------------------------------------------------------------------------|
+| `validate:local`                | `npm run validate:local`                | Runs the local-safe validation aggregate                                                      |
+| `lint:md`                       | `npm run lint:md`                       | Markdown linting via markdownlint-cli2                                                        |
+| `lint:md:fix`                   | `npm run lint:md:fix`                   | Markdown linting with auto-fix                                                                |
+| `lint:ps`                       | `npm run lint:ps`                       | PowerShell analysis via PSScriptAnalyzer                                                      |
+| `lint:zizmor`                   | `npm run lint:zizmor`                   | zizmor `pedantic` audit of workflows, actions, and `dependabot.yml` (needs the pinned zizmor) |
+| `lint:workflows`                | `npm run lint:workflows`                | Workflow and composite action validation with GitHub's parser and pinned shellcheck           |
+| `lint:links`                    | `npm run lint:links`                    | Link language checking                                                                        |
+| `lint:md-links`                 | `npm run lint:md-links`                 | Markdown link target validation                                                               |
+| `lint:frontmatter`              | `npm run lint:frontmatter`              | Frontmatter schema validation                                                                 |
+| `lint:json`                     | `npm run lint:json`                     | JSON syntax validation                                                                        |
+| `lint:adr-consistency`          | `npm run lint:adr-consistency`          | ADR structure and consistency checks                                                          |
+| `lint:plugin-manifest`          | `npm run lint:plugin-manifest`          | Plugin manifest and locator drift check                                                       |
+| `lint:hooks`                    | `npm run lint:hooks`                    | Hook manifest validation                                                                      |
+| `lint:version-consistency`      | `npm run lint:version-consistency`      | GitHub Action version consistency                                                             |
+| `lint:tool-version-consistency` | `npm run lint:tool-version-consistency` | Tool, runtime, and tool-lock versions against the manifest                                    |
+| `lint:action-pin-provenance`    | `npm run lint:action-pin-provenance`    | Action pin comments and commits against upstream tags (network)                               |
+| `lint:permissions`              | `npm run lint:permissions`              | Workflow permissions validation                                                               |
+| `lint:models`                   | `npm run lint:models`                   | Model reference validation against catalog                                                    |
 
 ### Validation
 
@@ -164,7 +173,7 @@ The `validate:local` script chains local-safe checks in a fixed sequence:
 2. `lint:tables` checks markdown table columns without modifying them
 3. `lint:md` checks markdown style rules (`.markdownlint.json`)
 4. `lint:ps` analyzes PowerShell scripts (`PSScriptAnalyzer.psd1`)
-5. `lint:yaml` validates YAML file syntax
+5. `lint:workflows` validates workflows and composite actions with GitHub's parser, custom checks, and pinned shellcheck
 6. `lint:json` validates JSON syntax
 7. `lint:links` checks link text language patterns
 8. `lint:md-links` resolves markdown link targets
@@ -173,19 +182,22 @@ The `validate:local` script chains local-safe checks in a fixed sequence:
 11. `lint:hooks` validates hook manifests
 12. `lint:design-intent` validates design intent declarations
 13. `lint:version-consistency` checks GitHub Action version alignment
-14. `lint:permissions` validates workflow permissions
-15. `lint:dangerous-workflow` checks workflows for dangerous patterns
-16. `lint:dependency-pinning` checks dependencies are pinned to fixed versions
-17. `lint:public-dependency-feeds` confirms dependency sources use canonical public feeds
-18. `lint:pr-gate` validates the pull request validation gate
-19. `lint:ps-module-pins` checks PowerShell module versions are pinned
-20. `lint:extension-artifact-naming` validates the one extension artifact identity
-21. `lint:py` lints Python scripts via `Invoke-PythonLint.ps1`
-22. `validate:skills` verifies skill directory structure
-23. `lint:ai-artifacts` validates planner AI artifacts
-24. `lint:asset-docs` confirms assets have documentation pages
-25. `lint:models` validates model references against the catalog
-26. `validate:devcontainer-lockfile` checks devcontainer lockfile integrity
+14. `lint:tool-version-consistency` checks hard-coded tool versions, runtime pins, and tool lock projects against the manifest
+15. `lint:permissions` validates workflow permissions
+16. `lint:workflow-runner` checks every job runs on a dated GitHub-hosted Ubuntu runner
+17. `lint:dangerous-workflow` checks workflows for dangerous patterns
+18. `lint:dependency-pinning` checks dependencies are pinned to fixed versions
+19. `lint:public-dependency-feeds` confirms dependency sources use canonical public feeds
+20. `lint:pr-gate` validates the pull request validation gate
+21. `lint:ps-module-pins` checks PowerShell module versions are pinned
+22. `lint:extension-artifact-naming` validates the one extension artifact identity
+23. `lint:py` lints Python scripts via `Invoke-PythonLint.ps1`
+24. `validate:skills` verifies skill directory structure
+25. `lint:ai-artifacts` validates planner AI artifacts
+26. `lint:artifact-portability` checks AI artifact references stay portable across distributions
+27. `lint:asset-docs` confirms assets have documentation pages
+28. `lint:models` validates model references against the catalog
+29. `validate:devcontainer-lockfile` checks devcontainer lockfile integrity
 
 Each linter outputs results to `logs/` for inspection. Run individual linters for faster
 feedback during development:

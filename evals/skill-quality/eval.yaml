@@ -26,8 +26,8 @@ stimuli:
       A System Architecture Reviewer confirmed reliability and cost as the
       focus areas for review `synthetic-queue`. Research recommends option A
       with evidence `E1`, but final budget approval is unresolved. Explain what
-      the Architecture Review Record must preserve before an ADR or RPI Plan
-      handoff, and who retains decision authority.
+      the Architecture Review Record must preserve, when the ADR and planning
+      next steps can be suggested, and who retains decision authority.
     tags:
       category: skill-quality
       skill: architecture-review
@@ -35,15 +35,15 @@ stimuli:
       - type: output-matches
         name: architecture-review-record-content
         config:
-          pattern: "(?is)(scope).*(evidence|E1).*(reliability).*(cost).*(trade-off|recommendation).*(limit|unresolved)"
+          pattern: "(?is)(?=[\\s\\S]*\\b(?:scope|findings?|non-findings?)\\b)(?=[\\s\\S]*\\b(?:dispositions?|accepted|revised|rejected|deferred)\\b)(?=[\\s\\S]*\\b(?:limits?|limitations?|unassessed|not assessed|gaps?|open (?:items?|questions?))\\b)"
       - type: output-matches
         name: architecture-review-preserves-authority
         config:
-          pattern: "(?is)(ADR|user).*(remain|retain|authoritative|authority).*(review record|Architecture Review Record).*(not|does not|without)"
+          pattern: "(?is)(?:\\b(?:you|yours|user|users|human|humans|owner|owners|stakeholder|stakeholders|approver|approvers|decision[- ]makers?|decision[- ]owners?)\\b[\\s\\S]{0,60}?\\b(?:retain|retains|retained|keep|keeps|hold|holds|own|owns|make|makes|have|has)\\b[\\s\\S]{0,60}?\\b(?:authority|decision|decisions|final say|final call|approval|sign-off)\\b|\\b(?:authority|decision|decisions|final say|final call|approval|sign-off)\\b[\\s\\S]{0,60}?\\b(?:stay|stays|remain|remains|rest|rests|belong|belongs|lie|lies|sit|sits|is|are|go|goes)\\b[\\s\\S]{0,50}?\\b(?:you|yours|user|users|human|humans|owner|owners|stakeholder|stakeholders|approver|approvers|decision[- ]makers?|decision[- ]owners?)\\b|\\b(?:decided|approved)\\b[\\s\\S]{0,20}?\\bby\\b[\\s\\S]{0,40}?\\b(?:you|yours|user|users|human|humans|owner|owners|stakeholder|stakeholders|approver|approvers|decision[- ]makers?|decision[- ]owners?)\\b|\\b(?:you|yours|user|users|human|humans|owner|owners|stakeholder|stakeholders|approver|approvers|decision[- ]makers?|decision[- ]owners?)\\b[\\s\\S]{0,30}?\\b(?:decide|decides|approve|approves)\\b)|^(?=[\\s\\S]*\\b(?:you|yours|user|users|human|humans|owner|owners|stakeholder|stakeholders|approver|approvers|decision[- ]makers?|decision[- ]owners?)\\b)(?=[\\s\\S]*\\b(?:record|review)\\b[\\s\\S]{0,100}?\\b(?:not|never|without|rather than|instead of|only|solely|doesn't|doesn’t|isn't|isn’t|won't|won’t|cannot|can't|can’t)\\b[\\s\\S]{0,80}?\\b(?:decide|decides|decided|deciding|decision|decisions|authority|approve|approves|approved|approval)\\b)"
       - type: output-matches
         name: architecture-review-requires-record-first-handoff
         config:
-          pattern: "(?is)(persist|complete|write).*(Architecture Review Record|record).*(before).*(ADR|RPI Plan|handoff)"
+          pattern: "(?is)(?:\\b(?:persist|persists|persisted|persisting|save|saves|saved|saving|write|writes|written|writing|wrote|complete|completes|completed|completing|finalize|finalizes|finalized|store|stores|stored)\\b[\\s\\S]{0,120}?\\brecord\\b[\\s\\S]{0,160}?\\b(?:before|prior to)\\b[\\s\\S]{0,160}?\\b(?:ADR|ADRs|ADR Creator|rpi-plan|next steps?|plan|planning|handoff|handoffs|hand off|handing off|suggest|suggests|suggested|suggesting|suggestion)\\b|\\brecord\\b[\\s\\S]{0,120}?\\b(?:persist|persists|persisted|persisting|save|saves|saved|saving|write|writes|written|writing|wrote|complete|completes|completed|completing|finalize|finalizes|finalized|store|stores|stored)\\b[\\s\\S]{0,160}?\\b(?:before|prior to)\\b[\\s\\S]{0,160}?\\b(?:ADR|ADRs|ADR Creator|rpi-plan|next steps?|plan|planning|handoff|handoffs|hand off|handing off|suggest|suggests|suggested|suggesting|suggestion)\\b|\\b(?:before|prior to)\\b[\\s\\S]{0,200}?\\b(?:ADR|ADRs|ADR Creator|rpi-plan|next steps?|plan|planning|handoff|handoffs|hand off|handing off|suggest|suggests|suggested|suggesting|suggestion)\\b[\\s\\S]{0,200}?\\b(?:persist|persists|persisted|persisting|save|saves|saved|saving|write|writes|written|writing|wrote|complete|completes|completed|completing|finalize|finalizes|finalized|store|stores|stored)\\b[\\s\\S]{0,120}?\\brecord\\b|\\b(?:ADR|ADRs|ADR Creator|rpi-plan|next steps?|plan|planning|handoff|handoffs|hand off|handing off|suggest|suggests|suggested|suggesting|suggestion)\\b[\\s\\S]{0,120}?\\b(?:only after|after|once|until)\\b[\\s\\S]{0,80}?\\brecord\\b[\\s\\S]{0,60}?\\b(?:persisted|saved|written|stored|complete|completed|finalized|finished|exists)\\b|\\b(?:only after|after|once|until)\\b[\\s\\S]{0,80}?\\brecord\\b[\\s\\S]{0,60}?\\b(?:persisted|saved|written|stored|complete|completed|finalized|finished|exists)\\b[\\s\\S]{0,160}?\\b(?:ADR|ADRs|ADR Creator|rpi-plan|next steps?|plan|planning|handoff|handoffs|hand off|handing off|suggest|suggests|suggested|suggesting|suggestion)\\b|\\b(?:persist|persists|persisted|persisting|save|saves|saved|saving|write|writes|written|writing|wrote|complete|completes|completed|completing|finalize|finalizes|finalized|store|stores|stored)\\b[\\s\\S]{0,80}?\\brecord\\b[\\s\\S]{0,60}?\\bfirst\\b[\\s\\S]{0,80}?\\b(?:then|after that|afterward|afterwards)\\b[\\s\\S]{0,160}?\\b(?:ADR|ADRs|ADR Creator|rpi-plan|next steps?|plan|planning|handoff|handoffs|hand off|handing off|suggest|suggests|suggested|suggesting|suggestion)\\b|\\brecord\\b[\\s\\S]{0,60}?\\b(?:persisted|saved|written|stored|complete|completed|finalized|finished|exists)\\b[^\\n]{0,20}(?:→|->)[^\\n]{0,80}\\b(?:ADR|ADRs|ADR Creator|rpi-plan|next steps?|plan|planning|handoff|handoffs|hand off|handing off|suggest|suggests|suggested|suggesting|suggestion)\\b)"
 
   - name: owasp-top10-identify-injection
     prompt: |

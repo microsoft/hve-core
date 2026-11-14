@@ -64,11 +64,11 @@ canonical_deck:
   last_generated_at: null  # ISO 8601 timestamp; last time a snapshot was generated
 
 customer_card_render:
-  last_offered_at: null   # ISO 8601 timestamp; last time customer-card build was offered
+  last_offered_at: null   # ISO 8601 timestamp; last time customer-card generation was offered
   last_offered_response: null  # "accepted" | "declined" | null
-  last_generated_at: null  # ISO 8601 timestamp; last time customer-card PPTX was generated
+  last_generated_at: null  # ISO 8601 timestamp; last time customer-card content was generated
   decline_final: false    # boolean; true if user declined at Method 5 (no further offers)
-  output_path: null       # relative path to last generated PPTX
+  output_path: null       # relative path to last generated content directory
 ```
 
 ### Field Definitions
@@ -86,7 +86,7 @@ customer_card_render:
 * `method`: integer 1-9 indicating the active method.
 * `space`: derived from method number. Methods 1-3 map to `problem`, 4-6 to `solution`, 7-9 to `implementation`.
 * `phase`: free-text label describing the current step within the method (e.g., "stakeholder mapping", "interview planning", "theme clustering", "prototype testing").
-* `disclaimerShownAt`: ISO 8601 timestamp recording when the Design Thinking Coaching disclaimer was shown. `null` until shown; once set, never overwritten. See `shared/disclaimer-language.instructions.md` (Design Thinking Coaching section).
+* `disclaimerShownAt`: ISO 8601 timestamp recording when the Design Thinking Coaching disclaimer was shown. `null` until shown; once set, never overwritten. See the `disclaimer-language` skill (Design Thinking Coaching section).
 
 #### Hint Calibration
 
@@ -129,7 +129,7 @@ List of artifacts produced during coaching. Each entry captures:
 Specialized DT workflows may extend the base state schema with additional top-level blocks. Preserve these blocks when updating coaching state files.
 
 * `canonical_deck`: snapshot history and cooldown state for canonical deck generation.
-* `customer_card_render`: cooldown state and output metadata for PowerPoint renders derived from the canonical deck.
+* `customer_card_render`: cooldown state and output metadata for customer-card slide content derived from the canonical deck.
 
 #### Canonical Deck Block
 
@@ -140,17 +140,17 @@ Specialized DT workflows may extend the base state schema with additional top-le
 
 #### Customer Card Render Block
 
-* `last_offered_at`: ISO 8601 timestamp of the most recent customer-card PowerPoint offer.
+* `last_offered_at`: ISO 8601 timestamp of the most recent customer-card offer.
 * `last_offered_response`: user's response to the most recent offer: `"accepted"`, `"declined"`, or `null` if never offered.
-* `last_generated_at`: ISO 8601 timestamp of the most recent customer-card PowerPoint generation.
+* `last_generated_at`: ISO 8601 timestamp of the most recent customer-card content generation.
 * `decline_final`: boolean indicating the user declined at the Method 5 checkpoint. When `true`, no further customer-card offers are made.
-* `output_path`: relative path to the last generated customer-card PowerPoint file.
+* `output_path`: relative path to the last generated customer-card `content.yaml` directory.
 
 ## State Management Rules
 
 ### Initialization
 
-Create the state file when starting a new coaching project via the `dt-start-project` prompt. Set `current.method` to 1, `current.space` to `problem`, and record the initial transition log entry.
+Create the state file when DT Coach session initialization starts a new coaching project. Set `current.method` to 1, `current.space` to `problem`, and record the initial transition log entry.
 
 ### Updates
 
@@ -161,6 +161,10 @@ Update the state file at these events:
 * Artifact creation: append to `artifacts` list.
 * Phase change within a method: update `current.phase`.
 * Hint calibration shift: update `hint_calibration.level` when the team's responsiveness to hints changes. Record observations in `hint_calibration.pattern_notes`.
+
+### Write Failures
+
+When a state write fails, report the failure and its cause, state that the recorded state is unchanged, and ask the team how to proceed. Do not retry the write through another path on your own, and do not describe a transition or update as complete when its write failed.
 
 ### Space Derivation
 
@@ -176,15 +180,17 @@ Do not set space independently of method.
 
 When resuming a coaching session:
 
-1. Read the state file at `.copilot-tracking/dt/{project-slug}/coaching-state.md`.
+1. Read the state file at `.copilot-tracking/dt/{project-slug}/coaching-state.md`. When the slug is missing or ambiguous, list the projects under `.copilot-tracking/dt/` with their last session dates and ask which one to resume; when no project exists, offer to start a new one.
 2. Verify the file parses as valid YAML and contains required fields (`project`, `current`, `methods_completed`, `transition_log`).
 3. Restore coaching context from `current.method`, `current.space`, and `current.phase`.
 4. Review the most recent `transition_log` and `session_log` entries to understand where the team left off.
 5. Check `methods_completed` to understand overall progress.
 6. Scan the `artifacts` list for available project artifacts to reference.
-7. Announce the resumed state to the user: current method, current phase, and a brief summary of previous work.
+7. Announce the resumed state to the user: current method, current phase, overall progress, the most recent transition rationale when it helps, and a brief summary of previous work.
+8. Ask the user to confirm the summary before resuming active coaching, then continue naturally from where the previous session ended rather than reciting method steps.
+9. Resume hint escalation at the level recorded in `hint_calibration` and recent session logs rather than resetting to Level 1.
 
-If the state file is missing or corrupted, inform the user and offer to reinitialize from scratch or reconstruct state from existing artifacts in the project directory.
+If the state file is missing or corrupted, inform the user which fields are unreadable and offer to reinitialize from scratch or reconstruct state from existing artifacts in the project directory.
 
 ## Project Directory Contents
 
@@ -197,4 +203,4 @@ The `.copilot-tracking/dt/{project-slug}/` directory holds all project-specific 
 
 ## Integration with Method Sequencing
 
-The coaching state schema aligns with the method routing assessment flow used during method sequencing. The `current.method` field drives which dt-methods reference the agent loads on demand via `read_file` when a method becomes active. The `transition_log` provides the history that the method sequencing transition protocol references.
+The coaching state schema aligns with the method routing assessment flow used during method sequencing. The `current.method` field drives which dt-methods reference the agent reads on demand when a method becomes active. The `transition_log` provides the history that the method sequencing transition protocol references.

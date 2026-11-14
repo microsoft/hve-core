@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
-    Asserts planner startup prompts and instruction-level disclaimer contracts are present.
+    Asserts planner startup announcements and instruction-level disclaimer contracts are present.
 .NOTES
-    Effective case count: 9 (1 `It` block x `-ForEach $script:prompts` arity 6, plus 3 Accessibility contract tests).
+    Effective case count: 8 (1 `It` block x `-ForEach $script:plannerAgents` arity 2, plus 3 Security cadence tests and 3 Accessibility contract tests).
 #>
 
 $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
@@ -13,13 +13,9 @@ $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 $securityAttribution = 'OWASP ASVS • OWASP Top 10 • NIST SSDF'
 $ssscAttribution = 'OpenSSF Scorecard • SLSA Build Levels • OpenSSF Best Practices Badge • Sigstore • SBOM'
 
-$script:prompts = @(
-    @{ Name = 'security-capture';          Attribution = $securityAttribution }
-    @{ Name = 'security-plan-from-prd';    Attribution = $securityAttribution }
-    @{ Name = 'sssc-capture';              Attribution = $ssscAttribution }
-    @{ Name = 'sssc-from-brd';             Attribution = $ssscAttribution }
-    @{ Name = 'sssc-from-prd';             Attribution = $ssscAttribution }
-    @{ Name = 'sssc-from-security-plan';   Attribution = $ssscAttribution }
+$script:plannerAgents = @(
+    @{ Name = 'security-planner'; Attribution = $securityAttribution }
+    @{ Name = 'sssc-planner';     Attribution = $ssscAttribution }
 )
 
 Describe 'Planner startup disclosures' -Tag 'Unit' {
@@ -28,33 +24,31 @@ Describe 'Planner startup disclosures' -Tag 'Unit' {
         $script:accessibilityIdentityPath = Join-Path $script:repoRoot '.github/instructions/accessibility/accessibility-identity.instructions.md'
         $script:securityAgentPath = Join-Path $script:repoRoot '.github/agents/security/security-planner.agent.md'
         $script:securityIdentityPath = Join-Path $script:repoRoot '.github/instructions/security/identity.instructions.md'
-        $script:sharedBasePath = Join-Path $script:repoRoot '.github/instructions/shared/planner-identity-base.instructions.md'
-        $script:disclaimerSourcePath = Join-Path $script:repoRoot '.github/instructions/shared/disclaimer-language.instructions.md'
+        $script:sharedBasePath = Join-Path $script:repoRoot '.github/skills/shared/planner-identity/SKILL.md'
+        $script:disclaimerSourcePath = Join-Path $script:repoRoot '.github/skills/shared/disclaimer-language/SKILL.md'
     }
 
-    Context 'Security and SSSC entry prompts' {
-        It 'Prompt <Name> contains ## Startup and expected attribution' -ForEach $script:prompts {
-            $path = Join-Path $script:repoRoot ".github/prompts/security/$Name.prompt.md"
-            Test-Path $path | Should -BeTrue -Because "$Name.prompt.md must exist"
+    Context 'Security and SSSC planner startup attribution' {
+        It 'Agent <Name> displays its framework attribution in the Startup Announcement' -ForEach $script:plannerAgents {
+            $path = Join-Path $script:repoRoot ".github/agents/security/$Name.agent.md"
+            Test-Path $path | Should -BeTrue -Because "$Name.agent.md must exist"
             $content = Get-Content -Path $path -Raw
-            $content | Should -Match '(?m)^##\s+Startup\s*$' -Because "$Name must have a ## Startup heading"
-            $content | Should -BeLike "*$Attribution*" -Because "$Name must reference its framework attribution"
+            $content | Should -Match '(?m)^##\s+Startup Announcement\s*$' -Because "$Name must have a ## Startup Announcement heading"
+            $content | Should -BeLike "*$Attribution*" -Because "$Name must display its framework attribution"
         }
     }
 
     Context 'Security disclaimer cadence contract' {
-        It 'Security entry surfaces load the canonical instruction and halt when it is unavailable' {
+        It 'Security entry surfaces preload the canonical disclaimer skill and halt when it is unavailable' {
             $paths = @(
                 $script:securityAgentPath
-                (Join-Path $script:repoRoot '.github/prompts/security/security-capture.prompt.md')
-                (Join-Path $script:repoRoot '.github/prompts/security/security-plan-from-prd.prompt.md')
             )
 
             foreach ($path in $paths) {
                 $content = Get-Content -Path $path -Raw
-                $content | Should -Match 'locate .*instruction file named `disclaimer-language\.instructions\.md`'
-                $content | Should -Not -Match '#file:\.\./\.\./instructions/shared/disclaimer-language\.instructions\.md'
-                $content | Should -Match 'read .*disclaimer-language\.instructions\.md.*in full'
+                $content | Should -Match '(?ms)^skills:\s*$.*?^\s+-\s+disclaimer-language\s*$'
+                $content | Should -Not -Match 'instruction file named `disclaimer-language'
+                $content | Should -Match '`Security Planning` section of the preloaded `disclaimer-language` skill'
                 $content | Should -Match 'cannot be found or loaded, halt before questions, analysis, state initialization, or phase work'
             }
         }
@@ -62,8 +56,6 @@ Describe 'Planner startup disclosures' -Tag 'Unit' {
         It 'Security entry surfaces use null-gated automatic display and explicit redisplay details' {
             $paths = @(
                 $script:securityAgentPath
-                (Join-Path $script:repoRoot '.github/prompts/security/security-capture.prompt.md')
-                (Join-Path $script:repoRoot '.github/prompts/security/security-plan-from-prd.prompt.md')
             )
 
             foreach ($path in $paths) {

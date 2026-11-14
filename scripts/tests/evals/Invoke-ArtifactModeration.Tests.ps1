@@ -154,6 +154,29 @@ Describe 'Invoke-ArtifactModeration.ps1' -Tag 'Unit' {
         $data.flagged | Should -BeFalse
     }
 
+    It 'Reports a missing manifest artifact as an encoded warning annotation on GitHub Actions' {
+        $repo = New-Repo
+        New-Item -ItemType Directory -Path (Join-Path $repo 'evals') -Force | Out-Null
+        $manifest = Join-Path $repo 'logs/changed-ai-artifacts.json'
+        $outFile = Join-Path $repo 'logs/moderation-artifacts.json'
+
+        New-Manifest -Path $manifest -Artifacts @(
+            @{ path = '.github/agents/ghost.agent.md'; status = 'modified' }
+        )
+
+        $savedGitHubActions = $env:GITHUB_ACTIONS
+        try {
+            $env:GITHUB_ACTIONS = 'true'
+            $output = & pwsh -NoProfile -File $script:ScriptPath -ManifestPath $manifest -EvalRoot 'evals' -OutFile $outFile -RepoRoot $repo 2>&1
+            $exitCode = $LASTEXITCODE
+        }
+        finally {
+            $env:GITHUB_ACTIONS = $savedGitHubActions
+        }
+        $exitCode | Should -Be 0
+        ($output -join "`n") | Should -Match '(?m)^::warning::Artifact file not found: \.github/agents/ghost\.agent\.md$'
+    }
+
     It 'Moderates combined specs and changed artifacts and exits 0 when clean' {
         $repo = New-Repo
         New-EvalSpec -RepoRoot $repo -RelativePath 'evals/skill-quality/example.eval.yaml' | Out-Null

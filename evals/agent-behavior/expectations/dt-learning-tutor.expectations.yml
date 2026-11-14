@@ -108,7 +108,7 @@ expectations:
       - Handoff named with the wrong retained agent (e.g. RPI Agent).
     priority: medium
     applies_when: "response includes Phase 5: Completion content"
-    contract_ref: "agent §Phase 5 (`Offer the \"Start Project\" handoff`); frontmatter `handoffs:` to `DT Coach`"
+    contract_ref: "agent §Phase 5 (`Offer to start a project with the DT Coach`)"
 
   - expectation_id: tutor-not-coach-role
     summary: Output frames the agent as instructor delivering curriculum, not as a project coach.

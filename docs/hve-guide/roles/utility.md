@@ -3,7 +3,7 @@ title: Utility Reference
 description: Cross-cutting HVE Core utilities for documentation, media, Git workflows, workspace-local state, and shared continuation
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-10-06
+ms.date: 2026-11-13
 ms.topic: reference
 keywords:
   - utility
@@ -24,7 +24,7 @@ Use these cross-cutting utilities when your workflow spans multiple roles or lif
 | Documentation | Documentation audit, drift, authoring, and validation |
 | Media         | Video-to-GIF conversion with FFmpeg optimization      |
 | Git           | Commit messages, merge workflows, PR creation         |
-| Installation  | Selective component adoption and environment setup    |
+| Installation  | Repository adoption and environment setup             |
 | Diagnostics   | Build information retrieval and CI/CD status checks   |
 
 ## Usage Patterns
@@ -33,13 +33,15 @@ Use these cross-cutting utilities when your workflow spans multiple roles or lif
 
 Resume a workflow from the state and evidence files it owns. For RPI, reference the dated research, task-centered plan, changes, and review artifacts with the same stable task ID. Backlog managers and planning agents use their domain-specific state files and handoff records.
 
-Use [Share Work for Another Contributor](../../rpi/shared-work-handoff) when a named teammate must continue from a different working copy. It minimizes selected evidence into a checked-in handoff without exposing private workflow state.
+Select **RPI Agent** and ask it to resume:
 
 ```text
-/rpi Continue task authentication-refactor from the latest dated plan,
+Continue task authentication-refactor from the latest dated plan,
 changes record, and review evidence. Resume the next incomplete task
 without repeating completed research.
 ```
+
+Use [Share Work for Another Contributor](../../rpi/shared-work-handoff) when a named teammate must continue from a different working copy. It minimizes selected evidence into a checked-in handoff without exposing private workflow state.
 
 ### Documentation Operations
 
@@ -68,13 +70,13 @@ Refer to the [video-to-gif skill](https://github.com/microsoft/hve-core/blob/mai
 
 Git utilities manage commit messages, merge operations, and pull request creation across all roles.
 
-| Prompt             | Purpose                                 | Invoke                |
-|--------------------|-----------------------------------------|-----------------------|
-| git-commit         | Conventional commit message generation  | `/git-commit`         |
-| git-commit-message | Commit message from staged changes      | `/git-commit-message` |
-| git-merge          | Merge, rebase, and conflict resolution  | `/git-merge`          |
-| pull-request       | Pull request creation with templates    | `/pull-request`       |
-| git-setup          | Git configuration and environment setup | `/git-setup`          |
+| Skill        | Purpose                                                     | Invoke                          |
+|--------------|-------------------------------------------------------------|---------------------------------|
+| git-commit   | Stage selected paths and commit with a conventional message | `/git-commit`                   |
+| git-commit   | Commit message from staged changes, without committing      | `/git-commit mode=message-only` |
+| git-merge    | Merge, rebase, and conflict resolution                      | `/git-merge`                    |
+| pull-request | Pull request creation with templates                        | `/pull-request`                 |
+| git-setup    | Git configuration and environment setup                     | `/git-setup`                    |
 
 ## Full Asset Reference
 
@@ -84,33 +86,27 @@ Git utilities manage commit messages, merge operations, and pull request creatio
 |-------------------|---------------|-------------------------------------------------------|
 | **documentation** | Documentation | Documentation audit, drift, authoring, and validation |
 
-### Prompts
-
-| Prompt             | Category    | Invoke                | Description                                      |
-|--------------------|-------------|-----------------------|--------------------------------------------------|
-| git-commit         | Git         | `/git-commit`         | Conventional commit message generation           |
-| git-commit-message | Git         | `/git-commit-message` | Commit message from staged changes               |
-| git-merge          | Git         | `/git-merge`          | Merge, rebase, and conflict resolution workflows |
-| pull-request       | Git         | `/pull-request`       | Pull request creation with template support      |
-| git-setup          | Git         | `/git-setup`          | Git configuration and environment setup          |
-| ado-get-build-info | Diagnostics | `/ado-get-build-info` | Azure DevOps build status and log retrieval      |
-
 ### Skills
 
-| Skill               | Category     | Description                                     |
-|---------------------|--------------|-------------------------------------------------|
-| installer           | Installation | HVE Core customized installation                |
-| shared-work-handoff | Continuity   | Optional checked-in continuation between people |
-| video-to-gif        | Media        | FFmpeg two-pass video-to-GIF conversion         |
+| Skill               | Category     | Invoke                            | Description                                                |
+|---------------------|--------------|-----------------------------------|------------------------------------------------------------|
+| git-commit          | Git          | `/git-commit`                     | Selected-path conventional commits, or a message-only mode |
+| git-merge           | Git          | `/git-merge`                      | Merge, rebase, and conflict resolution workflows           |
+| git-setup           | Git          | `/git-setup`                      | Git configuration and environment setup                    |
+| pull-request        | Git          | `/pull-request`                   | Pull request creation with template support                |
+| backlog-management  | Diagnostics  | Ask for Azure DevOps build status | Azure DevOps build status and log retrieval                |
+| installer           | Installation |                                   | HVE Core customized installation                           |
+| shared-work-handoff | Continuity   | `/shared-work-handoff`            | Optional checked-in continuation between people            |
+| video-to-gif        | Media        |                                   | FFmpeg two-pass video-to-GIF conversion                    |
 
 ## Tips
 
-| Do                                                                 | Don't                                                      |
-|--------------------------------------------------------------------|------------------------------------------------------------|
-| Resume from the workspace-local artifacts owned by each workflow   | Rely on a conversation transcript as authoritative state   |
-| Use `/git-commit` for all commits to maintain conventions          | Write ad-hoc commit messages that skip conventional format |
-| Ask an agent to use `hve-core-installer` for selective clone setup | Copy components without reviewing paths and maturity       |
-| Refer to the skill docs for media processing parameters            | Guess at FFmpeg options without consulting the skill file  |
+| Do                                                                             | Don't                                                      |
+|--------------------------------------------------------------------------------|------------------------------------------------------------|
+| Resume from the workspace-local artifacts owned by each workflow               | Rely on a conversation transcript as authoritative state   |
+| Use `/git-commit` for all commits to maintain conventions                      | Write ad-hoc commit messages that skip conventional format |
+| Ask an agent to use `hve-core-installer` to copy HVE Core into your repository | Copy components without reviewing paths and maturity       |
+| Refer to the skill docs for media processing parameters                        | Guess at FFmpeg options without consulting the skill file  |
 
 ## Next Steps
 

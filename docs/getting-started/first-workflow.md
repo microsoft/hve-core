@@ -3,7 +3,7 @@ title: Your First Full Workflow
 description: Hands-on tutorial using Research, Plan, Implement phases to create a validation script
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-10-31
 ms.topic: tutorial
 keywords:
   - getting started
@@ -28,7 +28,7 @@ Build a real validation script using the Research → Plan → Implement workflo
 
 ## Prerequisites
 
-* VS Code with GitHub Copilot Chat extension
+* VS Code with GitHub Copilot Chat and HVE Core installed (see [Installing HVE Core](install.md))
 * This repository cloned locally
 * Basic familiarity with GitHub Copilot
 * ~15 minutes to complete
@@ -57,6 +57,8 @@ The `/clear` command resets Copilot's context between phases. Each RPI phase
 can start fresh because the research and planning artifacts carry verified
 context forward. This tutorial invokes `/rpi-research`, `/rpi-plan`, and
 `/rpi-implement` separately so you can see each responsibility and artifact.
+If you installed HVE Core as a plugin, VS Code shows these skills with the
+plugin name in front, such as `/hve-core:rpi-research`.
 
 > [!NOTE]
 > Understanding why `/clear` matters (not just that you should use it) helps you recognize when context degradation affects your results. See [Context Engineering](../rpi/context-engineering.md) for the full explanation.
@@ -216,9 +218,9 @@ with `/clear` between each phase. This is a useful way to learn RPI because you
 see each phase produce its own artifact.
 
 For day-to-day work, select
-[RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent)
-or invoke `/rpi`. Both coordinate the same phase skills and include
-Review and Follow-up when the task reaches those stages.
+[RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent).
+It coordinates the same phase skills and includes Review and Follow-up
+when the task reaches those stages.
 
 To compare the experience, select **RPI Agent** from the agent picker and try
 this prompt:
@@ -229,6 +231,11 @@ this prompt:
 
 RPI Agent coordinates the applicable skills without requiring manual agent
 switches between phases.
+
+If your host shows canvases, the agent also opens the RPI Workflow canvas,
+where you can watch this task move through each phase and answer the decisions
+it leaves to you. The [RPI Workflow Canvas](../rpi/rpi-workflow-canvas.md) guide
+shows this same task in the canvas, from research to follow-up.
 
 ## What You Learned
 

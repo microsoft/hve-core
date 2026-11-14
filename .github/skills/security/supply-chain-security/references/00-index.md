@@ -11,7 +11,7 @@ This index catalogs every reference file in the supply chain security skill. Eac
 | Reference                                          | Topic                                                         |
 |----------------------------------------------------|---------------------------------------------------------------|
 | [openssf-scorecard.md](openssf-scorecard.md)       | OpenSSF Scorecard 20 checks with risk levels and score ranges |
-| [slsa-levels.md](slsa-levels.md)                   | SLSA v1.0 Build track levels L0 through L3                    |
+| [slsa-levels.md](slsa-levels.md)                   | SLSA v1.2 Build track levels L0 through L3                    |
 | [best-practices-badge.md](best-practices-badge.md) | OpenSSF Best Practices Badge Passing, Silver, and Gold tiers  |
 | [sigstore-maturity.md](sigstore-maturity.md)       | Sigstore (cosign) adoption maturity levels                    |
 | [sbom-elements.md](sbom-elements.md)               | NTIA SBOM minimum elements and format guidance                |

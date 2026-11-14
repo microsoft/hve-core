@@ -18,7 +18,7 @@ Use this reference table when mapping gaps. It provides the known implementation
 | 6  | Contributors           | Low      | Multi-contributor                                       | Same                             | N/A (organic)         | —              |
 | 7  | Dangerous-Workflow     | Critical | Clean patterns; CodeQL                                  | Same                             | Script adoption       | S              |
 | 8  | Dependency-Update-Tool | High     | dependabot.yml                                          | dependabot.yml (12 ecosystems)   | Workflow copy/modify  | S              |
-| 9  | Fuzzing                | Medium   | ❌ Gap                                                   | ❌ Gap                            | New capability        | L              |
+| 9  | Fuzzing                | Medium   | ❌ Gap                                                  | ❌ Gap                           | New capability        | L              |
 | 10 | License                | Low      | LICENSE (MIT)                                           | LICENSE                          | Platform config       | S              |
 | 11 | Maintained             | High     | Active dev                                              | Active dev                       | N/A (organic)         | —              |
 | 12 | Packaging              | Medium   | VS Code extension                                       | Same                             | N/A (existing)        | —              |

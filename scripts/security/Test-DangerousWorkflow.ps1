@@ -114,6 +114,75 @@ function Get-ExpressionMatches {
     return @($expressionMatchList | ForEach-Object { $_.Groups[1].Value.Trim() })
 }
 
+function ConvertTo-CanonicalExpression {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Expression
+    )
+
+    # Index and bracket syntax reach the same attacker-controlled fields as the dotted
+    # and wildcard spellings the patterns are written for (commits[0].message and
+    # commits.*.message, inputs['name'] and inputs.name). Rewrite quoted keys as property
+    # access and every other index, including a computed one such as
+    # commits[github.run_attempt], as .* so one set of patterns covers them all. A computed
+    # index is appended after a space so references inside it are still matched, and
+    # brackets inside string literals are left alone. The result is for matching only;
+    # line lookup still needs the expression as written.
+    $text = $Expression
+    $canonical = [System.Text.StringBuilder]::new()
+    $computedIndexes = [System.Collections.Generic.List[string]]::new()
+    $depth = 0
+    $indexStart = 0
+    $inString = $false
+    for ($position = 0; $position -lt $text.Length; $position++) {
+        $character = $text[$position]
+        if ($character -eq "'") {
+            $inString = -not $inString
+        }
+        elseif (-not $inString -and $character -eq '[') {
+            if ($depth -eq 0) {
+                # commits [0] evaluates like commits[0]
+                while ($canonical.Length -gt 0 -and [char]::IsWhiteSpace($canonical.Chars($canonical.Length - 1))) {
+                    $canonical.Length--
+                }
+                $indexStart = $position + 1
+            }
+            $depth++
+            continue
+        }
+        elseif (-not $inString -and $character -eq ']' -and $depth -gt 0) {
+            $depth--
+            if ($depth -eq 0) {
+                $index = $text.Substring($indexStart, $position - $indexStart).Trim()
+                if ($index -match "^'((?:[^']|'')*)'$") {
+                    [void]$canonical.Append('.').Append($Matches[1].Replace("''", "'"))
+                }
+                else {
+                    [void]$canonical.Append('.*')
+                    if ($index -notmatch '^(\d+|\*)$') {
+                        $computedIndexes.Add((ConvertTo-CanonicalExpression -Expression $index))
+                    }
+                }
+            }
+            continue
+        }
+
+        if ($depth -eq 0) {
+            [void]$canonical.Append($character)
+        }
+    }
+
+    if ($depth -gt 0) {
+        # Unbalanced brackets: keep the unparsed remainder visible to the patterns.
+        [void]$canonical.Append($text.Substring($indexStart - 1))
+    }
+
+    return (@($canonical.ToString()) + $computedIndexes) -join ' '
+}
+
 function Test-IsUntrustedInjectionExpression {
     [CmdletBinding()]
     param(
@@ -121,7 +190,7 @@ function Test-IsUntrustedInjectionExpression {
         [string]$Expression
     )
 
-    $expression = $Expression.Trim()
+    $expression = ConvertTo-CanonicalExpression -Expression $Expression.Trim()
     if ([string]::IsNullOrWhiteSpace($expression)) {
         return $false
     }
@@ -255,9 +324,10 @@ function Get-InputReference {
         'github\.event\.inputs\.([A-Za-z0-9_-]+)'
     )
 
+    $canonicalExpression = ConvertTo-CanonicalExpression -Expression $Expression
     $names = [System.Collections.Generic.List[string]]::new()
     foreach ($pattern in $referencePatterns) {
-        foreach ($referenceMatch in [System.Text.RegularExpressions.Regex]::Matches($Expression, $pattern)) {
+        foreach ($referenceMatch in [System.Text.RegularExpressions.Regex]::Matches($canonicalExpression, $pattern)) {
             $name = $referenceMatch.Groups[1].Value
             if (-not $names.Contains($name)) {
                 $names.Add($name)
@@ -312,6 +382,13 @@ function ConvertTo-DangerousWorkflowSarif {
             name                 = 'DangerousWorkflowDirectInputInterpolation'
             shortDescription     = @{ text = 'Caller-controlled workflow inputs are interpolated into code execution contexts' }
             fullDescription      = @{ text = 'Caller-controlled workflow_call or workflow_dispatch inputs should reach run or script blocks through a step-level env mapping rather than through expression interpolation. Only inputs declared with type boolean are exempt.' }
+            defaultConfiguration = @{ level = 'error' }
+        }
+        @{
+            id                   = 'dangerous-workflow/unparsed-file'
+            name                 = 'DangerousWorkflowUnparsedFile'
+            shortDescription     = @{ text = 'A workflow or composite action could not be parsed and was not evaluated' }
+            fullDescription      = @{ text = 'The dangerous workflow gate fails closed: a file it cannot parse, whether from malformed YAML or a missing YAML module, is reported instead of skipped.' }
             defaultConfiguration = @{ level = 'error' }
         }
     )
@@ -457,9 +534,13 @@ function Invoke-DangerousWorkflowCheck {
             $yaml = $workflowContent | ConvertFrom-Yaml
         }
         catch {
-            $parseErrorMessage = "Skipping workflow file '$relativePath' because YAML parsing failed: $($_.Exception.Message)"
-            Write-SecurityLog $parseErrorMessage -Level Warning -CIAnnotation
-            Write-CIAnnotation -Message $parseErrorMessage -Level 'Warning' -File $relativePath -Line 1
+            # A file the gate cannot read is a finding, not a skip, so a missing YAML
+            # module or a malformed file fails the scan instead of passing it unchecked.
+            $parseErrorMessage = "Workflow file '$relativePath' could not be parsed as YAML and was not evaluated: $($_.Exception.Message)"
+            Write-SecurityLog $parseErrorMessage -Level Error -CIAnnotation
+            Write-CIAnnotation -Message $parseErrorMessage -Level 'Error' -File $relativePath -Line 1
+            $violations += New-DangerousWorkflowViolation -File $relativePath -Line 1 -RuleId 'dangerous-workflow/unparsed-file' -Description $parseErrorMessage `
+                -Remediation 'Fix the YAML syntax, or install the powershell-yaml module, so the dangerous workflow gate can evaluate this file'
             continue
         }
 

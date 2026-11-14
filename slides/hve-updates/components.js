@@ -2,7 +2,7 @@
 // cspell:words titlebar
 (function () {
   'use strict';
-  const { graphs, mermaidSource, diffStats } = globalThis.HVEContent;
+  const { graphs, mermaidSource, diffStats, chatModel } = globalThis.HVEContent;
   let graphSerial = 0;
 
   function element(tag, className, text) {
@@ -95,7 +95,7 @@
     attach.append(icon('plus'));
     const mode = element('span', `composer-picker${step.mode === 'RPI Agent' ? ' rpi-selected-picker' : ''}`, step.mode || 'Agent');
     mode.append(icon('chevron'));
-    const model = element('span', 'composer-picker', 'Auto');
+    const model = element('span', 'composer-picker', chatModel);
     model.append(icon('chevron'));
     const send = element('span', 'composer-send');
     send.setAttribute('aria-hidden', 'true');
@@ -141,7 +141,7 @@
     picker.setAttribute('aria-label', 'Show how to select RPI Agent in VS Code Chat');
     picker.append(icon('check'), element('span', '', 'RPI Agent'), icon('chevron'));
     picker.addEventListener('click', () => openExample(picker));
-    cue.append(element('span', 'rpi-agent-cue-context', 'VS Code Copilot Chat'), element('span', 'rpi-agent-cue-action', 'Switch the agent dropdown to'), picker, element('span', 'rpi-agent-cue-scope', 'For coordinated RPI'));
+    cue.append(element('span', 'rpi-agent-cue-context', 'VS Code Copilot Chat'), element('span', 'rpi-agent-cue-action', 'Switch the agent dropdown to'), picker, element('span', 'rpi-agent-cue-scope', 'for coordinated RPI'));
     return cue;
   }
 
@@ -217,9 +217,10 @@
     arrow.append(svgElement('path', { d: 'M 1 1 L 9 5 L 1 9', fill: 'none', stroke: '#a2a9b3', 'stroke-width': 1.4 }));
     defs.append(arrow);
     svg.append(defs);
-    if (type === 'research') {
-      svg.append(svgElement('rect', { x: 726, y: 106, width: 366, height: 228, rx: 12, class: 'subagent-frame' }));
-      svg.append(svgElement('text', { x: 745, y: 129, class: 'graph-group-label' }, 'SUBAGENT LANE / ILLUSTRATIVE'));
+    if (graph.batch) {
+      const { x, y, width, height, label, labelX, labelY } = graph.batch;
+      svg.append(svgElement('rect', { x, y, width, height, rx: 12, class: 'subagent-frame' }));
+      svg.append(svgElement('text', { x: labelX, y: labelY, 'text-anchor': 'middle', class: 'graph-group-label' }, label));
     }
     const byId = new Map(graph.nodes.map(node => [node.id, node]));
     graph.edges.forEach(([from, to]) => {
@@ -243,6 +244,10 @@
     graph.nodes.forEach(node => nodes.append(element('li', '', `${node.label}: ${node.detail}`)));
     const relationships = element('ul');
     graph.edges.forEach(([from, to]) => relationships.append(element('li', '', `${labels.get(from)} to ${labels.get(to)}`)));
+    if (graph.batch) {
+      const members = graph.batch.members.map(id => graph.nodes.find(node => node.id === id)).map(node => `${node.label} (${node.detail})`);
+      relationships.append(element('li', '', `Dispatched together in one parallel batch: ${members.join(' and ')}`));
+    }
     description.append(nodes, relationships);
     return description;
   }
@@ -252,7 +257,7 @@
     const breadcrumb = element('div', 'debug-breadcrumb');
     breadcrumb.append(icon('branch'), element('span', '', 'Agent Debug Logs'), element('span', '', '/'), element('strong', '', 'Agent Flow Chart'), element('span', 'preview-tag', 'Preview'));
     const legend = element('div', 'graph-legend');
-    for (const [kind, label] of [['model', 'Model turn'], ['tool', 'Tool call'], ['subagent', 'Subagent']]) {
+    for (const [kind, label] of [['model', 'Model turn'], ['tool', 'Tool call'], ['subagent', 'Subagent lane']]) {
       legend.append(element('span', `legend-${kind}`, label));
     }
     surface.append(breadcrumb, graphSVG(graphs[step.graph], 'research'), legend, graphDescription(graphs[step.graph]));

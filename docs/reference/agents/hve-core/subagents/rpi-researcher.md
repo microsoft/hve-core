@@ -1,9 +1,9 @@
 ---
 title: RPI Researcher
 description: "Gathers candidate sources for one bounded research question and returns source pointers, exact locations, contract excerpts, and brief relevance notes as suggestions for the calling agent to verify. Use during research when isolating source gathering would help."
-sidebar_position: 2
+sidebar_position: 3
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-10-19
 ms.topic: reference
 keywords:
   - agent
@@ -30,17 +30,24 @@ Gathers candidate sources for one bounded research question and returns source p
 
 `RPI Researcher` is an optional helper that [rpi-research](../../../skills/rpi/rpi-research) may use, not a required step and not something a user selects. The research context decides whether isolating a bounded gathering task, such as collecting candidate sources for one question or retrieving an exact API, schema, or example, would improve evidence quality or protect its working context.
 
+Each dispatch can select the helper's reasoning effort when the dispatch tool supports that parameter.
+Its frontmatter declares Claude Haiku 5.5 at `max`; that fallback applies only on hosts that honor reasoning-effort frontmatter.
+VS Code's Local harness ignores that field, so the helper runs at the effort chosen for its model in the model picker.
+Where supported, rpi-research lowers a lane to `low` when a tool guarantees a complete result, such as a search inventory, and keeps `max` for lanes that read for meaning.
+
 The helper gathers and returns; it does not conclude. Its return lists each suggested source with an exact location (a workspace-relative path and heading or symbol, or a URL with retrieval date), a line on what it appears to contain, a line on why it seems relevant, verbatim excerpts when a contract was requested, and a brief interpretation labeled as unverified.
 
 The research context keeps every decision: it reads the sources it chooses, assigns `C#` and `W#` IDs, classifies evidence state, and records findings in the primary research artifact. The helper writes no file and never speaks to the user.
 
 ## Example usage
 
-A representative dispatch supplies one bounded question and the return kind:
+A representative dispatch supplies one bounded question, its purpose, what is already ruled out, and the return kind:
 
 ```text
 Question: Q2 chunk size and concurrency defaults, Q3 retry semantics on partial upload,
   for azure-storage-blob async uploads over 1 GB.
+Purpose: decides whether the upload plan can rely on SDK defaults or must set them.
+Ruled out: the package README, which documents neither default.
 Scope: current official documentation or SDK source; no third-party blogs.
 Return: source pointers plus the exact upload_blob signature.
 Limit: none.

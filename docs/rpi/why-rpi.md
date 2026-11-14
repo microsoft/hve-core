@@ -3,7 +3,7 @@ title: Why the RPI Workflow Works
 description: The psychology and principles behind the evidence-led RPI lifecycle and its entry surfaces
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-28
+ms.date: 2026-11-02
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -49,7 +49,7 @@ RPI keeps Research, Plan, Implement, Review, and Follow-up distinct so a task us
 
 When a long lifecycle needs a fresh context, durable artifacts preserve the task identity, evidence, decisions, and next action. A reset can reduce accumulated context, but it does not require a new research stage or a fresh run of every lifecycle concept.
 
-Use `RPI Agent` as a user-selected wrapper that activates the applicable RPI skills. It is an entry surface for the phase skills, not an autonomous dispatcher of specialized task workers.
+Use `/rpi` (the `rpi` skill) or select `RPI Agent` (which preloads `rpi`) as a lifecycle wrapper that activates the applicable RPI skills. It is an entry surface for the phase skills, not an autonomous dispatcher of specialized task workers.
 
 ### The Difference in Practice
 
@@ -81,7 +81,7 @@ When evidence is adequate, Research is reused or satisfied-and-skipped instead o
 * Giving each phase a coherent outcome goal and each task an observable behavior or capability goal.
 * Identifying dependencies between changes.
 * Keeping requirements, details, and linked references under the task they inform, and leaving verification choices to the implementer.
-* Showing the overall change and each phase's slice of it as Mermaid diagrams in the Phase Checklist.
+* Showing the overall change as a small change map in the Phase Checklist, grouped by where changes land, with each change tagged by the phases that make it and a Before view when the plan rewires how parts connect.
 * Using code as illustrative guidance unless a real interface or requirement makes it binding.
 * Running an independent `rpi-plan-critique` before implementation readiness by default, unless you skip it.
 
@@ -94,7 +94,7 @@ The plan becomes a contract. When implementation begins, the AI follows the plan
 * No time wasted rediscovering conventions.
 * Completion checkboxes change only after completion evidence exists.
 * Descriptive change evidence and truthful validation establish what happened.
-* A significant discovery updates the affected plan after its required decision and pauses only dependent work; a follow-up critique is optional.
+* A significant discovery updates the affected plan after its required decision and pauses only dependent work; a follow-up critique runs only when you ask for one.
 
 ### Review Phase: Validating, Not Assuming
 

@@ -2,7 +2,7 @@
 title: Evaluations
 description: 'Architecture overview and contributor guide for Vally evaluation specs'
 author: HVE Core Team
-ms.date: 2026-10-03
+ms.date: 2026-11-05
 ---
 
 This directory contains [Vally](https://www.npmjs.com/package/@microsoft/vally-cli) evaluation specs for hve-core.
@@ -16,7 +16,8 @@ evals/
 ├── agent-conformance/    copilot-sdk multi-turn behavioral conformance per planner agent
 ├── script-validation/    copilot-sdk evals testing deterministic scripts
 ├── baseline-equivalence/ parameterized baseline-vs-customized equivalence suite
-├── behavior-conformance/ Tier 3 advisory conformance for prompts, instructions, and skill behavior
+├── behavior-conformance/ Tier 3 advisory conformance for instructions and skill behavior
+├── rca-real-world/       blinded RCAEval case contract, runbook, and sanitized evidence
 └── skill-hygiene/        vally lint structural checks for .github/skills/
 ```
 
@@ -29,7 +30,7 @@ evals/
 | `agent-conformance`    | `copilot-sdk` | Two-turn behavioral conformance per planner agent: turn 0 launches the agent, turn 1 sends the case  |
 | `script-validation`    | `copilot-sdk` | Tests agent reasoning about validation rules (will migrate to mock when available)                   |
 | `baseline-equivalence` | `copilot-sdk` | Asserts hve-core agent customization preserves baseline model behavior beyond documented divergences |
-| `behavior-conformance` | `copilot-sdk` | Tier 3 advisory conformance for prompts, instructions, and skill behavior (does not fail PR builds)  |
+| `behavior-conformance` | `copilot-sdk` | Tier 3 advisory conformance for instructions and skill behavior (does not fail PR builds)            |
 | `skill-hygiene`        | `vally lint`  | Structural checks for every `SKILL.md` under `.github/skills/`; authoritative, no executor calls     |
 
 The `skill-hygiene` suite is the only entry that uses `vally lint` instead of `vally eval`. It is a README-only suite (no `eval.yaml`) that reuses the lint pipeline's static grader registry to validate the skill catalog on every PR that touches `.github/skills/`. See [`skill-hygiene/README.md`](skill-hygiene/README.md) for coverage and grader detail.
@@ -80,10 +81,27 @@ equivalence lane retains its own declared models.
 The selected attempt remains the one with the fewest trials lacking a grade, keeping
 the first on ties. All attempts remain visible. `integrity-failure` blocks a
 producer independently of advisory behavior when selected evidence is missing,
-duplicated, malformed, lacks usable grades or contains grader errors. Fan-in checks the
+duplicated, malformed, lacks usable grades or contains grader errors, apart from the
+advisory-only exception described below. Fan-in checks the
 contract, ownership, configured populations and aggregate arithmetic rather than
 treating absent diagnostics as success. Legitimate empty producers and the
 separate baseline schema retain their existing meanings.
+
+Within each attempt, a few transient executor errors are recovered before the attempt is
+recorded. When at most 20% of the attempt's expected trials errored without a trajectory,
+the runner re-runs only the affected stimuli through a filtered copy of the spec, written
+beside it as `.recovery-*.eval.yaml` and removed afterward, for up to two rounds. Each
+errored trial is replaced, in a copy of the run directory, by a successful recovery trial
+that takes its identity, so the attempt still reports the configured population. A larger
+share, or an error that survives recovery, stays with the attempt and its integrity check.
+
+Advisory verdicts never block a merge, so a spec whose selected stimuli are all advisory
+reports a small gap left by errored trials instead of blocking on it. The spec gets
+`advisory-fail` and an `integrityTolerance` record when every problem comes from trials
+that errored before producing a verdict, at most 20% of the configured trials errored
+(one errored trial is always allowed), and every stimulus kept at least one graded trial.
+Missing, duplicate or malformed evidence, grading problems on graded trials, and larger or
+systematic gaps still block. The shard runner and fan-in apply the same rule.
 
 Input digests cover the checkout's tracked evaluation artifacts and those not ignored,
 fixtures, scripts and root lockfile. They identify inputs, not agent behavior.

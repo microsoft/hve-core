@@ -154,17 +154,27 @@ def collect_readiness(
     credential_file = resolve_credential_file(profile_name)
     configured = bool(os.environ.get("MURAL_CLIENT_ID")) or credential_file.exists()
     store = load_token_store(resolve_token_store_path())
+    # Match ``mural auth status`` and the request path: the store side follows
+    # the active profile, and only a usable token-store record counts as login.
+    # An invalid profile name keeps doctor's verdict-only contract.
     try:
-        profile = package._select_profile(store or {}, profile_name)
-    except Exception:
-        profile = {}
-    logged_in = bool(profile.get("access_token") or profile.get("refresh_token"))
+        store_profile: str | None = package._resolve_active_profile(
+            store, os.environ, getattr(args, "profile", None)
+        )
+    except package.MuralError:
+        store_profile = None
+    logged_in = store_profile is not None and package._profile_has_usable_session(
+        store_profile, store
+    )
+    granted_scopes = (
+        package._token_granted_scopes(store, store_profile) if store_profile else ()
+    )
     return evaluate_readiness(
         cwd_ok=_cwd_is_supported(cwd or pathlib.Path.cwd()),
         dependencies_available=(dependency_probe or _dependencies_available)(),
         configured=configured,
         logged_in=logged_in,
-        granted_scopes=package._token_granted_scopes(store, profile_name),
+        granted_scopes=granted_scopes,
         required_scopes=tuple(getattr(args, "require_scope", ()) or ()),
     )
 

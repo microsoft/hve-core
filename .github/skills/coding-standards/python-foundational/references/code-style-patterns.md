@@ -2,7 +2,7 @@
 title: Code Style Patterns
 description: Concrete before/after examples for Sections 1 through 5 of the python-foundational skill checklist
 author: microsoft/hve-core
-ms.date: 2026-07-08
+ms.date: 2026-10-13
 ms.topic: reference
 keywords:
   - python

@@ -593,11 +593,98 @@ function Get-StandardTimestampPattern {
     return '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z$'
 }
 
+function ConvertTo-MarkdownEscaped {
+    <#
+    .SYNOPSIS
+    Escapes a string so it renders as literal text in Markdown.
+
+    .DESCRIPTION
+    Collapses line breaks to spaces, drops control and invisible bidirectional
+    characters, and backslash-escapes Markdown and HTML metacharacters (including
+    the backslash itself), so report-derived values
+    cannot open code spans, links, emphasis, tables, or raw HTML in generated
+    issue bodies and step summaries.
+
+    .PARAMETER Value
+    The text to escape.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $false)]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$Value
+    )
+
+    if ([string]::IsNullOrEmpty($Value)) { return '' }
+
+    $flat = $Value -replace '[\r\n\u2028\u2029]+', ' '
+    $flat = $flat -replace '[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]', ''
+    return [regex]::Replace($flat, '([\\`*_{}\[\]()#+\-.!|<>~&:@])', '\$1')
+}
+
+function Format-StaleDependencyLine {
+    <#
+    .SYNOPSIS
+    Formats one stale-dependency report entry as a Markdown list item.
+
+    .DESCRIPTION
+    Name and versions come from scanned workflow text, so each is checked
+    against the supported identifier grammar (owner/repo[/path] for actions,
+    a plain name for tools and modules, a SHA or version string for versions).
+    A value outside the grammar is replaced with a fixed placeholder rather than
+    echoed. File and DaysOld are Markdown-escaped.
+
+    .PARAMETER Dependency
+    A dependency object from the staleness report (File, Name, CurrentVersion,
+    LatestVersion, DaysOld).
+
+    .PARAMETER Style
+    Summary renders plain text for the step summary. Issue renders code spans
+    for the persistent issue body.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [PSObject]$Dependency,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Summary', 'Issue')]
+        [string]$Style = 'Summary'
+    )
+
+    $placeholder = 'invalid value omitted'
+    $namePattern = '^[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9._-]+)*\z'
+    $versionPattern = '^[A-Za-z0-9][A-Za-z0-9._+-]*\z'
+
+    $name = [string]$Dependency.Name
+    $current = [string]$Dependency.CurrentVersion
+    $latest = [string]$Dependency.LatestVersion
+    $valid = ($name -cmatch $namePattern) -and ($current -cmatch $versionPattern)
+    $safeLatest = if ($latest -cmatch $versionPattern) { $latest } else { $null }
+    $file = ConvertTo-MarkdownEscaped -Value ([string]$Dependency.File)
+    $days = ConvertTo-MarkdownEscaped -Value ([string]$Dependency.DaysOld)
+
+    if ($Style -eq 'Issue') {
+        $identity = if ($valid) { "``$name@$current``" } else { ConvertTo-MarkdownEscaped -Value $placeholder }
+        $latestText = if ($safeLatest) { "``$safeLatest``" } else { ConvertTo-MarkdownEscaped -Value $placeholder }
+        return "- **${file}:** $identity - $days days old (latest: $latestText)"
+    }
+
+    $identity = if ($valid) { ConvertTo-MarkdownEscaped -Value "$name@$current" } else { ConvertTo-MarkdownEscaped -Value $placeholder }
+    $latestText = if ($safeLatest) { ConvertTo-MarkdownEscaped -Value $safeLatest } else { ConvertTo-MarkdownEscaped -Value $placeholder }
+    return "- **${file}**: $identity ($days days old, latest: $latestText)"
+}
+
 Export-ModuleMember -Function @(
     'Get-StandardTimestamp',
     'Get-StandardTimestampPattern',
     'ConvertTo-GitHubActionsEscaped',
     'ConvertTo-AzureDevOpsEscaped',
+    'ConvertTo-MarkdownEscaped',
+    'Format-StaleDependencyLine',
     'Get-CIPlatform',
     'Test-CIEnvironment',
     'Set-CIOutput',

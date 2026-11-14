@@ -1,9 +1,9 @@
 ---
 title: mcsb
 description: Microsoft Cloud Security Benchmark (MCSB v2) control-domain taxonomy and NIST 800-53 / CIS Controls crosswalk for planning and reviewing Azure cloud resources.
-sidebar_position: 2
+sidebar_position: 3
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - skill

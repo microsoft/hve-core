@@ -60,12 +60,12 @@ Write-Debug "Parameters: WorkflowPath=$WorkflowPath, OutputReport=$OutputReport,
 # GitHub Actions SHA references matching current workflow usage
 $ActionSHAMap = @{
     # Core setup and checkout
-    "actions/checkout@v4"                  = "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v4.2.2
+    "actions/checkout@v4"                  = "actions/checkout@11d5960a326750d5838078e36cf38b85af677262" # v4.4.0
     "actions/setup-node@v6"                = "actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f" # v6.3.0
     "actions/setup-python@v6"              = "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" # v6.2.0
 
     # Artifact management
-    "actions/upload-artifact@v4"           = "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v4.4.3
+    "actions/upload-artifact@v4"           = "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02" # v4.6.2
     "actions/download-artifact@v8"         = "actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3" # v8.0.0
 
     # GitHub Pages
@@ -80,17 +80,21 @@ $ActionSHAMap = @{
     # Security and code analysis
     "actions/dependency-review-action@v4"  = "actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48" # v4.9.0
     "advanced-security/component-detection-dependency-submission-action@v0" = "advanced-security/component-detection-dependency-submission-action@b876b8cc341a53970394b33ea0ca4e86c25542de" # v0.1.3
-    "github/codeql-action/init@v3"         = "github/codeql-action/init@ce729e4d353d580e6cacd6a8cf2921b72e5e310a" # v3.27.0
-    "github/codeql-action/autobuild@v3"    = "github/codeql-action/autobuild@ce729e4d353d580e6cacd6a8cf2921b72e5e310a" # v3.27.0
-    "github/codeql-action/analyze@v3"      = "github/codeql-action/analyze@ce729e4d353d580e6cacd6a8cf2921b72e5e310a" # v3.27.0
-    "github/codeql-action/upload-sarif@v3" = "github/codeql-action/upload-sarif@ce729e4d353d580e6cacd6a8cf2921b72e5e310a" # v3.27.0
+    "github/codeql-action/init@v3"         = "github/codeql-action/init@1190a975f95ce23525efb6a3fc21ea29567c1b52" # v3.38.2
+    "github/codeql-action/autobuild@v3"    = "github/codeql-action/autobuild@1190a975f95ce23525efb6a3fc21ea29567c1b52" # v3.38.2
+    "github/codeql-action/analyze@v3"      = "github/codeql-action/analyze@1190a975f95ce23525efb6a3fc21ea29567c1b52" # v3.38.2
+    "github/codeql-action/upload-sarif@v3" = "github/codeql-action/upload-sarif@1190a975f95ce23525efb6a3fc21ea29567c1b52" # v3.38.2
+    "github/codeql-action/init@v4"         = "github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2" # v4.38.2
+    "github/codeql-action/autobuild@v4"    = "github/codeql-action/autobuild@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2" # v4.38.2
+    "github/codeql-action/analyze@v4"      = "github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2" # v4.38.2
+    "github/codeql-action/upload-sarif@v4" = "github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2" # v4.38.2
     "ossf/scorecard-action@v2"             = "ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a" # v2.4.3
 
     # Azure
     "azure/login@v2"                       = "azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5" # v2.3.0
 
     # Third-party
-    "actions/create-github-app-token@v2"   = "actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf" # v2.0.0
+    "actions/create-github-app-token@v2"   = "actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349" # v2.2.2
     "codecov/codecov-action@v5"            = "codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de" # v5.5.2
     "googleapis/release-please-action@v4"  = "googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38" # v4.4.0
     "anchore/sbom-action@v0"               = "anchore/sbom-action@17ae1740179002c89186b61233e0f892c3118b11" # v0.23.0

@@ -112,13 +112,13 @@ stimuli:
   - name: code-reverse-string-rust
     constraints: *agent-time-limit
     category: code-qa
-    prompt: "Write a Rust function that reverses a string and returns the reversed value."
+    prompt: "Write a Rust function that reverses a string and returns the reversed value. Show the code in your reply."
     invariants: [rust-fn-syntax]
     tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
         name: rust-fn-syntax
-        config: {pattern: "(?i)fn\\s+\\w+\\s*\\([^)]*&?str"}
+        config: {pattern: "(?i)\\bfn\\s+\\w+\\s*(?=[^{;]*\\b(?:str|String)\\b)(?:<[^{;()]*>)?\\s*\\("}
       - type: prompt
         name: code-reverse-string-rust-response-quality
         config: {prompt: "Does the response define a Rust function that reverses a string?"}
@@ -330,7 +330,11 @@ stimuli:
   - name: multi-turn-confirm-action
     constraints: *agent-time-limit
     category: multi-turn
-    prompt: "You proposed renaming the function to `loadConfig`. Confirm the new name and list one rationale."
+    prompt: "Earlier we agreed to rename the function `readSettings` to `loadConfig`. Confirm that `loadConfig` is the new name and list one rationale."
+    # The prompt states the prior rename instead of attributing an unseen proposal to the
+    # model. The baseline run has no prior turn, and the attributed framing let the
+    # uncustomized model intermittently decline to restate the name, failing
+    # mentions-loadconfig without any customization involved.
     invariants: [mentions-loadconfig]
     tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [rpi-agent], policy: equivalent}
     graders:

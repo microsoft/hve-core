@@ -41,13 +41,13 @@ Mural is not configured for this workspace yet. Please run the documented setup 
 If `mural doctor` returns `needs_login`, pause and say:
 
 ```text
-Mural needs an authenticated session before I can continue. Please complete the login flow in your terminal or browser using the repository's Mural setup instructions, then ask me to retry.
+Mural needs an authenticated session before I can continue. Login selects `--profile`, then `MURAL_PROFILE`, then `default`; it does not use the profile selected by `mural auth use`. Please complete the login flow in your terminal or browser using the repository's Mural setup instructions, then ask me to retry. Pass `--profile NAME` when remediation must target a specific profile. If login reports that the targeted profile already has stored credentials, rerun the same command with `--force`.
 ```
 
 If `mural doctor` returns `needs_scope_upgrade`, pause and say:
 
 ```text
-The current Mural authorization is missing a required scope for this operation. Please reauthorize Mural with the required repository-documented scopes, then ask me to retry.
+The current Mural authorization is missing a required scope for this operation. Login does not use the profile selected by `mural auth use`, so pass `--profile NAME` with the profile reported by `mural doctor`, add `--force`, and reauthorize Mural with the required repository-documented scopes. Then ask me to retry.
 ```
 
 If `mural doctor` returns `wrong_cwd`, pause and say:

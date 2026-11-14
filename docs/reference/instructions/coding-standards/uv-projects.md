@@ -3,7 +3,7 @@ title: Coding Standards/Uv Projects
 description: Create and manage Python virtual environments using uv commands
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-10-09
 ms.topic: reference
 keywords:
   - instruction

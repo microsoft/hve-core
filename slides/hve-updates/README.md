@@ -1,7 +1,7 @@
 ---
 title: HVE Core updates deck
-description: Interactive HTML presentation of HVE Core changes from April to September 2026.
-ms.date: 2026-09-30
+description: Interactive HTML presentation of HVE Core changes from April to October 2026.
+ms.date: 2026-10-27
 ---
 
 ## Build and present
@@ -36,10 +36,11 @@ Diagram descriptions expose node meanings and relationships as text.
 
 ## Create or update decks
 
-Use the repository-only [HVE Slides skill](../../.github/skills/hve-slides/SKILL.md)
+Use the [HVE Slides skill](../../.github/skills/experimental/hve-slides/SKILL.md)
 to update this presentation or create another HVE-related deck under `slides/`.
 It covers source research, slide writing, visual examples, editing, validation
-and local sharing. It is not included in the HVE Core plugin.
+and local sharing. The same skill is packaged for plugin/VSIX users and supports
+render-only delivery from already-authored sources.
 
 ```text
 /hve-slides deck=slides/hve-updates mode=update
@@ -103,7 +104,7 @@ Run `npm run slides:check` from the repository root to verify source-to-bundle p
 without rewriting the committed HTML. It fails on missing, stale, or orphaned bundles.
 
 The source build uses the repository's canonical bundler under
-`.github/skills/hve-slides/templates/deck/`. Keep the checkout available when rebuilding;
+`.github/skills/experimental/hve-slides/templates/deck/`. Keep the checkout available when rebuilding;
 `bundle.mjs` in this deck is a thin wrapper around that implementation. The generated
 HTML remains independent of the repository and skill files.
 
@@ -184,8 +185,8 @@ button and disables transitions.
 
 ## Content and fidelity
 
-The deck contains 26 slides, with separate RPI and HVE Builder sections and
-presenter-stepped demonstrations: 15 RPI steps, nine HVE Builder steps and
+The deck contains 28 slides, with separate RPI and HVE Builder sections and
+presenter-stepped demonstrations: 15 RPI steps, eight HVE Builder steps and
 five VS Code source-install steps. Snack Mission Control and Snack Evidence
 are invented examples, not HVE Core features or installed artifacts.
 
@@ -203,8 +204,9 @@ nodes and edges; this is a constrained presentation rendering, not a
 general-purpose Mermaid interpreter.
 
 Mode/model pickers, question options and send glyphs are display-only.
-Slide 9 shows the four RPI participation choices in a Copilot-style question
-card, with the planning-only option selected as an example. It does not
+The **Choose when the agent should ask you** slide shows the four RPI
+participation choices in a Copilot-style question card, with the
+planning-only option selected as an example. It does not
 change the session mode. Use the presenter step controls to advance the
 walkthroughs. The diagram/source toggle works locally. All subagent calls
 shown in the flow chart are fictional.
@@ -229,15 +231,23 @@ The header and customization window follow the supplied visual references,
 with Featured collapsed and unrelated counts omitted to keep the slide
 readable. Displayed installed counts are illustrative, not your inventory.
 
+The HVE Builder walkthrough creates an invented research skill, runs local
+checks, shows HVE Builder Reviewer's suggestions, and records which findings
+the assistant accepts or rejects before the targeted closure. The
+**The assistant decides what passes** slide adapts the example in PR #2902.
+
 Historical milestones cite commits and merged pull requests. April is a
 repository snapshot. HVE Builder was introduced in merged history on
-July 11, 2026, in PR #2438. Some Pacific commit dates differ from UTC merge
-dates. The current HVE source baseline is
-`3e29a0b2422bd13c39a087c635638e6722859e73` on September 10, 2026.
+July 11, 2026, in PR #2438. The timeline separates changes through
+September 10 from those merged since. Some Pacific commit dates differ from
+UTC merge dates. The current HVE source baseline is
+`301cad63b340d92066c599b28ae85931982e461a` on October 21, 2026.
 
-Plugin instructions were researched on September 10, 2026, against official
+Plugin client behavior was researched on September 10, 2026, against official
 documentation and source, with VS Code 1.137.0 and Copilot CLI v1.0.83 as
-the latest releases observed. CLI-to-VS Code discovery depends on the
+the latest releases observed. That client research was not repeated for the
+October update. HVE-side plugin facts, such as the retired prompt files and
+the `main`-tracking CLI registration, follow the October 21 baseline. CLI-to-VS Code discovery depends on the
 same accessible home/environment and enabled, policy-allowed plugins.
 "VS Code only" describes the default separate install flow. Manually
 shared paths and future integrations may behave differently.

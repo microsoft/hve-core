@@ -1,9 +1,9 @@
 ---
 title: hve-demo-material
 description: "Create levelled demo decks and narrated MP4s for any repository topic, with HVE Core as the default in the hve-core repository. Use when training or demo material is needed for L100 through L400 audiences."
-sidebar_position: 5
+sidebar_position: 6
 author: Microsoft
-ms.date: 2026-09-28
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - skill
@@ -35,10 +35,10 @@ level is scored against. The HVE Demo Material Builder agent applies it
 interactively; `scripts/render-level.sh` applies it without an agent, which is
 how the repository's weekly workflows rebuild the published material.
 
-Rendering needs `uv`, Python 3.11+, LibreOffice, and FFmpeg, plus either Azure
-Speech credentials or the Piper executable and voice. L300 and L400 live
-captures also need the VS Code CLI and Chromium. In the hve-core repository the
-script also builds a single-file HTML slide deck, which needs Node.js 24.
+Rendering requires the packaged HVE Slides skill, Node.js 24+, `uv`, Python
+3.11+, Chromium and FFmpeg. HTML is mandatory in repository and installed use.
+L300/L400 live captures also require the VS Code CLI. Narrated output needs
+approved Azure Speech authentication and region; `narration: none` needs neither.
 
 ## Example usage
 
@@ -49,10 +49,12 @@ bash .github/skills/experimental/hve-demo-material/scripts/render-level.sh \
   --level L100 \
   --level-dir .copilot-tracking/demo-material/2026-09-24/L100 \
   --workspace "$PWD" \
-  --narration piper
+  --slides-skill-root "$PWD/.github/skills/experimental/hve-slides"
 ```
 
-Expect the deck, a captioned MP4, a WebVTT file, a transcript page, and, in
-this repository, `hve-demo-L100.html` under the level's `output/` folder, plus
-`output/render-result.json`. Success means `"ok": true`, with every scored
-criterion from `T-04` through `T-10` recording `pass`.
+For installed use, resolve HVE Slides by name and pass its loaded root instead
+of the repository example path. Expect required HTML, raw/final MP4, WebVTT,
+transcript, manifest6 and hash-bound HTML/frame evidence under the level's
+output tree. Render-result2 must record passing machine checks, including T-10
+for every level and T-11 for silent output. Machine success does not replace
+visual review or the active autonomy mode's delivery approval.

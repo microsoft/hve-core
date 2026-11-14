@@ -1,0 +1,14 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: probe invalid-dispatch-input-type
+permissions: {}
+on:
+  workflow_dispatch:
+    inputs:
+      value:
+        type: blob
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo hi

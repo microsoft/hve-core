@@ -1,6 +1,6 @@
 ---
 name: tts-voiceover
-description: 'Text-to-speech voice-over generation from YAML speaker notes using Azure Speech SDK with SSML pronunciation control, or an offline Piper engine that needs no credentials'
+description: 'Text-to-speech voice-over generation from YAML speaker notes using Azure AI Speech neural voices with SSML pronunciation control'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
@@ -8,24 +8,32 @@ metadata:
 
 # TTS Voice Over Skill
 
-Generates per-slide WAV voice-over files from YAML `speaker_notes` using Azure Speech SDK with SSML pronunciation control, or a locally installed Piper engine.
+Generates per-slide WAV voice-over files from YAML `speaker_notes` using Azure AI Speech neural voices with SSML pronunciation control.
 
 ## Overview
 
-This skill reads `content.yaml` files from a PowerPoint skill content directory, extracts `speaker_notes` fields, applies acronym aliases for correct pronunciation of technical terms, and produces one WAV file per slide. Supports dry-run mode for SSML template verification without Azure credentials.
+This skill reads `content.yaml` files from a slide content directory (`slide-NNN/content.yaml`), extracts `speaker_notes` fields, applies acronym aliases for correct pronunciation of technical terms, and produces one WAV file per slide. Supports dry-run mode for SSML template verification without Azure credentials.
 
-Two engines are available through `--engine`:
+Synthesis uses Azure AI Speech neural voices, including the HD voices such as `en-US-Andrew:DragonHDLatestNeural`. HD voices are offered in a subset of Azure regions; check the [Speech service regions](https://learn.microsoft.com/azure/ai-services/speech-service/regions) before choosing `SPEECH_REGION`.
 
-* `azure` (default) sends SSML to Azure AI Speech neural voices. Use it for published narration.
-* `piper` runs a separately installed [Piper](https://github.com/OHF-Voice/piper1-gpl) executable on the local machine. It needs no credentials or network access after the voice is downloaded, which suits scheduled CI builds. Narration never leaves the host.
+Narration produced by this skill is synthetic. Tell listeners that the voice is AI-generated, following Microsoft's [disclosure design guidelines for synthetic voices](https://learn.microsoft.com/azure/foundry/responsible-ai/speech-service/text-to-speech/concepts-disclosure-guidelines). HVE demo-material CI does not synthesize speech; it generates silent videos.
 
 ## Prerequisites
 
-* **Azure Speech resource** — Free tier provides 500K characters per month.
-* **Authentication** — Key-based (`SPEECH_KEY`) or Microsoft Entra ID (`SPEECH_RESOURCE_ID`).
-* **Region** — `SPEECH_REGION` is required for Azure synthesis and has no default. Dry-run mode and the `piper` engine do not need it.
+* **Azure Speech resource**: see [Azure AI Speech pricing](https://azure.microsoft.com/pricing/details/speech/) for the free-tier allowance and HD voice rates.
+* **Authentication**: Microsoft Entra ID (`SPEECH_RESOURCE_ID`, recommended) or a resource key (`SPEECH_KEY`).
+* **Region**: `SPEECH_REGION` is required for synthesis and has no default. Dry-run mode does not need it.
 * **Python 3.11+** with `uv` for virtual environment management.
-* **Data handling note** — Speaker-notes content is transmitted to the configured `SPEECH_REGION` for synthesis. Operators must set an approved region and avoid sending regulated or confidential narration.
+* **Data handling note**: Speaker-notes content is transmitted to the configured `SPEECH_REGION` for synthesis. For prebuilt neural voices, Microsoft states that neither the input text nor the output audio is stored in Microsoft logs; see [Data, privacy, and security for text to speech](https://learn.microsoft.com/azure/foundry/responsible-ai/speech-service/text-to-speech/data-privacy-security). Operators must still set an approved region and avoid sending regulated or confidential narration.
+
+### Microsoft Entra ID Auth (Recommended)
+
+Entra ID avoids storing a long-lived key. It requires a custom domain on the Speech resource and the `Cognitive Services Speech User` role for the signed-in identity. The script resolves the identity through `DefaultAzureCredential`, so an `az login` session, a managed identity, or a GitHub Actions OIDC login through `azure/login` all work.
+
+```bash
+export SPEECH_RESOURCE_ID="/subscriptions/.../Microsoft.CognitiveServices/accounts/your-resource"
+export SPEECH_REGION="eastus"
+```
 
 ### Key-Based Auth
 
@@ -34,14 +42,7 @@ export SPEECH_KEY="your-speech-key"
 export SPEECH_REGION="eastus"
 ```
 
-### Microsoft Entra ID Auth
-
-Requires a custom domain on the Speech resource and `Cognitive Services Speech User` role.
-
-```bash
-export SPEECH_RESOURCE_ID="/subscriptions/.../Microsoft.CognitiveServices/accounts/your-resource"
-export SPEECH_REGION="eastus"
-```
+When both `SPEECH_KEY` and `SPEECH_RESOURCE_ID` are set, the script warns and uses the key. Unset `SPEECH_KEY` to use Entra ID.
 
 Install dependencies:
 
@@ -49,29 +50,6 @@ Install dependencies:
 # run from this skill folder
 uv sync
 ```
-
-### Piper Engine
-
-Piper is not a dependency of this skill. It is licensed GPL-3.0-or-later, so the skill invokes it as an external executable, the same way other skills invoke FFmpeg or LibreOffice. Install it and download a voice separately:
-
-```bash
-uv tool install piper-tts
-uvx --from piper-tts python -m piper.download_voices en_US-joe-medium --data-dir ~/.local/share/piper
-export PIPER_DATA_DIR=~/.local/share/piper
-```
-
-To run Piper without installing it, also set:
-
-```bash
-export PIPER_COMMAND="uvx --from piper-tts piper"
-```
-
-| Variable         | Purpose                                                                  |
-|:-----------------|:-------------------------------------------------------------------------|
-| `PIPER_COMMAND`  | Command that runs Piper, split without a shell (default: `piper`)        |
-| `PIPER_DATA_DIR` | Directory holding downloaded voices; `--piper-data-dir` takes precedence |
-
-Voice models carry their own licenses, listed in each voice's `MODEL_CARD`. The default `en_US-joe-medium` is CC0. Check the model card before publishing narration from any other voice, because some Piper voices are non-commercial or require attribution.
 
 ## Quick Start
 
@@ -87,50 +65,30 @@ Generate voice-over WAV files:
 uv run scripts/generate_voiceover.py --content-dir path/to/content --output-dir voice-over
 ```
 
-Generate voice-over offline with Piper:
-
-```bash
-uv run scripts/generate_voiceover.py --engine piper --collapse-newlines \
-  --content-dir path/to/content --output-dir voice-over
-```
-
-Embed audio into a PPTX deck:
-
-```bash
-uv run scripts/embed_audio.py --input deck.pptx --audio-dir voice-over --output deck-narrated.pptx
-```
+Use `demo-video` to combine the WAV files with approved frames or clips.
+Use `hve-slides` for HTML presentations and `hve-demo-material` for the
+HTML/frame/MP4/caption workflow. Audio embedding into presentation files is retired.
 
 ## Parameters Reference
 
+For different speakers, synthesize one voice's selected slides per invocation
+using repeated `--slide <number>` arguments. Only those canonical `slide-NNN`
+folders are read and their WAVs replaced; other speakers' outputs are untouched.
+Omit `--slide` to synthesize the whole deck.
+
 ### generate_voiceover.py
 
-| Parameter             | Type   | Default                             | Description                                                                                |
-|:----------------------|:-------|:------------------------------------|:-------------------------------------------------------------------------------------------|
-| `--dry-run`           | flag   | `false`                             | Print SSML (`azure`) or plain text (`piper`) without generating audio                      |
-| `--engine`            | string | `azure`                             | Synthesis engine: `azure` or `piper`                                                       |
-| `--voice`             | string | `en-US-Andrew:DragonHDLatestNeural` | Voice name; the `piper` default is `en_US-joe-medium`                                      |
-| `--rate`              | string | `+10%`                              | Azure speech prosody rate; ignored by `piper`                                              |
-| `--piper-data-dir`    | path   | `PIPER_DATA_DIR`                    | Directory holding downloaded Piper voices                                                  |
-| `--content-dir`       | path   | `content`                           | Path to slide content directory                                                            |
-| `--output-dir`        | path   | `voice-over`                        | Path to WAV output directory                                                               |
-| `--lexicon`           | path   | *(auto-detect)*                     | Custom acronyms.yaml path                                                                  |
-| `--collapse-newlines` | flag   | `false`                             | Collapse newlines and whitespace runs in speaker notes into single spaces before synthesis |
-| `--verbose` / `-v`    | flag   | `false`                             | Enable verbose (DEBUG) logging output                                                      |
-
-### embed_audio.py
-
-Embeds WAV files into corresponding PPTX slides and adds narration timing
-XML so PowerPoint recognizes the audio for video export via
-**File > Export > Create a Video > Use Recorded Timings and Narrations**.
-
-| Parameter          | Type | Default           | Description                           |
-|:-------------------|:-----|:------------------|:--------------------------------------|
-| `--input`          | path | *(required)*      | Source PPTX file path                 |
-| `--audio-dir`      | path | `voice-over`      | Directory with slide-NNN.wav          |
-| `--output`         | path | `*-narrated.pptx` | Output PPTX file path                 |
-| `--verbose` / `-v` | flag | `false`           | Enable verbose (DEBUG) logging output |
-
-Each WAV file maps to a slide by the number in its name, so `slide-1.wav` and `slide-001.wav` both map to slide 1. When two files map to the same slide, embedding stops with an error and writes no output. WAV files numbered past the last slide are ignored with a warning. An unreadable WAV file is reported, its slide is left unchanged, and the remaining slides are still embedded.
+| Parameter             | Type    | Default                             | Description                                                                                |
+|:----------------------|:--------|:------------------------------------|:-------------------------------------------------------------------------------------------|
+| `--dry-run`           | flag    | `false`                             | Print SSML without generating audio                                                        |
+| `--voice`             | string  | `en-US-Andrew:DragonHDLatestNeural` | Azure AI Speech voice name                                                                 |
+| `--rate`              | string  | `+10%`                              | Speech prosody rate                                                                        |
+| `--content-dir`       | path    | `content`                           | Path to slide content directory                                                            |
+| `--output-dir`        | path    | `voice-over`                        | Path to WAV output directory                                                               |
+| `--slide`             | integer | all slides                          | Repeat to synthesize only the selected canonical slide numbers                             |
+| `--lexicon`           | path    | *(auto-detect)*                     | Custom acronyms.yaml path                                                                  |
+| `--collapse-newlines` | flag    | `false`                             | Collapse newlines and whitespace runs in speaker notes into single spaces before synthesis |
+| `--verbose` / `-v`    | flag    | `false`                             | Enable verbose (DEBUG) logging output                                                      |
 
 ## Script Reference
 
@@ -161,15 +119,6 @@ uv run scripts/generate_voiceover.py \
   --collapse-newlines
 ```
 
-Embed generated audio:
-
-```bash
-uv run scripts/embed_audio.py \
-  --input slide-deck/presentation.pptx \
-  --audio-dir voice-over \
-  --output slide-deck/presentation-narrated.pptx
-```
-
 ## Acronym Lexicon
 
 The lexicon controls SSML `<sub alias>` replacements for acronyms and technical terms. Create an `acronyms.yaml` file:
@@ -189,8 +138,6 @@ Lexicon resolution order:
 2. `acronyms.yaml` in the content directory.
 3. Built-in defaults covering common technical acronyms.
 
-The `piper` engine has no SSML support, so it substitutes aliases directly into the text. Aliases written as spaced single letters are hyphenated first (`H V E Core` becomes `H-V-E Core`), because Piper reads hyphenated letters as one fluent run and spaced letters as slow separate words.
-
 ## SSML Template
 
 Each slide produces an SSML document:
@@ -206,9 +153,9 @@ Each slide produces an SSML document:
 </speak>
 ```
 
-## Integration with PowerPoint Skill
+## Content Directory Contract
 
-This skill reads from the PowerPoint skill's content directory structure:
+This skill reads a slide content directory with this structure:
 
 ```text
 content/
@@ -223,19 +170,12 @@ Each `content.yaml` should contain a `speaker_notes:` field with the narration t
 
 ## Troubleshooting
 
-| Issue                                                | Solution                                                                                                                                                                  |
-|:-----------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Set SPEECH_KEY ... or SPEECH_RESOURCE_ID`           | Export `SPEECH_KEY` (key auth) or `SPEECH_RESOURCE_ID` (Entra ID) with `SPEECH_REGION`.                                                                                   |
-| `SPEECH_REGION must be set`                          | Export `SPEECH_REGION` with an approved Azure region. Synthesis has no default region.                                                                                    |
-| `Multiple WAV files map to slide N`                  | Remove the duplicate WAV files (for example `slide-1.wav` beside `slide-001.wav`) and rerun `embed_audio.py`.                                                             |
-| 401 with Entra ID auth                               | Verify custom domain on the Speech resource and `Cognitive Services Speech User` role. RBAC propagation takes up to 5 minutes.                                            |
-| Empty WAV files or skipped slides                    | Verify `speaker_notes:` is present and non-empty in `content.yaml`.                                                                                                       |
-| Mispronounced acronyms                               | Add entries to `acronyms.yaml` with phonetic aliases.                                                                                                                     |
-| `azure-cognitiveservices-speech package is required` | Run `uv sync` in the skill directory.                                                                                                                                     |
-| `Piper executable not found`                         | Install Piper separately or set `PIPER_COMMAND`, for example `uvx --from piper-tts piper`.                                                                                |
-| Piper cannot find the voice model                    | Download the voice with `piper.download_voices` and pass its directory through `--piper-data-dir` or `PIPER_DATA_DIR`.                                                    |
-| Audio icon visible in PPTX                           | Reposition or resize the audio object in PowerPoint after embedding.                                                                                                      |
-| Authored slide animations missing after embedding    | `embed_audio.py` replaces existing `p:timing` with narration timing; re-apply animations in PowerPoint after embedding audio.                                             |
-| Slides no longer advance on click after embedding    | `embed_audio.py` sets `advClick="0"` for auto-advance. To re-enable, select all slides in PowerPoint and check **Advance Slide > On Mouse Click** in the Transitions tab. |
-| Video export shows "No timings recorded"             | Re-embed audio with the updated `embed_audio.py` which adds narration timing XML automatically.                                                                           |
+| Issue                                                | Solution                                                                                                                       |
+|:-----------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------|
+| `Set SPEECH_KEY ... or SPEECH_RESOURCE_ID`           | Export `SPEECH_KEY` (key auth) or `SPEECH_RESOURCE_ID` (Entra ID) with `SPEECH_REGION`.                                        |
+| `SPEECH_REGION must be set`                          | Export `SPEECH_REGION` with an approved Azure region. Synthesis has no default region.                                         |
+| 401 with Entra ID auth                               | Verify custom domain on the Speech resource and `Cognitive Services Speech User` role. RBAC propagation takes up to 5 minutes. |
+| Empty WAV files or skipped slides                    | Verify `speaker_notes:` is present and non-empty in `content.yaml`.                                                            |
+| Mispronounced acronyms                               | Add entries to `acronyms.yaml` with phonetic aliases.                                                                          |
+| `azure-cognitiveservices-speech package is required` | Run `uv sync` in the skill directory.                                                                                          |
 

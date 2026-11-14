@@ -19,7 +19,7 @@ A diagram is never embedded as a binary screenshot. When a diagram is present, t
 ## Format Selector Matrix
 
 | notation | use_when | tooling | embed_method |
-| --- | --- | --- | --- |
+|----------|----------|---------|--------------|
 | BPMN-style lane flow with sequential activities and exclusive or parallel gateways | A single process view, up to four lanes | Mermaid `flowchart` with subgraphs as lanes | Fenced ```` ```mermaid ```` block inline in the artifact section |
 | Decision logic driven by a small input set | One decision with a compact set of inputs | Markdown decision table augmented by a Mermaid `flowchart` | Mermaid block plus a sibling markdown table inline in the artifact section |
 | UML 2.5.1 - class or component structure | Up to roughly twelve classes or components with attributes and relationships | Mermaid `classDiagram` or `flowchart` for components | Fenced ```` ```mermaid ```` block inline in the artifact section |

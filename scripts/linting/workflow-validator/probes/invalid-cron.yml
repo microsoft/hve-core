@@ -1,0 +1,12 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: probe invalid-cron
+permissions: {}
+on:
+  schedule:
+    - cron: '99 * * * *'
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo hi

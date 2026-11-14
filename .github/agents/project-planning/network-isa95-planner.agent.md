@@ -4,8 +4,10 @@ description: 'ISA-95-aligned network planning for secure edge Kubernetes to Azur
 disable-model-invocation: true
 tools:
   - agent
-  - edit/editFiles
-  - microsoft-docs/*
+  - edit
+  - 'microsoft-docs/*'
+  - skill
+  - ask_user
 ---
 
 # Network ISA-95 Planner
@@ -156,7 +158,7 @@ If any baseline element is missing, MUST include it in Priority 0 or Priority 1 
 MUST produce the conduit matrix before final recommendations using this schema:
 
 | Flow ID | Source Zone | Source Asset Class | Destination Zone | Destination Asset Class | Direction | Protocol | Dest Port | Auth Method | Encryption | Operational Justification | Monitoring Source | Control Owner |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
+|---------|-------------|--------------------|------------------|-------------------------|-----------|----------|-----------|-------------|------------|---------------------------|-------------------|---------------|
 
 Conduit rules:
 

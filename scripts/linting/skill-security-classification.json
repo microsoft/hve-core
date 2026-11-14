@@ -21,10 +21,6 @@
       "status": "pending",
       "issue": 3026
     },
-    "experimental/hve-demo-material": {
-      "status": "pending",
-      "issue": 3102
-    },
     "experimental/vscode-playwright": {
       "status": "pending",
       "issue": 3103
@@ -40,10 +36,6 @@
     "hve-core/vally-tests": {
       "status": "exempt",
       "reason": "Reads operator-authored artifacts and a corpus that follows the shipped template, runs a fixed safety-lint script, and writes only to its declared eval output paths; no network or credentials."
-    },
-    "hve-slides": {
-      "status": "exempt",
-      "reason": "Build scripts read repository deck sources and write only to the declared slides/<slug>/ and docs/slides/ outputs; no network, credentials, or subprocess."
     },
     "project-planning/adr-author": {
       "status": "exempt",

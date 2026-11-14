@@ -13,7 +13,7 @@ tags:
   - agents
   - accessibility
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-10-02
 ms.topic: concept
 estimated_reading_time: 6
 ---
@@ -103,7 +103,7 @@ The reviewer's deterministic signals can be shared with the Security Planner's p
 | File type | Location                                                                          |
 |-----------|-----------------------------------------------------------------------------------|
 | Agent     | `.github/agents/accessibility/accessibility-reviewer.agent.md`                    |
-| Prompt    | `.github/prompts/accessibility/accessibility-coverage-matrix.prompt.md`           |
+| Skill     | `.github/skills/accessibility/accessibility-coverage-matrix/SKILL.md`             |
 | Subagent  | `.github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md` |
 | Skills    | `.github/skills/accessibility/`                                                   |
 | Reports   | `.copilot-tracking/accessibility/`                                                |

@@ -16,7 +16,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-11-10
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -31,7 +31,7 @@ The SSSC Planner agent walks your team through a structured six-phase supply cha
 |------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
 | 🔗 Consistent coverage       | Every repository gets the same 27-capability inventory and 20-check Scorecard mapping, so nothing falls through the cracks          |
 | 🔍 Standards-backed analysis | Gaps are mapped to OpenSSF Scorecard, SLSA Build levels, and Best Practices Badge criteria rather than ad-hoc checklists            |
-| ⚡ Actionable output          | The final phase produces backlog items with adoption steps, priority derived from risk level, and improvement projections per check |
+| ⚡ Actionable output         | The final phase produces backlog items with adoption steps, priority derived from risk level, and improvement projections per check |
 
 > [!TIP]
 > New to the agent? Read [Why SSSC Planning?](why-sssc-planning) for the reasoning behind each phase.
@@ -99,14 +99,14 @@ Work items generated in Phase 5 are assigned an autonomy tier that controls how 
 
 ## Entry Modes
 
-The SSSC Planner supports four entry modes, each matched to a prompt file.
+The SSSC Planner supports four entry modes. Select the SSSC Planner agent and describe your starting point, including when a Security Planner session recommends it; the agent resolves the mode from your request and supplied artifacts.
 
-| Mode               | Prompt                    | Starting point                                             |
-|--------------------|---------------------------|------------------------------------------------------------|
-| Capture            | `sssc-capture`            | Starts a blank Phase 1 interview to gather scope directly  |
-| From-PRD           | `sssc-from-prd`           | Seeds Phase 1 from PRD artifacts found in the workspace    |
-| From-BRD           | `sssc-from-brd`           | Seeds Phase 1 from BRD artifacts found in the workspace    |
-| From-Security-Plan | `sssc-from-security-plan` | Seeds Phase 1 from an existing Security Planner state file |
+| Mode               | How to start                                         | Starting point                                             |
+|--------------------|------------------------------------------------------|------------------------------------------------------------|
+| Capture            | Describe the repository, optionally with prior notes | Starts a blank Phase 1 interview to gather scope directly  |
+| From-PRD           | Ask to start from your product requirements          | Seeds Phase 1 from PRD artifacts found in the workspace    |
+| From-BRD           | Ask to start from your business requirements         | Seeds Phase 1 from BRD artifacts found in the workspace    |
+| From-Security-Plan | Ask to extend a completed security plan              | Seeds Phase 1 from an existing Security Planner state file |
 
 ## When to Use
 
@@ -119,21 +119,27 @@ The SSSC Planner supports four entry modes, each matched to a prompt file.
 
 ## Quick Start
 
-1. Open the prompt picker and select one of the four SSSC prompt files (Capture, From-PRD, From-BRD, or From-Security-Plan).
+1. Select **SSSC Planner** in the agent picker and name the entry mode, Capture, From-PRD, From-BRD, or From-Security-Plan, or let the agent pick it from your request and the files you supply.
 2. Provide a project slug when prompted (or let the agent generate one).
 3. Answer the scoping questions. The agent asks 3-5 questions per turn until each phase is complete.
 4. Review the generated backlog items and adjust autonomy tiers as needed.
-5. Follow the backlog manager handoff in Phase 6 to create work items in ADO or GitHub.
+5. After Phase 6, select the **Backlog Manager** agent to create work items in ADO or GitHub from the planner's backlog handoff.
 
 > [!IMPORTANT]
 > Start each new SSSC plan in a fresh chat session. Use `/clear` to reset context if you need to restart.
 
 ## Prerequisites
 
-* The SSSC Planner agent installed and enabled in your VS Code workspace.
-* The `rpi-research` skill available for WAF and CAF runtime lookups.
+* HVE Core installed in one of these hosts:
+  * VS Code with the `hve-core` plugin ([Install the Plugin](../../getting-started/install.md#install-the-plugin)) or the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) (`ise-hve-essentials.hve-core`).
+  * GitHub Copilot CLI with the `hve-core` plugin (`copilot plugin install hve-core@hve-core`).
 * For From-PRD/From-BRD mode: PRD or BRD artifacts present under `.copilot-tracking/`.
 * For From-Security-Plan mode: A completed Security Planner state file.
+
+Either install delivers the SSSC Planner with the skills it uses, including `supply-chain-security` for assessment references and `rpi-research` for WAF and CAF runtime lookups.
+There is no separate security extension.
+The planner reads its `sssc-planner` instructions by name at session start, so it does not depend on `applyTo` matching.
+To copy HVE Core into your repository instead, see [Copy HVE Core Into Your Repository](../../getting-started/install.md#copy-hve-core-into-your-repository). The installer copies every component, including SSSC Planner and the skills and instructions it loads.
 
 ## Next Steps
 

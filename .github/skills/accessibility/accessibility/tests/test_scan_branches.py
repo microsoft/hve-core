@@ -25,6 +25,39 @@ def test_normalize_results_non_dict_returns_empty_summary() -> None:
     assert result["violations"] == []
 
 
+@pytest.mark.parametrize("nodes", [5, "abc", {"html": "<img>"}, None])
+def test_normalize_results_counts_nodes_only_when_list(nodes: object) -> None:
+    result = scan.normalize_results(
+        {"violations": [{"id": "image-alt", "nodes": nodes}]},
+        target="https://example.com",
+    )
+
+    assert result["violations"][0]["nodes"] == 0
+
+
+def test_normalize_results_coerces_violation_text_to_bounded_strings() -> None:
+    long_text = "x" * (scan.MAX_VIOLATION_TEXT_CHARS + 1)
+    result = scan.normalize_results(
+        {
+            "violations": [
+                {"id": 7, "impact": None, "description": long_text, "nodes": []},
+                {"id": ["image-alt"], "impact": {"level": "critical"}},
+            ]
+        },
+        target="https://example.com",
+    )
+
+    assert result["violations"] == [
+        {
+            "id": "",
+            "impact": "",
+            "description": "x" * scan.MAX_VIOLATION_TEXT_CHARS,
+            "nodes": 0,
+        },
+        {"id": "", "impact": "", "description": "", "nodes": 0},
+    ]
+
+
 def test_run_scan_raises_on_called_process_error() -> None:
     error = subprocess.CalledProcessError(1, "npx", stderr="boom")
     with patch("scan.subprocess.run", side_effect=error):
@@ -49,6 +82,17 @@ def test_run_scan_raises_on_invalid_json() -> None:
 def test_run_scan_raises_on_non_dict_payload() -> None:
     with patch("scan.subprocess.run") as mock_run:
         mock_run.return_value = SimpleNamespace(stdout="[]", stderr="")
+        with pytest.raises(scan.ScriptError, match="unexpected payload"):
+            scan.run_scan("https://example.com", allow_external=True)
+
+
+@pytest.mark.parametrize(
+    "stdout",
+    ['["not-a-result"]', '[{"violations": []}, {"violations": []}]'],
+)
+def test_run_scan_raises_on_result_list_not_single_object(stdout: str) -> None:
+    with patch("scan.subprocess.run") as mock_run:
+        mock_run.return_value = SimpleNamespace(stdout=stdout, stderr="")
         with pytest.raises(scan.ScriptError, match="unexpected payload"):
             scan.run_scan("https://example.com", allow_external=True)
 

@@ -1,0 +1,14 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: probe modern-syntax
+permissions: {}
+on: push
+concurrency:
+  group: probe
+  queue: max
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "${{ job.workflow_sha }}"
+      - uses: $/.github/actions/example

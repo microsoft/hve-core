@@ -3,7 +3,7 @@ title: Copyright Header Guidelines
 description: Standards for copyright and license headers in source files to meet OpenSSF Best Practices badge criteria
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-09-28
+ms.date: 2026-10-08
 ms.topic: reference
 keywords:
   - copyright
@@ -56,7 +56,7 @@ Applies to: `.sh` files
 // SPDX-License-Identifier: MIT
 ```
 
-Applies to: `.mjs`, `.cjs`, `.ts`, `.tsx`, and `.jsx` files
+Applies to: `.mjs`, `.mts`, `.cjs`, `.ts`, `.tsx`, and `.jsx` files
 
 ## Placement Rules
 

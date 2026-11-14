@@ -1,9 +1,11 @@
 ---
 title: Demo Material
-description: Levelled HVE Core training decks, narrated videos, and browser slides from L100 to L400, rebuilt weekly when their source documents change
+description: Levelled HVE Core training decks, silent CI videos, and browser slides from L100 to L400, rebuilt weekly when their source documents change
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-29
 ms.topic: overview
+mdx:
+  format: mdx
 keywords:
   - demo material
   - training
@@ -19,16 +21,13 @@ pagination_label: Demo Material
 estimated_reading_time: 3
 ---
 
-HVE Core publishes a training deck, a narrated video, and a browser slide deck
+HVE Core's delivery workflow produces an HTML training deck and a video
 for each of four depth levels. Each level targets a different audience and
-builds on the one before it.
+builds on the one before it. The catalog reads the published build index and
+shows links only when that level has a complete passing bundle.
 
-| Level | Audience                                        | Length       | Watch                                                        | Present                                                          | Download                                                                                                                     |
-|-------|-------------------------------------------------|--------------|--------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
-| L100  | New contributors and first-time HVE Core users  | 4 to 6 min   | [L100 video and transcript](pathname:///demo-material/L100/) | [L100 slides](pathname:///demo-material/L100/hve-demo-L100.html) | [L100 deck](pathname:///demo-material/L100/hve-demo-L100.pptx), [L100 MP4](pathname:///demo-material/L100/hve-demo-L100.mp4) |
-| L200  | Contributors ready to follow a guided task      | 6 to 8 min   | [L200 video and transcript](pathname:///demo-material/L200/) | [L200 slides](pathname:///demo-material/L200/hve-demo-L200.html) | [L200 deck](pathname:///demo-material/L200/hve-demo-L200.pptx), [L200 MP4](pathname:///demo-material/L200/hve-demo-L200.mp4) |
-| L300  | Engineers choosing an applied workflow          | 8 to 10 min  | [L300 video and transcript](pathname:///demo-material/L300/) | [L300 slides](pathname:///demo-material/L300/hve-demo-L300.html) | [L300 deck](pathname:///demo-material/L300/hve-demo-L300.pptx), [L300 MP4](pathname:///demo-material/L300/hve-demo-L300.mp4) |
-| L400  | Maintainers and contributors extending HVE Core | 10 to 12 min | [L400 video and transcript](pathname:///demo-material/L400/) | [L400 slides](pathname:///demo-material/L400/hve-demo-L400.html) | [L400 deck](pathname:///demo-material/L400/hve-demo-L400.pptx), [L400 MP4](pathname:///demo-material/L400/hve-demo-L400.mp4) |
+{/*<!-- markdownlint-disable-next-line MD033 -->*/}
+<DemoMaterialCatalog />
 
 L100 and L200 videos show the deck slides. L300 and L400 add live VS Code
 captures of the repository files they discuss.
@@ -42,12 +41,12 @@ file, so you can download it and present offline.
 
 Every level is published with:
 
-* Captions embedded in the MP4 and as a separate WebVTT file, generated from the
-  exact narration text
+* Visible text embedded in the MP4 and as a separate WebVTT file, generated from
+  the authored speaker notes
 * A video page with a captioned player and a full transcript listing each
   slide's title, on-screen text, image descriptions, and narration
-* Narration that voices what each slide shows and describes each live capture,
-  so the audio carries the visual content
+* A text transcript describing each slide and live capture; new CI videos have
+  no voiceover or audio stream
 * A deck with a title on every slide, alternative text on every image, and the
   document language set, so screen readers can navigate it
 * Browser slides with keyboard navigation, labelled slides, a reading view that
@@ -55,9 +54,9 @@ Every level is published with:
 * Text colors that meet the WCAG 2.2 AA contrast minimum of 4.5:1
 
 The render workflow checks each item it can verify and withholds a level that
-fails. Caption timing within a slide is estimated from sentence length, so
-captions can lead or trail the voice by a moment. Whether the narration fully
-describes each visual cannot be checked by a machine and needs human review.
+fails. Silent CI timing is derived from the notes' word count, not synthesized
+speech. A human must review reading pace and whether the transcript fully
+describes each visual. Silent videos do not provide spoken audio description.
 
 ## How the Material Stays Current
 
@@ -65,25 +64,49 @@ The material is rebuilt by two scheduled workflows, and only for the levels whos
 source documents changed:
 
 1. The [Demo Material Author](https://github.com/microsoft/hve-core/blob/main/.github/workflows/demo-material-author.md)
-   agentic workflow runs weekly. A deterministic step compares each level's
-   pinned sources with the commit its current material was built from, and the
-   agent writes new slide content only for the levels that changed. When
-   nothing changed, the agent does not run.
+  agentic workflow runs weekly. A deterministic step compares each level's
+  pinned sources with the commit its current material was built from. The
+  agent writes new slide content for changed, failed, or unpublished levels.
+  When every level is current and published, the agent does not run.
 2. The [Demo Material Render](https://github.com/microsoft/hve-core/blob/main/.github/workflows/demo-material-render.yml)
-   workflow builds each authored level into a deck, narration, a video, and
-   browser slides from the same slide content, then scores the checks a machine
-   can verify: narration paired to every slide, the video landing inside the
+   workflow attempts a daily pickup of one eligible successful author run:
+   normally the oldest run the render index has not recorded, or the newest
+   run when no history exists. A backlog of author runs, schedule delays,
+   failed checks, and the first v2 publication can each delay new material, so
+   the schedule is not a publication deadline. It builds each authored level into a
+  HTML deck and a silent video from matching exported slide frames, then
+   scores the checks a machine can verify: timing paired to every slide, absence
+   of an audio stream, the video landing inside the
    level's length, readable live captures, the pinned house style, the
    accessibility items above, and browser slides that open offline with no
    slide overflowing. A level that fails any check keeps its previous files.
-3. The documentation deployment publishes the latest passing files on this page.
+   The later weekly render check forces another authoring attempt for any level
+   whose latest attempt failed or whose first passing bundle is still missing.
+3. The documentation deployment publishes the latest passing files. This page
+   reads that same index, so a missing level appears as unavailable rather than
+   linking to files that do not exist.
 
-The narration uses an offline [Piper](https://github.com/OHF-Voice/piper1-gpl)
-voice (`en_US-joe-medium`, CC0), so the builds need no cloud speech service. The
+New CI builds are silent: no speech service or speech model is used. Local
+narrated production uses an AI-generated Azure AI Speech voice. During
+regeneration, a level retains its previous compatible passing files until a
+replacement passes. The published index records `narration_engine`
+and the timing basis for new renders. The
 [level contracts and sources](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/hve-demo-material/references/curriculum.md)
 define what each level covers.
 
 ## Build Status
+
+Current delivery uses `demo-material-content/v2`, `demo-material-site/v2`,
+manifest6 and render-result2. HTML, raw/final MP4, captions, transcript and
+hash-bound evidence must agree. Old metadata can trigger fresh authoring but
+cannot certify a new delivery. The catalog hides obsolete or incomplete links.
+
+The first v2 publication requires explicit maintainer approval and preservation
+of existing published media. Recovery/deployment stop on incompatible old bundles
+rather than resetting the index or publishing an empty directory. The
+[v2 migration runbook](v2-migration) gives the maintainer-owned procedure:
+inventory, archive, the `migrate-from-v1` render, validation, publication, and
+rollback criteria. This source change performs no publication.
 
 The [build index](pathname:///demo-material/index.json) records, for each level,
 the commit it was built from, when it was rendered, its measured length, and the
@@ -92,10 +115,10 @@ result of every check, including the most recent failed attempt.
 > [!NOTE]
 > The decks, videos, and slides are drafted by an AI agent from this repository's
 > documentation and checked automatically, not reviewed by a person before
-> publication. Review a deck before presenting it to an external audience. A
-> level's links resolve after its first successful render.
+> publication. Review a deck before presenting it to an external audience. An
+> unavailable level exposes no media links until its first successful render.
 
-<!-- markdownlint-disable MD036 -->
+{/*<!-- markdownlint-disable MD036 -->*/}
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
 then carefully refined by our team of discerning human reviewers.*
-<!-- markdownlint-enable MD036 -->
+{/*<!-- markdownlint-enable MD036 -->*/}

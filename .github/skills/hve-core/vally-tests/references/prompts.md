@@ -10,7 +10,9 @@ description: Twelve conformance checks the vally-tests skill emits for .prompt.m
 
 This reference enumerates the twelve conformance checks the `vally-tests` skill knows how to express for `.prompt.md` artifacts. Each check exercises a behavior the prompt's authoring contract already claims, then routes the resulting stimulus block to the canonical Vally eval file declared in `eval-suite-routing.md`.
 
-The canonical eval target for this kind is `evals/behavior-conformance/prompts.eval.yaml`. New stimulus blocks are appended to its `stimuli:` array and tagged `tags.advisory: true` per `eval-suite-routing.md`. Authors MUST run every candidate stimulus through `refusal-taxonomy.md` before emission and refuse any match.
+The Copilot agent harness does not load `.prompt.md` files, and HVE Core ships its entry points as user-invocable skills. Use these checks only for prompt files kept for hosts that still load them, such as VS Code's Local harness. Test a skill entry point with [skills.md](skills.md).
+
+The canonical eval target for this kind is `evals/behavior-conformance/prompts.eval.yaml`. New stimulus blocks are appended to its `stimuli:` array, creating the file on first use, and tagged `tags.advisory: true` per `eval-suite-routing.md`. Authors MUST run every candidate stimulus through `refusal-taxonomy.md` before emission and refuse any match.
 
 Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`, `contains`, `regex`, `json_schema`) per `grader-catalog.md`. Where the research phrasing recommended `output-matches`, the equivalent here is `regex`; where it recommended `output-contains`, the equivalent is `contains`; where it recommended `llm-grader`, the equivalent is `semantic_similarity`.
 
@@ -33,9 +35,9 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 * Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
 * Testable behavior: prompt frontmatter MUST include a non-empty `description:` field under 120 characters; OPTIONAL fields `agent:`, `argument-hint:`, and a `---` activation line MAY be present when the prompt delegates or accepts arguments.
-* Suggested stimulus: ask the assistant to summarize the frontmatter of a named prompt under `.github/prompts/hve-core/`, then assert that the description value is surfaced in the response.
+* Suggested stimulus: ask the assistant to summarize the frontmatter of a named prompt under `.github/prompts/`, then assert that the description value is surfaced in the response.
 * Grader recommendation: `regex` with pattern `(?m)^description:\s*['"]?.{1,120}['"]?`.
-* Evidence: `.github/prompts/hve-core/rpi.prompt.md` shows `description:`, `agent:`, and `argument-hint:` together.
+* Evidence: a delegating prompt typically declares `description:`, `agent:`, and `argument-hint:` together.
 
 ### Check 2: Agent Delegation Without Duplication
 
@@ -43,7 +45,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 * Testable behavior: when the prompt sets `agent:`, it MUST NOT duplicate the delegated agent's Required Phases or Required Steps; instead the prompt references the specific phases or sections that differ and extends rather than substitutes the agent's requirements section.
 * Suggested stimulus: ask the assistant to describe what a delegating prompt adds on top of its agent, naming the delegated agent and any sections that differ.
 * Grader recommendation: `semantic_similarity` with rubric "Does the response identify the delegated agent and confirm that the prompt extends rather than duplicates the agent's protocol?".
-* Evidence: `.github/prompts/hve-core/rpi.prompt.md` delegates to `RPI Agent` and contributes scoped Inputs and Requirements without duplicating the agent's flow.
+* Evidence: a prompt that sets `agent:` contributes scoped Inputs and Requirements and leaves the delegated agent's flow to the agent.
 
 ### Check 3: Inputs Documentation Format
 
@@ -51,7 +53,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 * Testable behavior: when the prompt defines inputs, the Inputs section MUST document every input variable using `${input:varName}` for required inputs or `${input:varName:defaultValue}` for optional inputs.
 * Suggested stimulus: ask the assistant to list the inputs a named prompt accepts and the default value (if any) for each.
 * Grader recommendation: `regex` with pattern `\$\{input:[a-zA-Z_][a-zA-Z0-9_]*(?::[^}]*)?\}`.
-* Evidence: `.github/prompts/hve-core/rpi.prompt.md` documents `${input:task}`, `${input:continue}`, and `${input:followUp}` with descriptions.
+* Evidence: a prompt with inputs documents each variable, such as a required `${input:task}` and an optional `${input:mode:standard}`, with a description.
 
 ### Check 4: Argument Hint Format
 
@@ -59,7 +61,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 * Testable behavior: when the prompt declares `argument-hint:`, the value MUST use `[]` for positional arguments, `key=value` for named arguments, `{option1|option2}` for enumerated choices, and `...` for free-form remainders.
 * Suggested stimulus: ask the assistant to show the argument hint a named prompt advertises in the VS Code picker.
 * Grader recommendation: `regex` with pattern `argument-hint:\s*["'][^"']*(?:\[.*\]|\{.*\|.*\}|=|\.\.\.)`.
-* Evidence: `.github/prompts/hve-core/rpi.prompt.md` shows `argument-hint: "task=... [continue=...] [followUp=...]"`.
+* Evidence: an argument hint such as `argument-hint: "task=... [mode={standard|deep}] [notes=...]"` combines named, enumerated, and free-form arguments.
 
 ### Check 5: Protocol Structure Presence
 
@@ -67,7 +69,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 * Testable behavior: a prompt with multiple ordered stages or a complex workflow MUST include either `## Required Steps` (autonomous, step-based) or `## Required Phases` (conversational, phase-based). Single-task prompts MAY omit a protocol section.
 * Suggested stimulus: ask the assistant whether a named prompt uses a step-based or phase-based protocol and to name the section heading.
 * Grader recommendation: `regex` with pattern `(?m)^##\s+Required\s+(Steps|Phases|Protocol)\b`.
-* Evidence: `.github/prompts/hve-core/evals-import.prompt.md` declares a `## Required Protocol` section that scopes its behavior.
+* Evidence: a multi-stage prompt declares a `## Required Steps`, `## Required Phases`, or `## Required Protocol` section that scopes its behavior.
 
 ### Check 6: Step and Phase Heading Consistency
 
@@ -75,7 +77,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 * Testable behavior: when a protocol section is present, each step heading MUST take the form `### Step N: Short Summary` and each phase heading MUST take the form `### Phase N: Short Summary` with a descriptive summary after the colon.
 * Suggested stimulus: ask the assistant to list the step or phase headings of a named prompt in order.
 * Grader recommendation: `regex` with pattern `(?m)^###\s+(?:Step|Phase)\s+\d+:\s+\S.+`.
-* Evidence: `.github/prompts/experimental/cspell-config.prompt.md` demonstrates numbered step headings with descriptive summaries.
+* Evidence: a step-based prompt uses numbered step headings with descriptive summaries.
 
 ### Check 7: File References as Markdown Links
 
@@ -99,7 +101,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 * Testable behavior: bulleted lists (`*` or `-`) MUST be used for groupings and option lists; numbered lists (`1.`, `2.`, ...) MUST be used for sequential action steps. Sequence vs grouping intent MUST match the list type.
 * Suggested stimulus: ask the assistant to walk through the ordered steps of a named prompt's protocol and separately to enumerate the groupings of optional inputs.
 * Grader recommendation: `semantic_similarity` with rubric "Does the response use ordered lists for sequential steps and bulleted lists for groupings consistent with the prompt's structure?".
-* Evidence: every sampled prompt under `.github/prompts/hve-core/` follows this convention.
+* Evidence: prompts authored to the `hve-builder` conventions follow this pattern.
 
 ### Check 10: Prompt Design Principles
 
@@ -107,7 +109,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 * Testable behavior: prompt outputs MUST exhibit clarity (followable without guessing), consistency (similar inputs yield similar shapes), alignment (matches repo conventions), coherence (no internal conflicts), calibration (just enough instruction), and correctness (asks rather than guesses when inputs are ambiguous).
 * Suggested stimulus: invoke the prompt with a deliberately ambiguous or incomplete input and observe whether the assistant asks for clarification rather than fabricating values.
 * Grader recommendation: `semantic_similarity` with rubric "Does the response demonstrate the six prompt-design principles, in particular asking for clarification on ambiguous inputs instead of guessing?".
-* Evidence: all sampled prompts under `.github/prompts/hve-core/`.
+* Evidence: the prompt-design principles in the `hve-builder` conventions.
 
 ### Check 11: Few-Shot Examples in Fenced Code Blocks
 
@@ -120,10 +122,10 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 ### Check 12: Subagent Invocation Uses Human-Readable Names
 
 * Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
-* Testable behavior: when the prompt or its delegated agent invokes a subagent, invocation text MUST reference the subagent by the human-readable `name:` from the subagent's frontmatter (for example, "Run PowerPoint Subagent"). Invocation by filename or by file path is non-conforming.
+* Testable behavior: when the prompt or its delegated agent invokes a subagent, invocation text MUST reference the subagent by the human-readable `name:` from the subagent's frontmatter (for example, "Dispatch the BRD Quality Reviewer subagent"). Invocation by filename or by file path is non-conforming.
 * Suggested stimulus: ask the assistant which subagent a named prompt invokes and how the invocation reads.
-* Grader recommendation: `regex` with positive pattern `(?i)\brun\s+[A-Z][A-Za-z0-9 ]+\s+Subagent\b` and negate pattern `(?i)[A-Za-z0-9_-]+\.agent\.md`.
-* Evidence: `.github/agents/experimental/pptx.agent.md` invokes `PowerPoint Subagent` by its human-readable name.
+* Grader recommendation: `regex` with a positive pattern naming the subagent, for example `(?i)\bBRD Quality Reviewer\b`, and negate pattern `(?i)[A-Za-z0-9_-]+\.agent\.md`.
+* Evidence: `.github/agents/project-planning/brd-builder.agent.md` dispatches `BRD Quality Reviewer` by its human-readable name.
 
 ## Cross-References
 

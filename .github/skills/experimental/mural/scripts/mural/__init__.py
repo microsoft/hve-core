@@ -532,6 +532,7 @@ from ._cli_auth import (  # noqa: E402,F401 - re-export carved auth CLI surface
     _load_token_store_locked,
     _logout_remove_credentials,
     _migrate_source_is_keyring,
+    _profile_has_usable_session,
     _save_token_store_locked,
 )
 
@@ -1100,7 +1101,6 @@ from ._operations import (  # noqa: E402,F401 - re-export carved CLI operations 
     _op_area_get,
     _op_area_list,
     _op_area_probe,
-    _op_auth_status,
     _op_bootstrap_dt_board,
     _op_bootstrap_ux_board,
     _op_clone_with_tags,
@@ -1226,7 +1226,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         required_scopes = required_scopes_for_args(args)
         if required_scopes:
-            _require_scope(required_scopes, profile_name=profile_name)
+            _require_scope(required_scopes, cli_profile=getattr(args, "profile", None))
         return func(args)
     except SystemExit:
         raise

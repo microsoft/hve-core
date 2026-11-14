@@ -3,7 +3,7 @@ title: Your First Research
 description: Use the rpi-research skill to investigate your own codebase
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-10-31
 ms.topic: tutorial
 keywords:
   - getting started
@@ -35,16 +35,17 @@ teach methodology; real questions teach methodology and produce useful output.
 ## Run the Research
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`).
-2. Invoke `/rpi-research` from the skill surface.
+2. Type `/rpi-research` in the chat input. If you installed HVE Core as a plugin, VS Code lists it as `/hve-core:rpi-research`.
 3. Type your question as a prompt.
 
-The skill creates a research document in `.copilot-tracking/research/` with
-findings, source references, and evidence. This takes 2-5 minutes depending on
-the scope of the question.
+The skill creates a research document at
+`.copilot-tracking/research/YYYY-MM-DD/<task-slug>-research.md` with findings,
+source references, and evidence. Broader questions take longer.
 
 ## Read the Output
 
-Open the research document. You'll find:
+Open the research document. Start with the Executive Summary, then read the
+findings. You'll find:
 
 * The skill cites source references for load-bearing facts.
 * Conclusions trace back to actual code through evidence-linked findings.

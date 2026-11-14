@@ -72,7 +72,7 @@ The DT coach monitors for handoff readiness at every space boundary using this f
 
 1. **Detect**: At each method boundary, assess whether the team's work satisfies the space boundary readiness signals defined in the method sequencing protocol.
 2. **Surface**: When readiness signals are met, explicitly name the lateral handoff option alongside forward and backward options. State which exit point applies. All exits hand off to `rpi-research`.
-3. **Prepare**: If the team chooses lateral handoff, create the handoff summary file. Tag each artifact and constraint with a confidence marker. Identify gaps where confidence is `unknown` or `conflicting`.
+3. **Prepare**: If the team chooses lateral handoff, follow the matching exit procedure in [space-exit-handoffs.md](space-exit-handoffs.md) to create the handoff summary file. Tag each artifact and constraint with a confidence marker. Identify gaps where confidence is `unknown` or `conflicting`.
 4. **Transfer**: Record a lateral transition in the coaching state `transition_log` with rationale. Announce the handoff to `rpi-research` and provide the handoff summary path.
 
 The coach remains available in an advisory capacity after handoff. If the RPI workflow surfaces questions that require DT methods, the team can resume coaching from the recorded state.

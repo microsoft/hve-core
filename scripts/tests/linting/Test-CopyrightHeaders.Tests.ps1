@@ -232,7 +232,7 @@ console.log('Canonical');
 
 export const value = 'Canonical';
 "@
-        foreach ($extension in @('mjs', 'cjs')) {
+        foreach ($extension in @('mjs', 'mts', 'cjs')) {
             $fixture = "canonical.$extension"
             Set-Content -Path (Join-Path $script:FixturesPath $fixture) -Value $canonicalContent
 

@@ -3,7 +3,7 @@ title: Security Architect Guide
 description: HVE Core support for security architects building security models, security plans, and compliance verification
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-04
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - security
@@ -16,7 +16,7 @@ estimated_reading_time: 10
 This guide is for you if you perform security model analysis, build security plans, assess risks, define compliance requirements, or review system security posture. Security architects have focused but deep tooling, with 9 addressable assets centered on security planning and risk management.
 
 > [!CAUTION]
-> The security agents and prompts in HVE Core are **assistive tools only**.
+> The security agents and skills in HVE Core are **assistive tools only**.
 > They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review.
 > All AI-generated security plans, security models, risk registers, and incident response runbooks **must** be reviewed and validated by qualified security professionals before use.
 > AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
@@ -25,9 +25,9 @@ This guide is for you if you perform security model analysis, build security pla
 ## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
+> Install the [HVE Core plugin](../../getting-started/methods/cli-plugins.md) for the complete active component set in VS Code or Copilot CLI.
 >
-> For selective clone adoption, choose security planning, supply chain assessment, Responsible AI, risk, and research components that match your review scope. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
+> To copy HVE Core into your repository, use the included `hve-core-installer` skill. It copies the full set, including the security planning, supply chain assessment, Responsible AI, risk, and research components this role uses most. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 
@@ -112,9 +112,9 @@ arguments.
 | **rpi-research**     | Security-focused codebase and threat research              | [RPI workflow](../../rpi/) |
 | **rpi-review**       | Implementation review against approved security plans      | [RPI workflow](../../rpi/) |
 
-Prompts complement the agents for targeted security workflows:
+Skills complement the agents for targeted security workflows:
 
-| Prompt            | Purpose                                     | Invoke               |
+| Skill             | Purpose                                     | Invoke               |
 |-------------------|---------------------------------------------|----------------------|
 | risk-register     | Component risk assessment and documentation | `/risk-register`     |
 | incident-response | Incident response runbook creation          | `/incident-response` |

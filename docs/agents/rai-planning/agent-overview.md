@@ -13,7 +13,7 @@ tags:
   - architecture
   - reference
 author: Microsoft
-ms.date: 2026-09-10
+ms.date: 2026-11-10
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -23,7 +23,7 @@ estimated_reading_time: 7
 ```mermaid
 flowchart TD
   accTitle: RAI Planner Agent Architecture
-  accDescr: The RAI Planner reads and writes session state, generates phase artifacts, activates research for framework questions, and follows its identity, licensing, planning, and standards guidance.
+  accDescr: The RAI Planner reads and writes session state, generates phase artifacts, activates research for framework questions, activates the planner-identity and rai-planner skills at session start, uses the rai-standards skill, and follows its licensing instruction.
   subgraph Agent ["RAI Planner Agent"]
     RP["rai-planner.agent.md"]
     RR["rpi-research"]
@@ -37,34 +37,34 @@ flowchart TD
   end
 
   subgraph Instructions ["Instruction Files"]
-    I1["rai-identity"]
-    I2["rai-license-posture"]
+    I1["rai-license-posture"]
   end
 
   subgraph Skills ["Skills"]
-    S1["rai-planner"]
+    S0["planner-identity"]
+    S1["rai-planner<br/>references/rai-identity.md"]
     S2["rai-standards"]
   end
 
   RP -->|"reads/writes"| SJ
   RP -->|"generates"| AF
   RP -->|"follows"| I1
-  RP -->|"follows"| I2
-  RP -->|"uses"| S1
+  RP -->|"activates at session start"| S0
+  RP -->|"activates at session start"| S1
   RP -->|"uses"| S2
 ```
 
-The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-planner.agent.md`. Two instruction files under `.github/instructions/rai-planning/` provide domain-specific guidance, auto-applied via `applyTo` patterns when working within `.copilot-tracking/rai-plans/`. Phase-specific assessment guidance lives in the `rai-planner` skill and the `rai-standards` skill.
+The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-planner.agent.md`. At session start the agent activates the `planner-identity` and `rai-planner` skills and reads the `rai-planner` skill's `references/rai-identity.md`. One instruction file under `.github/instructions/rai-planning/` adds licensing rules for files under `.copilot-tracking/rai-plans/`. Phase-specific assessment guidance lives in the `rai-planner` skill and the `rai-standards` skill.
 
 | Instruction file                      | Domain                                                                    |
 |---------------------------------------|---------------------------------------------------------------------------|
-| `rai-identity.instructions.md`        | Agent identity, orchestration, state management, session recovery         |
 | `rai-license-posture.instructions.md` | RAI standards licensing posture, source-class mapping, attribution gating |
 
-| Skill           | Domain                                                                                                         |
-|-----------------|----------------------------------------------------------------------------------------------------------------|
-| `rai-planner`   | Risk classification, impact assessment, security model, capture coaching, and backlog handoff phase references |
-| `rai-standards` | NIST AI RMF 1.0 trustworthiness characteristics, subcategory mappings, framework isolation, AI STRIDE overlay  |
+| Skill              | Domain                                                                                                                                                         |
+|--------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `planner-identity` | Shared state protocol, resume sequence, question cadence, disclaimer cadence, and error handling that `rai-identity` extends                                   |
+| `rai-planner`      | RAI identity and phase lifecycle (`references/rai-identity.md`), risk classification, impact assessment, security model, capture coaching, and backlog handoff |
+| `rai-standards`    | NIST AI RMF 1.0 trustworthiness characteristics, subcategory mappings, framework isolation, AI STRIDE overlay                                                  |
 
 ## State Management
 
@@ -119,9 +119,9 @@ The agent asks up to 7 focused questions per turn, using emoji checklists to tra
 
 | Marker | Meaning                                            |
 |--------|----------------------------------------------------|
-| ❓      | Pending: question not yet answered                 |
-| ✅      | Complete: answer received and recorded             |
-| ❌      | Blocked or skipped: user indicated "skip" or "n/a" |
+| ❓     | Pending: question not yet answered                 |
+| ✅     | Complete: answer received and recorded             |
+| ❌     | Blocked or skipped: user indicated "skip" or "n/a" |
 
 Each turn begins by showing the current phase checklist status. When all questions for a phase reach ✅ or ❌, the agent summarizes findings. At hard gates (Phases 2, 3, and 6) it then asks for explicit confirmation before advancing; at summary-and-advance gates (Phases 1, 4, and 5) it advances unless the user objects.
 
@@ -167,16 +167,13 @@ When conversation context is compacted, a seven-step recovery process reconstruc
 
 ## Related Files
 
-| File                                                                 | Purpose                             |
-|----------------------------------------------------------------------|-------------------------------------|
-| `.github/agents/rai-planning/rai-planner.agent.md`                   | Agent definition                    |
-| `.github/agents/rai-planning/rai-reviewer.agent.md`                  | Reviewer agent orchestrator         |
-| `.github/agents/rai-planning/subagents/rai-skill-assessor.agent.md`  | Skill assessor subagent             |
-| `.github/instructions/rai-planning/*.instructions.md`                | Identity and licensing instructions |
-| `.github/prompts/rai-planning/rai-capture.prompt.md`                 | Capture mode entry prompt           |
-| `.github/prompts/rai-planning/rai-plan-from-prd.prompt.md`           | PRD-seeded entry prompt             |
-| `.github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md` | Security plan-seeded entry prompt   |
-| `.copilot-tracking/rai-plans/{project-slug}/state.json`              | Assessment state                    |
+| File                                                                | Purpose                             |
+|---------------------------------------------------------------------|-------------------------------------|
+| `.github/agents/rai-planning/rai-planner.agent.md`                  | Agent definition                    |
+| `.github/agents/rai-planning/rai-reviewer.agent.md`                 | Reviewer agent orchestrator         |
+| `.github/agents/rai-planning/subagents/rai-skill-assessor.agent.md` | Skill assessor subagent             |
+| `.github/instructions/rai-planning/*.instructions.md`               | Identity and licensing instructions |
+| `.copilot-tracking/rai-plans/{project-slug}/state.json`             | Assessment state                    |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

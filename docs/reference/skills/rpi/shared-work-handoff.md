@@ -1,9 +1,9 @@
 ---
 title: shared-work-handoff
 description: Read or share bounded repository context and decision rationale with independent named-consumer continuation. Use for reusable context or accountable work handoffs.
-sidebar_position: 8
+sidebar_position: 9
 author: Microsoft
-ms.date: 2026-10-06
+ms.date: 2026-11-13
 ms.topic: reference
 keywords:
   - skill

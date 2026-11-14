@@ -13,8 +13,8 @@
 After installing this extension, the chat agents are available in GitHub Copilot Chat:
 
 1. **Use custom agents** by selecting the custom agent from the agent picker drop-down list in Copilot Chat
-2. **Apply prompts** through the Copilot Chat interface
-3. Reference instructions: they are automatically applied based on file patterns
+2. **Run skills** as `/` slash commands in Copilot Chat, or let agents load them when relevant
+3. **Instructions** from this extension may not reach Copilot chat sessions. If you rely on path-specific instructions or canvases, install the [`hve-core` plugin](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/cli-plugins.md) instead, and use one install route at a time
 
 ### Post-Installation Setup
 

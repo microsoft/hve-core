@@ -1,7 +1,7 @@
 ---
 title: Threat Model Completeness Review
 description: Public checklist and verdict format for reviewing whether a threat-model spec satisfies the schema-backed completeness requirements.
-ms.date: 2026-08-05
+ms.date: 2026-11-11
 ms.topic: reference
 ---
 

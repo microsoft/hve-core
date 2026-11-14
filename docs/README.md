@@ -1,9 +1,9 @@
 ---
 title: HVE Core Documentation
-description: Documentation hub for HVE Core, a prompt engineering framework that brings AI-powered agents, prompts, instructions, and skills to your GitHub Copilot workflow
+description: Documentation hub for HVE Core, a prompt engineering framework that brings AI-powered agents, instructions, and skills to your GitHub Copilot workflow
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-28
+ms.date: 2026-11-13
 ms.topic: overview
 keywords:
   - hve core
@@ -14,17 +14,21 @@ keywords:
 estimated_reading_time: 3
 ---
 
-HVE Core gives your team production-ready agents, reusable prompts, coding instructions, and executable skills for GitHub Copilot. You get structured workflows (Research → Plan → Implement), schema-enforced quality gates, and role-specific tooling across 10 engineering disciplines. Install from the VS Code Marketplace and start shipping with AI-assisted engineering in minutes.
+HVE Core gives your team agents, coding instructions, and skills for GitHub Copilot. You get structured Research → Plan → Implement workflows, schema-checked quality gates, and role-specific tooling across 10 engineering disciplines.
 
 ## Choose Your Installation
 
-| Option       | HVE Core Extension                                                                                  | Selective Clone                                                            |
-|--------------|-----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
-| What you get | Every distributable agent, prompt, instruction, and skill                                           | Complete or custom agents, prompts, instructions, and distributable skills |
-| Best for     | Teams that want managed updates and the complete content set                                        | Teams that want repository-owned, reviewable component selection           |
-| Start        | [Install HVE Core](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) | Use the included `hve-core-installer` skill with a pinned or cloned source |
+Most people should start with the plugin. [Installing HVE Core](getting-started/install.md) compares every route.
+
+| Route                                                                            | What you get                                          | Choose it when                                    |
+|----------------------------------------------------------------------------------|-------------------------------------------------------|---------------------------------------------------|
+| [Plugin](getting-started/install.md#install-the-plugin) ⭐                       | Every agent, skill, and instruction, following `main` | You want the full set in VS Code or Copilot CLI   |
+| [VS Code extension](getting-started/install.md#use-the-vs-code-extension)        | Agents and skills from the VS Code Marketplace        | You manage editor tools through the Marketplace   |
+| [Repository copy](getting-started/install.md#copy-hve-core-into-your-repository) | Copies of every component, owned by your repository   | Your repository should own and customize HVE Core |
 
 > Not sure which to choose? See the [installation methods comparison](getting-started/methods/comparison.md) for a detailed breakdown.
+
+HVE Core no longer ships prompt files. If you used a former prompt command such as `/rpi` or `/security-review`, [Retired Prompt Commands](getting-started/package-migration.md#retired-prompt-commands) maps each one to its replacement.
 
 ## Find Your Path
 
@@ -32,13 +36,13 @@ HVE Core gives your team production-ready agents, reusable prompts, coding instr
 
 Get up and running with installation, configuration, and your first AI-assisted workflow.
 
-* [Install HVE Core](getting-started/install.md) covers three setup paths from marketplace extension to developer clone
+* [Install HVE Core](getting-started/install.md) compares the plugin, extension, repository copy, and clone routes
 * [Run your first workflow](getting-started/first-workflow.md) walks through an end-to-end RPI example
 * [Understand the HVE Core identity](getting-started/packages.md) to compare channels and release assurance
 
 ### Leading a Team?
 
-Set up HVE Core for your team with governance, selective adoption, and customization options.
+Set up HVE Core for your team with governance, repository adoption, and customization options.
 
 * [Team adoption guide](customization/team-adoption.md) covers governance, naming conventions, and onboarding
 * [HVE Core identity and channels](getting-started/packages.md) explains how artifacts are bundled and distributed
@@ -63,11 +67,11 @@ Explore advanced capabilities including Design Thinking coaching, security plann
 
 ## Roles
 
-HVE Core provides dedicated tooling for 10 engineering roles, each with curated agents, prompts, and starter workflows. Find your role guide on the [Role Guides](hve-guide/roles/) page.
+HVE Core provides dedicated tooling for 10 engineering roles, each with curated agents, skills, and starter workflows. Find your role guide on the [Role Guides](hve-guide/roles/) page.
 
 ## AI-Assisted Project Lifecycle
 
-HVE Core supports a 9-stage lifecycle from initial setup through ongoing operations. Each stage maps to specific agents, prompts, and role-specific guidance.
+HVE Core supports a 9-stage lifecycle from initial setup through ongoing operations. Each stage maps to specific agents, skills, and role-specific guidance.
 
 * [Stage overview](hve-guide/lifecycle/) provides a full lifecycle map
 * [Implementation (Stage 6)](hve-guide/lifecycle/implementation.md) is the highest-density stage with 30+ assets
@@ -77,7 +81,7 @@ HVE Core supports a 9-stage lifecycle from initial setup through ongoing operati
 
 ## Agent Systems
 
-Specialized agents are organized into functional groups that combine agents, prompts, and instruction files into cohesive workflows.
+Specialized agents are organized into functional groups that combine agents, skills, and instruction files into cohesive workflows.
 
 * [RPI Orchestration](rpi/) separates complex tasks into research, planning, implementation, and review phases
 * [Project Planning](agents/project-planning/) creates ADRs, BRDs, PRDs, architecture diagrams, and security plans through guided AI workflows
@@ -91,8 +95,9 @@ Specialized agents are organized into functional groups that combine agents, pro
 Research, Plan, Implement, Review (RPI) decomposes complex engineering tasks into phase skills coordinated by RPI Agent or invoked directly.
 
 * [Why RPI?](rpi/why-rpi.md) explains the problem statement and design rationale
-* [RPI overview](rpi/) introduces RPI Agent, `/rpi`, and the direct `rpi-*` phase skills
+* [RPI overview](rpi/) introduces RPI Agent and the direct `rpi-*` phase skills
 * [Using Together](rpi/using-together.md) describes phase coordination and workspace-local evidence
+* [RPI Workflow Canvas](rpi/rpi-workflow-canvas.md) shows a session phase by phase beside the chat, where you answer the agent's decisions and send it input
 * [Share Work for Another Contributor](rpi/shared-work-handoff.md) explains optional checked-in continuation between named teammates
 
 **[RPI Documentation →](rpi/)**

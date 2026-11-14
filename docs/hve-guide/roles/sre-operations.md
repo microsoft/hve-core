@@ -3,7 +3,7 @@ title: SRE / Operations Guide
 description: HVE Core support for SRE and operations engineers managing infrastructure, incidents, and deployment workflows
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - SRE
@@ -16,7 +16,7 @@ estimated_reading_time: 10
 This guide is for you if you manage infrastructure, handle incidents, deploy systems, maintain CI/CD pipelines, or ensure production reliability. SRE and operations engineers have 13+ addressable assets spanning infrastructure as code, incident response, security operations, and deployment automation.
 
 > [!CAUTION]
-> The security agents and prompts referenced in this guide are **assistive tools only**.
+> The security agents and skills referenced in this guide are **assistive tools only**.
 > They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review.
 > All AI-generated security plans, security models, risk registers, and incident response runbooks **must** be reviewed and validated by qualified security professionals before use.
 > AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
@@ -25,9 +25,9 @@ This guide is for you if you manage infrastructure, handle incidents, deploy sys
 ## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
+> Install the [HVE Core plugin](../../getting-started/methods/cli-plugins.md) for the complete active component set in VS Code or Copilot CLI.
 >
-> For selective clone adoption, choose infrastructure-as-code standards, incident response, supply chain security, and investigation components that match your operational responsibilities. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
+> To copy HVE Core into your repository, use the included `hve-core-installer` skill. It copies the full set, including the infrastructure-as-code standards, incident response, supply chain security, and investigation components this role uses most. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 
@@ -115,9 +115,9 @@ encryption at rest. Output the connection string to the Vault KV store.
 | **sssc-planner**     | Supply chain security assessment for infrastructure | Agent file                 |
 | **code-review**      | Pull request review for infrastructure changes      | Agent file                 |
 
-Prompts complement the agents for operational workflows:
+Skills complement the agents for operational workflows:
 
-| Prompt            | Purpose                                  | Invoke               |
+| Skill             | Purpose                                  | Invoke               |
 |-------------------|------------------------------------------|----------------------|
 | incident-response | Incident response runbook creation       | `/incident-response` |
 | git-commit        | Conventional commit message generation   | `/git-commit`        |

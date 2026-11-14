@@ -3,7 +3,7 @@ title: "Stage 1: Setup"
 description: Install and configure HVE Core tooling for your project with guided onboarding
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -30,7 +30,7 @@ You enter Setup when starting a new project or joining an existing engagement th
 | Tool          | Type        | How to Invoke                                            | Purpose                                         |
 |---------------|-------------|----------------------------------------------------------|-------------------------------------------------|
 | installer     | Skill       | Ask any agent: "help me customize hve-core installation" | Install and configure HVE Core for your project |
-| git-setup     | Prompt      | `/git-setup`                                             | Configure Git settings for the project          |
+| git-setup     | Skill       | `/git-setup`                                             | Configure Git settings for the project          |
 | writing-style | Instruction | Auto-activated on `**/*.md`                              | Enforces voice and tone conventions             |
 | markdown      | Instruction | Auto-activated on `**/*.md`                              | Enforces Markdown formatting rules              |
 | hve-builder   | Instruction | Auto-activated on AI artifacts                           | Enforces authoring standards                    |
@@ -43,9 +43,9 @@ For role-specific onboarding paths, see the [Role Guides](../roles/).
 
 ## Starter Prompts
 
-Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core), or use a [clone-based method](../../getting-started/install.md):
+Install the [HVE Core plugin](../../getting-started/methods/cli-plugins.md), or choose another route in the [installation guide](../../getting-started/install.md):
 
-For selective clone adoption or MCP guidance, ask an agent to use the included `hve-core-installer` skill.
+To copy HVE Core into your repository, or for MCP guidance, ask an agent to use the included `hve-core-installer` skill.
 
 ```text
 Set up HVE Core for my Python microservices project. Use a custom clone

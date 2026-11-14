@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-10-04
+ms.date: 2026-10-31
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -66,6 +66,54 @@ Workflow ownership is explicit:
     preparation, and lets release-please create the Stable tag and draft.
 * `release-vsix-publish.yml` is the sole post-tag producer for both channels.
 
+Every job that mints a release GitHub App token reads the app key from the
+`release-governance` environment, which admits only `main`, the two release
+branches, and the `v*` and `prerelease-v*` tags. The three merge-driven
+workflows therefore start on the push a reviewed merge produces rather than on
+the pull request event, whose `refs/pull/N/merge` ref the environment rejects.
+
+### Release Branch Gating
+
+The `release-branches` ruleset protects `release/prerelease` and
+`release/stable` against deletion and force pushes, and requires a pull
+request with one approval, approval of the most recent push, and stale-review
+dismissal. It deliberately does not require the `PR Validation Success` status
+check. The release workflows are designed so that release-branch pull
+requests carry only reviewed content:
+
+* Promotion pull requests that the preparation workflows generate carry `main`
+  content, and every change to `main` merged through a reviewed pull request
+  that passed the required checks of its time. Since 2026-10-04 that is
+  `PR Validation Success`, re-run in the merge queue. The preparation
+  workflows stop when merging `main` or the selected tag conflicts outside
+  the release-owned files: `CHANGELOG.md`, the channel release-please config
+  and manifest, the version fields, `plugin.json`, and
+  `.github/plugin/marketplace.json`. The workflow restores or writes those
+  files itself.
+* Managed release pull requests that release-please opens carry release-please
+  and version synchronization output.
+* Every hop needs a human approval of the latest push, and auto-merge is never
+  enabled.
+* After each merge, `release-prerelease.yml` and `release-stable-publish.yml`
+  revalidate the merged head identity and release intent before release-please
+  can create a tag, and `release-vsix-publish.yml` proves the tag, source
+  commit, channel branch, and committed release state before packaging.
+
+These properties describe workflow-generated pull requests; they are not
+enforced on content. No ruleset restricts who can push to a
+`release-promotion--*` or `release-please--*` head branch, merge-time
+revalidation checks head identity and release intent rather than the merged
+content, and the Stable promotion check accepts a head that is ahead of the
+selected tag. Anyone with write access can add commits to a release head
+branch, and the change can reach a tagged, signed release with only the
+approval of someone other than the last pusher. Release-branch merges are not
+gated by `PR Validation`.
+
+`PR Validation` still runs on pull requests into both release branches.
+Reviewing its result, and confirming that the pull request contains only the
+expected promotion or release-please commits, is part of the review steps
+below; it is a review step, not an enforced gate.
+
 ## How Releases Work
 
 ```mermaid
@@ -96,8 +144,8 @@ flowchart TD
 
 ### PreRelease Flow
 
-1. `Pre-Release Promotion Preparation` runs after an eligible merged PR to
-   `main`, or through its input-free recovery dispatch.
+1. `Pre-Release Promotion Preparation` runs on each push to `main` (a merged
+   PR), or through its input-free recovery dispatch.
 2. It refreshes the target-based promotion head from `release/prerelease`,
    merges current `main`, restores channel-owned release state, writes the
    exact `release-as`, and opens a reviewed PR to `release/prerelease`.
@@ -168,6 +216,11 @@ fixed-name VSIX and dependency SBOM through digest-checked transfers. It never
 installs dependencies or packages the extension. No job both packages and
 signs.
 
+`release-vsix-publish.yml` sets `cache-mode: none`, so the post-tag producer
+and every workflow it calls, including the pinned signer, run without GitHub
+Actions cache access. Each release installs its dependencies fresh, and no
+cache written by another workflow can influence the signed VSIX.
+
 The signer revision is pinned, and Dependabot ignores it. Update the caller in
 `release-vsix-publish.yml`, the expected signer revisions in the release and
 Marketplace publish workflows, the extension tests, and the `--signer-digest`
@@ -187,17 +240,25 @@ and does not rebuild the extension.
 
 ### Required Tag Governance
 
-Tag governance is a mandatory activation prerequisite for post-tag production,
-but it is not yet active or proven. The intended repository configuration has
-two rulesets:
+Tag governance is a mandatory activation prerequisite for post-tag production.
+Both tag rulesets were created on 2026-10-04 (Pacific time), are active,
+and target `refs/tags/v*` and `refs/tags/prerelease-v*`:
 
 * `release-tags-creation-by-release-app` restricts creation only and grants a
     bypass to the Release App
 * `release-tags-immutable` restricts updates, deletion, and force pushes with
     no bypass
 
-Do not interpret this intended configuration as evidence that either ruleset
-is installed.
+No release has run under these rulesets yet. The provenance signer checks
+both rulesets before packaging, but its token cannot see bypass lists, so it
+cannot detect another actor added as a bypass. Before each release, a
+repository administrator completes this audit:
+
+1. Open **Settings → Rules → Rulesets** for `microsoft/hve-core`.
+2. Confirm `release-tags-creation-by-release-app` is active and lists only the
+    Release App as a bypass actor.
+3. Confirm `release-tags-immutable` is active and lists no bypass actors.
+4. Stop the release if either check fails.
 
 > [!IMPORTANT]
 > This release architecture does not establish SLSA Build Level 3. Future
@@ -257,7 +318,7 @@ entries. Commit type does not select the release version.
 
 ```bash
 # Feature changelog entry
-git commit -m "feat: add new prompt for code review"
+git commit -m "feat: add new skill for code review"
 
 # Fix changelog entry
 git commit -m "fix: resolve parsing error in instruction files"
@@ -269,7 +330,7 @@ git commit -m "docs: update installation guide"
 git commit -m "feat!: redesign configuration schema"
 ```
 
-For more details, see the [commit message instructions](https://github.com/microsoft/hve-core/blob/main/.github/instructions/hve-core/commit-message.instructions.md).
+For more details, see the [commit message conventions in the `git-commit` skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/git-commit/references/commit-message.md).
 
 ## For Maintainers
 
@@ -437,7 +498,7 @@ matching channel workflow dispatch fallback:
 
 Publish the extension after merging a Release PR that includes extension-relevant changes:
 
-* New prompts, instructions, or custom agents
+* New skills, instructions, or custom agents
 * Bug fixes affecting extension behavior
 * Updated extension metadata or documentation
 
@@ -445,7 +506,7 @@ Documentation-only releases may not require an extension publish.
 
 ## Historical Release Identities
 
-Because snapshot publication has stopped, tags and catalogs remain immutable and supported only as historical records. Existing `hve-core-v<version>` and `plugins-v<version>` tags, releases, and catalogs are within that historical set. They are not active registration, publication, recovery, or compatibility namespaces. Current automation does not create, move, rewrite, delete, or migrate them.
+Because snapshot publication has stopped, tags and catalogs are supported only as historical records. Existing `hve-core-v<version>` and `plugins-v<version>` tags, releases, and catalogs are within that historical set. These tag names fall outside the `v*` and `prerelease-v*` tag rulesets, so no ruleset protects them. They are not active registration, publication, recovery, or compatibility namespaces. Current automation does not create, move, rewrite, delete, or migrate them.
 
 ## Version Quick Reference
 

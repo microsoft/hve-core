@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-10-03
+ms.date: 2026-10-31
 ms.topic: guide
 keywords:
   - copilot
@@ -38,7 +38,7 @@ Select from the **agent picker dropdown** in the Chat view:
 
 The RPI lifecycle keeps Research, Plan, Implement, Review, and Follow-up distinct for complex development tasks. It begins with research readiness: supplied or completed evidence is reused when adequate, and research runs only for a demonstrated requirements, acceptance, dependency, material-risk, complexity, uncertainty, or decision-critical gap.
 
-`RPI Agent` is a user-selected lifecycle wrapper that activates the matching RPI skills. It runs in manual mode by default and can switch to a confirmed automatic session that completes the remaining phases through Review. The `/rpi` prompt provides the same full-lifecycle entry point. Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` when you need a direct phase entry point.
+`RPI Agent` is a user-selected lifecycle wrapper that activates the matching RPI skills. It runs in manual mode by default and can switch to a confirmed automatic session that completes the remaining phases through Review. Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` when you need a direct phase entry point.
 
 Use the self-contained `rpi-challenger` skill to interrogate a confirmed subject through adaptive skeptical questions, and `rpi-walkthrough` to understand code or RPI artifacts one segment at a time. See the [RPI Documentation](../docs/rpi/README.md) for all surfaces.
 
@@ -102,9 +102,12 @@ subagents, and skills.
 * `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
 * `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`
 
-**Modes:** Manual mode stays in the active phase until you invoke the next `/rpi-*` command or select a phase handoff. The **Full Auto** handoff requests an automatic session; after you confirm whether ordinary Research and Plan decisions are agent-owned or user-retained, the agent continues through Review without routine approval prompts.
+**Modes:** When your request doesn't say how to proceed, the agent asks how you want to work: handle it end to end, keep going but check with you on unclear decisions, research and plan with you and stop before implementation, or work through each phase with you.
+Asking for "full auto" or "automatic mode" starts an automatic session without the question. Manual mode stays in the active phase until you invoke the next `/rpi-*` command or ask for the next phase. An automatic session continues through Review without routine approval prompts.
 
 After Review, an automatic session offers ranked follow-up choices plus **Stop automatic session** and **Switch to manual mode**. Blockers, required human review, and destructive or externally visible actions still stop for confirmation.
+
+**Canvas:** When the host offers canvases, the agent opens the RPI Workflow canvas on its session, where you follow each phase, answer the agent's decisions, and send it input that it reads back. See the [RPI Workflow Canvas guide](../docs/rpi/rpi-workflow-canvas.md).
 
 **Critical:** `RPI Agent` is a user-selected lifecycle wrapper, not a dispatcher for named specialized task workers. Automatic mode begins only after explicit confirmation and never infers consent from a handoff request. It may use generic bounded delegation only when it materially improves an isolated activity. Navigate durable artifacts with the task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
 
@@ -189,7 +192,8 @@ After Review, an automatic session offers ranked follow-up choices plus **Stop a
 
 **Workflow:** Discover → Extract → Synthesize → Handoff
 
-**Critical:** Experimental. Requires the `workiq` MCP server in `.vscode/mcp.json` (not included in the installer skill or curated MCP documentation; see [official documentation](https://learn.microsoft.com/microsoft-365-copilot/extensibility/workiq-overview#install-in-vs-code) for setup). Requires `mcp_workiq_accept_eula` call before querying. Uses `mcp_workiq_ask_work_iq` for Microsoft 365 meeting data. Query budget of approximately 30 per session. Hands off to **prd-builder** for PRD creation.
+**Critical:** Experimental. Requires the `workiq` MCP server in `.mcp.json` (see [MCP Server Configuration](../docs/getting-started/mcp-configuration.md#workiq) and the [official documentation](https://learn.microsoft.com/microsoft-365-copilot/extensibility/workiq-overview#install-in-vs-code) for setup).
+Requires `mcp_workiq_accept_eula` call before querying. Uses `mcp_workiq_ask_work_iq` for Microsoft 365 meeting data. Query budget of approximately 30 per session. Hands off to **prd-builder** for PRD creation.
 
 **Data Sensitivity Warning:** Meeting transcripts retrieved by this agent may contain PII, customer confidential information, and proprietary business data. Analysis files and state files are written to `.copilot-tracking/prd-sessions/` which is gitignored by default when following HVE Core setup guidance, but the files exist **unencrypted on disk**.
 Users are responsible for verifying their repository's `.gitignore` configuration, complying with their organization's data handling policies, and deleting both the `<name>-transcript-analysis.md` and `<name>-transcript.state.json` files after the PRD handoff is complete. The agent will prompt for deletion at handoff completion, but deletion is the user's responsibility.
@@ -266,7 +270,7 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Creates:** Merged review artifacts in a normalized branch folder:
 
-* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/review.md` (merged review document, per the shared persistence protocol in `review-artifacts.instructions.md`)
+* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/review.md` (merged review document, per the shared persistence protocol in the `code-review` skill's `references/review-artifacts.md`)
 * `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/metadata.json` (review metadata record)
 
 **Workflow:** Context Bootstrap → Human Scope Confirmation → Perspective + Depth Selection → Prepare Dispatch State → Dispatch Selected Perspectives → Merge and Persist
@@ -294,7 +298,7 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 ### Coordinating an RPI Lifecycle
 
-1. Select **RPI Agent** from the agent picker, or use `/rpi` for the full-lifecycle prompt entry point.
+1. Select **RPI Agent** from the agent picker for the full-lifecycle entry point.
 2. Provide the task, acceptance criteria, decisions, dependencies, and any completed research.
 3. Assess research readiness before activating `rpi-research`; reuse adequate evidence instead of repeating research.
 4. Continue through the applicable phase skills and resume from the durable artifact set when a long lifecycle needs a fresh context.
@@ -334,7 +338,7 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 * **Agent Switching:** Clear context or start a new chat when switching between specialized agents
 * **Evidence Readiness:** `rpi-plan` uses supplied or complete evidence and activates `rpi-research` only for a demonstrated readiness gap
 * **Phase Ownership:** `rpi-research` and `rpi-plan` produce evidence and planning artifacts; `rpi-implement` owns source changes
-* **RPI entry surfaces:** `RPI Agent` and `/rpi` activate the same phase skills; neither requires a fixed specialized task-worker roster
+* **RPI entry surfaces:** `RPI Agent` coordinates the same phase skills that `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` run directly; neither path requires a fixed specialized task-worker roster
 
 ## Tips
 

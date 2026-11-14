@@ -1,32 +1,33 @@
 ---
 title: TTS Voice-Over Skill
-description: Generate per-slide WAV voice-over files from YAML speaker notes using Azure Speech SDK or an offline Piper engine
+description: Generate per-slide WAV voice-over files from YAML speaker notes using Azure AI Speech neural voices
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-09-23
+ms.date: 2026-10-28
 ms.topic: how-to
 keywords:
   - tts
   - voice-over
   - azure speech
   - ssml
-  - powerpoint
+  - narration
 estimated_reading_time: 5
 ---
 
-The `tts-voiceover` skill generates per-slide WAV voice-over files from YAML speaker notes using the Azure Speech SDK with SSML pronunciation control for technical acronyms.
+The `tts-voiceover` skill generates per-slide WAV voice-over files from YAML speaker notes using Azure AI Speech neural voices with SSML pronunciation control for technical acronyms.
 
 ## Overview
 
-This skill reads `content.yaml` files produced by the PowerPoint skill, extracts `speaker_notes` fields, applies SSML acronym aliases for correct pronunciation, and produces one WAV file per slide. An optional embedding step adds the WAV files back into the PPTX deck as auto-play media objects.
+This skill reads `content.yaml` files, extracts `speaker_notes`, applies SSML acronym aliases, and produces one WAV per slide. Use `demo-video` to assemble narration with visuals, or `hve-demo-material` for the HTML/frame/MP4/caption workflow. Presentation-file embedding is retired.
 
 ## Prerequisites
 
-| Requirement           | Details                                                               |
-|:----------------------|:----------------------------------------------------------------------|
-| Azure Speech resource | Free tier provides 500K characters per month                          |
-| Python 3.11+          | With [uv](https://docs.astral.sh/uv/) for environment management      |
-| Authentication        | Key-based (`SPEECH_KEY`) or Microsoft Entra ID (`SPEECH_RESOURCE_ID`) |
+| Requirement           | Details                                                                                                        |
+|:----------------------|:---------------------------------------------------------------------------------------------------------------|
+| Azure Speech resource | See [Azure AI Speech pricing](https://azure.microsoft.com/pricing/details/speech/) for the free-tier allowance |
+| Python 3.11+          | With [uv](https://docs.astral.sh/uv/) for environment management                                               |
+| Authentication        | Microsoft Entra ID (`SPEECH_RESOURCE_ID`, recommended) or a resource key (`SPEECH_KEY`)                        |
+| Region                | `SPEECH_REGION`, required, with no default                                                                     |
 
 ## Setup
 
@@ -39,19 +40,27 @@ uv sync
 
 ### Configure Authentication
 
-Key-based authentication (simplest):
+Microsoft Entra ID authentication is recommended because it avoids storing a long-lived key. It requires a custom domain on the Speech resource and the `Cognitive Services Speech User` role for your identity. The script signs in through `DefaultAzureCredential`, so an `az login` session works:
+
+```bash
+export SPEECH_RESOURCE_ID="/subscriptions/.../Microsoft.CognitiveServices/accounts/your-resource"
+export SPEECH_REGION="eastus"
+```
+
+Key-based authentication:
 
 ```bash
 export SPEECH_KEY="your-speech-key"
 export SPEECH_REGION="eastus"
 ```
 
-Microsoft Entra ID authentication (requires a custom domain on the Speech resource and `Cognitive Services Speech User` role):
+When both are set, the script uses the key and logs a warning.
 
-```bash
-export SPEECH_RESOURCE_ID="/subscriptions/.../Microsoft.CognitiveServices/accounts/your-resource"
-export SPEECH_REGION="eastus"
-```
+### Data Handling and Disclosure
+
+Speaker notes are sent to Azure AI Speech in the region you set. For prebuilt neural voices, Microsoft states that neither the input text nor the output audio is stored in Microsoft logs. See [Data, privacy, and security for text to speech](https://learn.microsoft.com/azure/foundry/responsible-ai/speech-service/text-to-speech/data-privacy-security). Choose an approved region and leave regulated or confidential content out of narration.
+
+The narration is a synthetic voice. Tell listeners so, following the [disclosure design guidelines for synthetic voices](https://learn.microsoft.com/azure/foundry/responsible-ai/speech-service/text-to-speech/concepts-disclosure-guidelines).
 
 ## Usage
 
@@ -69,27 +78,12 @@ uv run scripts/generate_voiceover.py --dry-run --content-dir path/to/content
 uv run scripts/generate_voiceover.py --content-dir path/to/content --output-dir voice-over
 ```
 
-To generate narration offline without an Azure Speech resource, install [Piper](https://github.com/OHF-Voice/piper1-gpl) separately, download a voice, and select the `piper` engine:
+### 3. Assemble Narration with Visuals
 
-```bash
-uv tool install piper-tts
-uvx --from piper-tts python -m piper.download_voices en_US-joe-medium --data-dir ~/.local/share/piper
-uv run scripts/generate_voiceover.py --engine piper --piper-data-dir ~/.local/share/piper \
-  --content-dir path/to/content --output-dir voice-over
-```
-
-Piper is GPL-3.0-or-later and is not installed with the skill. Each voice has its own license in its model card; the default `en_US-joe-medium` voice is CC0. Piper sounds less natural than Azure neural voices, so prefer Azure for published narration.
-
-### 3. Embed Audio into PPTX
-
-Embedding adds WAV files as media objects and injects narration timing XML so
-PowerPoint recognizes the audio for video export.
-
-```bash
-uv run scripts/embed_audio.py --input deck.pptx --audio-dir voice-over
-```
-
-After embedding, use **File > Export > Create a Video > Use Recorded Timings and Narrations** in PowerPoint to produce an MP4 with synchronized audio.
+Hand the WAVs and matching frames or clips to `demo-video`. For levelled training,
+use `hve-demo-material`, which renders HTML through HVE Slides, exports matching
+frames, and retains captions and a transcript. Standalone HTML and narrated MP4
+are separate deliverables; the HTML deck does not embed audio/video.
 
 ## Cross-Platform Wrappers
 
@@ -99,14 +93,12 @@ Bash and PowerShell wrappers manage the Python virtual environment automatically
 
 ```bash
 ./scripts/generate-voiceover.sh --dry-run --content-dir content
-./scripts/embed-audio.sh --input deck.pptx --audio-dir voice-over
 ```
 
 ### PowerShell
 
 ```powershell
 ./scripts/Invoke-GenerateVoiceover.ps1 -DryRun -ContentDir content
-./scripts/Invoke-EmbedAudio.ps1 -InputPath deck.pptx -AudioDir voice-over
 ```
 
 Both wrappers accept `--skip-venv-setup` / `-SkipVenvSetup` to skip `uv sync` when the environment is already initialized.
@@ -130,7 +122,7 @@ Lexicon resolution order:
 
 ## Content Directory Structure
 
-The skill expects the same directory structure produced by the PowerPoint skill:
+The skill expects this slide content directory structure:
 
 ```text
 content/
@@ -149,7 +141,6 @@ content/
 | 401 with Entra ID auth                     | Verify custom domain and `Cognitive Services Speech User` role assignment |
 | Empty WAV files                            | Verify `speaker_notes:` is present and non-empty in `content.yaml`        |
 | Mispronounced acronyms                     | Add entries to `acronyms.yaml` with phonetic aliases                      |
-| Video export shows "No timings recorded"   | Re-embed audio with the latest `embed_audio.py`                           |
 
 ## Related Resources
 

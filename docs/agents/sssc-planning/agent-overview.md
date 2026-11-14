@@ -11,7 +11,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-11-10
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -45,7 +45,7 @@ flowchart TD
   SP -->|"follows"| I1 & I2
 ```
 
-The agent is driven by a single consolidated SSSC instruction file (`sssc-planner.instructions.md`) plus the shared planner base (`planner-identity-base.instructions.md`), with phase-specific guidance carried in the agent definition itself rather than in separate per-phase instruction files.
+The agent is driven by a single consolidated SSSC instruction file (`sssc-planner.instructions.md`) plus the shared `planner-identity` skill, with phase-specific guidance carried in the agent definition itself rather than in separate per-phase instruction files.
 
 ## State Management
 
@@ -100,7 +100,7 @@ The agent follows strict question rules during each phase:
 | Guardrail                             | Description                                                                                        |
 |---------------------------------------|----------------------------------------------------------------------------------------------------|
 | 3-5 questions per turn                | Enough to make progress without overwhelming the user                                              |
-| Emoji checklists                      | Questions use ❓ for pending, ✅ for answered, and ❌ for blocked items                               |
+| Emoji checklists                      | Questions use ❓ for pending, ✅ for answered, and ❌ for blocked items                            |
 | No phase advance without confirmation | The agent summarizes phase findings and asks for explicit approval before moving to the next phase |
 
 ## Session Resume
@@ -127,7 +127,6 @@ When conversation context was compacted by the chat system, the agent also reads
 | File type    | Location                                                 |
 |--------------|----------------------------------------------------------|
 | Agent        | `.github/agents/security/sssc-planner.agent.md`          |
-| Prompts      | `.github/prompts/security/sssc-*.prompt.md`              |
 | Instructions | `.github/instructions/security/`                         |
 | Skill        | `.github/skills/security/supply-chain-security/`         |
 | State        | `.copilot-tracking/sssc-plans/{project-slug}/state.json` |

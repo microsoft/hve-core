@@ -2,10 +2,9 @@
 name: Supply Chain Skill Assessor
 description: "Assesses supply-chain posture against the supply-chain skill and returns structured findings"
 tools:
-  - search/codebase
-  - search/fileSearch
-  - search/textSearch
-  - read/readFile
+  - search
+  - read
+  - skill
 user-invocable: false
 ---
 

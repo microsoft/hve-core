@@ -3,7 +3,7 @@ title: Code Review Standards Output Format
 description: Report template and findings format for the Code Review Standards perspective
 sidebar_position: 9
 author: microsoft/hve-core
-ms.date: 2026-08-01
+ms.date: 2026-11-03
 ms.topic: reference
 keywords:
   - code review
