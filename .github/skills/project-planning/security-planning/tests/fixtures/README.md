@@ -1,7 +1,7 @@
 ---
 title: TM7 test fixtures
 description: Provenance, licensing, and maintenance rules for the TM7 test fixtures.
-ms.date: 2026-08-07
+ms.date: 2026-11-11
 ms.topic: reference
 ---
 
@@ -21,6 +21,9 @@ against every `.tm7` in the upstream repository and match none of them.
 * `expected.tm7` and `tmp-sample.tm7` are first-party pinned golden files.
 * `comprehensive-spec.yaml` is first-party, a pinned regression snapshot of
   `docs/planning/threat-models/hve-core-comprehensive.yaml`.
+* `visual-feedback/valid-manifest.json` and `visual-feedback/valid-overlay.yaml`
+  are first-party, synthetic inputs for the visual-feedback manifest and layout
+  overlay loaders.
 
 ### tmt-reference.tm7
 
