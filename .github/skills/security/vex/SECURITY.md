@@ -2,7 +2,7 @@
 title: VEX Skill Security Model
 description: STRIDE threat model for the vex skill runtime (vex_gate.py) organized by assets, adversaries, and trust buckets (untrusted detection-issue body parsing, OpenVEX document parsing, gate decision with an adjacent workflow-owned fetch) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-08-09
+ms.date: 2026-11-11
 ms.topic: reference
 estimated_reading_time: 7
 keywords:
@@ -17,13 +17,13 @@ keywords:
 
 This document records the STRIDE threat model for the vex skill's executable runtime, `scripts/vex_gate.py`. The model is organized by trust bucket: untrusted detection-issue body parsing (B1), OpenVEX document parsing (B2), and the gate decision with its adjacent workflow-owned fetch (B3). Each bucket enumerates all six STRIDE categories with the in-code mitigations that address them. Assets and adversaries are enumerated first. Acknowledged enterprise readiness gaps are listed at the end.
 
-The skill is otherwise a markdown knowledge pack (`SKILL.md` plus `references/` and `assets/`); only `scripts/vex_gate.py` is executable. That script is a deterministic gate: it reads a detection-issue body from **stdin**, reads an OpenVEX JSON document from a **local path** passed as its first argument, decides whether the `vex-draft` agentic workflow should proceed, and returns an exit code (`0` proceed, `1` skip). It handles no credentials, opens no network connection, spawns no subprocess, writes no files, and parses JSON with `json.loads` (never `pickle` or a YAML object loader). The upstream fetch of the issue body, the OpenVEX document, and this gate script itself — and the `GH_TOKEN` those calls use — is a **separate, workflow-owned step** in `.github/workflows/vex-draft.md` (`gh issue view` and `gh api`), governed by that workflow's `contents: read` / `issues: read` permissions. In production the `vex-draft` workflow fetches `scripts/vex_gate.py` from the default branch through that same contents API and executes it directly, so the deployed gate is exactly the code this model's test suite covers — there is no separately maintained inline reimplementation that could drift.
+The skill is otherwise a markdown knowledge pack (`SKILL.md` plus `references/` and `assets/`); only `scripts/vex_gate.py` is executable. That script is a deterministic gate: it reads a detection-issue body from **stdin**, reads an OpenVEX JSON document from a **local path** passed as its first argument, decides whether the `vex-draft` agentic workflow should proceed, and returns an exit code (`0` proceed, `1` skip, or `2` when the path argument is missing). It handles no credentials, opens no network connection, spawns no subprocess, writes no files, and parses JSON with `json.loads` (never `pickle` or a YAML object loader). The upstream fetch of the issue body, the OpenVEX document, and this gate script itself — and the `GH_TOKEN` those calls use — is a **separate, workflow-owned step** in `.github/workflows/vex-draft.md` (`gh issue view` and `gh api`), governed by that workflow's `contents: read` / `issues: read` permissions. In production the `vex-draft` workflow fetches `scripts/vex_gate.py` from the default branch through that same contents API and executes it directly, so the deployed gate is exactly the code this model's test suite covers — there is no separately maintained inline reimplementation that could drift.
 
 > **See also: repo-wide STRIDE model.** This skill participates in the repository-wide threat model at [`docs/security/security-model.md`](../../../../docs/security/security-model.md) and is registered in its [Skill Security Models](../../../../docs/security/security-model.md#skill-security-models) section.
 
 ## Executive Summary
 
-The vex skill's highest-risk behavior is **parsing an externally authorable GitHub issue body** (the VEX detection issue) to decide whether an AI drafting workflow spends credits. Finding IDs are extracted only from the first cell of each markdown table row and only when they match an anchored vulnerability-ID allowlist (`^(?:CVE|GHSA|PYSEC|OSV|RUSTSEC|GO|GMS|GLSA|DSA|USN|ALSA|ELSA|RHSA)-[0-9A-Za-z._-]+$`), so header rows, separator rows, and injected free-text cannot register as findings. The regex has no nested quantifiers, so it is not vulnerable to catastrophic backtracking. The OpenVEX document is read with `json.loads` and walked for statement `status` values only; a corrupt or unreadable document is caught and treated as absent, which makes the gate **proceed** (favouring triage over a silent skip). The script performs no network, credential, subprocess, or file-write activity; the fetch that supplies its inputs is delegated to the `vex-draft` workflow and inherits that workflow's permissions and credit-budget guardrails. Residual risk concentrates in gate-decision tampering by a party with issue-edit access (bounded by the bot-owned, `automated`-labelled detection issue) and AI-credit consumption from a forced proceed (bounded by the workflow's credit budgets and `skip-if-match`).
+The vex skill's highest-risk behavior is **parsing an externally authorable GitHub issue body** (the VEX detection issue) to decide whether an AI drafting workflow spends credits. Finding IDs are extracted only from the first cell of each markdown table row and only when they match an anchored vulnerability-ID allowlist (`^(?:CVE|GHSA|PYSEC|OSV|RUSTSEC|GO|GMS|GLSA|DSA|USN|ALSA|ELSA|RHSA)-[0-9A-Za-z._:-]+$`; the identifier body admits `:` so distro advisories such as `RHSA-2024:1234` parse), so header rows, separator rows, and injected free-text cannot register as findings. The regex has no nested quantifiers, so it is not vulnerable to catastrophic backtracking. The OpenVEX document is read with `json.loads` and walked for statement `status` values only; a corrupt or unreadable document is caught and treated as absent, which makes the gate **proceed** (favouring triage over a silent skip). The script performs no network, credential, subprocess, or file-write activity; the fetch that supplies its inputs is delegated to the `vex-draft` workflow and inherits that workflow's permissions and credit-budget guardrails. Residual risk concentrates in gate-decision tampering by a party with issue-edit access (bounded by the bot-owned, `automated`-labelled detection issue) and AI-credit consumption from a forced proceed (bounded by the workflow's credit budgets and `skip-if-match`).
 
 ### Security Posture Overview
 
@@ -51,7 +51,7 @@ The vex skill's highest-risk behavior is **parsing an externally authorable GitH
 
 ### Components
 
-1. `scripts/vex_gate.py` — reads the detection-issue body from stdin, extracts finding IDs with an anchored allowlist regex (`parse_finding_ids`), reads the OpenVEX document from `argv[1]` with `json.loads`, walks its `statements` for terminal statuses (`_iter_statement_ids` / `all_terminal`), and returns `0` (proceed) or `1` (skip). No network, credentials, subprocess, or file writes.
+1. `scripts/vex_gate.py` — reads the detection-issue body from stdin, extracts finding IDs with an anchored allowlist regex (`parse_finding_ids`), reads the OpenVEX document from `argv[1]` with `json.loads`, walks its `statements` for terminal statuses (`_iter_statement_ids` / `all_terminal`), and returns `0` (proceed) or `1` (skip); called with no path argument it prints a usage line and returns `2`. No network, credentials, subprocess, or file writes.
 2. `SKILL.md`, `references/*.md`, `assets/pr-body-scaffold.yml` — non-executable knowledge and templates; no runtime surface.
 
 ### Data Flow
@@ -205,7 +205,7 @@ flowchart TD
 
 ### Denial of Service
 
-* The gate itself is `O(findings)`; input-driven DoS is addressed in B1 and B2. The pre-activation job is short-lived and non-privileged.
+* The gate itself is `O(findings)`; input-driven DoS is addressed in B1 and B2. The pre-activation job is short-lived and non-privileged. When the workflow cannot fetch the gate script, the step proceeds without running it; that forced proceed is bounded by the same credit budgets and `skip-if-match` guard (G-DOS-1).
 
 ### Elevation of Privilege
 
