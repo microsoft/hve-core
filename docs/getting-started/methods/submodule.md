@@ -3,7 +3,7 @@ title: Git Submodule Installation
 description: Set up HVE Core as a git submodule for version-controlled team consumption
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-10
 ms.topic: how-to
 keywords:
   - git submodule
@@ -281,13 +281,13 @@ To check the plugin, run **Developer: Reload Window**, confirm `RPI Agent` appea
 
 ## Comparison with Other Methods
 
-| Aspect               | Submodule           | Multi-Root        | Clone         |
-|----------------------|---------------------|-------------------|---------------|
-| Version controlled   | ✅  Yes              | ⚠️  Partial       | ❌  No         |
-| Team reproducibility | ✅  Same version     | ⚠️  May vary      | ⚠️  May vary  |
-| Update control       | ✅  Explicit commits | ⚠️  Automatic     | ⚠️  Automatic |
-| In workspace         | ✅  Subfolder        | ✅  Workspace root | ❌  External   |
-| Initial setup        | 🟡  Medium          | 🟡  Medium        | 🟢  Easy      |
+| Aspect               | Submodule            | Multi-Root         | Clone         |
+|----------------------|----------------------|--------------------|---------------|
+| Version controlled   | ✅  Yes              | ⚠️  Partial        | ❌  No        |
+| Team reproducibility | ✅  Same version     | ⚠️  May vary       | ⚠️  May vary  |
+| Update control       | ✅  Explicit commits | ⚠️  Automatic      | ⚠️  Automatic |
+| In workspace         | ✅  Subfolder        | ✅  Workspace root | ❌  External  |
+| Initial setup        | 🟡  Medium           | 🟡  Medium         | 🟢  Easy      |
 
 ## Next Steps
 

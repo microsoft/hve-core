@@ -99,7 +99,7 @@ jobs:
 engine:
   id: copilot
   # Pinned Copilot CLI; scripts/security/tool-checksums.json records it.
-  version: "1.0.87"
+  version: "1.0.103"
 runs-on: ubuntu-24.04
 runs-on-slim: ubuntu-24.04
 runtimes:
@@ -144,8 +144,11 @@ safe-outputs:
   report-failed-jobs: false
   report-failure-as-issue: false
   report-incomplete: false
-  missing-tool: false
-  missing-data: false
+  report-missing-tool: false
+  report-missing-data: false
+  noop:
+    max: 1
+    report-as-issue: false
   jobs:
     publish-backlog-grooming-result:
       name: Publish the shard result
@@ -353,8 +356,9 @@ untrusted data.
   Treat the following as active work and never recommend closure while the
   referenced alert, exception, or advisory remains open:
   issues labeled `code-scanning`; issues carrying
-  `<!-- automation:security-scan:<rule-id> -->`,
-  `<!-- automation:security-scan-dismissed:<rule-id> -->`,
+  `<!-- automation:security-scan:<tool>:<rule-id> -->`,
+  `<!-- automation:security-scan-dismissed:<tool>:<rule-id> -->`,
+  the older rule-only forms of those two markers,
   `<!-- automation:code-scanning-exception:<tool>:<rule-id>:<path> -->`,
   `<!-- automation:code-scanning-exception-status:<tool>:<rule-id>:<path> -->`, or
   `<!-- automation:upstream-watch:<id> -->`;

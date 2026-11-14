@@ -1,7 +1,7 @@
 ---
 title: Asset documentation section bodies
 description: Human-authored scaffold bodies used by the asset documentation generator.
-ms.date: 2026-08-08
+ms.date: 2026-11-06
 ---
 
 <!-- BEGIN ASSET-DOC TEMPLATE: when-to-use-it -->

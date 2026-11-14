@@ -3,7 +3,7 @@ title: GitHub Codespaces Installation
 description: Set up HVE Core in GitHub Codespaces with committed plugin defaults or a cloned copy
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-10
 ms.topic: how-to
 keywords:
   - codespaces
@@ -35,11 +35,11 @@ GitHub Codespaces runs your repository in a cloud container with no access to yo
 
 ## Why Other Methods Don't Work in Codespaces
 
-| Feature                   | Local Devcontainer | GitHub Codespaces  |
-|---------------------------|--------------------|--------------------|
-| `${localWorkspaceFolder}` | ✅ Resolves to host | ❌ Not available    |
-| Bind mounts to host       | ✅ Full support     | ❌ No host access   |
-| Persistent storage        | Host filesystem    | `/workspaces` only |
+| Feature                   | Local Devcontainer  | GitHub Codespaces  |
+|---------------------------|---------------------|--------------------|
+| `${localWorkspaceFolder}` | ✅ Resolves to host | ❌ Not available   |
+| Bind mounts to host       | ✅ Full support     | ❌ No host access  |
+| Persistent storage        | Host filesystem     | `/workspaces` only |
 
 ## How It Works
 
@@ -299,14 +299,14 @@ Or add the `postStartCommand` from [Auto-Update on Codespace Start](#auto-update
 
 | Aspect                     | Status                                                           |
 |----------------------------|------------------------------------------------------------------|
-| Codespaces                 | ✅  Designed for this                                             |
+| Codespaces                 | ✅  Designed for this                                            |
 | Local devcontainers        | ⚠️  Works but consider other methods                             |
-| Team sharing               | ✅  Plugin defaults offered to everyone who opens the repository  |
-| Portable paths             | ✅  Relative paths inside the checkout                            |
+| Team sharing               | ✅  Plugin defaults offered to everyone who opens the repository |
+| Portable paths             | ✅  Relative paths inside the checkout                           |
 | Path-specific instructions | ⚠️  Not confirmed from declared folders; use the plugin defaults |
 | Version pinning            | ⚠️  Clone option with a release tag                              |
-| Offline support            | ❌  Requires network during creation                              |
-| Setup complexity           | ✅  Low (one committed settings file)                             |
+| Offline support            | ❌  Requires network during creation                             |
+| Setup complexity           | ✅  Low (one committed settings file)                            |
 
 ## Version Pinning
 

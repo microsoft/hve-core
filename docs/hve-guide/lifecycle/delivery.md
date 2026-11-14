@@ -3,7 +3,7 @@ title: "Stage 8: Delivery"
 description: Merge approved changes, verify builds, and update tracking systems for release
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-10-20
+ms.date: 2026-11-07
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -40,12 +40,11 @@ You enter Delivery after [Stage 7: Review](review.md) with an approved pull requ
 
 ### Auto-Activated Instructions
 
-| Instruction           | Activates On                        | Purpose                                                 |
-|-----------------------|-------------------------------------|---------------------------------------------------------|
-| backlog-guardrails    | Files under a backlog tracking root | Requires backlog-management before any tracker mutation |
-| community-interaction | Backlog agent and GitHub reference  | Enforces community communication standards              |
+| Instruction        | Activates On                        | Purpose                                                 |
+|--------------------|-------------------------------------|---------------------------------------------------------|
+| backlog-guardrails | Files under a backlog tracking root | Requires backlog-management before any tracker mutation |
 
-Backlog conventions and the Azure DevOps pull request protocol are no longer auto-activated instructions. They live in the `backlog-management` skill and load on demand when a workflow activates it.
+Backlog conventions, the Azure DevOps pull request protocol, and the GitHub community communication templates are no longer auto-activated instructions. They live in the `backlog-management` skill and load on demand when a workflow activates it.
 
 ## Role-Specific Guidance
 

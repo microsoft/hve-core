@@ -76,9 +76,9 @@ that was explained or investigated.
 
 | Agent Output Verdict     | `verdict` value         |
 |--------------------------|-------------------------|
-| ✅ Approve                | `approve`               |
+| ✅ Approve               | `approve`               |
 | 💬 Approve with comments | `approve_with_comments` |
-| ❌ Request changes        | `request_changes`       |
+| ❌ Request changes       | `request_changes`       |
 
 ## Orientation-First Artifacts
 

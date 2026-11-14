@@ -3,7 +3,7 @@ title: Git-Ignored Folder Installation
 description: Install HVE Core in a git-ignored folder for devcontainer environments
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-10
 ms.topic: how-to
 keywords:
   - git-ignored
@@ -245,15 +245,15 @@ The clone only happens if the folder doesn't exist. To force update:
 
 | Aspect                     | Status                                                             |
 |----------------------------|--------------------------------------------------------------------|
-| Devcontainers              | ✅  Designed for this                                               |
+| Devcontainers              | ✅  Designed for this                                              |
 | Codespaces                 | ⚠️  Works but not optimal (use [Codespaces method](codespaces.md)) |
 | Team sharing               | ⚠️  Each developer clones separately                               |
-| Portable paths             | ✅  Option B uses relative paths inside the checkout                |
+| Portable paths             | ✅  Option B uses relative paths inside the checkout               |
 | Path-specific instructions | ⚠️  Load with Option A; not confirmed with Option B                |
 | Workspace trust            | ⚠️  Option B folders load only in a trusted workspace folder       |
 | Version pinning            | ⚠️  Manual (modify clone command)                                  |
 | Disk usage                 | ⚠️  Per-project copy                                               |
-| Setup complexity           | ✅  Simple                                                          |
+| Setup complexity           | ✅  Simple                                                         |
 
 ## Next Steps
 

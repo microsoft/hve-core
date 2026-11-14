@@ -1,0 +1,1999 @@
+{
+  "schemaVersion": "1.0.0",
+  "snapshotDate": "2026-11-02",
+  "status": "debug-current-state-human-review-pending",
+  "run": {
+    "runId": "pr-3136-adhoc-v7-debug-20261102-01",
+    "protocol": "ad-hoc-v7",
+    "profile": "debug",
+    "modelIdentifier": "gpt-5.6-luna",
+    "immutableModelBuild": "not-exposed-by-host",
+    "reasoningEffort": "medium",
+    "contextTier": "default",
+    "cliVersion": "GitHub Copilot CLI 1.0.101.",
+    "nodeVersion": "v26.13.0",
+    "repositoryCommitAtStart": "876719d2b0b10cf79442d7d4154d7429dfa4480f",
+    "evaluatedUncommittedChanges": true,
+    "inputFingerprint": "05ccbcde7efb20ee7ce4641015f1ba4ed8bcb20652d2cdcf6d06d02a6e75bae0",
+    "packageLockSha256": "ac3d9e91d05889647445032e68b4f4e0c0c0f7b17e86cce484dac395c6ccf7c9",
+    "readerBundleIdentity": "hyparquet@1.31.5:fdd28364b0dde800dea00979cbd3ddee26a053bb0d15b17820e0f865b9ab8178",
+    "startedAt": "2026-11-02T22:59:45.599Z",
+    "completedRounds": [
+      1,
+      2,
+      3
+    ],
+    "conditions": [
+      "with-skill",
+      "without-skill"
+    ],
+    "retries": "none",
+    "productionAuthorization": false
+  },
+  "dataset": {
+    "name": "phamquiluan/RCAEval",
+    "url": "https://huggingface.co/datasets/phamquiluan/RCAEval",
+    "revision": "afeacb11bcc94dadfd1c8f483ee4377b2b8b614e",
+    "license": "MIT",
+    "transformationVersion": "2.0.0"
+  },
+  "sourceArtifactHashes": {
+    "run-manifest.json": "37416f58753f8144258bfc34449ebf1ee708f56a7b6871e2d2be7a1734039367",
+    "evaluation-summary.json": "614d8ee0afb110ab4afe6a97c24c6e7b4a4a271764a8981f898e21da6c9b944f",
+    "inputs/scorer-only/preparation-manifest.json": "49d612e92dfb7a1901f58075765fc49973f6438ecffeacfe05009dde497d4925"
+  },
+  "cases": [
+    {
+      "caseId": "case-01",
+      "sourcePath": "re1ob_adservice_cpu_1",
+      "heldOutService": "adservice",
+      "heldOutFault": "cpu",
+      "compatibleMechanism": "Abnormal CPU consumption or saturation in the held-out service.",
+      "metricColumnsSha256": "17248089abe87d59437ba5369636cf94e46064ed8ca67c293c94f6d4e5f16058",
+      "modalities": [
+        {
+          "modality": "metrics",
+          "rowCount": 4201,
+          "sha256": "79cd8f5002bdbaf526fb01eff5c29096cfbed99f1061c8e2f22206e7a7e56a8f"
+        }
+      ],
+      "sourceFiles": [
+        {
+          "sourcePath": "re1ob_adservice_cpu_1/inject_time.txt",
+          "objectId": "6a57189142bd8e3a693bc7972bd8cb104ef1830e",
+          "sha256": "392017698b9b1df43c5b9a5e96dfb9c19676348d67d2ee6a4ad2061abe729112",
+          "size": 10
+        },
+        {
+          "sourcePath": "re1ob_adservice_cpu_1/metrics.parquet",
+          "objectId": "b63e39684bb89cfd8bd34b18ac6f478ea4e564a3",
+          "sha256": "464dcc215afe145d37f8b107ea291df7ffc0691756d375c54ddc1c09d0a2ac74",
+          "size": 368024
+        }
+      ]
+    },
+    {
+      "caseId": "case-02",
+      "sourcePath": "re2ob_checkoutservice_delay_1",
+      "heldOutService": "checkoutservice",
+      "heldOutFault": "delay",
+      "compatibleMechanism": "Injected processing or request delay in the held-out service.",
+      "metricColumnsSha256": "71fc8486d3cd572e4edb196b4ce1d7b20086585f30c827273ad3067c09550239",
+      "modalities": [
+        {
+          "modality": "metrics",
+          "rowCount": 1441,
+          "sha256": "80eafdb2edd95d3342ae879cca5c88d7308fdf9d3b50d2dd604796439052dc38"
+        },
+        {
+          "modality": "logs",
+          "rowCount": 177868,
+          "sha256": "390c956679f33eedab915c37ac2fb57cb449d20802882b73a53468e11210b0f7"
+        },
+        {
+          "modality": "traces",
+          "rowCount": 405229,
+          "sha256": "e1eb5fadf67d632f85c01013d868cd7974aab4f56df85b2bffab82b9e571418a"
+        }
+      ],
+      "sourceFiles": [
+        {
+          "sourcePath": "re2ob_checkoutservice_delay_1/inject_time.txt",
+          "objectId": "ac78589b4127ea2c4c889cf19032f30c1091d1d8",
+          "sha256": "5b8132d68105c187d8aad124f7af4a8bdee399082a1fbf35f2f58aa9d1229d55",
+          "size": 10
+        },
+        {
+          "sourcePath": "re2ob_checkoutservice_delay_1/logs.parquet",
+          "objectId": "05c2845cbb3ed38222bfa01d397db97fada4f65f",
+          "sha256": "f3645724f7c021ba532deea938049a575b75d265e1e0535038f5ea5fbb854b16",
+          "size": 350672
+        },
+        {
+          "sourcePath": "re2ob_checkoutservice_delay_1/metrics.parquet",
+          "objectId": "635011e97d4e8b49dcc3051d510cef32f0005d28",
+          "sha256": "3a428e2e4792c6ceecd1e47c770477887b7c14c175347ac52b28011595d23088",
+          "size": 161729
+        },
+        {
+          "sourcePath": "re2ob_checkoutservice_delay_1/traces.parquet",
+          "objectId": "eaee3b2265d2bd9da5abad06681d62aa3c23f9cb",
+          "sha256": "a86818c7ab72aa360c3d81aafd9c4dc6a4da0ef75204cbf3a0c70d07a1fd44da",
+          "size": 10233639
+        }
+      ]
+    },
+    {
+      "caseId": "case-03",
+      "sourcePath": "re3ob_cartservice_f1_1",
+      "heldOutService": "cartservice",
+      "heldOutFault": "f1",
+      "compatibleMechanism": "A code-level condition compatible with the held-out f1 fault.",
+      "metricColumnsSha256": "20d6207ccb9ad29fd97e9d9ca4ff09f938672e7afd486d6c2cb3b83c41bbcbff",
+      "modalities": [
+        {
+          "modality": "metrics",
+          "rowCount": 1441,
+          "sha256": "4ad6503ddff80c1c2fde4a20dcc1550336714395b105b46b9ab532beaa52fd33"
+        },
+        {
+          "modality": "logs",
+          "rowCount": 65025,
+          "sha256": "7f1d3fc4ec07dc87eb2aa29914235e8ca19912c665ff8748887f4cd3adcdad1d"
+        },
+        {
+          "modality": "traces",
+          "rowCount": 148799,
+          "sha256": "457991ba9725e2296f527977148050ba5c38e7481e8bf8e6a80d34acbce6d47f"
+        }
+      ],
+      "sourceFiles": [
+        {
+          "sourcePath": "re3ob_cartservice_f1_1/inject_time.txt",
+          "objectId": "28bfb5984a5d336ecfb0a43e922fd84d7dff9854",
+          "sha256": "3acf7c7b4c1388a39a895006b4963c0ae10f60eba4efc6590f5728e60d5a0567",
+          "size": 10
+        },
+        {
+          "sourcePath": "re3ob_cartservice_f1_1/logs.parquet",
+          "objectId": "62da67ab134a7e8573b93787f9e7c78d6a437b5d",
+          "sha256": "daba5217f71f5a595e28cf9d5a3bda414d6e0cfaf19aa754a24aad9c14677a63",
+          "size": 117073
+        },
+        {
+          "sourcePath": "re3ob_cartservice_f1_1/metrics.parquet",
+          "objectId": "985ed8580ff822ae85fd8c310987e514000445c1",
+          "sha256": "f48dbce429636dfabb33f5695f0992d91c92b97c4b3031cfe0606a37bf49221c",
+          "size": 148622
+        },
+        {
+          "sourcePath": "re3ob_cartservice_f1_1/traces.parquet",
+          "objectId": "25f14a6bb719f9632016a027563d7f2b7f43ac8e",
+          "sha256": "13bb4dfddce23145579f9189e125d72463b5045348dfb6f6cf247b21b4f43cfa",
+          "size": 4094874
+        }
+      ]
+    },
+    {
+      "caseId": "case-04",
+      "sourcePath": "re1tt_ts-travel-service_mem_3",
+      "heldOutService": "ts-travel-service",
+      "heldOutFault": "mem",
+      "compatibleMechanism": "A code-level condition compatible with the held-out mem fault.",
+      "metricColumnsSha256": "f15b7a37f24d599dc103c792b94bfe52d4d103fdfd58ebbb4504d4b0405e3480",
+      "modalities": [
+        {
+          "modality": "metrics",
+          "rowCount": 961,
+          "sha256": "839843bc67a3e3a17d44acaea9322b4e8631d0d90575d748d5f527258cd68210"
+        }
+      ],
+      "sourceFiles": [
+        {
+          "sourcePath": "re1tt_ts-travel-service_mem_3/inject_time.txt",
+          "objectId": "7e85a2ab759cb9de6145286cbddb6b7aecdf684f",
+          "sha256": "3a41e8ea116be3bf35575551c244637d5f8218bb35f4345c04b67bff2c487347",
+          "size": 10
+        },
+        {
+          "sourcePath": "re1tt_ts-travel-service_mem_3/metrics.parquet",
+          "objectId": "288f70d5ba51606c0d95f7daa05b5de09f812b6a",
+          "sha256": "c2c3f202aa9334877325e55388876f92117cac7c4defa0e19706b86f9f75a20b",
+          "size": 525731
+        }
+      ]
+    },
+    {
+      "caseId": "case-05",
+      "sourcePath": "re3tt_ts-auth-service_f2_4",
+      "heldOutService": "ts-auth-service",
+      "heldOutFault": "f2",
+      "compatibleMechanism": "A code-level condition compatible with the held-out f2 fault.",
+      "metricColumnsSha256": "144bd26662ddbcbb62541b0e146932f5b3cb912ed67c97842b5fa356ceb6ed4d",
+      "modalities": [
+        {
+          "modality": "metrics",
+          "rowCount": 1801,
+          "sha256": "df5dc3d5b1c30c8be7f3c651166f4dcc7530b4c0320df5d9e206c8af8b0c20eb"
+        },
+        {
+          "modality": "logs",
+          "rowCount": 17640,
+          "sha256": "40926bec85450a8a43bea6cee5888ed43185cf6ff19622069c646c102e7043ce"
+        },
+        {
+          "modality": "traces",
+          "rowCount": 37936,
+          "sha256": "2557d8970f49f57edbc689e38723238256e4fd3a27ac12da40e55a8cecdfe381"
+        }
+      ],
+      "sourceFiles": [
+        {
+          "sourcePath": "re3tt_ts-auth-service_f2_4/inject_time.txt",
+          "objectId": "deaff518168a14c4c6ff081cd169588a4dd0a0a4",
+          "sha256": "f5acb2ceebd33a50d61c5d5fce9dff58f730b8f4eb4ffe3b12f435688253c075",
+          "size": 10
+        },
+        {
+          "sourcePath": "re3tt_ts-auth-service_f2_4/logs.parquet",
+          "objectId": "454c87f01918ebcf4843d7760f34c7235f817657",
+          "sha256": "3305db7b2332b7a85a4526002883c774c5a67e921eb32dcdd74744c27ae94743",
+          "size": 188890
+        },
+        {
+          "sourcePath": "re3tt_ts-auth-service_f2_4/metrics.parquet",
+          "objectId": "c4ed2d4b560ba10aa95bfeb7186a4faa3836d658",
+          "sha256": "5fbb13acf53b8bc73cd30b7fdb1054f1e55fb4f7a3209bbc1992a83a03aaeba8",
+          "size": 731695
+        },
+        {
+          "sourcePath": "re3tt_ts-auth-service_f2_4/traces.parquet",
+          "objectId": "96295c965d6d3e553a97b061c362ac248025f783",
+          "sha256": "06dd9fe84aa894a6c536fb15fa6f4e5a7c8e9f1dd895f784fa5dc8fc773e5240",
+          "size": 1214819
+        }
+      ]
+    }
+  ],
+  "totals": [
+    {
+      "condition": "with-skill",
+      "sessions": 15,
+      "validSessions": 14,
+      "serviceMatches": 14,
+      "technicalFailures": 1,
+      "premiumRequests": 68,
+      "formatRejections": 1,
+      "queryRejections": 0,
+      "artifactRedactions": 49
+    },
+    {
+      "condition": "without-skill",
+      "sessions": 15,
+      "validSessions": 14,
+      "serviceMatches": 10,
+      "technicalFailures": 1,
+      "premiumRequests": 44,
+      "formatRejections": 0,
+      "queryRejections": 0,
+      "artifactRedactions": 0
+    }
+  ],
+  "trials": [
+    {
+      "condition": "with-skill",
+      "caseId": "case-01",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "service": "adservice",
+        "mechanism": "An onset-aligned adservice CPU runaway or saturation condition, potentially caused by an internal compute loop or resource leak; the available metrics do not distinguish this from a CPU-instrumentation anomaly.",
+        "serviceScore": "match",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 1,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "62a62b84e91a69f30ddd2a37d091e3d4ad5e51de7aea9cf821248f64bb4064a4",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "ee61f45bd18f24ad09c77d143e8fc86d651fda53129482d05d80f0feb4e9bc57",
+        "promptSha256": "e95db2a41ba7e20ae08a701506d07386d3c3834ff824e4206e8e657e0dd1d22c",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "664dbee1306169d8aa02d3b47fe850571f7a4b66a1b1c3a185544f3559c30d58",
+        "turn2PromptSha256": "c6cf702a42ee7e5b2fa9cf122aedd919c030ea3b1fa746e76b1754ea716ff78a",
+        "turn3PromptSha256": "96be69cb02b0e85dde55dc8712b67c037272011265d3b1ecbefbbbde47fc0c2d",
+        "turn4PromptSha256": "f61613aa17b6ae7d0f39b5521c87457e474fe225a1bf5742b0356c9c43f666c8",
+        "turn5PromptSha256": "fdd269da930459ab366d5fa8bbf35dbb40511fd15cdc2f0212ed9ee2430020a7",
+        "turn6PromptSha256": "0abaade5e41a292aa8b1d6844cf94122cffa9174b73b7c55af4cf4d3d20dd025"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-02",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "service": "shared inter-service communication path affecting emailservice, paymentservice, shippingservice, and checkoutservice",
+        "mechanism": "A shared dependency or network/inter-service latency condition began at the incident onset, increasing RPC response times across multiple services while CPU, memory, workload, error logs, timeout logs, and trace status codes did not show a corresponding service-local failure. This is the leading working theory, not a verified root cause.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "2bfa0181c106312a3d9234023017930da6178d9d71e54a806c50694bda5463ec",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "e53903b0e83e65c1252c08bb2f11e96098887518bb876e14cd117f93cb357af3",
+        "promptSha256": "7cf2ce398ab24079bbc1ce13ec64189a4c0117829901fd465e04b9b4fc609bad",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "16ab38c870fa17b4885999f74159eaaabdd58a7d778803e540454e6f2954fe73",
+        "turn2PromptSha256": "f801fcb323e18a9cba3bf40887bfbbfdec90055cb391d7209f1b114fe3af0a85",
+        "turn3PromptSha256": "1a4c8d2da579708bbb6719f8376828382ce8bc054e2bfbc06638f069bdde8922",
+        "turn4PromptSha256": "8c38d3d0d9e2f9872c751e6261c2715e017a09fa33ebb04de7db746d380a6e6f",
+        "turn5PromptSha256": "e360ab9c89eb528e3b60495fd6672a40701548adc5904b8cf128c5093ab05a58",
+        "turn6PromptSha256": "d6a39332ee6183aee250e9b2bddc972532dbe1fa5165f64f2e04786d8c3a150d"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-03",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "service": "cartservice",
+        "mechanism": "A cartservice-side connection/socket-resource condition may have increased failed frontend requests, with frontend request errors appearing as the user-visible symptom.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "266327a92242a589b73c858df38c14aca4636db5e5d5f5e3e9a902efee171df4",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "1c38531d1b859c613dce3d6ed1a251c7dc503cb36b239f50138728c87ca9e679",
+        "promptSha256": "469d88cb9a4bf37495543970e14f59ea08c482dd063d0283c81f2ca65e858560",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "e4b205e2eb5c68e5145725652b486000f6bab9959609e3a5c650af350cd772bd",
+        "turn2PromptSha256": "788d27ed3195b3dbcfac62eb4a2548c138497fe49f34dcc08c9e49cd7304e741",
+        "turn3PromptSha256": "6327ce5d4eba4a584af624f7b72e855ede5f9fde24703085b6ffa5d8df7e9699",
+        "turn4PromptSha256": "82a9488b5e3cfe87805dfacceb792a6a0a6a0d17572c2b811d421eef3b89fcf6",
+        "turn5PromptSha256": "5f418da0da7e19daf14dae2962245d1dd2bcf83cb5fc1c717eb981e6a9e50e15",
+        "turn6PromptSha256": "69b179708cfd4aabba173e8fd611f4173b33accb3d458f20338cded4ba094eca"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-04",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "service": "ts-travel-service",
+        "mechanism": "A sharp increase in ts-travel-service CPU utilization coincided with and plausibly drove elevated travel-service and downstream request latency, consistent with CPU saturation or a compute-intensive regression in the travel service.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 2,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "47b80ca056a7b2138366de9bf39ec68eb2d62816f9621d97d6d3f26ad184a271",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "f58be2a33ddd1da0f5dd57dbb675e8711357e5f4b0f449b2546ea93e36d3d5de",
+        "promptSha256": "73d25ceca3b2c42bcf8aed3930f9e001466ee86f323463532f862ba6f03a2ff1",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "7a2b2ca4468c40a1333591723b3225b4c446de3750d9abd447d324d5b246eb40",
+        "turn2PromptSha256": "40ef8f2989c8ddc7dcb966d654fc4b8d9e3d2524fe249fb2875b90e9acb76864"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-05",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "service": "ts-auth-service",
+        "mechanism": "A restart or termination of ts-auth-service at approximately 1733834342 interrupted authentication traffic; the service then required roughly 55 seconds to initialize before serving requests again. The initiating cause of the restart is not established.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 5,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "bb15bb98d746c2bf010a483c978d86e0ce788629c4ab31b8246da78e04a773e0",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "b67a3b1fa898201f48e9549878efc04b636f955a65fea6fe34f47416b042bd76",
+        "promptSha256": "56d93feadd1da02e8879b235905691f6146b87ab653c7870e64d684dc68f760a",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "8cbc6f2d619d3642bfe4c48c181595fa01f4c455818cba8099675b3cd70ce362",
+        "turn2PromptSha256": "f68868c54fda15618e5c12572c5c59aa0c2c931b334943b747bec9aa1b0e268b",
+        "turn3PromptSha256": "69edf12baa748da6438d2d83c72f0f021f140fc8e8291bea1c86b228a71487cb",
+        "turn4PromptSha256": "1df8da7a3da489feb67cfc1146c30bd415a1766d88311d463b0c7e4a2d63a5bc",
+        "turn5PromptSha256": "f2d2cf551e6b801b1bb4484ffe1f0f6e1cba6d011de7c13943f0d1efcfc5cd33"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-01",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "service": "adservice_cpu",
+        "mechanism": "Severe adservice CPU saturation beginning at incident onset, likely caused by an abrupt increase in adservice computational demand or a runaway workload, with insufficient CPU capacity as the proximate failure mechanism.",
+        "serviceScore": "miss",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 3,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "cbbd2ea0a25f288af731eb0da75c7194490924b7c699d3b9049c009dda663788",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "33b79132ab36333f27361424e1a1e414d99473658007abee0dc6631c4eb2fcf1",
+        "promptSha256": "0d3666b1d4d959015250374cb5e49da609f9f76d07e42eff42567e32d0f80d74",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "84bcc26bd1e3bbfee048ca9873ea46d3ac41f80a5b05b2931402f27578b4d43b",
+        "turn2PromptSha256": "23efa2abba1b1a3a5912ca28e3ae36a0303a0712347574d34761f38ef12e62ee",
+        "turn3PromptSha256": "f0e3d09737523edd1c422da27cb5e02453433287b90c0f2c7dabc85e3e0d074d"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-02",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "service": "redis",
+        "mechanism": "A Redis persistence/background snapshot workload introduced substantial disk I/O, plausibly creating storage or host contention that propagated as downstream request latency and checkout/frontend slow traces.",
+        "serviceScore": "miss",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 3,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "ab9889746e3755da27e44bd30a9370e424c05f1c3262b7151662c9afb2895f3c",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "42bb8f7de402812dfb90bbb912b5bc864e9f7b2669d12fe3681ff47cf02a7023",
+        "promptSha256": "6ced0685ab5f9f0a676a95129e117f4555a34bb850fd99cbb2573de95e0383dc",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "0c93b1f219367f978d3b198d7d4518adea972c8fcd3ba502204c1f792a687aec",
+        "turn2PromptSha256": "79b17f5002ca8092ac13f97017b645d61ef277538e064f6a855b97bfe475921e",
+        "turn3PromptSha256": "1e02a423ebd41cb982fc5cf2e97d86ac0da480528e49f16c5af18173e3d99365"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-03",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "service": "cartservice.cartstore.RedisCartStore.AddItemAsync",
+        "mechanism": "Cart-service cart storage handling parses a Redis cart value with Int32.Parse; an out-of-range value triggers System.OverflowException, causing FailedPrecondition responses and cascading frontend request errors.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 2,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "0ea5ed410955e74beb965327d06d06d649df2b03860eb6446347610796dc5485",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "9ee0eb2c9c796156c66c64d408d23eb253540e994609ccc175cacff9105c0f3f",
+        "promptSha256": "2ed0b66a8cff1354b4083b021f97c2493b47164e5deead77c947729353e21de0",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "d03146fa4ff659be97ce0781bf68d3b5a12150f8b252c38c6c20e657eba46ade",
+        "turn2PromptSha256": "c99212813651d5e1f9e0e7af430bb88585dd9eb1cfa459103144c9b68f297f43"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-04",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "service": "ts-travel-service",
+        "mechanism": "A service-local resource-exhaustion or runaway-processing condition, most consistent with a memory leak or CPU-intensive loop, causing severe CPU and memory growth and consequent latency degradation.",
+        "serviceScore": "match",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 4,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "e3e6824868bce619a282345cd922a4af5239eaf1d71ff8433eefabec901bfb37",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "b7f15132dd1da3ecb5cfa80f8b295864deae94ef082e32fa310e333c71d7d795",
+        "promptSha256": "4063db9dfe42d202a092586e32b80774560b41b1055ee7d5e18dc7433a8a917b",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "67ef7bf68e7831e88335078e7dadf5b4975f236aa8dc64e72cf1fc640629e99b",
+        "turn2PromptSha256": "a2982a73338f5451da67c159c3a4d1c894d9ea87f7c40d26840d67647d214944",
+        "turn3PromptSha256": "277792dc7a72411c75b61413da3e5f28a9b62918fa1a88d7bb8b624cd141cc99",
+        "turn4PromptSha256": "4996ec536a36261c4165318b489cb7e17819c83e8000833d63f5b4d12f7edbc5"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-05",
+      "trial": 1,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "service": "ts-auth-service",
+        "mechanism": "Authentication-service resource saturation and/or restart caused severe login latency, increasing CPU and memory pressure and preventing downstream request flow.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 3,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "64f2c0d57e33182423f5a649f897fec8fc9355f14b0428b88d4693da9bb19b85",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "ef92a264e32d357a5f38dbf0611e9abffc464a87d7661f3e3bbecce9cec8b8b4",
+        "promptSha256": "c6cdf60a5461caf0b31df8e15a2966f189637e273290e24e5a0639a389afd97f",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "9f8a2ea3f68f1c41da6440a5f06cf6a9af15301bbcb0a8cd8433b3cd70b40ec5",
+        "turn2PromptSha256": "90132a0a1a8aba96d7550bfe6b3a4a439e0abc3a09be875eb3ad7f66675b3864",
+        "turn3PromptSha256": "fe16f622ef88a59d33159fb3b360df434eabb57b8b7c8d4410a885e68820f508"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-01",
+      "trial": 2,
+      "integrity": "fail",
+      "outcome": "protocol-error",
+      "errorCode": "invalid-fields",
+      "strictGates": {
+        "approvalClearlySimulated": false,
+        "approvalContract": false,
+        "honestEvidenceGaps": false,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": false,
+        "statisticalApplicability": false
+      },
+      "finding": {
+        "status": "Unusable (protocol-error)",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 5,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "c8192fb5594c9e6e534a88731d6ed36a45d0b7452e32c279b848f0683d4345d3",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "91d62d391b4777ce9fe3d756b088a5dea125f085b0fd82eb7223ea76032f5df0",
+        "promptSha256": "d6e294e8079066257b1e2d658334a55c0259fdc7367c93048ada89b8af3f44af",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "a1e413d0c59ac2e0b3c61c33156cae9f1aa2757721c8052db46ae73fff20fb41",
+        "turn2PromptSha256": "c0a41460ca26abe8e085d4672656210ac368c52a4c0762c400e89d6b81ddadab",
+        "turn3PromptSha256": "c0fc3a221c8e7cb9ac16d5421742f05ce7b34666902eed6b60456e68a5edade1",
+        "turn4PromptSha256": "32ee04c0f4b74385943a9ec1972929699467bc4a29fa28d2ec17ba4cadc0aeef",
+        "turn5PromptSha256": "0cf6ccb16e499db17c8e571fa8ee135edaaa9ac6db7f329b19fdda24ba191cff"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-02",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "service": "checkoutservice",
+        "mechanism": "A checkoutservice request-path or outbound-call latency condition added roughly 200 ms to multiple synchronous operations, compounding into multi-second PlaceOrder latency and downstream checkout degradation.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 4,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "a3b9bb01a00caf3d348f09e14ba8543116ec0ff5beccbbb8882e4bb908051fed",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "6d6a5f79d59ee1dec0156d49c306152785a3734d547a0f3650c1abd76254b161",
+        "promptSha256": "368dab0bb86700edb7d938797b976dbdca8b8d9d3bc9414d9d18bb44809d8058",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "478a511ae0af9dbe4b52d927fec7e53eb1f7714ab0b71ac953e385e4e708b0c3",
+        "turn2PromptSha256": "0c1330a530d6546109f98a96c8ccf835ebd539c2ccf818d883bf1e123d19f2dd",
+        "turn3PromptSha256": "43ad19e8a85ed96c1f92d9eec5c65e71a044d61bfdca373b6d833d51f87ed5d5",
+        "turn4PromptSha256": "59bb81947be871b1a71f390059d17f59d30d639fd28dc6e305e5e1e551b3ac3c"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-03",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "ready-for-human-sign-off",
+        "service": "cartservice",
+        "mechanism": "Unchecked Int32 parsing in RedisCartStore.AddItemAsync overflows on an out-of-range cart value, causing cart operation failures and downstream frontend request errors.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "service": "cartservice",
+        "mechanism": "cartservice fails while adding items because cartstore.RedisCartStore.AddItemAsync calls Int32.Parse on a value outside the Int32 range, producing OverflowException and FailedPrecondition errors that propagate to frontend request failures.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 3,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "982f8dba4f19a795b5c09218f4fa0c5d5c6362bfeb528ca1d6bffd82c2660d09",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "bbd08f117b2b3e88221e5f061cdc9fbfe788ba1dfae6cc72f41f7545c9951a40",
+        "promptSha256": "9d8117839fea233d552480703f811353d7f018aaec5a866c877edd6c1ebb752d",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "7c74a9e04cbf5862a840b645f6de25a0e78cfac7ff542c788dd51f5d0eec89f6",
+        "turn2PromptSha256": "d0c4580850d7e13f731ff0dbfa71e1726c085d79a0f2fa66a2a3d8c7402f70ff",
+        "turn3PromptSha256": "1da2d0b7ff9d12fb8304368fd8e8c886d5c4b93385cb0c50c494af764096540e"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-04",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "service": "ts-travel-service",
+        "mechanism": "A service-local resource or processing fault caused a sharp CPU increase with concurrent memory growth and substantial latency degradation after onset; the available metrics do not identify the underlying fault mechanism.",
+        "serviceScore": "match",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 3,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 49,
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "d99c5f8abe4a5371f24ef887cace45cea46fca7763a8abd44a03de24f710a5f5",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "c65dc3aa761312d994f0965bb5648cade7c63184b09e5a70fe0f146dcd9b0f6c",
+        "promptSha256": "a0a920d6b5f78d0e3d006f0ecf6afbd226b747fd2167aedf2cb7a71f5644c8d1",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "7f38be96231d229d2e754c58a00b2bd73d274a2e67b041800a2c7ea5cd8f4cee",
+        "turn2PromptSha256": "a0086b4e9c847461b31ac77973939634206af4481a57fbb2c8baf030a022901b",
+        "turn3PromptSha256": "5a3526c975046675d331ece4a82c4abee72871428144131e83b441c9d76b7a25"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-05",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "service": "ts-auth-service",
+        "mechanism": "Authentication-service saturation or request-thread starvation causing severe login-path latency, with the observed CPU and memory rise occurring alongside prolonged login and token-generation spans; the evidence does not establish whether the initiating resource contention is inside the service, at its runtime, or in an upstream dependency.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 5,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "0a222ce42281d80f157117fd4fbf60c41d2f330b9ca630cde3cb92ef2f40f453",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "b7f51ce6f328ffd277a147fa6de4a7f512b31ddfdb8ccf5b033158337c50772c",
+        "promptSha256": "44be68bd78e423c19ec1cde0a6b61476569d01411bd957672e3fcd917301fd76",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "35ec1c4f8ca62bed41dd28abeee025b8b611ab00ff664d2f5ac8b973abdbe1a9",
+        "turn2PromptSha256": "8693ad246617c399ba2cf28479ecd91560c6ad953a20b9c82e814c41ffa0a9c9",
+        "turn3PromptSha256": "ee074a8001c2874afe23cd3c59bb72017a03a62ae68acbb2c7965d386731e79b",
+        "turn4PromptSha256": "7e4943dbd8031f4c6d1d922a85fb52a273032ca0cf9fa8681bb7aee1044262e5",
+        "turn5PromptSha256": "2596ace9843e8baf3ce8bd97715fe0180596fcdae91daca866dfaf63579b3f04"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-01",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "service": "adservice_cpu",
+        "mechanism": "A sudden adservice CPU saturation or runaway CPU-consuming workload beginning at the incident onset, likely exhausting the service's compute allocation and causing the incident.",
+        "serviceScore": "miss",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 3,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "82e6a3d725e3e715fbfb65e351c3bb0717e3addcfb22f676b7f54380836f3d3c",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "cf62da479b906de14469a0748dbb86aa9439a5a5573c0c0ae00a427c4d5357fd",
+        "promptSha256": "62f4a35afe71e01d88266e339dacdb17cce965341666b0f1db85a50305270872",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "480fcb37ffef323b02e373f91902d2f457e832fdcc295070fd9fdc9745b2a1c1",
+        "turn2PromptSha256": "8bea75b9ad8f9a6b37e713539c0b47844c3beeb918a531fa2d0aff27bd6c1b44",
+        "turn3PromptSha256": "93f8f6b1d15b160ecb6590c1d804b5a015ddb34a490c33bbeddc07337e7e9139"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-02",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "service": "checkoutservice",
+        "mechanism": "A post-onset latency fault affecting the checkout path, most likely an injected or downstream-induced delay that propagates into checkout request latency and contributes to elevated payment, email, and shipping tail latency.",
+        "serviceScore": "match",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 3,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "b48adeabc14babbcd6fce15ffc08dfb9d58fd8500264846e3b37cc245b0c76ac",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "65c516e15346c56741ab37bf364eabcf6c712786a254358f31799b8b5192efe0",
+        "promptSha256": "e36deb519e3ce75309650b2a9d0cf9d2e6b335b2abfb8075c58ca7f820ae4793",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "719ae83e60e8ee36eb31586f5c0626461515f540d4e2f5b0b6be50ed7fda0505",
+        "turn2PromptSha256": "6fd9e5de2230765d1c40661b1667ac638620c8df83f4540375d927661eaaab89",
+        "turn3PromptSha256": "78e4bbe9bcd7176d79a5ff20c67cd6f8e06e59db1c93e8587d3e91e0c8197bc9"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-03",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "service": "cartservice.RedisCartStore.AddItemAsync",
+        "mechanism": "The cart service attempts to parse a Redis cart value as a 32-bit integer using Int32.Parse; an out-of-range value raises System.OverflowException. The resulting FailedPrecondition errors stall or fail frontend cart operations and propagate into elevated frontend errors and latency.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 4,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "833bcc16cd94bdecc5a2c0a1040850af7278ff8503fb5cb4235c83143e292ec8",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "44d8bfc59d8797e34d7dde41a68bc83c6b14d4faf754fe9e3adc6f95fe1c505f",
+        "promptSha256": "f5d9258848a273771231928997e549fcec86f24ae09fb79fd2e25585c99559b5",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "6caf2e567dc61afd6fd13cf7450170488b24e4b0876308936fc9362a8cff0772",
+        "turn2PromptSha256": "09da06f6a52b7e56c5036a3f16e3f08b8fbac2d7602c7721596d8d75aa64e928",
+        "turn3PromptSha256": "f54340d03d2dc854b6f6f19a633a34c268ffd372a3159c490a293586f8eb8462",
+        "turn4PromptSha256": "7eeaa44391a78c9726b81aaaca38038fe3f6ec037741251996f34d2fc1b9ebc4"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-04",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "service": "ts-travel-service",
+        "mechanism": "Severe CPU saturation or runaway CPU consumption in the travel service caused its latency to increase substantially, with downstream latency propagation to dependent services.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 2,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "3509b169dc5b8651f6442892436f697ab6fd7a9f5bad0714241e85dd94b6961a",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "87edc271ef8a8a30e928d07691c51fcbdea703349c6965ea7ade559e9009b3ee",
+        "promptSha256": "57ab5e623516879f95738275699af2280c2ca5d55c1ee5e8d5c8fac681314fb6",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "881a8f64c2eff64579fc97114b56bf3816e2acb377deec45c8a7f9fcf95df769",
+        "turn2PromptSha256": "7c317599d909112fae1b4066abea8d37d1c3697036cb951e915beb19eda846ca"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-05",
+      "trial": 2,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "service": "ts-auth-service",
+        "mechanism": "Authentication-service resource saturation or an equivalent auth-path performance regression increased login latency, causing authentication-dependent traffic to stall or drain and producing the broad downstream workload collapse.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 3,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "e8d4a96b7521d7181b367bb5b1d3f4c1922311da97a27db66202d93bf5a3e9ed",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "9f45e8f309d3199a7f0e41b3d4b4e902de816c446efa71791bd8eec92d969f66",
+        "promptSha256": "ecc1f0a227a4f87bf64f7d85f32cc720cdae7e31d56f091ffeb9d115967a0560",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "1cc4ae63eb0ae0c1e9d948a8c46ce09ebd69b4da747b6ffe036b6f55bd2e6366",
+        "turn2PromptSha256": "df3bef2e07279ec9f4c9069f56170698d1597968f4275ee1bf2d6c2f9f9fa4a0",
+        "turn3PromptSha256": "36145e27347c34c7023d5ba94dd1a864c695d6f528158bbfbb242b019a25d496"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-01",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "service": "adservice",
+        "mechanism": "A sharp incident-boundary increase in adservice CPU utilization may indicate localized CPU saturation or an injected adservice resource fault, but the available evidence does not establish that it caused the reported incident.",
+        "serviceScore": "match",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "4e63cf94e9ef9564aeeb20e54ee1708ec153da2555ab328b5bd4fedb720c4d9a",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "7d5c2ce28d87b4427154053f8d3cd29b1061fee6e4da3f4a5be635c3ce1628bb",
+        "promptSha256": "5cf5b17df180d0314afb770a3e99c937dfb37917a7576b0ec79a45d8caa90b7d",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "2ea762a2f203d9c77cd42805d242e8f082a9b90756013362d842f2fb712b9070",
+        "turn2PromptSha256": "3abf234e21f08bb1c41094ea1e215f4227f61755f59c296f553b6a46015f6c75",
+        "turn3PromptSha256": "a92524ee54989375ecd0f69b0b5eeb2f3a0ad0cfd328b8a042a64eb028f1cb1f",
+        "turn4PromptSha256": "bb5857cadcc81be32b5f5150ed86825d3014f17437c7ee15728d0834899cb2b4",
+        "turn5PromptSha256": "a1e7b80c6e0e0e11273259c7deb39573054c0f3525e2d0a453707c5540fd818b",
+        "turn6PromptSha256": "ef2213e611ee5593dc598e802e7ad7a067b3b624c622c922a59b680ee5010c1d"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-02",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "service": "checkoutservice",
+        "mechanism": "A post-onset latency condition in checkoutservice causes roughly 200 ms delay across checkout-related spans; serial dependency calls then accumulate into multi-second PlaceOrder latency and the observed checkoutservice p50/p90 increase.",
+        "serviceScore": "match",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 4,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "c1e99817a806356d2667717b0cf693b03e14b40fe7b884ccafb131290ea153fd",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "232bc8a24c37eb63d343195b5a6dece82b92027c41983fb60d60e9942456782b",
+        "promptSha256": "9f3f98c34cc3a7ee378268af706f951061d718b241f8053fbcf8cc849def3973",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "7ade55fbb6a1e43b1a4d88c86bc22827bcb15c27e2a574c106b23cf5f35edfc8",
+        "turn2PromptSha256": "b96be152e15b5030398277c47388a837133038a55cc1c556c85fcfb000db6b42",
+        "turn3PromptSha256": "59d8f330af8e878d6678fd89c75d40db1046ee589f1b3853f4182dc59633fccb",
+        "turn4PromptSha256": "535a9e25de0c5b0124f2335f0abce6b11d5287f4df426eec3dd0e5aefda8b476"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-03",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "service": "cartservice",
+        "mechanism": "A cartservice RedisCartStore.AddItemAsync path attempts to parse a stored value outside the Int32 range with Int32.Parse, raises OverflowException, returns FailedPrecondition, and propagates request errors to frontend.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 4,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "57b801741f54246e570554a767b7b1293b3593f9687152ad5309578854f94cbc",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "32d4536686dedfd5611b9c69640b73433a37a184541eac930c4651d3950c5351",
+        "promptSha256": "bf9c197ba62b17c4da6e4faf5114474662f048613000f362291b5e5ef508e179",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "86f93242d38abcf1a8b285be889a296718f87505dfecfcb75e00303a9ac7380e",
+        "turn2PromptSha256": "22d0951e67beb1df5f15f966813d6c015d1c7f093fa66eb2e4a2156f6ee88db0",
+        "turn3PromptSha256": "090ca1dfa23b1132382953e96a5977dcc2d8fab4302ed24c028a9e9692e2d119",
+        "turn4PromptSha256": "ccfd1c4df366f71471dd06b26ac68f7f736bde472b25ca42a9bb8475ba4ea5f7"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-04",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "service": "ts-travel-service",
+        "mechanism": "A resource or execution-pressure condition affecting ts-travel-service caused a large CPU increase, which coincided with materially increased travel-service p90 latency and propagated latency to dependent services. The evidence is broad-window and observational, so this is a medium-confidence working hypothesis rather than a verified root cause.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 3,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "832b1c27b14b3a095a093a2ca991c0df417ecd3a7ff9bc80f2156935e2778a18",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "16119221012b518fe8f6be59ef17a62253af53116efe22e25d6fc9091b5229d9",
+        "promptSha256": "136c8d5a6f3f8c7254260f0869717c434fbff4d49aa272247e7fdb0a25fae47b",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "d1a2d1c2d8424913c3f5048366a9374d5539a6cea50394c0bb5a1ab2fd72be2e",
+        "turn2PromptSha256": "6bf4afc6995dfdffecb475bfe5d6255400884aefab829d118488945960d6be32",
+        "turn3PromptSha256": "fdb6db7409aa59fa81189acc0cc9acad90a03f19e5b5a41db8ff64dd4af221f4"
+      }
+    },
+    {
+      "condition": "with-skill",
+      "caseId": "case-05",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "finding": {
+        "status": "not-established",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "unassessable"
+      },
+      "candidate": {
+        "service": "ts-auth-service",
+        "mechanism": "A ts-auth-service runtime/resource degradation, reflected by a post-onset CPU increase from 4.45% to 16.07%, memory increase from approximately 229.5 MB to 429.1 MB, socket increase from 10.29 to 15.25, and markedly prolonged login/token traces, appears to be the most likely proximal cause. The evidence does not establish whether the underlying mechanism is a memory leak, thread/connection contention, request amplification, or another application-level condition.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "36beb0f8d3c7f2dd8d50cd81ce4a2221c0fdbf22ba038f1aa90cf365dab842b8",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "d2970d28516a04171f9d8bfc549faf71097e16c61436987c414fb0d106819b9b",
+        "promptSha256": "144a20cad1fbfa65296fabe7c4c21f0633b8ac841d70c4e0feda4f12c0369712",
+        "skillBundleSha256": "164f1e21dd1ccaf914c95784d18c9eb58df97b30c85dae3e8f24c7b34afe8334",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "9b638dbc154cd67a06b807afe1f9f850a50a12731188c6615c9fba3c64b7bfd8",
+        "turn2PromptSha256": "370769b7bfd9569e76eba1863a5b9eb479717c52f78390ce30b4f02cf4ffa24c",
+        "turn3PromptSha256": "48615fa613f524bdfea55c18fefd29642ddd6069d4c645f2cfd93cf06d8616a1",
+        "turn4PromptSha256": "fb8e35b1427489285f67ae0837c4675a5d7bcdd7f89957a13c2a867018ba2d8d",
+        "turn5PromptSha256": "c1857de7321c87b4b06dc16c858d1fe5ac21d39ad977b0f6d70cd7f9c6a94811",
+        "turn6PromptSha256": "0acc8a80f346d285a6309f54d4c984aab9a5d84182d0774ba72f51d701b84f28"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-01",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "service": "adservice_cpu",
+        "mechanism": "A sharp, isolated CPU saturation or CPU-measurement anomaly in adservice beginning at incident onset, likely caused by an adservice workload or execution-path change that drove CPU utilization from a low baseline to near saturation.",
+        "serviceScore": "miss",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 3,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "f5aa9793ecb23cab5f07fa76633b699f293c5846a17c0304c794e451b27d3e90",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "c1b8afe22720a0ba2ccc61e37b961b9ebab0e9868affe7a0654f411adecbf08c",
+        "promptSha256": "5ad5db5e9d343535463e65fc8b3547ad909e9f648227e332e263a107ecbe2fe4",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "f60ac17ea9a46cf9073e747263d62639de28e089bce19424c3b55322c57310b7",
+        "turn2PromptSha256": "c2d32c1ff94147a224037dda0ba576d03107b42dd6b4b96bef31ff541b764b8c",
+        "turn3PromptSha256": "2e2d10107872d7132e4f4431c6845663aa449ad8950761f7593634c60e7fb543"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-02",
+      "trial": 3,
+      "integrity": "fail",
+      "outcome": "protocol-error",
+      "errorCode": "invalid-json",
+      "strictGates": {
+        "approvalClearlySimulated": false,
+        "approvalContract": false,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": false,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Unusable (protocol-error)",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 2,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "66ee78b181dd6c8dc173f57375ef46f4631cfb0066f94d3b4cf3e58d7cfb93bb",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "57a598ec6762b8e95ea03fec3e3d9cddb747dff48759bbde6604b9be337f9c16",
+        "promptSha256": "925877bb41b2a57c89c95dcf292392a4fb236e47a3f95224c518fc5456db1158",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "76eaa6883cd60ae244e590a55f6ff37ced8838d47b95aea10e106b91026d8039",
+        "turn2PromptSha256": "7dd4c9f5e8b36e419a26cc5784d271f746996f1008eed0c0627ec64123ba8360"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-03",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "service": "cartservice.cartstore.RedisCartStore.AddItemAsync",
+        "mechanism": "Cart item data parsed with Int32.Parse overflowed on an out-of-range value, causing cartservice FailedPrecondition errors and propagating request errors to frontend.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 2,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "aa77919078e1db363349a034b23f6a444419efb75e0dbf8f21b697890237eea6",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "25a7ee18e27900add105d0120f97248f899965ca4ab1a9add932c0be3ca4febf",
+        "promptSha256": "4d0bdb77e452664a054609774628b48f66c503ccc97aa1896d45acb60eb60be2",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "cbb11f0fa832228b990b60941073ff05b5afc46efd124c11571a8c83929d40db",
+        "turn2PromptSha256": "aabae75ac01286301773113d97dbdc800a09cf8ecaece2d3aad0d5b942be4397"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-04",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "service": "ts-travel-service",
+        "mechanism": "A service-local resource-exhaustion or CPU-saturation event, likely an injected runaway computation or equivalent process degradation, caused sharply elevated CPU and memory usage and consequently increased request latency.",
+        "serviceScore": "match",
+        "mechanismScore": "match"
+      },
+      "premiumRequests": 4,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "e1e9a3086fedaf3d50d47306435f219b0da2e93523567257e3c27d1fdb2b820e",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "58564d43ef150387b19a44abf33299b3690ee99442924ae889b5fcfea7d78f75",
+        "promptSha256": "46954b124eb0e448c61d62fdb650c34c39f460a1b9a251cf2346c6af177370a9",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "ae9046546939c8999877ee28138aecf737a1264847d9ba2be9e184d68c3eec25",
+        "turn2PromptSha256": "75f14fe1d2445e8436478c6c0362441d35c037441721a5fbe999a576ad244c2a",
+        "turn3PromptSha256": "966f91af33129eb8e3a7c00d3fa569f0d34d59db8461109a9650cac853b43020",
+        "turn4PromptSha256": "2be868ffe0bd3c81945129808454bf47326e94eaeb15be45e75dd1d20424b6c9"
+      }
+    },
+    {
+      "condition": "without-skill",
+      "caseId": "case-05",
+      "trial": 3,
+      "integrity": "pass",
+      "outcome": "candidate",
+      "errorCode": null,
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "finding": {
+        "status": "Not applicable - baseline reports one best guess",
+        "service": null,
+        "mechanism": null,
+        "serviceScore": "unassessed",
+        "mechanismScore": "unassessed",
+        "correctCauseTested": "not-applicable"
+      },
+      "candidate": {
+        "service": "ts-auth-service",
+        "mechanism": "A sustained login/authentication surge appears to have driven auth-service resource pressure and severe request queuing, followed by a service restart/redeployment that temporarily disrupted authentication and propagated latency to dependent requests.",
+        "serviceScore": "match",
+        "mechanismScore": "unassessed"
+      },
+      "premiumRequests": 3,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "replacements": 0,
+        "categories": [],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified"
+      },
+      "humanReview": "pending",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "hashes": {
+        "resultSha256": "5a9dbdaff1dbec46ce5e74d12f79a1e7dd4413e8a8aa3e1c9626b2234c6cbb15",
+        "scorerVersionSha256": "bce0bf350f51b8fee5d92f34460db2968b93049f0685cf3cce3373955a027eeb",
+        "sessionArtifactSha256": "a1b9813c7ed1e31c803342dfbec760fea9b0de942f60f68a7ea63bbd1fe410aa",
+        "promptSha256": "985e79ee9d6b971a0d7aa43671a44502fea97cc727dfa3477cfb3403c77d98f6",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "c0efba9901c8a275b54073e899d837e9adae77f7eb1aa81641b5d174faef665b",
+        "turn1PromptSha256": "b4a4a41e0e25fa3964cd142174be4c7e7985f7f9ea4832b893c1cb691532a0ad",
+        "turn2PromptSha256": "10a3dcfd7fd4335bbc1d80e95e1ce1ef28167de8d764831feffb10a582d3a362",
+        "turn3PromptSha256": "d1ba43e787496294ba86ddf0a003dc5261a6e75b0a3224cd96710e745ea05826"
+      }
+    }
+  ],
+  "limitations": [
+    "Debug results on development-exposed fault-injection cases are not a general skill-efficacy estimate.",
+    "Model identity is the host-exposed identifier, not an immutable backend build.",
+    "The run evaluated uncommitted changes; the base commit alone does not reproduce the evaluated source state.",
+    "Baseline adservice_cpu was scored as a service miss in all three trials; normalization review is pending.",
+    "A broad multi-service skilled candidate in case-02 trial-1 was counted as a service match; specificity review is pending.",
+    "Ready-for-human-sign-off is not a human-verified causal conclusion.",
+    "Raw prompts, telemetry, narratives, captures, approval ledgers, session identifiers, keys and reveal links are excluded.",
+    "Hashes identify private supporting artifacts but do not make those artifacts available from this snapshot.",
+    "Redaction impact and original-source retrieval remain unassessed and unverified respectively."
+  ]
+}

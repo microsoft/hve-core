@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-10-30
+ms.date: 2026-11-10
 ms.topic: reference
 keywords:
   - github actions
@@ -460,7 +460,7 @@ planned_sweep_aic = required_waves * planned_aic_per_wave
 
 The workflow rejects capacity or AIC values that exceed safe integer
 arithmetic. `max-parallel: 2` bounds concurrent model workers. gh-aw is pinned
-at `v0.89.21`; its worker uses the Copilot engine, a 20-minute timeout, and at
+at `v1.0.1`; its worker uses the Copilot engine, a 20-minute timeout, and at
 most 1,000 AIC. The 2,000 planned AIC per nonempty wave is the sum of two
 per-worker ceilings. gh-aw does not provide one shared runtime AIC pool across
 the matrix. Planned AIC is a configuration ceiling, not measured use or a
@@ -846,8 +846,8 @@ This architecture ensures:
 
 Workflow Execution Matrix:
 
-| Event                                | Workflows That Run                                       | CodeQL Included                                          |
-|--------------------------------------|----------------------------------------------------------|----------------------------------------------------------|
+| Event                                | Workflows That Run                                       | CodeQL Included                                           |
+|--------------------------------------|----------------------------------------------------------|-----------------------------------------------------------|
 | Open PR to main/develop              | `pr-validation.yml`                                      | ✅ Yes                                                    |
 | Push to PR branch                    | `pr-validation.yml`                                      | ✅ Yes                                                    |
 | Merge to main                        | `release-prerelease-prepare.yml`, `security-scan.yml`    | ✅ Yes (via `security-scan.yml` -> `codeql-analysis.yml`) |

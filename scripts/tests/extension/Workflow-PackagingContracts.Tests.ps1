@@ -1249,6 +1249,30 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
         @($exceptions[0]['job']) | Should -Be @('activation')
     }
 
+    It 'Scopes the PR review checkout acknowledgement to activation only' {
+        $exceptions = @($script:PoutineConfig['skip'] | Where-Object {
+                @($_['rule']) -contains 'untrusted_checkout_exec' -and
+                @($_['path']) -contains '.github/workflows/pr-review.lock.yml'
+            })
+        $exceptions | Should -HaveCount 1
+        @($exceptions[0].Keys | Sort-Object) | Should -Be @('job', 'path', 'rule')
+        @($exceptions[0]['rule']) | Should -Be @('untrusted_checkout_exec')
+        @($exceptions[0]['path']) | Should -Be @('.github/workflows/pr-review.lock.yml')
+        @($exceptions[0]['job']) | Should -Be @('activation')
+    }
+
+    It 'Keeps the PR review activation checkout off the pull request head' {
+        $activation = (Get-WorkflowDocument -Name 'pr-review.lock.yml')['jobs']['activation']
+        $checkouts = @($activation['steps'] | Where-Object { [string]$_['uses'] -like 'actions/checkout@*' })
+        $checkouts | Should -HaveCount 1
+        $ref = [string]$checkouts[0]['with']['ref']
+        $ref | Should -Match 'github\.event\.pull_request\.base\.sha \|\| github\.sha'
+        $ref | Should -Not -Match 'head'
+        foreach ($step in @($activation['steps'] | Where-Object { $_.Contains('run') })) {
+            [string]$step['run'] | Should -Not -Match '(^|\s)(\./|npm |npx |node |pwsh |python)|GITHUB_WORKSPACE'
+        }
+    }
+
     It 'Has no repository-wide Poutine rule suppression' {
         @($script:PoutineConfig['skip'] | Where-Object {
                 $_.Contains('rule') -and
