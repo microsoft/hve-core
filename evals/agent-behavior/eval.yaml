@@ -5558,7 +5558,7 @@ stimuli:
   - type: output-matches
     name: identifies-target-by-name-not-path
     config:
-      pattern: (?i)agent\s*:\s*.{0,3}[\w/-]*\.agent\.md
+      pattern: (?i)(?<!(?:\b(?:not|never)|n[\x27\u2019]t)\s+(?:\w+\s+){0,2})\bagent\s*:\s*\W{0,3}[\w/-]*\.agent\.md
       negate: true
 - name: functional-planner-terminal-grant-scope
   prompt: |

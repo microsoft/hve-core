@@ -1950,7 +1950,7 @@ stimuli:
       - type: output-matches
         name: skill-rpi-tool-trigger-skill-selected
         config:
-          pattern: '(?m)^\W*Skill:\W*rpi\W*$'
+          pattern: '^\s*[*_\x60#>\- \t]*Skill[*_\x60]*:[*_\x60 \t]*rpi[*_\x60 \t.]*(?:\r?\n|$)'
       - type: output-matches
         name: skill-rpi-tool-trigger-phase-skill-evidence
         config:
@@ -1974,11 +1974,11 @@ stimuli:
       - type: output-matches
         name: skill-rpi-bleed-detection-skill-selected
         config:
-          pattern: '(?m)^\W*Skill:\W*rpi-plan-critique\W*$'
+          pattern: '^\s*[*_\x60#>\- \t]*Skill[*_\x60]*:[*_\x60 \t]*rpi-plan-critique[*_\x60 \t.]*(?:\r?\n|$)'
       - type: output-matches
         name: skill-rpi-bleed-detection-read-only-evidence
         config:
-          pattern: '(?i)\bwithout\s+editing\b|\bdoes\s+not\s+edit\b|\bnot\s+edit\b|\bnever\s+edits?\b|\bcredibility\b|\bfindings?\b'
+          pattern: '(?i)\bwithout\s+editing\b|\bdoes\s+not\s+edit\b|\bnot\s+edit\b|\bnever\s+edits?\b|\bcredibility\b|\bfindings?\b|\b(?:provides?|gives?|performs?|offers?|runs?|delivers?|does|is|it[\x27\u2019]s|stays?|remains?)\s+(?:an?\s+)?(?:\w+\s+){0,2}?read[-\s]only\b'
   - name: skill-rpi-canvas-provider-ambiguity
     prompt: |
       Using the `rpi` skill in a contained, response-only canvas-policy check:

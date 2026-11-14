@@ -62,6 +62,10 @@ stimuli:
         config:
           pattern: '\bqueueTimeDescending\b'
       - type: output-matches
+        name: skill-ado-get-build-info-conformance-status-tool
+        config:
+          pattern: '(?i)\b(?:mcp_ado_pipelines_)?get_build_status\b'
+      - type: output-matches
         name: skill-ado-get-build-info-conformance-tracking-path
         config:
           pattern: '(?i)\.copilot-tracking/pr/(?:\{\{YYYY-MM-DD\}\}|\d{4}-\d{2}-\d{2}|YYYY-MM-DD)-build-'
@@ -1131,7 +1135,7 @@ stimuli:
       - type: output-matches
         name: review-artifacts-conformance-metadata-path
         config:
-          pattern: '(?i)\.copilot-tracking/reviews/code-reviews/[^\s/]+/metadata\.json'
+          pattern: '(?i)\.copilot-tracking/reviews/code-reviews/feature-login-fix/metadata\.json'
 
   - name: instruction-adr-byo-template-conformance
     prompt: |
@@ -1228,7 +1232,12 @@ stimuli:
       - type: output-matches
         name: vex-generation-conformance-under-investigation
         config:
-          pattern: '\bunder_investigation\b'
+          pattern: '(?i)(?<!\b(?:instead\s+of|rather\s+than|over|not|never)\s+\W{0,2})\bunder_investigation\b'
+      - type: output-matches
+        name: vex-generation-conformance-no-not-affected
+        config:
+          pattern: '(?i)(?<!(?:\b(?:not|never|no|cannot|from)|n[\x27\u2019]t)\s+(?:\w+\s+){0,2})\b(?:draft(?:s|ed|ing)?|use|select|choose|set|assign|emit|status)\b\W{0,3}not_affected\b'
+          negate: true
       - type: output-matches
         name: vex-generation-conformance-reviewer-questions
         config:
@@ -1679,6 +1688,10 @@ stimuli:
         name: engagement-reporting-data-handling-source-quality
         config:
           pattern: '(?i)\bsource[-\s]quality\b'
+      - type: output-matches
+        name: engagement-reporting-data-handling-minimization
+        config:
+          pattern: '(?i)(?<!(?:\b(?:not|never)|n[\x27\u2019]t)\s+(?:\w+\s+){0,2})\b(?:minimi[sz]\w*|omit\w*|remov\w*|exclud\w*|strip\w*|redact\w*|drop\w*|replac\w*)\b[^.\n]{0,80}\b(?:PII|personal|contact|e-?mail|identifiers?)\b'
       - type: output-matches
         name: engagement-reporting-data-handling-draft-capability
         config:
