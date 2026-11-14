@@ -3,7 +3,7 @@ title: Installing HVE Core
 description: Install HVE Core for the Copilot agent harness as a plugin, a repository default, a repository copy, the VS Code extension, or a clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-10
+ms.date: 2026-11-13
 ms.topic: how-to
 keywords: [installation, setup, github copilot, copilot plugin, agent plugins, marketplace, repository copy]
 estimated_reading_time: 7
@@ -195,6 +195,8 @@ Add this line to your project's `.gitignore`:
 > This applies to every install route. Agents create the `.copilot-tracking/` folder in your project directory, not in HVE Core itself.
 
 The folder holds working files such as research documents, implementation plans, PR review notes, and work item planning files. Agents use them to keep context across sessions, but they do not belong in your repository's history.
+
+When another contributor needs continuation context, use [Share Work for Another Contributor](../rpi/shared-work-handoff) to publish a minimized handoff under a checked-in repository path. Do not remove `.copilot-tracking/` from `.gitignore` to share private workflow state.
 
 ## MCP Server Configuration (Optional)
 

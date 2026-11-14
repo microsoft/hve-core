@@ -58,3 +58,10 @@ refreshes the pull request context, and includes the new commit in the final app
 
 For example, after approving an identified ordinary push, you can still leave the prepared PR
 unpublished. The remaining approval is for the PR write alone, not another approval of that push.
+
+The workflow may offer `/shared-work-handoff prepare preview` with proposed sources, target, and
+actual audience for you to complete and invoke manually. It does not load that manual-only skill or
+prepare its file. Declining leaves PR preparation unchanged. Preview grants no publication or Git
+write authority, and private sources need explicit selection. After taking the detour, explicitly
+resume PR preparation; a PR body link requires verified publication and disclosure approval, separate
+from the final PR-write approval.
