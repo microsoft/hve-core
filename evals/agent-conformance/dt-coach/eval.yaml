@@ -16,6 +16,17 @@ scoring:
     wall-time: 0.15
     output-contains: 0.15
   threshold: 0.7
+# Stage the agent at the path turn 0 launches, plus the skills it preloads and loads.
+# Paths resolve from this spec's directory, three levels below the repository root.
+agent_environment:
+  skills:
+  - ../../../.github/skills/shared/disclaimer-language
+  - ../../../.github/skills/shared/untrusted-content-boundary
+  - ../../../.github/skills/design-thinking/dt-coaching-foundation
+  - ../../../.github/skills/design-thinking/dt-methods
+  files:
+  - src: ../../../.github/agents/design-thinking/dt-coach.agent.md
+    dest: .github/agents/design-thinking/dt-coach.agent.md
 stimuli:
 - name: think-speak-empower-pattern
   turns:

@@ -33,6 +33,7 @@ stimuli:
       skills:
         - ../../.github/skills/security/supply-chain-security
         - ../../.github/skills/security/security-reviewer-formats
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
     graders:
@@ -219,6 +220,8 @@ stimuli:
       skills:
         - ../../.github/skills/security/supply-chain-security
         - ../../.github/skills/security/security-reviewer-formats
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
     graders:
@@ -255,6 +258,8 @@ stimuli:
           dest: .github/skills/security/vex/references/vex-generation.md
       skills:
         - ../../.github/skills/security/vex
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       advisory: "true"
@@ -284,6 +289,8 @@ stimuli:
           dest: .github/skills/security/vex/references/vex-generation.md
       skills:
         - ../../.github/skills/security/vex
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       advisory: "true"
