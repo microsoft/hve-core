@@ -1,4 +1,4 @@
-# cspell:ignore duplicat occlu bprepar
+# cspell:ignore duplicat occlu bprepar minimi exclud
 name: behavior-conformance-instructions
 description: >
   Advisory-tier behavior conformance evals for high-signal Markdown-applyTo
