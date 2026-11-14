@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 391
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 394
   stimuli, including engagement-reporting coverage, Outlook HTML guards, the
   conformance stimuli migrated from retired prompts, and complete branch
   coverage for the RPI, proposal-response, outcome-hypothesis, and
@@ -1873,6 +1873,70 @@ stimuli:
         name: skill-rpi-walkthrough-knowledge-read-only-boundary
         config:
           pattern: '(?i)^\s*read-only[.!]?\s*$'
+  - name: skill-rpi-tracking-audit-knowledge
+    prompt: |
+      Which rule ID does `rpi-tracking-audit` report for a possible credential
+      in a tracking artifact? Your entire response must be exactly the rule ID,
+      without Markdown or explanation.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-tracking-audit
+    tags:
+      category: behavior-conformance
+      skill: rpi-tracking-audit
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-rpi-tracking-audit-knowledge-credential-rule
+        config:
+          pattern: '(?i)^\s*HY1[.!]?\s*$'
+  - name: skill-rpi-tracking-audit-tool-trigger
+    prompt: |
+      I am returning to RPI work after a break and need a read-only report of
+      where each task under `.copilot-tracking/` stands, the next command to
+      run, and whether the plan, changes record, and review still agree. Which
+      skill under `.github/skills/**/SKILL.md` applies?
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-tracking-audit
+    tags:
+      category: behavior-conformance
+      skill: rpi-tracking-audit
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-rpi-tracking-audit-tool-trigger-skill-attribution
+        config:
+          pattern: '(?i)(rpi-tracking-audit|tracking audit)'
+      - type: output-matches
+        name: skill-rpi-tracking-audit-tool-trigger-scope-language
+        config:
+          pattern: '(?i)(read-only|copilot-tracking|consistent|consistency|handover|resume|state)'
+  - name: skill-rpi-tracking-audit-bleed-detection
+    prompt: |
+      I want to continue a paused RPI session from its recorded phase and keep
+      its session state up to date as the work proceeds. Does
+      `rpi-tracking-audit` or the `rpi` session skill apply directly? Justify
+      briefly.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-tracking-audit
+    tags:
+      category: behavior-conformance
+      skill: rpi-tracking-audit
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-rpi-tracking-audit-bleed-detection-skill-attribution
+        config:
+          pattern: '((?<![\w-])rpi(?![\w-])|session skill)'
+      - type: output-matches
+        name: skill-rpi-tracking-audit-bleed-detection-scope-language
+        config:
+          pattern: '(?i)(session|state|resume|read-only|audit)'
   - name: skill-rpi-challenger-contract
     prompt: |
       How many skeptical questions does `rpi-challenger` ask per active turn?

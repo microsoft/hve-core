@@ -21,7 +21,7 @@ Each tier shares the same advisory contract and manifest-driven gating model as 
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
 | `instructions.eval.yaml`   | 3i   | Advisory | 76      | `behavior-conformance` | Active (Phase 11) |
-| `skill-behavior.eval.yaml` | 3s   | Advisory | 391     | `behavior-conformance` | Active (Phase 13) |
+| `skill-behavior.eval.yaml` | 3s   | Advisory | 394     | `behavior-conformance` | Active (Phase 13) |
 
 Prompt conformance coverage moved to `skill-behavior.eval.yaml` and the agent-behavior partials when the repository's prompts became skills or agent entry modes. The `vally-tests` skill still routes `prompt`-kind stimuli to `prompts.eval.yaml`, which it creates on first use.
 
@@ -35,7 +35,7 @@ Stimuli that only checked how a moved instruction attached by `applyTo` were rem
 * Additional: `docusaurus-edits`, `dt-coach-telemetry`, `experiment-designer`, and `skill-security-model`.
 * Language guidance: Rust test placement, naming, local HTTP mocks, and unit-test network isolation; Bicep sensitive-parameter and required-default conventions.
 
-The maintained `skill-behavior.eval.yaml` inventory contains 391 stimuli across 90 skill subjects.
+The maintained `skill-behavior.eval.yaml` inventory contains 394 stimuli across 91 skill subjects.
 It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge,
 unavailable-bridge, read-only-review, and review-pass ownership decisions plus direct
 `rpi-challenger`, `rpi-plan-critique`, pull-request preflight, and RCA evidence-routing,
