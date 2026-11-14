@@ -1,9 +1,9 @@
 ---
 title: dt-curriculum
 description: "Design Thinking learning curriculum covering nine progressive modules across the full Problem, Solution, and Implementation Space methods plus a shared manufacturing reference scenario for teaching and practice"
-sidebar_position: 3
+sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-10-18
 ms.topic: reference
 keywords:
   - skill

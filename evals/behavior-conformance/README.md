@@ -14,7 +14,7 @@ Behavior conformance answers a focused question per stimulus: *does the asset un
 * Instruction conformance: exercises whether instructions in `.github/instructions/**/*.instructions.md` are interpreted by the model in line with their `applyTo` and content rules.
 * Skill behavior: exercises whether skill invocation produces the canonical artifacts and section headers each `SKILL.md` advertises across three stimulus shapes (knowledge, tool-trigger, bleed-detection).
 
-Each tier shares the same advisory contract and manifest-driven gating model as the other Tier 1/2 suites. Most stimuli use deterministic `output-matches` graders. Selected skill stimuli also use deterministic file and diff graders in isolated synthetic workspaces. `skill-behavior.eval.yaml` uses seven `prompt` model-judge graders for semantic contracts that deterministic checks cannot credibly assess.
+Each tier shares the same advisory contract and manifest-driven gating model as the other Tier 1/2 suites. Most stimuli use deterministic `output-matches` graders. Selected skill stimuli also use deterministic file and diff graders in isolated synthetic workspaces. `skill-behavior.eval.yaml` uses nine `prompt` model-judge graders for semantic contracts that deterministic checks cannot credibly assess.
 
 ## Spec inventory
 
@@ -173,6 +173,10 @@ execute the agent or establish model conformance. The redaction
 audit covers investigation artifacts and the final reply, not every intermediate
 assistant message or arbitrary workspace file.
 
+The `ai-discovery-cards` coverage checks workshop knowledge, skill routing after
+validated problem framing, deferral when framing is missing, and the prohibition
+on inventing card content when the authoritative facilitation guide is unavailable.
+
 ### Git publishing evidence boundary
 
 Source-backed Git decisions distinguish local-only integration, explicit ordinary-push consent,
@@ -217,7 +221,7 @@ validation alone cannot establish that the model follows the policy.
 
 The `backlog-plan` and `backlog-execute` workflow commands carry knowledge coverage plus a read-only boundary assertion and a mutation-safety assertion respectively. Other installed skill domains remain in advisory mode.
 
-The current branch-specific calibration status is not yet established for gating. Pass-rate and false-positive measurements are collected from advisory CI runs before graduation. Most stimuli use `output-matches` to check contract vocabulary and routing signals, while seven skill graders use `prompt` model judgment for semantic contracts such as the changes-record contract.
+The current branch-specific calibration status is not yet established for gating. Pass-rate and false-positive measurements are collected from advisory CI runs before graduation. Most stimuli use `output-matches` to check contract vocabulary and routing signals, while nine skill graders use `prompt` model judgment for semantic contracts such as the changes-record contract.
 
 ### Rust HTTP unit-test evidence boundary
 
