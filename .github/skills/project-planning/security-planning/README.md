@@ -1,7 +1,7 @@
 ---
 title: Security Planning TM7 generation and feedback tools
 description: Current generator, validator, feedback, schemas, and references shipped with the Security Planning skill
-ms.date: 2026-08-05
+ms.date: 2026-11-09
 ms.topic: reference
 ---
 
@@ -14,12 +14,14 @@ This package contains the current TM7 generation, validation, and native feedbac
 ### Scripts
 
 * `scripts/generate_tm7.py`: deterministic TM7 generation entry point with optional overlay replay
-* `scripts/validate_tm7_with_tmt.py`: native Microsoft Threat Modeling Tool harness entry point for probe, calibration-smoke, validate, compare-generation-state, upgrade-template, and feedback-loop modes
+* `scripts/validate_tm7_with_tmt.py`: native Microsoft Threat Modeling Tool harness entry point, with `--mode` selecting probe, calibration-smoke, validate, compare-generation-state, or upgrade-template, and the opt-in `--feedback-loop` flag running the feedback loop alongside the selected mode
 * `scripts/tm7_visual_feedback.py`: feedback-domain module for overlay validation, geometry metrics, ranking, and convergence
 * `scripts/tm7_threat_contract.py`: hardened XML parsing policy and the shared threat-contract types
 * `scripts/generate_tb7.py`: deterministic `.tb7` template generation
 * `scripts/populate_tm7_threats.py`: post-generation threat population with an expected-count guard
 * `scripts/generate_markdown.py`: synchronized markdown twin of a generated model
+* `scripts/validate_gap_citations.py`: checks that threat-model gap citations resolve to a skill that declares them
+* `scripts/Deserialize-Tm7.ps1`: deserializes a generated model with the Threat Modeling Tool's own DataContract serializer to prove format fidelity
 
 ### Assets
 
@@ -33,6 +35,8 @@ This package contains the current TM7 generation, validation, and native feedbac
 
 * `references/00-index.md`: navigation catalog and consolidated attribution
 * `references/tm7-generation.md`: public TM7 contract, CLI surface, mode-flag behavior, feedback-loop documentation, and operator runbook
+* `references/tm7-generation-workflow.md`: human-in-the-loop contract for TM7 generation and the native feedback loop
+* `references/drift-input-contracts.md`, `references/drift-comparison-model.md`, `references/drift-report-contract.md`, `references/drift-worked-examples.md`: the plan-to-current-evidence drift contract, its comparison model, output contract, and behavior fixtures
 * `references/operational-buckets.md`, `references/stride-model.md`, `references/standards-cross-reference.md`, `references/nist-control-families.md`, `references/data-classification.md`, `references/threat-model-review.md`, `references/backlog-formats.md`: planning references loaded on demand
 
 ### Other
