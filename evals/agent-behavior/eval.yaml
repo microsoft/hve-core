@@ -5472,6 +5472,38 @@ stimuli:
     name: finding-deep-verifier-no-new-findings-verdict-vocabulary
     config:
       pattern: (?i)\*\*verdict:?\*\*\s*(confirmed|disproved|downgraded)
+- name: finops-value-economist-guardrails-and-basis-separation
+  prompt: |
+    Read `policy/finops-value-economist.agent.md` and the staged FinOps skills.
+    Evaluate this synthetic scenario in chat without writing files or invoking external services:
+    - Claim `cap-01` (`capacity gained`): HVE RPI workflows reduced feature delivery from 10 hours to 4 hours across 20 features (`evidence_links: ["docs/cycle.csv"]`, `hourlyRate: 100`), but no `redeployedShare` was supplied.
+    - Claim `rev-01` (`revenue enablement`): Checkout conversion rose from 100 to 140 orders (`evidence_links: ["docs/orders.csv"]`, `unitValue: 50`, `attributionShare: 0.8`, `financeApproved: true`, `business_decision.status: approved`, `reference: "FIN-01"`).
+    - Counterfactual AI model-routing savings: `$120.00`.
+    Explain which monetary basis bucket each item belongs to, why `cap-01` cannot be multiplied directly by `$100/hr` without `redeployedShare`, and whether the `$120.00` counterfactual is included in `totalStatedEvidencedValue`.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/finops/finops-value-economist.agent.md
+      dest: policy/finops-value-economist.agent.md
+    skills:
+    - ../../.github/skills/finops/finops-value-evidence
+    - ../../.github/skills/finops/finops-value-valuation
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: finops-value-economist
+  graders:
+  - type: output-matches
+    name: names-monetary-basis-buckets
+    config:
+      pattern: (?i)(finance-approved|stated-indicative|modeled-counterfactual|unmonetized-native-only)
+  - type: output-matches
+    name: enforces-redeployment-guardrail
+    config:
+      pattern: (?is)(redeployedShare|redeploy|native\s+(?:operational\s+)?unit|unmonetized)
+  - type: output-matches
+    name: separates-counterfactual-from-evidenced-total
+    config:
+      pattern: (?is)(separate|excluded|not\s+included|never\s+(?:included|summed|added)).*(totalStatedEvidencedValue|evidenced|stated)|totalStatedEvidencedValue.*(exclude|not\s+include|separate)
 - name: functional-planner-frontmatter-name-and-description
   prompt: |
     Open the agent artifact at `.github/agents/project-planning/functional-planner.agent.md`.

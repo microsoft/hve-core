@@ -76,7 +76,7 @@ The complete plugin includes:
 * HVE Builder authoring, review, validation, and Vally conformance support
 * Coding standards and code review for multiple languages and infrastructure formats, including contract-focused TypeScript documentation comments
 * Security, TM7 threat-model generation, supply-chain security, privacy, accessibility, and Responsible AI planning and review
-* Outcome hypotheses, business requirements, product requirements, architecture decisions, performance, proposal and RFP responses, and backlog workflows
+* Outcome hypotheses, business requirements, product requirements, architecture decisions, performance, FinOps value evidence collection and deterministic monetary valuation, proposal and RFP responses, and backlog workflows
 * Azure DevOps, GitHub, GitLab, and Jira integrations
 * Source-grounded engagement reporting, review, Council critique, and optional
   Outlook draft creation
