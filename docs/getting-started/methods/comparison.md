@@ -3,7 +3,7 @@ title: Comparing Setup Methods
 description: Decision matrix, decision tree, and side-by-side comparison for choosing how to install HVE Core for the Copilot agent harness
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-10
 ms.topic: reference
 keywords:
   - installation
@@ -35,7 +35,7 @@ Three questions narrow down the method:
 
 | Need                                        | Team | Updates              | Recommended Method                                               |
 |---------------------------------------------|------|----------------------|------------------------------------------------------------------|
-| The full set with the least setup           | Any  | Auto, follows `main` | [Copilot Plugin](cli-plugins.md) ⭐                               |
+| The full set with the least setup           | Any  | Auto, follows `main` | [Copilot Plugin](cli-plugins.md) ⭐                              |
 | The same setup for everyone in a repository | Team | Auto, follows `main` | [Repository default](../install#offer-the-plugin-to-your-team)   |
 | Marketplace release channels                | Any  | Auto                 | [VS Code Extension](extension.md)                                |
 | A customized copy owned by your repository  | Team | Controlled           | [Repository copy](../install#copy-hve-core-into-your-repository) |

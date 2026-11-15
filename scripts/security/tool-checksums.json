@@ -128,12 +128,12 @@
     {
       "name": "copilot-cli",
       "repo": "github/copilot-cli",
-      "version": "1.0.87",
+      "version": "1.0.103",
       "verification": "published-checksums",
-      "sha256": "49d81b184f1a1b358af676155fe97e341b9d9f0bc8dd25190dfe17087669b5b9",
+      "sha256": "9aeb4430e9ac9523546db07b227c7aba179a4710a55f9ac29ad143b0f9e1b325",
       "sha256ByArch": {
-        "linux_amd64": "49d81b184f1a1b358af676155fe97e341b9d9f0bc8dd25190dfe17087669b5b9",
-        "linux_arm64": "c175343f60024d368e58a71f2294384b2b7df7b958079570b05b69ca89ce55f6"
+        "linux_amd64": "9aeb4430e9ac9523546db07b227c7aba179a4710a55f9ac29ad143b0f9e1b325",
+        "linux_arm64": "728a91dffb9a02817bd98c5b01bf2f9cb08c4fdac3c0ca8c48d7f1ccbfe282a1"
       },
       "assetTemplateByArch": {
         "linux_amd64": "https://github.com/github/copilot-cli/releases/download/v{version}/copilot-linux-x64.tar.gz",

@@ -6,7 +6,7 @@ license: MIT
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-10-31"
+  last_updated: "2026-11-06"
 ---
 
 # HVE-Core Installer Skill
@@ -537,19 +537,68 @@ Provide targeted guidance when steps fail:
 
 ## Rollback
 
-To remove a failed or unwanted installation:
+To remove a failed or unwanted installation. The methods that delete a working
+tree are gated by Checkpoint 4 below. The others skip that checkpoint only;
+they still follow the general authorization rules, including Checkpoint 3 for
+any settings or devcontainer edit.
 
-| Route or Method          | Cleanup                                                                                                                                                    |
-|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Plugin                   | Manage `hve-core` on the **Plugins** page of the Agent Customizations editor                                                                               |
-| Team default             | Remove the `hve-core` entries from `extraKnownMarketplaces` and `enabledPlugins` in `.github/copilot/settings.json`                                        |
-| Native adoption          | Delete `.hve-tracking.json` and any copied `.github/agents/`, `.github/prompts/`, `.github/instructions/`, or `.github/skills/` content you no longer need |
-| Extension                | VS Code → Extensions → HVE Core → Uninstall                                                                                                                |
-| 1 (Peer Clone)           | `rm -rf ../hve-core`                                                                                                                                       |
-| 2 (Git-Ignored)          | `rm -rf .hve-core`                                                                                                                                         |
-| 3-4 (Mounted/Codespaces) | Remove the mount or `postCreateCommand` from devcontainer.json and rebuild the container; for Method 4, also delete `.hve-core`                            |
-| 5 (Multi-Root)           | Delete `.code-workspace` file                                                                                                                              |
-| 6 (Submodule)            | `git submodule deinit lib/hve-core && git rm lib/hve-core`                                                                                                 |
+### Cleanup that needs no Checkpoint 4
+
+These do not delete a working tree, so Checkpoint 4 does not apply. Every other
+authorization rule still does: editing `.github/copilot/settings.json`,
+`devcontainer.json`, or a `.code-workspace` file still requires Checkpoint 3.
+
+| Route or Method | Cleanup                                                                                                                                                    |
+|-----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Plugin          | Manage `hve-core` on the **Plugins** page of the Agent Customizations editor                                                                               |
+| Team default    | Remove the `hve-core` entries from `extraKnownMarketplaces` and `enabledPlugins` in `.github/copilot/settings.json`                                        |
+| Native adoption | Delete `.hve-tracking.json` and any copied `.github/agents/`, `.github/prompts/`, `.github/instructions/`, or `.github/skills/` content you no longer need |
+| Extension       | VS Code → Extensions → HVE Core → Uninstall                                                                                                                |
+| 3 (Mounted)     | Remove the mount from devcontainer.json and rebuild the container                                                                                          |
+| 5 (Multi-Root)  | Delete `.code-workspace` file                                                                                                                              |
+
+### Destructive cleanup — requires Checkpoint 4
+
+These remove a working tree. Methods 1 and 2 delete the clone the installer
+invites users to customize, so any uncommitted local edits are lost
+permanently and `rm -rf` has no undo.
+
+| Method          | Cleanup                                                                                               | What is lost                                   |
+|-----------------|-------------------------------------------------------------------------------------------------------|------------------------------------------------|
+| 1 (Peer Clone)  | `rm -rf ../hve-core`                                                                                  | The peer clone and any local customizations    |
+| 2 (Git-Ignored) | `rm -rf .hve-core`                                                                                    | The in-repo clone and any local customizations |
+| 4 (Codespaces)  | Remove the `postCreateCommand` from devcontainer.json, rebuild the container, then delete `.hve-core` | The in-repo clone and any local customizations |
+| 6 (Submodule)   | `git submodule deinit lib/hve-core && git rm lib/hve-core`                                            | The submodule working tree and its gitlink     |
+
+Before running any row in this table, obtain Checkpoint 4 authorization. Prefer
+the non-destructive alternative where it is sufficient: renaming the directory
+(`mv ../hve-core ../hve-core.bak`) keeps the content recoverable and can be
+undone.
+
+### Checkpoint 4: Rollback Authorization
+
+Before any destructive rollback, inspect the target and present the following.
+Run `git status --porcelain` inside the target directory first so the uncommitted
+count is real rather than assumed:
+
+```text
+🗑️ Rollback — Destructive
+
+I will permanently delete:
+• [absolute path of the target directory]
+
+This includes [N] uncommitted change(s) in that directory, which cannot be recovered.
+
+Non-destructive alternative: rename it instead, with
+  mv [target] [target].bak
+
+⚠️ Authorization Required: Do you authorize deleting [target]? (yes/no)
+```
+
+If user declines: "Rollback cancelled. Nothing was deleted."
+
+If the target is not a directory, or is not the path recorded for the selected
+method, stop and report it rather than deleting anything.
 
 For a clone, also undo its connection: manage a plugin installed from source on the **Plugins** page, or remove the clone's folders from `agentDirectories`, `skillDirectories`, and `instructionDirectories` in `.github/copilot/settings.json`. When an earlier installer version added HVE-Core entries to the `chat.*Locations` settings, remove them as described in Earlier Location Settings Cleanup. Then run **Developer: Reload Window**.
 
@@ -561,6 +610,7 @@ Checkpoints requiring authorization:
 
 1. Initial Consent (Phase 1), before starting detection
 2. File Change Authorization (Checkpoint 3), before writing `.github/copilot/settings.json`, `devcontainer.json`, or a `.code-workspace` file, and before removing earlier location settings
+3. Rollback Authorization (Checkpoint 4), before any destructive rollback
 
 ### Checkpoint 3: File Change Authorization
 
@@ -578,6 +628,10 @@ Changes to be made:
 ```
 
 If the user declines, respond "No changes were made to [file]." Then skip the change and explain how the route is affected, or stop when the route cannot work without it.
+
+Never run a destructive rollback command as part of error recovery. "Delete the
+HVE-Core directory and re-run" in the troubleshooting table is advice to the
+user, not an action to take unprompted; it still requires Checkpoint 4.
 
 ## Output Format Requirements
 

@@ -11,7 +11,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-10
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -100,7 +100,7 @@ The agent follows strict question rules during each phase:
 | Guardrail                             | Description                                                                                        |
 |---------------------------------------|----------------------------------------------------------------------------------------------------|
 | 3-5 questions per turn                | Enough to make progress without overwhelming the user                                              |
-| Emoji checklists                      | Questions use ❓ for pending, ✅ for answered, and ❌ for blocked items                               |
+| Emoji checklists                      | Questions use ❓ for pending, ✅ for answered, and ❌ for blocked items                            |
 | No phase advance without confirmation | The agent summarizes phase findings and asks for explicit approval before moving to the next phase |
 
 ## Session Resume

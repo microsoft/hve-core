@@ -14,7 +14,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-10
 ms.topic: how-to
 estimated_reading_time: 5
 ---
@@ -40,10 +40,10 @@ Select the **SSSC Planner** agent and describe the repository you want to assess
 
 | Situation                                        | Fit |
 |--------------------------------------------------|-----|
-| No PRD, BRD, or security plan available          | ✅   |
-| Team wants to explore the workflow interactively | ✅   |
-| Existing informal notes to incorporate           | ✅   |
-| Well-documented project with formal artifacts    | ❌   |
+| No PRD, BRD, or security plan available          | ✅  |
+| Team wants to explore the workflow interactively | ✅  |
+| Existing informal notes to incorporate           | ✅  |
+| Well-documented project with formal artifacts    | ❌  |
 
 ## From-PRD Mode
 
@@ -65,10 +65,10 @@ Select the **SSSC Planner** agent and ask it to start from your product requirem
 
 | Situation                                 | Fit |
 |-------------------------------------------|-----|
-| PRD artifacts exist under `prd-sessions/` | ✅   |
-| Product requirements are well-documented  | ✅   |
-| Early-stage project without formal docs   | ❌   |
-| Completed security plan available         | ❌   |
+| PRD artifacts exist under `prd-sessions/` | ✅  |
+| Product requirements are well-documented  | ✅  |
+| Early-stage project without formal docs   | ❌  |
+| Completed security plan available         | ❌  |
 
 ## From-BRD Mode
 
@@ -90,10 +90,10 @@ Select the **SSSC Planner** agent and ask it to start from your business require
 
 | Situation                                      | Fit |
 |------------------------------------------------|-----|
-| BRD artifacts exist in `.copilot-tracking/`    | ✅   |
-| Business requirements are well-documented      | ✅   |
-| Early-stage project without formal docs        | ❌   |
-| PRD is more detailed than BRD for this project | ❌   |
+| BRD artifacts exist in `.copilot-tracking/`    | ✅  |
+| Business requirements are well-documented      | ✅  |
+| Early-stage project without formal docs        | ❌  |
+| PRD is more detailed than BRD for this project | ❌  |
 
 ## From-Security-Plan Mode
 
@@ -114,10 +114,10 @@ Select the **SSSC Planner** agent and ask it to extend your completed security p
 
 | Situation                                          | Fit |
 |----------------------------------------------------|-----|
-| Completed Security Planner state file exists       | ✅   |
-| Want to extend security analysis with supply chain | ✅   |
-| No prior security plan                             | ❌   |
-| Security plan is outdated or incomplete            | ❌   |
+| Completed Security Planner state file exists       | ✅  |
+| Want to extend security analysis with supply chain | ✅  |
+| No prior security plan                             | ❌  |
+| Security plan is outdated or incomplete            | ❌  |
 
 ## Comparing the Four Modes
 

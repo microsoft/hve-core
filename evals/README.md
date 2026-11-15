@@ -17,6 +17,7 @@ evals/
 ├── script-validation/    copilot-sdk evals testing deterministic scripts
 ├── baseline-equivalence/ parameterized baseline-vs-customized equivalence suite
 ├── behavior-conformance/ Tier 3 advisory conformance for instructions and skill behavior
+├── rca-real-world/       blinded RCAEval case contract, runbook, and sanitized evidence
 └── skill-hygiene/        vally lint structural checks for .github/skills/
 ```
 

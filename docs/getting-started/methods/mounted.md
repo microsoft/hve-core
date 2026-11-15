@@ -3,7 +3,7 @@ title: Mounted Directory Installation
 description: Advanced devcontainer setup mounting HVE Core from host filesystem
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-10
 ms.topic: how-to
 keywords:
   - mounted directory
@@ -301,15 +301,15 @@ This is expected. Codespaces doesn't support `${localWorkspaceFolder}` or host b
 
 | Aspect                     | Status                                                  |
 |----------------------------|---------------------------------------------------------|
-| Devcontainers              | ✅  Full support                                         |
-| Codespaces                 | ❌  Not supported (no host access)                       |
+| Devcontainers              | ✅  Full support                                        |
+| Codespaces                 | ❌  Not supported (no host access)                      |
 | Team sharing               | ⚠️  Each developer clones on their host                 |
-| Portable paths             | ✅  Relative paths inside the checkout                   |
+| Portable paths             | ✅  Relative paths inside the checkout                  |
 | Path-specific instructions | ⚠️  Not confirmed from declared folders; use the plugin |
 | Version pinning            | ⚠️  Manual (use git checkout on host)                   |
-| Shared installation        | ✅  One clone serves all projects                        |
+| Shared installation        | ✅  One clone serves all projects                       |
 | Setup complexity           | ⚠️  High (multi-phase, requires rebuild)                |
-| Update process             | ✅  git pull on host, then reload the window             |
+| Update process             | ✅  git pull on host, then reload the window            |
 
 ## Next Steps
 

@@ -16,7 +16,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-10
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -29,9 +29,9 @@ The Security Planner agent walks your team through a structured six-phase securi
 
 | Benefit                             | Description                                                                                                                   |
 |-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
-| 🛡️ Consistent coverage             | Every project gets the same structured analysis across seven operational buckets, so nothing falls through the cracks         |
+| 🛡️ Consistent coverage              | Every project gets the same structured analysis across seven operational buckets, so nothing falls through the cracks         |
 | 🔍 Standards-backed threat modeling | Threats are mapped to OWASP Top 10, NIST 800-53, and CIS Benchmarks rather than ad-hoc checklists                             |
-| ⚡ Actionable output                 | The final phase produces backlog items with acceptance criteria, autonomy tiers, and direct links to the threats they address |
+| ⚡ Actionable output                | The final phase produces backlog items with acceptance criteria, autonomy tiers, and direct links to the threats they address |
 
 > [!TIP]
 > New to the agent? Read [Why Security Planning?](why-security-planning) for the reasoning behind each phase.

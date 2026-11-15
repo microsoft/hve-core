@@ -16,7 +16,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-10
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -31,7 +31,7 @@ The SSSC Planner agent walks your team through a structured six-phase supply cha
 |------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
 | 🔗 Consistent coverage       | Every repository gets the same 27-capability inventory and 20-check Scorecard mapping, so nothing falls through the cracks          |
 | 🔍 Standards-backed analysis | Gaps are mapped to OpenSSF Scorecard, SLSA Build levels, and Best Practices Badge criteria rather than ad-hoc checklists            |
-| ⚡ Actionable output          | The final phase produces backlog items with adoption steps, priority derived from risk level, and improvement projections per check |
+| ⚡ Actionable output         | The final phase produces backlog items with adoption steps, priority derived from risk level, and improvement projections per check |
 
 > [!TIP]
 > New to the agent? Read [Why SSSC Planning?](why-sssc-planning) for the reasoning behind each phase.

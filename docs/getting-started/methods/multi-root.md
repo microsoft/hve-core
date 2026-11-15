@@ -3,7 +3,7 @@ title: Multi-Root Workspace Installation
 description: Set up your enterprise fork of HVE Core using VS Code multi-root workspaces
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-10
 ms.topic: how-to
 keywords:
   - multi-root workspace
@@ -188,8 +188,8 @@ Running **Chat: Install Plugin from Source** from the Command Palette (`Ctrl+Shi
 
 The `path` field of each folder entry tells VS Code where that folder is on disk. The `name` field is the label shown in the Explorer sidebar.
 
-| Path Style    | Example                  | Recommended                    |
-|---------------|--------------------------|--------------------------------|
+| Path Style    | Example                  | Recommended                     |
+|---------------|--------------------------|---------------------------------|
 | Absolute path | `"/workspaces/hve-core"` | ✅ Codespaces and devcontainers |
 | Relative path | `"../../hve-core"`       | ✅ VS Code on your machine      |
 
