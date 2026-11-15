@@ -38,7 +38,7 @@ Use `finops-value-evidence` first when repository delivery artifacts and benefit
 ## Example usage
 
 ```bash
-pwsh -NoProfile -File .github/skills/finops/finops-value-valuation/scripts/Measure-HveBenefitValue.ps1 \
+pwsh -NoProfile -File scripts/Measure-HveBenefitValue.ps1 \
   -ClaimsPath ./claims.json \
   -EvidencePath ../hve-value-evidence.json \
   -OutputPath .copilot-tracking/finops/2026-11-15-stated-value.md \

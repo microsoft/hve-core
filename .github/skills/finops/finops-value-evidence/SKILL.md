@@ -31,15 +31,15 @@ Read [references/business-value-measurement.md](references/business-value-measur
 
 <!-- <example-collect-evidence> -->
 ```bash
-# PowerShell (cross-platform)
-pwsh -NoProfile -File .github/skills/finops/finops-value-evidence/scripts/Collect-HveValueEvidence.ps1 \
-  -RepoRoot . \
-  -OutputPath ../hve-value-evidence.json
+# PowerShell (run relative to the resolved finops-value-evidence skill directory)
+pwsh -NoProfile -File scripts/Collect-HveValueEvidence.ps1 \
+  -RepoRoot /path/to/target-repo \
+  -OutputPath /path/to/hve-value-evidence.json
 
 # POSIX / Bash
-bash .github/skills/finops/finops-value-evidence/scripts/collect-hve-value-evidence.sh \
-  --repo-root . \
-  --output-path ../hve-value-evidence.json
+bash scripts/collect-hve-value-evidence.sh \
+  --repo-root /path/to/target-repo \
+  --output-path /path/to/hve-value-evidence.json
 ```
 <!-- </example-collect-evidence> -->
 
@@ -59,7 +59,7 @@ bash .github/skills/finops/finops-value-evidence/scripts/collect-hve-value-evide
 Reads the target Git repository strictly read-only (`GIT_OPTIONAL_LOCKS=0`), refuses symbolic links and reparse points, requires `-OutputPath` to live outside `-RepoRoot` so collection never dirties the repository under measurement, verifies working-tree stability before and after collection, and emits a SHA-256-sealed JSON evidence bundle summarizing:
 
 * Git HEAD, branch, file counts, and full SHA-256 file manifest
-* HVE customization categories (`.github/agents/`, `.github/instructions/`, `.github/skills/`, `docs/`, `tests/`)
+* HVE customization categories (`.github/{agents,instructions,skills}/`, `docs/`, `tests/`)
 * RPI delivery inventory under `.copilot-tracking/` (`research`, `plans`, `changes`, `reviews`, and review-accepted deliverable counts)
 * Optional XML test report attributes (DTD-prohibited safe XML reader) and AI accounting summary
 

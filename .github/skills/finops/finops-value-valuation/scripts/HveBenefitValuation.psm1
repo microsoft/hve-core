@@ -242,7 +242,7 @@ function ConvertTo-HveCurrencyAmount {
 
 <#
 .SYNOPSIS
-    Evaluates a single FinOps benefit claim into native delta, monetary basis, and gross value.
+    Evaluates a single FinOps benefit claim into native delta, monetary basis, and pre-deduction value.
 .PARAMETER Claim
     Claim object from benefit_claims[].
 .PARAMETER ReportCurrency
@@ -691,11 +691,17 @@ function Get-HveBenefitValuation {
     elseif ($null -ne (Get-HveProp -InputObject $InputDocument -Name 'as_of')) {
         [string](Get-HveProp -InputObject $InputDocument -Name 'as_of')
     }
+    elseif ($null -ne (Get-HveProp -InputObject $InputDocument -Name 'asOf')) {
+        [string](Get-HveProp -InputObject $InputDocument -Name 'asOf')
+    }
     else {
         [DateTimeOffset]::UtcNow.ToString('yyyy-MM-dd', [System.Globalization.CultureInfo]::InvariantCulture)
     }
 
     $reportId = [string](Get-HveProp -InputObject $InputDocument -Name 'report_id')
+    if ([string]::IsNullOrWhiteSpace($reportId)) {
+        $reportId = [string](Get-HveProp -InputObject $InputDocument -Name 'reportId')
+    }
     if ([string]::IsNullOrWhiteSpace($reportId)) {
         $reportId = "hve-valuation-$asOfText"
     }
@@ -711,6 +717,9 @@ function Get-HveBenefitValuation {
     }
 
     $docClaims = Get-HveProp -InputObject $InputDocument -Name 'benefit_claims'
+    if ($null -eq $docClaims) {
+        $docClaims = Get-HveProp -InputObject $InputDocument -Name 'benefitClaims'
+    }
     if ($null -eq $docClaims) {
         $docClaims = Get-HveProp -InputObject $InputDocument -Name 'claims'
     }
@@ -892,6 +901,8 @@ function Get-HveBenefitValuation {
     if ($null -ne $rawCosts) {
         foreach ($ce in @($rawCosts)) {
             if ($null -eq $ce) { continue }
+            $cBasis = ([string](Get-HveProp -InputObject $ce -Name 'basis')).Trim().ToLowerInvariant()
+            if ($cBasis -in @('modeled', 'forecast')) { continue }
             $amt = ConvertTo-HveDecimal -Value (Get-HveProp -InputObject $ce -Name 'amount') -FieldName 'cost_evidence.amount'
             $cCurr = [string](Get-HveProp -InputObject $ce -Name 'currency')
             if ([string]::IsNullOrWhiteSpace($cCurr)) { $cCurr = $currency }

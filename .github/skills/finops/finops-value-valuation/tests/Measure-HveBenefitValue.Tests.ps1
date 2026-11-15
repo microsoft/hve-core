@@ -2,11 +2,13 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
-Describe 'HveBenefitValuation and Measure-HveBenefitValue' {
+Describe 'HveBenefitValuation and Measure-HveBenefitValue' -Tag 'Unit' {
     BeforeAll {
         $script:ModulePath = Join-Path $PSScriptRoot '../scripts/HveBenefitValuation.psm1'
         $script:CliPath = Join-Path $PSScriptRoot '../scripts/Measure-HveBenefitValue.ps1'
-        Import-Module $script:ModulePath -Force
+        if (-not (Get-Command -Name Get-HveBenefitValuation -ErrorAction SilentlyContinue)) {
+            Import-Module $script:ModulePath
+        }
     }
 
     It 'monetizes all nine FinOps categories, separates finance-approved from stated-indicative, and computes BCR and ROI' {
@@ -199,8 +201,7 @@ Describe 'HveBenefitValuation and Measure-HveBenefitValue' {
         } | ConvertTo-Json -Depth 10
         Set-Content -LiteralPath $claimsFile -Value $claimsPayload
 
-        $jsonOut = & pwsh -NoProfile -File $script:CliPath -ClaimsPath $claimsFile -EvidencePath $evFile -OutputPath $outMd -Format json
-        $LASTEXITCODE | Should -Be 0
+        $jsonOut = & $script:CliPath -ClaimsPath $claimsFile -EvidencePath $evFile -OutputPath $outMd -Format json
         Test-Path -LiteralPath $outMd -PathType Leaf | Should -BeTrue
         $parsed = $jsonOut | ConvertFrom-Json
         # Delivery labor: 3 * (5 - 1) * 0.75 * 100 = 900.00
@@ -209,5 +210,156 @@ Describe 'HveBenefitValuation and Measure-HveBenefitValue' {
         $parsed.summary.overlapDeductionsTotal | Should -Be 800.00
         $parsed.summary.modeledCounterfactualValue | Should -Be 5.00
         $parsed.summary.netStatedValue | Should -Be 1898.50
+
+        # Also exercise inline -ClaimsJson, .json OutputPath, and -Format markdown
+        $outJsonPath = Join-Path $TestDrive 'report.json'
+        $mdOut = & $script:CliPath -ClaimsJson $claimsPayload -EvidencePath $evFile -OutputPath $outJsonPath -Format markdown -AsOf '2026-11-15'
+        Test-Path -LiteralPath $outJsonPath -PathType Leaf | Should -BeTrue
+        $mdOut | Should -Match 'Stated Monetary Value Report: hve-bundle-test'
+    }
+
+    It 'covers FX conversion, currency isolation, pending forecast claims, alternative category formulas, and guardrail refusals' {
+        $doc = [pscustomobject]@{
+            reportId  = 'fx-and-guardrails'
+            asOf      = '2026-11-15'
+            currency  = 'USD'
+            fxRates   = [pscustomobject]@{ EUR = 1.10 }
+            benefitClaims = @(
+                [pscustomobject]@{
+                    claimId          = 'eur-cost-unit'
+                    category         = 'cost-avoidance'
+                    hypothesis       = 'Reduce compute hours'
+                    beneficiary      = 'Infra'
+                    measurementOwner = 'FinOps'
+                    status           = 'supported'
+                    baseline         = [pscustomobject]@{ value = 100; unit = 'hours' }
+                    observation      = [pscustomobject]@{ value = 60; unit = 'hours' }
+                    evidenceLinks    = @('docs/infra.csv')
+                    valuation        = [pscustomobject]@{ currency = 'EUR'; unitCost = 10; attributionShare = 1.0; confidenceBand = 'high' }
+                }
+                [pscustomobject]@{
+                    claimId          = 'gbp-unconverted'
+                    category         = 'capacity-gained'
+                    hypothesis       = 'Avoid contractor backfill'
+                    beneficiary      = 'Ops'
+                    measurementOwner = 'Ops Lead'
+                    status           = 'supported'
+                    evidenceLinks    = @('docs/ops.csv')
+                    valuation        = [pscustomobject]@{ currency = 'GBP'; avoidedExpenseAmount = 2000; attributionShare = 1.0 }
+                }
+                [pscustomobject]@{
+                    claimId          = 'risk-per-incident'
+                    category         = 'risk-reduction'
+                    hypothesis       = 'Fewer P1 incidents'
+                    beneficiary      = 'SRE'
+                    measurementOwner = 'SRE Lead'
+                    status           = 'supported'
+                    baseline         = [pscustomobject]@{ value = 6; unit = 'incidents' }
+                    observation      = [pscustomobject]@{ value = 2; unit = 'incidents' }
+                    evidenceLinks    = @('docs/sre.csv')
+                    valuation        = [pscustomobject]@{ costPerIncident = 500; attributionShare = 1.0; sensitivity = [pscustomobject]@{ low = 1500; high = 2500 } }
+                }
+                [pscustomobject]@{
+                    claimId          = 'pending-forecast'
+                    category         = 'revenue-enablement'
+                    hypothesis       = 'Target Q1 expansion'
+                    beneficiary      = 'Sales'
+                    measurementOwner = 'RevOps'
+                    status           = 'pending'
+                    baseline         = [pscustomobject]@{ value = 10; unit = 'deals' }
+                    target           = [pscustomobject]@{ value = 20; unit = 'deals' }
+                    valuation        = [pscustomobject]@{ unitMargin = 100; conversionToRecognizedRate = 0.5; attributionShare = 1.0 }
+                }
+                [pscustomobject]@{
+                    claimId          = 'pipeline-only-blocked'
+                    category         = 'revenue_enablement'
+                    hypothesis       = 'Unconverted pipeline'
+                    beneficiary      = 'Sales'
+                    measurementOwner = 'RevOps'
+                    status           = 'supported'
+                    baseline         = [pscustomobject]@{ value = 5; unit = 'deals' }
+                    observation      = [pscustomobject]@{ value = 10; unit = 'deals' }
+                    evidenceLinks    = @('docs/pipe.csv')
+                    valuation        = [pscustomobject]@{ pipelineOnly = $true; unitValue = 100; attributionShare = 1.0 }
+                }
+                [pscustomobject]@{
+                    claimId          = 'labour-quality-failed'
+                    category         = 'labor-augmentation'
+                    hypothesis       = 'Degraded review quality'
+                    beneficiary      = 'Support'
+                    measurementOwner = 'Support Lead'
+                    status           = 'supported'
+                    baseline         = [pscustomobject]@{ value = 5; unit = 'hours' }
+                    observation      = [pscustomobject]@{ value = 2; unit = 'hours' }
+                    evidenceLinks    = @('docs/sup.csv')
+                    valuation        = [pscustomobject]@{ hourlyRate = 50; redeployedShare = 0.8; attributionShare = 1.0; qualityFloorMet = $false }
+                }
+                [pscustomobject]@{
+                    claimId          = 'newcap-unverified'
+                    category         = 'new_capacity'
+                    hypothesis       = 'Unverified demand'
+                    beneficiary      = 'Product'
+                    measurementOwner = 'PM'
+                    status           = 'supported'
+                    baseline         = [pscustomobject]@{ value = 0; unit = 'audits' }
+                    observation      = [pscustomobject]@{ value = 10; unit = 'audits' }
+                    evidenceLinks    = @('docs/audits.csv')
+                    valuation        = [pscustomobject]@{ unitValue = 100; attributionShare = 1.0; demandVerified = $false }
+                }
+                [pscustomobject]@{
+                    claimId          = 'eng-leading-only'
+                    category         = 'engagement'
+                    hypothesis       = 'MAU increase without downstream conversion'
+                    beneficiary      = 'Portal'
+                    measurementOwner = 'PM'
+                    status           = 'supported'
+                    baseline         = [pscustomobject]@{ value = 50; unit = 'mau' }
+                    observation      = [pscustomobject]@{ value = 100; unit = 'mau' }
+                    evidenceLinks    = @('docs/mau.csv')
+                    valuation        = [pscustomobject]@{ attributionShare = 1.0 }
+                }
+                [pscustomobject]@{
+                    claimId          = 'unit-mismatch-claim'
+                    category         = 'quality'
+                    hypothesis       = 'Mismatched units'
+                    beneficiary      = 'Core'
+                    measurementOwner = 'QA'
+                    status           = 'supported'
+                    baseline         = [pscustomobject]@{ value = 10; unit = 'hours' }
+                    observation      = [pscustomobject]@{ value = 3; unit = 'defects' }
+                    evidenceLinks    = @('docs/qa.csv')
+                    valuation        = [pscustomobject]@{ costPerDefect = 100; attributionShare = 1.0 }
+                }
+            )
+            costEvidence = @(
+                [pscustomobject]@{ scope = 'eur-tooling'; amount = 100; currency = 'EUR' }
+                [pscustomobject]@{ scope = 'modeled-forecast'; amount = 9999; currency = 'USD'; basis = 'modeled' }
+                [pscustomobject]@{ scope = 'gbp-missing-fx'; amount = 50; currency = 'GBP' }
+            )
+        }
+
+        $res = Get-HveBenefitValuation -InputDocument $doc
+        # eur-cost-unit: 40 * 10 * 1.10 = 440.00; risk-per-incident: 4 * 500 = 2000.00 => 2440.00
+        $res.summary.totalStatedEvidencedValue | Should -Be 2440.00
+        # costEvidence: 100 EUR * 1.10 = 110.00 (modeled 9999 and unconverted GBP 50 excluded)
+        $res.summary.totalEvidencedCost | Should -Be 110.00
+        $res.summary.netStatedValue | Should -Be 2330.00
+        # pending-forecast: 10 * 100 * 0.5 = 500.00 in modeledCounterfactualValue
+        $res.summary.modeledCounterfactualValue | Should -Be 500.00
+        ($res.claims | Where-Object { $_.claimId -eq 'gbp-unconverted' }).monetaryBasis | Should -Be 'unmonetized-native-only'
+        ($res.claims | Where-Object { $_.claimId -eq 'labour-quality-failed' }).monetaryBasis | Should -Be 'unmonetized-native-only'
+        ($res.claims | Where-Object { $_.claimId -eq 'newcap-unverified' }).monetaryBasis | Should -Be 'unmonetized-native-only'
+        ($res.claims | Where-Object { $_.claimId -eq 'eng-leading-only' }).monetaryBasis | Should -Be 'unmonetized-native-only'
+        ($res.claims | Where-Object { $_.claimId -eq 'unit-mismatch-claim' }).monetaryBasis | Should -Be 'unmonetized-native-only'
+    }
+
+    It 'validates CLI argument and input error guards cleanly' {
+        { & $script:CliPath } | Should -Throw '*Supply at least one input*'
+        { & $script:CliPath -ClaimsPath 'a.json' -ClaimsJson '{}' } | Should -Throw '*not both*'
+        { & $script:CliPath -ClaimsPath (Join-Path $TestDrive 'missing.json') } | Should -Throw '*was not found*'
+        { & $script:CliPath -EvidencePath (Join-Path $TestDrive 'missing-ev.json') } | Should -Throw '*was not found*'
+        { & $script:CliPath -ClaimsJson '{}' -OutputPath 'https://example.invalid/out.md' } | Should -Throw '*local filesystem path*'
+        { Get-HveBenefitValuation -InputDocument @{ benefit_claims = @(@{ claim_id = 'bad-cat'; category = 'unknown' }) } } | Should -Throw '*Unsupported benefit category*'
+        { Get-HveBenefitValuation -InputDocument @{ benefit_claims = @(@{ claim_id = 'bad-attr'; category = 'quality'; status = 'supported'; baseline = @{ value = 5; unit = 'd' }; observation = @{ value = 1; unit = 'd' }; evidence_links = @('x'); valuation = @{ attributionShare = 1.5; costPerDefect = 10 } }) } } | Should -Throw '*attributionShare*'
     }
 }

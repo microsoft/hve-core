@@ -227,6 +227,19 @@ foreach ($catName in $categoryPrefixes.Keys) {
     }
 }
 
+$agentDeclarations = @(
+    foreach ($file in @($manifest | Where-Object { $_.present -and ($_.path -replace '\\', '/') -like '.github/agents/*.agent.md' })) {
+        $text = Get-Content -LiteralPath (Join-Path $resolvedRepo $file.path) -Raw
+        $frontmatter = [regex]::Match($text, '(?s)\A---\r?\n(.*?)\r?\n---').Groups[1].Value
+        [ordered]@{
+            path             = ($file.path -replace '\\', '/')
+            name             = [regex]::Match($frontmatter, '(?m)^name:\s*(.+)$').Groups[1].Value.Trim().Trim('''', '"')
+            modelDeclaration = [regex]::Match($frontmatter, '(?m)^model:\s*(.+)$').Groups[1].Value.Trim()
+            bytes            = $file.bytes
+        }
+    }
+)
+
 $rpiEvidence = Get-RpiDeliveryEvidence -Repository $resolvedRepo
 
 $accountingSummary = $null
@@ -235,7 +248,37 @@ if (-not [string]::IsNullOrWhiteSpace($AccountingPath)) {
     if (Test-Path -LiteralPath $accCandidate -PathType Leaf) {
         $safeAcc = Assert-SafeEvidencePath -CandidatePath $accCandidate
         $acc = Get-Content -LiteralPath $safeAcc -Raw | ConvertFrom-Json
-        $knownUnits = if ($acc.PSObject.Properties['knownProviderUnits']) { [double]$acc.knownProviderUnits } else { $null }
+        $actorSummary = @()
+        $sessionRowUnits = $null
+        if ($acc.PSObject.Properties['sessionRows'] -and $null -ne $acc.sessionRows) {
+            $actorRows = @(
+                foreach ($row in @($acc.sessionRows)) {
+                    $rowUnits = if ($row.PSObject.Properties['knownNanoAiu']) { [double]$row.knownNanoAiu / 1e9 } elseif ($row.PSObject.Properties['knownUnits']) { [double]$row.knownUnits } else { 0.0 }
+                    [pscustomobject]@{
+                        actor = if ($row.PSObject.Properties['id'] -and ([string]$row.id) -match '-role\d+-(.+)$') { $Matches[1] } else { 'coordinator-or-unlabelled-session' }
+                        calls = $(if ($row.PSObject.Properties['calls']) { [int]$row.calls } else { 0 })
+                        units = $rowUnits
+                    }
+                }
+            )
+            $unitAccum = 0.0
+            foreach ($ar in $actorRows) { $unitAccum += $ar.units }
+            $sessionRowUnits = [Math]::Round($unitAccum, 6)
+            $actorSummary = @(
+                $actorRows | Group-Object actor | ForEach-Object {
+                    $gCalls = 0
+                    $gUnits = 0.0
+                    foreach ($g in $_.Group) { $gCalls += $g.calls; $gUnits += $g.units }
+                    [ordered]@{
+                        actor      = $_.Name
+                        sessions   = $_.Count
+                        calls      = $gCalls
+                        knownUnits = [Math]::Round($gUnits, 6)
+                    }
+                }
+            )
+        }
+        $knownUnits = if ($acc.PSObject.Properties['knownProviderUnits']) { [double]$acc.knownProviderUnits } elseif ($null -ne $sessionRowUnits) { $sessionRowUnits } else { $null }
         $costUsd = if ($acc.PSObject.Properties['costUsd']) {
             [double]$acc.costUsd
         }
@@ -252,6 +295,7 @@ if (-not [string]::IsNullOrWhiteSpace($AccountingPath)) {
             knownProviderUnits        = $knownUnits
             costUsd                   = $costUsd
             counterfactualBaselineUsd = $baselineUsd
+            actors                    = $actorSummary
             basis                     = $(if ($acc.PSObject.Properties['basis']) { [string]$acc.basis } else { 'measured' })
         }
     }
@@ -314,6 +358,7 @@ $snapshot = [ordered]@{
     statusStableDuringCollection = (($statusBefore -join "`n") -ceq ($statusAfter -join "`n"))
     fileManifestSha256           = $manifestSha
     categories                   = $categories
+    agentDeclarations            = $agentDeclarations
     rpiDelivery                  = $rpiEvidence
     accounting                   = $accountingSummary
     testReport                   = $testXmlSummary

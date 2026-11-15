@@ -30,15 +30,15 @@ Read [references/value-valuation.md](references/value-valuation.md) for the nine
 
 <!-- <example-measure-benefit-value> -->
 ```bash
-# PowerShell (cross-platform)
-pwsh -NoProfile -File .github/skills/finops/finops-value-valuation/scripts/Measure-HveBenefitValue.ps1 \
+# PowerShell (run relative to the resolved finops-value-valuation skill directory)
+pwsh -NoProfile -File scripts/Measure-HveBenefitValue.ps1 \
   -ClaimsPath ./claims.json \
   -EvidencePath ../hve-value-evidence.json \
   -OutputPath .copilot-tracking/finops/2026-11-15-stated-value.md \
   -Format json
 
 # POSIX / Bash
-bash .github/skills/finops/finops-value-valuation/scripts/measure-hve-benefit-value.sh \
+bash scripts/measure-hve-benefit-value.sh \
   --claims-path ./claims.json \
   --evidence-path ../hve-value-evidence.json \
   --output-path .copilot-tracking/finops/2026-11-15-stated-value.md

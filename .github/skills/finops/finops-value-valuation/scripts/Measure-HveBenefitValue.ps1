@@ -33,7 +33,7 @@
     ./Measure-HveBenefitValue.ps1 -ClaimsPath ./claims.json -EvidencePath ../evidence.json
 #>
 [CmdletBinding()]
-[OutputType([void])]
+[OutputType([string])]
 param(
     [Parameter(Mandatory = $false)]
     [string]$ClaimsPath = '',
@@ -58,71 +58,62 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-Import-Module (Join-Path $PSScriptRoot 'HveBenefitValuation.psm1') -Force
+if (-not (Get-Command -Name Get-HveBenefitValuation -ErrorAction SilentlyContinue)) {
+    Import-Module (Join-Path $PSScriptRoot 'HveBenefitValuation.psm1')
+}
 
-try {
-    if (-not [string]::IsNullOrWhiteSpace($ClaimsPath) -and -not [string]::IsNullOrWhiteSpace($ClaimsJson)) {
-        throw (Get-HveBenefitValuationStop -Message 'Specify either -ClaimsPath or -ClaimsJson, not both.')
-    }
-    if ([string]::IsNullOrWhiteSpace($ClaimsPath) -and [string]::IsNullOrWhiteSpace($ClaimsJson) -and [string]::IsNullOrWhiteSpace($EvidencePath)) {
-        throw (Get-HveBenefitValuationStop -Message 'Supply at least one input (-ClaimsPath, -ClaimsJson, or -EvidencePath).')
-    }
+if (-not [string]::IsNullOrWhiteSpace($ClaimsPath) -and -not [string]::IsNullOrWhiteSpace($ClaimsJson)) {
+    throw (Get-HveBenefitValuationStop -Message 'Specify either -ClaimsPath or -ClaimsJson, not both.')
+}
+if ([string]::IsNullOrWhiteSpace($ClaimsPath) -and [string]::IsNullOrWhiteSpace($ClaimsJson) -and [string]::IsNullOrWhiteSpace($EvidencePath)) {
+    throw (Get-HveBenefitValuationStop -Message 'Supply at least one input (-ClaimsPath, -ClaimsJson, or -EvidencePath).')
+}
 
-    $inputDoc = $null
-    if (-not [string]::IsNullOrWhiteSpace($ClaimsPath)) {
-        $safeClaims = Assert-HveSafePath -CandidatePath $ClaimsPath
-        if (-not (Test-Path -LiteralPath $safeClaims -PathType Leaf)) {
-            throw (Get-HveBenefitValuationStop -Message "ClaimsPath '$ClaimsPath' was not found.")
-        }
-        $inputDoc = [System.IO.File]::ReadAllText($safeClaims) | ConvertFrom-Json -Depth 32
+$inputDoc = $null
+if (-not [string]::IsNullOrWhiteSpace($ClaimsPath)) {
+    $safeClaims = Assert-HveSafePath -CandidatePath $ClaimsPath
+    if (-not (Test-Path -LiteralPath $safeClaims -PathType Leaf)) {
+        throw (Get-HveBenefitValuationStop -Message "ClaimsPath '$ClaimsPath' was not found.")
     }
-    elseif (-not [string]::IsNullOrWhiteSpace($ClaimsJson)) {
-        $inputDoc = $ClaimsJson | ConvertFrom-Json -Depth 32
+    $inputDoc = [System.IO.File]::ReadAllText($safeClaims) | ConvertFrom-Json -Depth 32
+}
+elseif (-not [string]::IsNullOrWhiteSpace($ClaimsJson)) {
+    $inputDoc = $ClaimsJson | ConvertFrom-Json -Depth 32
+}
+
+$evidenceDoc = $null
+if (-not [string]::IsNullOrWhiteSpace($EvidencePath)) {
+    $safeEv = Assert-HveSafePath -CandidatePath $EvidencePath
+    if (-not (Test-Path -LiteralPath $safeEv -PathType Leaf)) {
+        throw (Get-HveBenefitValuationStop -Message "EvidencePath '$EvidencePath' was not found.")
     }
+    $evidenceDoc = [System.IO.File]::ReadAllText($safeEv) | ConvertFrom-Json -Depth 32
+}
 
-    $evidenceDoc = $null
-    if (-not [string]::IsNullOrWhiteSpace($EvidencePath)) {
-        $safeEv = Assert-HveSafePath -CandidatePath $EvidencePath
-        if (-not (Test-Path -LiteralPath $safeEv -PathType Leaf)) {
-            throw (Get-HveBenefitValuationStop -Message "EvidencePath '$EvidencePath' was not found.")
-        }
-        $evidenceDoc = [System.IO.File]::ReadAllText($safeEv) | ConvertFrom-Json -Depth 32
+$model = Get-HveBenefitValuation -InputDocument $inputDoc -EvidenceDocument $evidenceDoc -AsOf $AsOf
+
+if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
+    if ($OutputPath -match '^[A-Za-z][A-Za-z0-9+.-]+://' -or $OutputPath -match '^(?:\\\\|//)') {
+        throw (Get-HveBenefitValuationStop -Message "OutputPath '$OutputPath' must be a local filesystem path.")
     }
-
-    $model = Get-HveBenefitValuation -InputDocument $inputDoc -EvidenceDocument $evidenceDoc -AsOf $AsOf
-
-    if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
-        if ($OutputPath -match '^[A-Za-z][A-Za-z0-9+.-]+://' -or $OutputPath -match '^(?:\\\\|//)') {
-            throw (Get-HveBenefitValuationStop -Message "OutputPath '$OutputPath' must be a local filesystem path.")
-        }
-        $safeOut = Assert-HveSafePath -CandidatePath $OutputPath
-        $parent = Split-Path -Parent $safeOut
-        if ($parent -and -not (Test-Path -LiteralPath $parent -PathType Container)) {
-            New-Item -ItemType Directory -Path $parent -Force | Out-Null
-        }
-        $body = if ($safeOut.EndsWith('.json', [System.StringComparison]::OrdinalIgnoreCase)) {
-            ($model | ConvertTo-Json -Depth 20) + "`n"
-        }
-        else {
-            ConvertTo-HveBenefitValuationMarkdown -Model $model
-        }
-        [System.IO.File]::WriteAllText($safeOut, $body, [System.Text.UTF8Encoding]::new($false))
-        $model['artifactPath'] = $safeOut
+    $safeOut = Assert-HveSafePath -CandidatePath $OutputPath
+    $parent = Split-Path -Parent $safeOut
+    if ($parent -and -not (Test-Path -LiteralPath $parent -PathType Container)) {
+        New-Item -ItemType Directory -Path $parent -Force | Out-Null
     }
-
-    if ($Format -eq 'markdown') {
-        [System.Console]::Out.Write((ConvertTo-HveBenefitValuationMarkdown -Model $model))
+    $body = if ($safeOut.EndsWith('.json', [System.StringComparison]::OrdinalIgnoreCase)) {
+        ($model | ConvertTo-Json -Depth 20) + "`n"
     }
     else {
-        [System.Console]::Out.WriteLine(($model | ConvertTo-Json -Depth 20))
+        ConvertTo-HveBenefitValuationMarkdown -Model $model
     }
-    exit 0
+    [System.IO.File]::WriteAllText($safeOut, $body, [System.Text.UTF8Encoding]::new($false))
+    $model['artifactPath'] = $safeOut
 }
-catch {
-    if ($_.Exception.Data.Contains('HveBenefitValuationStop')) {
-        [System.Console]::Error.WriteLine($_.Exception.Message)
-        exit 1
-    }
-    [System.Console]::Error.WriteLine("Measure-HveBenefitValue (unexpected failure): $($_.Exception.Message)")
-    exit 2
+
+if ($Format -eq 'markdown') {
+    Write-Output (ConvertTo-HveBenefitValuationMarkdown -Model $model)
+}
+else {
+    Write-Output ($model | ConvertTo-Json -Depth 20)
 }

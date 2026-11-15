@@ -38,12 +38,12 @@ Use `finops-value-valuation` next when you are ready to convert the collected ev
 ## Example usage
 
 ```bash
-pwsh -NoProfile -File .github/skills/finops/finops-value-evidence/scripts/Collect-HveValueEvidence.ps1 \
-  -RepoRoot . \
-  -OutputPath ../hve-value-evidence.json \
-  -AccountingPath ./accounting-summary.json
+pwsh -NoProfile -File scripts/Collect-HveValueEvidence.ps1 \
+  -RepoRoot /path/to/target-repo \
+  -OutputPath /path/to/hve-value-evidence.json \
+  -AccountingPath /path/to/accounting-summary.json
 ```
 
 Expected output indicators:
 
-* Writes `../hve-value-evidence.json` outside `-RepoRoot` and prints a compact JSON summary on stdout with `statusStableDuringCollection: true`, `fileManifestSha256`, `categories`, and `rpiDelivery.acceptedReviews`.
+* Writes `/path/to/hve-value-evidence.json` outside `-RepoRoot` and prints a compact JSON summary on stdout with `statusStableDuringCollection: true`, `fileManifestSha256`, `categories`, and `rpiDelivery.acceptedReviews`.

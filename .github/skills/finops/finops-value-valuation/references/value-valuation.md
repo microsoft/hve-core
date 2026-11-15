@@ -94,7 +94,7 @@ For each claim, `nativeDelta = baseline.value - observation.value` when lower is
 
 ## Double-Count Deduplication and Net Return
 
-* **Overlap deduplication (`overlap_group`)**: Within each shared `overlap_group` among evidenced claims, the primary claim (`primaryInGroup: true`, then `finance-approved`, then largest gross value) keeps its full value and secondary claims have `gross * overlapShare` (default `1.0`) deducted in `overlapAdjustments[]`.
+* **Overlap deduplication (`overlap_group`)**: Within each shared `overlap_group` among evidenced claims, the primary claim (`primaryInGroup: true`, then `finance-approved`, then largest pre-deduction value) keeps its full value and secondary claims have `preDeductionValue * overlapShare` (default `1.0`) deducted in `overlapAdjustments[]`.
 * **Net Stated Value, BCR, and ROI**:
   * `netStatedValue = totalStatedEvidencedValue - totalEvidencedCost`
   * `benefitCostRatio = totalStatedEvidencedValue / totalEvidencedCost`

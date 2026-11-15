@@ -47,4 +47,4 @@ Choose one primary value category per claim. Split multi-effect hypotheses into 
 ## References
 
 * [FinOps Foundation: Unit Economics](https://www.finops.org/framework/capabilities/unit-economics/)
-* [Microsoft Learn: Quantify business value](https://learn.microsoft.com/en-us/cloud-computing/finops/framework/quantify/quantify-business-value)
+* [Microsoft Learn: Quantify business value](https://learn.microsoft.com/cloud-computing/finops/framework/quantify/quantify-business-value)
