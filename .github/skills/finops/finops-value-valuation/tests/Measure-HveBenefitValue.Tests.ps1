@@ -6,9 +6,9 @@ Describe 'HveBenefitValuation and Measure-HveBenefitValue' -Tag 'Unit' {
     BeforeAll {
         $script:ModulePath = Join-Path $PSScriptRoot '../scripts/HveBenefitValuation.psm1'
         $script:CliPath = Join-Path $PSScriptRoot '../scripts/Measure-HveBenefitValue.ps1'
-        if (-not (Get-Command -Name Get-HveBenefitValuation -ErrorAction SilentlyContinue)) {
-            Import-Module $script:ModulePath
-        }
+        Remove-Module HveBenefitValuation -Force -ErrorAction SilentlyContinue
+        # Invoke CLI once before explicit module import so line 62 (auto-import) is exercised in-process
+        $null = & $script:CliPath -ClaimsJson '{"report_id":"boot"}'
     }
 
     It 'monetizes all nine FinOps categories, separates finance-approved from stated-indicative, and computes BCR and ROI' {
@@ -140,7 +140,7 @@ Describe 'HveBenefitValuation and Measure-HveBenefitValue' -Tag 'Unit' {
     It 'enforces guardrails, overlap_group deduplication, and HVE evidence bundle valuation via CLI' {
         $claimsFile = Join-Path $TestDrive 'claims.json'
         $evFile = Join-Path $TestDrive 'evidence.json'
-        $outMd = Join-Path $TestDrive 'report.md'
+        $outMd = Join-Path $TestDrive 'nested-reports/report.md'
 
         $evPayload = @{
             fileManifestSha256 = 'abc123'

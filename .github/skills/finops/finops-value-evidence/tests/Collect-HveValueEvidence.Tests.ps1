@@ -24,11 +24,13 @@ Describe 'Collect-HveValueEvidence' -Tag 'Unit' {
         Set-Content -LiteralPath (Join-Path $repo '.copilot-tracking/reviews/2026-11-15-pass.md') -Value "# Review`n`nVerdict: Pass`n"
         Set-Content -LiteralPath (Join-Path $repo '.copilot-tracking/reviews/2026-11-15-fail.md') -Value "# Review`n`nVerdict: Fail`n"
         Set-Content -LiteralPath (Join-Path $repo 'docs/readme.md') -Value "# Docs`n"
+        Set-Content -LiteralPath (Join-Path $repo 'docs/deleted-after-commit.md') -Value "# Gone`n"
         Set-Content -LiteralPath (Join-Path $repo 'testResults.xml') -Value '<?xml version="1.0" encoding="utf-8"?><test-results total="12" passed="11" failed="1" skipped="0" result="Failure" duration="1.25" />'
         & git -C $repo add -A
         & git -C $repo commit --quiet -m 'initial'
 
-        # Add one untracked file to exercise untracked path collection
+        # Delete one tracked file and add one untracked file to exercise both manifest states
+        Remove-Item -LiteralPath (Join-Path $repo 'docs/deleted-after-commit.md') -Force
         Set-Content -LiteralPath (Join-Path $repo 'tests/untracked.txt') -Value 'untracked'
 
         $accPayload = @{
@@ -47,7 +49,7 @@ Describe 'Collect-HveValueEvidence' -Tag 'Unit' {
         Test-Path -LiteralPath $outJson -PathType Leaf | Should -BeTrue
         $summary = $summaryJson | ConvertFrom-Json
         $summary.statusStableDuringCollection | Should -BeTrue
-        $summary.trackedPaths | Should -Be 8
+        $summary.trackedPaths | Should -Be 9
         $summary.untrackedNonignoredPaths | Should -Be 1
         $summary.rpiDelivery.present | Should -BeTrue
         $summary.rpiDelivery.researchArtifacts | Should -Be 1
@@ -65,20 +67,45 @@ Describe 'Collect-HveValueEvidence' -Tag 'Unit' {
         $fullBundle.agentDeclarations.Count | Should -Be 1
         $fullBundle.agentDeclarations[0].name | Should -Be 'Sample Agent'
         $fullBundle.accounting.actors.Count | Should -Be 2
+        ($fullBundle.fileManifest | Where-Object { $_.path -eq 'docs/deleted-after-commit.md' }).present | Should -BeFalse
     }
 
-    It 'handles unborn HEAD repositories without .copilot-tracking and refuses inside-RepoRoot OutputPath' {
+    It 'handles explicit costUsd, empty accounting, non-git errors, reparse points, and inside-RepoRoot OutputPath' {
         $repo = Join-Path $TestDrive 'guard-repo'
         New-Item -ItemType Directory -Path $repo -Force | Out-Null
         & git -C $repo init --quiet -b main
         Set-Content -LiteralPath (Join-Path $repo 'hello.txt') -Value 'hi'
 
+        $accExplicit = Join-Path $TestDrive 'acc-explicit.json'
+        Set-Content -LiteralPath $accExplicit -Value '{"sessions":1,"calls":2,"costUsd":1.25}'
         $outsideOut = Join-Path $TestDrive 'unborn-out.json'
-        $unbornSummary = (& $script:CollectorScript -RepoRoot $repo -OutputPath $outsideOut) | ConvertFrom-Json
+        $unbornSummary = (& $script:CollectorScript -RepoRoot $repo -OutputPath $outsideOut -AccountingPath $accExplicit) | ConvertFrom-Json
         $unbornSummary.head | Should -Be 'unborn'
         $unbornSummary.rpiDelivery.present | Should -BeFalse
+        $unbornSummary.accounting.costUsd | Should -Be 1.25
+
+        $accEmpty = Join-Path $TestDrive 'acc-empty.json'
+        Set-Content -LiteralPath $accEmpty -Value '{"sessions":1}'
+        $emptyAccOut = Join-Path $TestDrive 'empty-acc-out.json'
+        $emptyAccSummary = (& $script:CollectorScript -RepoRoot $repo -OutputPath $emptyAccOut -AccountingPath $accEmpty) | ConvertFrom-Json
+        $emptyAccSummary.accounting.costUsd | Should -BeNullOrEmpty
 
         $insideOut = Join-Path $repo 'nested/out.json'
         { & $script:CollectorScript -RepoRoot $repo -OutputPath $insideOut } | Should -Throw '*outside RepoRoot*'
+
+        $notGit = Join-Path $TestDrive 'not-a-git-repo'
+        New-Item -ItemType Directory -Path $notGit -Force | Out-Null
+        { & $script:CollectorScript -RepoRoot $notGit -OutputPath (Join-Path $TestDrive 'fail.json') } | Should -Throw '*Git read failed*'
+
+        $linkTargetDir = Join-Path $TestDrive 'real-target'
+        New-Item -ItemType Directory -Path $linkTargetDir -Force | Out-Null
+        $linkedDir = Join-Path $TestDrive 'linked-dir'
+        if ($IsWindows) {
+            New-Item -ItemType Junction -Path $linkedDir -Target $linkTargetDir | Out-Null
+        }
+        else {
+            New-Item -ItemType SymbolicLink -Path $linkedDir -Target $linkTargetDir | Out-Null
+        }
+        { & $script:CollectorScript -RepoRoot $repo -OutputPath (Join-Path $linkedDir 'out.json') } | Should -Throw '*reparse point*'
     }
 }

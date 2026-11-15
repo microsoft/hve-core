@@ -98,7 +98,7 @@ function Read-HveGitOutput {
         [string[]]$Arguments
     )
     $env:GIT_OPTIONAL_LOCKS = '0'
-    $result = @(& git --no-pager -C $Repository @Arguments)
+    $result = @(& git --no-pager -C $Repository @Arguments | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
     if ($LASTEXITCODE -ne 0) {
         throw "Git read failed: $($Arguments -join ' ')"
     }
@@ -180,9 +180,6 @@ $untracked = @(Read-HveGitOutput -Repository $resolvedRepo -Arguments @('ls-file
 
 $manifest = @(
     foreach ($relative in @($tracked + $untracked | Sort-Object -Unique)) {
-        if ([string]::IsNullOrWhiteSpace($relative)) {
-            continue
-        }
         $leafPath = Join-Path $resolvedRepo $relative
         if (-not (Test-Path -LiteralPath $leafPath -PathType Leaf)) {
             [pscustomobject][ordered]@{
@@ -193,15 +190,13 @@ $manifest = @(
             }
             continue
         }
-        $item = Get-Item -LiteralPath $leafPath -Force
-        if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -or $item.LinkTarget) {
-            throw "Refusing to follow reparse point: $relative"
-        }
+        $safeLeaf = Assert-SafeEvidencePath -CandidatePath $leafPath
+        $item = Get-Item -LiteralPath $safeLeaf -Force
         [pscustomobject][ordered]@{
             path    = $relative
             present = $true
             bytes   = [int64]$item.Length
-            sha256  = (Get-FileHash -LiteralPath $leafPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            sha256  = (Get-FileHash -LiteralPath $safeLeaf -Algorithm SHA256).Hash.ToLowerInvariant()
         }
     }
 )
