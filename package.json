@@ -155,14 +155,16 @@
     "@azure/identity": {
       "@azure/msal-node": "7.1.1"
     },
+    "@hono/node-server": "2.1.8",
     "@opentelemetry/core": "2.10.0",
-    "basic-ftp": "6.2.1",
+    "basic-ftp": "6.2.6",
     "body-parser": "2.4.0",
     "brace-expansion@^2": "2.1.7",
     "brace-expansion@^5": "5.0.12",
     "fast-uri": "3.1.9",
     "form-data": "4.0.6",
     "glob": "14.0.3",
+    "hono": "4.13.18",
     "ip-address": "10.7.4",
     "js-yaml": "4.3.2",
     "katex": "0.18.2",
