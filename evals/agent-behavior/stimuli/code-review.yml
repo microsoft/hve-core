@@ -17,6 +17,7 @@ stimuli:
           dest: .github/copilot-instructions.md
       skills:
         - ../../.github/skills/coding-standards/code-review
+        - ../../.github/skills/shared/disclaimer-language
     tags:
       category: agent-behavior
     graders:
@@ -424,6 +425,7 @@ stimuli:
       skills:
         - ../../.github/skills/coding-standards/code-review
         - ../../.github/skills/rpi/rpi-review
+        - ../../.github/skills/shared/disclaimer-language
     tags:
       category: agent-behavior
     graders:

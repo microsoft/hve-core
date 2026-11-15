@@ -65,6 +65,8 @@ stimuli:
           dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
       skills:
         - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       scenario: prd-proposal-rejected
@@ -109,6 +111,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/requirements-author
         - ../../.github/skills/rpi/rpi-research
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       scenario: prd-research-receipt
@@ -138,6 +142,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/requirements-author
         - ../../.github/skills/rpi/rpi-research
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       scenario: prd-research-blocked
@@ -182,6 +188,8 @@ stimuli:
         - ../../.github/skills/project-planning/requirements-author
         - ../../.github/skills/rpi/rpi-plan
         - ../../.github/skills/rpi/rpi-implement
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       scenario: prd-rpi-authoring-execution
@@ -235,6 +243,8 @@ stimuli:
           dest: .copilot-tracking/changes/2026-09-21/atlas-product-prd-build-02-changes.md
       skills:
         - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       scenario: prd-rpi-authoring-reconciliation
