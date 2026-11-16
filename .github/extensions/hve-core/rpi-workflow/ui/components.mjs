@@ -1423,4 +1423,3 @@ export function sessionMenuNodes(ctx, options) {
         h('p', { class: 'menu-note', text: rpi ? 'Choosing a loop, or a session under Other sessions, stops following the agent; choose Follow agent at the top to catch up with it.' : 'The sample has no other loops to show. Choose a session above to show its RPI work instead.' }),
     ].filter(Boolean);
 }
-

@@ -228,4 +228,3 @@ describe('instance memory', () => {
         store.close();
     });
 });
-

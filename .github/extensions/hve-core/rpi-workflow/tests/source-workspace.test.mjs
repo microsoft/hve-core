@@ -802,4 +802,3 @@ describe('git worktrees', () => {
         assert.equal(await readGit(linked), null);
     });
 });
-

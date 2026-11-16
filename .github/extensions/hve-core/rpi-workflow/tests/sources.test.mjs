@@ -886,4 +886,3 @@ describe('binding a canvas to a Copilot session', () => {
         assert.notEqual(same.json.digest, away.json.digest, 'the digest covers the session line');
     });
 });
-
