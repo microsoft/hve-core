@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, clear, decisionAlias, fullTime, h, icon, idTag, PHASE_META, PHASE_STATUS, phaseTabText, plural, relTime, sr } from './dom.mjs';
-import { confirmPress, copilotSessionsPicker, deliveryNotices, deliveryRequest, disclosure, failedPanel, filePreview, handAnnouncement, hasMarginHome, panelOutcome, presentationControl, revealRow, reviewSheet, ROUTE_CHANGED_NOTE, routeBlock, sendItems, sendShape, sessionLabel, sessionMenuNodes, staleAnnouncement, steerPanel, uncertainAnnouncement, waitingCount } from './components.mjs';
+import { confirmPress, deliveryNotices, deliveryRequest, disclosure, failedPanel, filePreview, handAnnouncement, hasMarginHome, panelOutcome, presentationControl, revealRow, reviewSheet, ROUTE_CHANGED_NOTE, routeBlock, sendItems, sendShape, sessionLabel, sessionMenuNodes, staleAnnouncement, steerPanel, uncertainAnnouncement, waitingCount } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
 import { notConnectedView } from './connect-view.mjs';

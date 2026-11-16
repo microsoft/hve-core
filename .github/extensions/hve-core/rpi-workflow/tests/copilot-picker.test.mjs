@@ -25,7 +25,6 @@ const LIVE = 'd5e6f7a8-1b2c-4d3e-8f4a-5b6c7d8e9f0a';
 const OWN = '0c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f';
 const STARTED_BLANK = 'f7a8b9c0-1d2e-4f3a-9b4c-5d6e7f8a9b0c';
 const OTHER = 'e6f7a8b9-0c1d-4e2f-8a3b-4c5d6e7f8a9b';
-const IDLE_UI = { asking: false, askedAt: 0, retryAfterMs: 30000, error: null, helpOpen: false };
 
 const textOf = (node) => node.textContent.replace(/\s+/g, ' ').trim();
 const within = (root) => elements(root);
