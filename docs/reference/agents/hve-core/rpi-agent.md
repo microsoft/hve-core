@@ -28,8 +28,8 @@ User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Fo
 
 ## When to use it
 
-Select `RPI Agent` from the chat agent picker when you want a dedicated agent entry point that preloads the [rpi](../../skills/rpi/rpi) skill to coordinate Research, Plan, Implement, Review, and Follow-up with a durable state record and one stable task identity.
-You can also invoke the [rpi](../../skills/rpi/rpi) skill directly as `/rpi` or let the model load it on demand without switching agents.
+Select `RPI Agent` from the chat agent picker when you want a dedicated agent entry point that preloads the [rpi](../../skills/rpi/rpi.md) skill to coordinate Research, Plan, Implement, Review, and Follow-up with a durable state record and one stable task identity.
+You can also invoke the [rpi](../../skills/rpi/rpi.md) skill directly as `/rpi` or let the model load it on demand without switching agents.
 Both entry surfaces follow the `rpi` skill instructions, activate the matching phase skills ([rpi-research](../../skills/rpi/rpi-research), [rpi-plan](../../skills/rpi/rpi-plan), [rpi-implement](../../skills/rpi/rpi-implement), [rpi-review](../../skills/rpi/rpi-review), and [rpi-refine](../../skills/rpi/rpi-refine)), and open and use the RPI Workflow canvas (`hve-core-rpi-workflow`) when available.
 
 It persists mode, active phase, artifact pointers (`research`, `plan`, `critique`, `changes`, `review`, and `refinement`), decisions, blockers, and ranked follow-ups in one JSON state record per task so a later conversation can resume from the recorded phase.

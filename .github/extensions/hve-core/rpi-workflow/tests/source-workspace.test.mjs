@@ -470,7 +470,7 @@ describe('loading and importing a task', () => {
         await fs.mkdir(path.dirname(path.join(dual, rootReview2)), { recursive: true });
         const rootReview1Text = await fs.readFile(path.join(dual, PATHS.review), 'utf8');
         await fs.writeFile(path.join(dual, rootReview2), rootReview1Text.replaceAll('RV-001', 'RV-010').replaceAll('RV-002', 'RV-011'));
-        await fs.writeFile(path.join(dual, rootRefinement1), refinementText.replaceAll('RF-001', 'RF-001'));
+        await fs.writeFile(path.join(dual, rootRefinement1), refinementText);
         await fs.writeFile(path.join(dual, rootRefinement2), refinementText.replaceAll('RF-001', 'RF-020'));
         await writeJson(dual, PATHS.rootState, {
             ...ROOT_STATE,

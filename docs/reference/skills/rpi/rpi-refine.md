@@ -31,7 +31,7 @@ Review completed RPI work for what can be removed, simplified, consolidated, or 
 Use `rpi-refine` after implementation finishes to examine completed work for what can be removed, simplified, consolidated, or redesigned across everything the session touched.
 While [rpi-review](rpi-review) checks whether delivered work meets planned requirements and acceptance criteria, `rpi-refine` looks across code, tests, documents, domain language, conventions, SDKs and libraries, base assumptions, error boundaries, runtime performance, language versions, and configuration to cut unnecessary weight and surface workarounds that warrant redesign.
 
-During an [rpi](rpi) or [RPI Agent](../../agents/hve-core/rpi-agent) session, `rpi-refine` runs alongside `rpi-review` in the Review phase, and the [RPI Workflow canvas](../../../rpi/rpi-workflow-canvas) displays both reviews together in its Review view.
+During an [rpi](rpi.md) or [RPI Agent](../../agents/hve-core/rpi-agent) session, `rpi-refine` runs alongside `rpi-review` in the Review phase, and the [RPI Workflow canvas](../../../rpi/rpi-workflow-canvas) displays both reviews together in its Review view.
 When a Project coordinates the session on significant changes, the coordinator can create a dedicated fresh-context session just to run and manage `rpi-refine` and hand back the completed record; without a Project coordinator (standalone `/rpi-refine` or single-session RPI), the current main agent runs and manages `rpi-refine` directly.
 
 The main agent owns the refinement analysis, backward logic tracing, assumption and domain judgment, and authoring of `-refinement.md` across four subtractive lenses.

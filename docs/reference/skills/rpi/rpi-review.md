@@ -29,7 +29,7 @@ Compare RPI planning and implementation evidence, record review findings, and ro
 ## When to use it
 
 Use `rpi-review` after implementation finishes to reconcile the plan, the critique when one ran, the changes record, and validation evidence against the accepted requirements.
-In an [rpi](rpi) session it runs alongside [rpi-refine](rpi-refine), which handles subtractive simplification in its own record, and both reviews appear together in the RPI Workflow canvas Review view. The skill initializes one record under `.copilot-tracking/reviews/logs/`, compares the evidence in one marker-driven pass, and writes the findings itself. If a session ends mid-review, run it again and it continues from the saved record.
+In an [rpi](rpi.md) session it runs alongside [rpi-refine](rpi-refine), which handles subtractive simplification in its own record, and both reviews appear together in the RPI Workflow canvas Review view. The skill initializes one record under `.copilot-tracking/reviews/logs/`, compares the evidence in one marker-driven pass, and writes the findings itself. If a session ends mid-review, run it again and it continues from the saved record.
 
 A helper such as [RPI Reviewer](../../agents/hve-core/subagents/rpi-reviewer) is optional: the review parent may assign it one bounded, context-heavy comparison and receive candidate findings with evidence locations, then verifies each one, or investigates further itself, before recording an `RV-xxx`. The review parent owns the final outcome and every route in `## Parent Decision Record`.
 
