@@ -798,6 +798,135 @@ Describe 'VallyRunner module' -Tag 'Unit' {
         }
     }
 
+    Context 'Vally 0.21 output shapes' {
+        BeforeAll {
+            $script:V021FixturePath = Join-Path $PSScriptRoot 'fixtures/equivalence/vally-0.21-results.jsonl'
+
+            function New-V021Inventory {
+                param([string[]]$Stimuli)
+                $inventory = [ordered]@{}
+                foreach ($name in $Stimuli) { $inventory[$name] = [ordered]@{ runs = 1; graders = @([ordered]@{ name = 'check'; type = 'program' }) } }
+                return $inventory
+            }
+
+            function New-V021RunDir {
+                param([string[]]$Lines)
+                $runDir = Join-Path $script:WorkRoot ('v021-' + [Guid]::NewGuid())
+                New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+                if ($Lines) { Set-Content -LiteralPath (Join-Path $runDir 'results.jsonl') -Value $Lines -Encoding utf8 }
+                else { Copy-Item -LiteralPath $script:V021FixturePath -Destination (Join-Path $runDir 'results.jsonl') }
+                return $runDir
+            }
+
+            function New-V021Diagnostic {
+                param([hashtable]$Aggregate, [System.Collections.IDictionary]$Inventory)
+                $trials = @($Aggregate.trialDiagnostics)
+                return [ordered]@{ schemaVersion = '2.0.0'; runKey = 'synthetic.yaml'; configurationStatus = 'available'; specDigest = ('sha256:' + 'a' * 64); inputDigest = ('sha256:' + 'b' * 64)
+                    inputDigestScope = 'spec-only'; selectionDigest = (Get-AgentEvalValueDigest -Value $Inventory); checkout = $null; executorModel = 'model'; judgeModels = @()
+                    versions = @{ vally = '0.21.0'; 'vally-cli' = '0.21.0' }; threshold = 0.7; expectedStimuli = $Inventory; selectedAttempt = 1
+                    attempts = @([ordered]@{ runKey = 'synthetic.yaml'; ordinal = 1; selected = $true; selectionReason = 'fewest-errors-first-on-tie'; exitCategory = 'success'
+                        assertionsPassed = [int]$Aggregate.assertionsPassed; assertionsFailed = [int]$Aggregate.assertionsFailed; erroredTrials = [int]$Aggregate.errored
+                        observedTrials = $trials.Count; recordIssues = @($Aggregate.recordIssues); trials = $trials
+                        perStimulus = @(foreach ($name in $Inventory.Keys) {
+                            $bucket = $Aggregate.perStimulus[$name]
+                            [ordered]@{ stimulusName = $name; expectedTrials = 1; observedTrials = [int]$bucket.trials
+                                aggregateScore = $bucket.aggregateScore; aggregatePassed = $bucket.aggregatePassed }
+                        }) }) }
+            }
+
+            $script:V021Stimuli = @('tool-timing', 'auto-mode', 'skill-stamped', 'skill-unstamped')
+        }
+
+        It 'Observes shell tool calls that carry endTimestamp without projecting the timestamp' {
+            $inventory = New-V021Inventory -Stimuli $script:V021Stimuli
+            $result = Read-VallyResultsJsonl -RunDir (New-V021RunDir) -Threshold 0.7 -ExpectedStimuli $inventory
+
+            $trial = @($result.trialDiagnostics | Where-Object { $_.stimulusName -eq 'tool-timing' })
+            $trial | Should -HaveCount 1
+            $trial[0].observedShellTools | Should -Be @('bash')
+            $trial[0].observedTurns | Should -Be 1
+            $trial[0].responseTurns | Should -Be 1
+            $trial[0].Keys | Should -Not -Contain 'endTimestamp'
+            ($trial[0] | ConvertTo-Json -Depth 10) | Should -Not -Match 'endTimestamp|2026-11-03'
+        }
+
+        It 'Keeps auto-mode system events and the model display label out of turn counts and the projection' {
+            $inventory = New-V021Inventory -Stimuli $script:V021Stimuli
+            $result = Read-VallyResultsJsonl -RunDir (New-V021RunDir) -Threshold 0.7 -ExpectedStimuli $inventory
+
+            $trial = @($result.trialDiagnostics | Where-Object { $_.stimulusName -eq 'auto-mode' })
+            $trial | Should -HaveCount 1
+            $trial[0].configuredTurns | Should -Be 1
+            $trial[0].observedTurns | Should -Be 1
+            $trial[0].responseTurns | Should -Be 1
+            $trial[0].endReason | Should -Be 'completed'
+            $trial[0].observedShellTools | Should -BeNullOrEmpty
+            ($result.trialDiagnostics | ConvertTo-Json -Depth 10) | Should -Not -Match 'modelDisplayName|gpt-6-luna|auto_mode|fusion_resolved'
+        }
+
+        It 'Counts one observed turn for a user-invoked skill activation that is <Case>' -ForEach @(
+            @{ Case = 'stamped with the prompt turn'; Stimulus = 'skill-stamped' }
+            @{ Case = 'unstamped'; Stimulus = 'skill-unstamped' }
+        ) {
+            $inventory = New-V021Inventory -Stimuli $script:V021Stimuli
+            $result = Read-VallyResultsJsonl -RunDir (New-V021RunDir) -Threshold 0.7 -ExpectedStimuli $inventory
+
+            $trial = @($result.trialDiagnostics | Where-Object { $_.stimulusName -eq $Stimulus })
+            $trial | Should -HaveCount 1
+            $trial[0].configuredTurns | Should -Be 1
+            $trial[0].observedTurns | Should -Be 1
+            $trial[0].observedTurns | Should -BeLessOrEqual $trial[0].configuredTurns
+            $trial[0].responseTurns | Should -Be 1
+        }
+
+        It 'Accepts 0.21 trial projections as complete diagnostic evidence' -Tag 'Diagnostic' {
+            $inventory = New-V021Inventory -Stimuli $script:V021Stimuli
+            $result = Read-VallyResultsJsonl -RunDir (New-V021RunDir) -Threshold 0.7 -ExpectedStimuli $inventory
+
+            $result.trials | Should -Be 4
+            $result.assertionsPassed | Should -Be 4
+            $result.errored | Should -Be 0
+            $result.recordIssues | Should -BeNullOrEmpty
+            @($result.trialDiagnostics | Where-Object { $_.identitySource -ne 'native-item-id' }) | Should -BeNullOrEmpty
+            @($result.trialDiagnostics | Where-Object { -not $_.allGradersPassed -or $_.gradeStatus -ne 'success' }) | Should -BeNullOrEmpty
+
+            $evidence = Test-VallyDiagnosticEvidence -Diagnostics (New-V021Diagnostic -Aggregate $result -Inventory $inventory) -RunKey 'synthetic.yaml'
+
+            $evidence.contractValid | Should -BeTrue
+            $evidence.integrityPassed | Should -BeTrue
+            $evidence.allChecksPassed | Should -BeTrue
+            $evidence.issues | Should -BeNullOrEmpty
+        }
+
+        It 'Classifies a results.jsonl grading error on a graded advisory trial as graded-trial-issue' -Tag 'Diagnostic' {
+            $inventory = New-V021Inventory -Stimuli @('graded')
+            $record = @{
+                type = 'trial-result'; stimulus = 'graded'; trialIndex = 0; totalTrials = 1; status = 'success'; durationMs = 10; trajectory = $null
+                gradeResult = @{ status = 'error'; passed = $false; score = 0; details = @(
+                    @{ configuredName = 'check'; graderType = 'program'; status = 'error'; passed = $false; score = 0 }
+                ) }
+            } | ConvertTo-Json -Depth 10 -Compress
+            $result = Read-VallyResultsJsonl -RunDir (New-V021RunDir -Lines @($record)) -Threshold 0.7 -ExpectedStimuli $inventory
+
+            $trial = $result.trialDiagnostics[0]
+            $trial.gradeStatus | Should -Be 'error'
+            $trial.allGradersPassed | Should -BeFalse
+            $trial.thresholdPassed | Should -BeFalse
+            $trial.graders[0].status | Should -Be 'error'
+
+            $diagnostics = New-V021Diagnostic -Aggregate $result -Inventory $inventory
+            $evidence = Test-VallyDiagnosticEvidence -Diagnostics $diagnostics -RunKey 'synthetic.yaml'
+            $evidence.contractValid | Should -BeTrue
+            $evidence.integrityPassed | Should -BeFalse
+            $evidence.issues | Should -Contain 'grading-error'
+
+            $verdict = Test-VallyAdvisoryIntegrityTolerance -Diagnostics $diagnostics -Integrity $evidence -AdvisoryMap @{ graded = $true }
+
+            $verdict.tolerated | Should -BeFalse
+            $verdict.reason | Should -Be 'graded-trial-issue'
+        }
+    }
+
     Context 'Invoke-VallySpec (stub)' {
         It 'Emits a verifiable complete diagnostic contract using native-shaped records' -Tag 'DiagnosticIntegration' {
             $specPath = Join-Path $script:WorkRoot 'configured.yaml'
