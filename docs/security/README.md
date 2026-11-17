@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Security Documentation"
 pagination_label: Security Documentation
 author: Microsoft
-ms.date: 2026-10-29
+ms.date: 2026-11-11
 ms.topic: overview
 keywords:
   - security
@@ -51,6 +51,7 @@ Skills whose shipped scripts make network requests, handle credentials, parse co
 | **customer-card-render** (experimental)         | Local Python CLI; DT markdown to `content.yaml` emission                                                                                                          | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/customer-card-render/SECURITY.md)  |
 | **security-planning**                           | Local Python generator; native TMT validation harness; Windows UI Automation; screenshot capture; overlay and evidence handling                                   | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/project-planning/security-planning/SECURITY.md) |
 | **vex**                                         | Local Python gate; untrusted issue-body + OpenVEX doc parsing                                                                                                     | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/security/vex/SECURITY.md)                       |
+| **rpi-tracking-audit**                          | Local Python CLI; untrusted tracking-file parsing; credential redaction                                                                                           | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/rpi/rpi-tracking-audit/SECURITY.md)             |
 | **hve-core-installer**                          | Local PowerShell + Bash file copy into a target repository; `jq`, `git`, VS Code CLI subprocesses                                                                 | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/installer/hve-core-installer/SECURITY.md)       |
 | **session-log-canvas-update** (repository only) | Local Node.js CLI; installed or operator-named session event schema parsing; operator-selected `--indexer` module import; one fixed baseline write                | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/session-log-canvas-update/SECURITY.md)          |
 | **hve-demo-material** (experimental)            | GitHub REST and Pages client with `GITHUB_TOKEN`; deck and video render writes; `node`, `npm`, `ffmpeg`, `git` subprocesses                                       | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/hve-demo-material/SECURITY.md)     |

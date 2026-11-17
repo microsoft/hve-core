@@ -1,9 +1,9 @@
 ---
 title: rpi
 description: "Coordinate a resumable RPI session through Research, Plan, Implement, Review, and Follow-up with durable session state and RPI Workflow canvas integration. Use when a task needs multi-phase RPI lifecycle coordination."
-sidebar_position: 8
+sidebar_position: 9
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-11
 ms.topic: reference
 keywords:
   - skill
