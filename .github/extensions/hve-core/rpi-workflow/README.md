@@ -287,7 +287,7 @@ While the picker is on screen, the outcome of Open in new panel appears at its f
 | Wait    | The agent was just asked to open a canvas for NAME. Wait N seconds, then try again. |
 | Failed  | Opening a canvas for NAME failed: REASON.                                           |
 
-A Wait notice for a different session says "another session" in place of NAME. When the host cannot open the panel, the canvas sends the chat one fixed line, `RPI canvas <handle>: open an RPI Workflow canvas for session <session ID>.`, and reports Asked. It sends at most one such line every 30 seconds, so a request within that time gets the Wait notice.
+A Wait notice for a different session says "another session" in place of NAME. When the host cannot open the panel, the canvas sends the chat one fixed line, `RPI canvas <handle>: open an RPI Workflow canvas for session <session ID>.`, followed for the agent by the canvas ID, instance ID, and input to open it with, and its provider when the canvas knows it. It then reports Asked. It sends at most one such line every 30 seconds, so a request within that time gets the Wait notice.
 
 If Show here fails, the picker says so with the reason, and the page announces it once. While the list loads, it says "Looking for sessions…" If the list cannot be read, it says "Sessions could not be listed," with the reason. When no session has RPI work, it says "No sessions with RPI work were found on this machine." Refresh fetches the list again, and the page announces what it found. When the list renders again, focus stays on the control or heading that had it.
 
