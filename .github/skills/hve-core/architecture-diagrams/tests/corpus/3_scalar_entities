@@ -1,3 +1,5 @@
 ---
+catalog_version: DS_CATALOG_V1
 entities: not-a-list
+relationships: []
 ---
