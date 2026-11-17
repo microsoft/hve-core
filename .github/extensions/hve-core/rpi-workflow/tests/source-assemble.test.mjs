@@ -23,7 +23,7 @@ import {
 } from '../lib/source/assemble.mjs';
 import { parseChanges, parseCritique, parsePlan, parseResearch, parseReview, parseState } from '../lib/source/parse.mjs';
 import { installFakeDom } from './helpers/fake-dom.mjs';
-import { CHANGES, childSession, CRITIQUE, PATHS, PLAN, RESEARCH, REVIEW, ROOT_STATE, rootSession } from './helpers/rpi-fixture.mjs';
+import { cameWithPlanEvidence, CHANGES, childSession, copiedEvidence, CRITIQUE, PATHS, PLAN, RESEARCH, REVIEW, ROOT_STATE, rootSession, SOURCE_SESSION, suppliedEvidence } from './helpers/rpi-fixture.mjs';
 
 const NOW = '2026-01-15T12:00:00.000Z';
 
@@ -150,9 +150,9 @@ describe('assembled document', () => {
 });
 
 describe('provided research and plans', () => {
-    const SOURCE_SESSION = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
-    const COPIED = `Copied from session ${SOURCE_SESSION}; path ${PATHS.research}; content hash 9f2c4e1a`;
-    const SUPPLIED = 'User supplied the plan in chat.';
+    // The evidence the rpi skill records; the tolerance test holds the other shapes the canvas reads.
+    const COPIED = copiedEvidence(PATHS.research);
+    const SUPPLIED = suppliedEvidence('offline trail plan in chat.');
     const copied = { status: 'provided', evidence: COPIED };
     const supplied = { status: 'provided', evidence: SUPPLIED };
     const artifacts = () => ({ research: parseResearch(RESEARCH), plan: parsePlan(PLAN), changes: parseChanges(CHANGES) });
@@ -171,6 +171,9 @@ describe('provided research and plans', () => {
     });
     const assembled = (state, files = artifacts(), extra = {}) => assembleSession({ id: 'x', state, artifacts: files, statePath: PATHS.rootState, now: NOW, ...extra }).session;
     const statuses = (session) => Object.values(session.phases).map((phase) => phase.status);
+    /** A session whose research came with its plan: no research document, so the state keeps no research path. */
+    const withPlan = (activePhase, evidence, fields = {}) => stateWith(activePhase, { status: 'provided', evidence }, supplied, { artifact_paths: { plan: PATHS.plan }, ...fields });
+    const planOnly = { plan: parsePlan(PLAN) };
 
     it('shows research and plan as Provided once the agent is past them', () => {
         assert.deepEqual(statuses(assembled(stateWith('Implement', copied, supplied))), ['provided', 'provided', 'active', 'upcoming', 'upcoming']);
@@ -213,12 +216,23 @@ describe('provided research and plans', () => {
         assert.equal(sections['plan-source'].markdown, `The plan came from the user.\n\n${SUPPLIED}`);
         assert.ok(sections['research-summary'], 'a provided research document renders as today');
         assert.equal(phases.research.artifact, PATHS.research);
-        assert.equal(assembled(stateWith('Implement', null, { status: 'provided', evidence: '' })).sections['plan-source'].markdown, 'The plan came from the user or another session.');
     });
 
     it('keeps evidence that holds markup as text, without changing it', () => {
-        const markup = '<img src=x onerror="alert(1)"> supplied by the user';
+        const markup = suppliedEvidence('<img src=x onerror="alert(1)"> notes in chat');
         assert.equal(assembled(stateWith('Implement', null, { status: 'provided', evidence: markup })).sections['plan-source'].markdown, `The plan came from the user.\n\n${markup}`);
+    });
+
+    it('tolerates evidence in other shapes than the skill records: other separators, free text, any letter case, or none', () => {
+        const researchSource = (evidence) => assembled(stateWith('Implement', { status: 'provided', evidence }, supplied)).sections['research-source'].markdown;
+        const planSource = (evidence) => assembled(stateWith('Implement', null, { status: 'provided', evidence })).sections['plan-source'].markdown;
+        const cameWith = (evidence) => assembled(withPlan('Implement', evidence), planOnly).sections['research-source'].markdown;
+        const separators = `Copied from session ${SOURCE_SESSION}; path ${PATHS.research}; content hash 9f2c4e1a`;
+        assert.equal(researchSource(separators), `Research came from session 3fa85f64.\n\n${separators}`, 'semicolons and a short hash still name the session');
+        assert.equal(planSource('User supplied the plan in chat.'), 'The plan came from the user.\n\nUser supplied the plan in chat.', 'free text that names the user');
+        assert.equal(planSource(''), 'The plan came from the user or another session.', 'no evidence');
+        assert.match(cameWith(`came WITH the provided PLAN: Copied from session ${SOURCE_SESSION}; path ${PATHS.plan}`), /^Research came with the plan from session 3fa85f64\./, 'any letter case');
+        assert.match(cameWith('Came with the provided plan: plan notes from chat.'), /^Research came with the plan\.\n\n/, 'a note that names neither a session nor the user');
     });
 
     it('does not read a provided research as reused, even when its state path names another kind', () => {
@@ -229,11 +243,8 @@ describe('provided research and plans', () => {
     });
 
     describe('research that came with a provided plan', () => {
-        const WITH_PLAN_SESSION = `Came with the provided plan: Copied from session ${SOURCE_SESSION}; path ${PATHS.plan}; sha256 1a2b3c4d`;
-        const WITH_PLAN_USER = 'Came with the provided plan: Supplied by the user on 2026-11-09: offline trail plan in chat.';
-        /** A session whose research came with its plan: no research document, so the state keeps no research path. */
-        const withPlan = (activePhase, evidence, fields = {}) => stateWith(activePhase, { status: 'provided', evidence }, supplied, { artifact_paths: { plan: PATHS.plan }, ...fields });
-        const planOnly = { plan: parsePlan(PLAN) };
+        const WITH_PLAN_SESSION = cameWithPlanEvidence(copiedEvidence(PATHS.plan));
+        const WITH_PLAN_USER = cameWithPlanEvidence(SUPPLIED);
 
         it('names the session the plan came from, with the evidence as recorded', () => {
             const session = assembled(withPlan('Implement', WITH_PLAN_SESSION), planOnly);
@@ -248,15 +259,6 @@ describe('provided research and plans', () => {
             const session = assembled(withPlan('Implement', WITH_PLAN_USER), planOnly);
             assert.equal(session.sections['research-source'].markdown, `Research came with the plan the user supplied.\n\n${WITH_PLAN_USER}`);
             assert.equal(session.phases.research.status, 'provided');
-        });
-
-        it('reads the came-with-the-plan note whatever its letter case', () => {
-            const lower = `came WITH the provided PLAN: Copied from session ${SOURCE_SESSION}; path ${PATHS.plan}`;
-            assert.match(assembled(withPlan('Implement', lower), planOnly).sections['research-source'].markdown, /^Research came with the plan from session 3fa85f64\./);
-        });
-
-        it('falls back to a plain came-with-the-plan sentence when the evidence names neither a session nor the user', () => {
-            assert.match(assembled(withPlan('Implement', 'Came with the provided plan: plan notes from chat.'), planOnly).sections['research-source'].markdown, /^Research came with the plan\.\n\n/);
         });
 
         it('keeps research that came with the plan In progress while the session runs in Research', () => {

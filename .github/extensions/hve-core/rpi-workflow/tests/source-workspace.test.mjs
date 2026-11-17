@@ -32,7 +32,7 @@ import {
 } from '../lib/source/workspace.mjs';
 import { createStore } from '../lib/store.mjs';
 import { scratchFolder, symlinkOrSkip } from './helpers/scratch.mjs';
-import { CHILD_STATE, CHILD_TASK, EARLY, PATHS, PLAN, ROOT_STATE, ROOT_TASK, SESSION_KEY, STALE_TASK, writeEarlierWork, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
+import { CHILD_STATE, CHILD_TASK, copiedEvidence, EARLY, PATHS, PLAN, ROOT_STATE, ROOT_TASK, SESSION_KEY, STALE_TASK, writeEarlierWork, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
 
 const EARLY_RESEARCH = `# Task Research: Offline trail maps, first look
 
@@ -424,7 +424,7 @@ describe('loading and importing a task', () => {
             status: 'active',
             confirmed_decisions: [
                 ...ROOT_STATE.confirmed_decisions.filter((item) => item.decision !== 'Research disposition'),
-                { decision: 'Research disposition', status: 'provided', evidence: `Copied from session 3fa85f64-5717-4562-b3fc-2c963f66afa6; path ${EARLY.research}; content hash 9f2c4e1a` },
+                { decision: 'Research disposition', status: 'provided', evidence: copiedEvidence(EARLY.research) },
             ],
             documents,
         });

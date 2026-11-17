@@ -7,7 +7,7 @@ import { after, before, describe, it } from 'node:test';
 import { assembleSession } from '../lib/source/assemble.mjs';
 import { parsePlan, parseResearch, parseState } from '../lib/source/parse.mjs';
 import { installFakeDom, serialize } from './helpers/fake-dom.mjs';
-import { FIXTURE_NOW, PATHS, PLAN, RESEARCH, ROOT_STATE, rootSession } from './helpers/rpi-fixture.mjs';
+import { copiedEvidence, FIXTURE_NOW, PATHS, PLAN, RESEARCH, ROOT_STATE, rootSession, suppliedEvidence } from './helpers/rpi-fixture.mjs';
 
 const html = (nodes) => (Array.isArray(nodes) ? nodes : [nodes]).flat(Infinity).filter(Boolean).map(serialize).join('');
 const textOf = (markup) => markup.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
@@ -145,7 +145,7 @@ describe('updated marks', () => {
 });
 
 describe('provided sources', () => {
-    const MARKUP = '<img src=x onerror="alert(1)"> supplied by the user';
+    const MARKUP = suppliedEvidence('<img src=x onerror="alert(1)"> notes in chat');
     /** A task whose Research and Plan were provided with this evidence, assembled as the canvas reads them. */
     const providedWith = (evidence) => assembleSession({
         id: 'rpi-trail-maps',
@@ -159,16 +159,16 @@ describe('provided sources', () => {
         const session = providedWith(MARKUP);
         const markup = html(planView.renderView(makeContext(session, 'plan')));
         assert.ok(markup.indexOf('id="row-plan-source"') < markup.indexOf('id="row-plan-summary"'), 'the source comes before the summary');
-        assert.match(textOf(markup), /The plan came from the user\. &lt;img src=x onerror=&quot;alert\(1\)&quot;&gt; supplied by the user/);
+        assert.match(textOf(markup), /The plan came from the user\. Supplied by the user on 2026-01-15: &lt;img src=x onerror=&quot;alert\(1\)&quot;&gt; notes in chat/);
         assert.doesNotMatch(markup, /<img/, 'the evidence renders as text, never as an element');
         assert.deepEqual(planView.outline(makeContext(session, 'plan')).slice(0, 2).map((item) => item.label), ['Source', 'Summary']);
     });
 
     it('shows a provided research\'s Source row first, naming the session by its short ID', () => {
-        const session = providedWith(`Copied from session 3fa85f64-5717-4562-b3fc-2c963f66afa6; path ${PATHS.research}; content hash 9f2c4e1a`);
+        const session = providedWith(copiedEvidence(PATHS.research));
         const markup = html(researchView.renderView(makeContext(session, 'research')));
         assert.ok(markup.indexOf('id="row-research-source"') < markup.indexOf('id="row-research-summary"'));
-        assert.match(textOf(markup), /Research came from session 3fa85f64\. Copied from session 3fa85f64-5717-4562-b3fc-2c963f66afa6;/);
+        assert.ok(textOf(markup).includes(`Research came from session 3fa85f64. ${copiedEvidence(PATHS.research)}`), 'the short ID, then the evidence as recorded');
         assert.equal(researchView.outline(makeContext(session, 'research'))[0].label, 'Source');
     });
 
