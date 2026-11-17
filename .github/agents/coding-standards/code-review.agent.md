@@ -1,6 +1,6 @@
 ---
 name: Code Review
-description: "Review changes through the shared Code Review skill, with focused perspectives, snapshot-backed evidence, and an optional canvas."
+description: "Prioritize functional code review through the consolidated code-review skill, with parallel general-purpose task orchestration, strictly opt-in non-functional vectors, and an optional Code Review canvas."
 tools:
   - agent
   - execute
@@ -18,6 +18,10 @@ skills:
 
 # Code Review
 
-Follow the preloaded `code-review` skill for target resolution, shared evidence,
-perspective selection, dispatch, findings, feedback, and delivery. Keep review
-source read-only and preserve the skill's human-review and publication boundaries.
+Follow the preloaded `code-review` skill for target resolution, snapshot capture,
+functional-first review, parallel general-purpose task orchestration (or Project
+coordinator session delegation when operating under a Project), verification,
+canvas feedback, and delivery. Keep non-functional review references and
+external specialist skills unloaded unless the user explicitly requests them.
+Keep reviewed source read-only and preserve human-review and publication
+boundaries.

@@ -6,8 +6,8 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
-import { captureReview } from '../../../../skills/coding-standards/code-review-core/scripts/lib/snapshot.mjs';
-import { schedule, updateContext } from '../../../../skills/coding-standards/code-review-core/scripts/lib/operations.mjs';
+import { captureReview } from '../../../../skills/coding-standards/code-review/scripts/lib/snapshot.mjs';
+import { schedule, updateContext } from '../../../../skills/coding-standards/code-review/scripts/lib/operations.mjs';
 import {
     dismissFeedback, editFeedback, markTarget, openReview, queueFeedback, readFeedback, recordInterpretation, refresh, requestReviewer, restoreFeedback,
     sendFeedback, takeFeedback, unqueueFeedback,
@@ -202,21 +202,47 @@ describe('dismissing feedback', () => {
 describe('adding reviewers', () => {
     const scope = { profile: 'standard', depth: 'standard', mode: 'sweep', rationale: 'Fixture scope.' };
 
-    it('queues one request per reviewer and refuses reviewers that run, are requested, or are unknown', async (t) => {
-        const { captured, source } = await fixture(t);
-        await schedule(captured, 0, { perspectives: ['functional'], scope });
-        await refresh(source);
-        let feedback = await requestReviewer(source, { revision: 0, perspective: 'privacy', text: 'Add the Privacy reviewer to this review.' });
-        assert.deepEqual(feedback.items.map((item) => [item.kind, item.status, item.target.kind, item.target.id]), [['add-reviewer', 'queued', 'perspective', 'privacy']]);
-        await assert.rejects(requestReviewer(source, { revision: feedback.revision, perspective: 'privacy' }), /already requested/);
+    it('queues area-scoped or whole-review requests and refuses duplicates on already covered areas', async (t) => {
+        const repository = await fs.mkdtemp(path.join(os.tmpdir(), 'hve-review-areas-'));
+        t.after(() => fs.rm(repository, { recursive: true, force: true }));
+        const captured = await captureReview(repository, {
+            kind: 'selected',
+            selection: [
+                { path: 'auth.js', startLine: 1, endLine: 1, text: 'verify();' },
+                { path: 'deps.js', startLine: 1, endLine: 1, text: 'load();' },
+            ],
+        });
+        const [authFile, depsFile] = captured.snapshot.files;
+        const areas = [
+            { id: 'area-auth', title: 'Auth', fileIds: [authFile.id], summary: '', before: '', after: '', impact: [] },
+            { id: 'area-deps', title: 'Dependencies', fileIds: [depsFile.id], summary: '', before: '', after: '', impact: [] },
+        ];
+        await schedule(captured, 0, { perspectives: ['functional'], scope, areas });
+        const source = await openReview(repository, { state: `${captured.relative}/review-state.json` });
+
+        let feedback = await requestReviewer(source, { revision: 0, perspective: 'security', areaIds: ['area-auth'] });
+        feedback = await requestReviewer(source, { revision: feedback.revision, perspective: 'sssc', areaIds: ['area-deps'] });
+        feedback = await requestReviewer(source, { revision: feedback.revision, perspective: 'rai', areaIds: ['area-deps'] });
+        assert.deepEqual(feedback.items.map((item) => [item.target.id, item.areaIds]), [
+            ['security', ['area-auth']],
+            ['sssc', ['area-deps']],
+            ['rai', ['area-deps']],
+        ]);
+        await assert.rejects(requestReviewer(source, { revision: feedback.revision, perspective: 'security', areaIds: ['area-auth'] }), /already requested/);
+        feedback = await requestReviewer(source, { revision: feedback.revision, perspective: 'security', areaIds: ['area-deps'] });
+        assert.equal(feedback.items.filter((item) => item.target.id === 'security').length, 2);
+        await assert.rejects(requestReviewer(source, { revision: feedback.revision, perspective: 'security' }), /already requested/);
         await assert.rejects(requestReviewer(source, { revision: feedback.revision, perspective: 'functional' }), /already reviews this change/);
+        await assert.rejects(requestReviewer(source, { revision: feedback.revision, perspective: 'functional', areaIds: ['area-auth'] }), /already reviews the selected area/);
         await assert.rejects(requestReviewer(source, { revision: feedback.revision, perspective: 'telemetry' }), /Unknown reviewer/);
+        await assert.rejects(requestReviewer(source, { revision: feedback.revision, perspective: 'privacy', areaIds: ['missing'] }), /current areas/);
+
         const review = { kind: 'review', id: source.state.reviewId, snapshotId: source.state.snapshotId };
         await assert.rejects(editFeedback(source, { revision: feedback.revision, kind: 'add-reviewer', target: review, text: 'Add one.' }), /Choose the reviewer/);
         const security = { kind: 'perspective', id: 'security', snapshotId: source.state.snapshotId };
-        feedback = await editFeedback(source, { revision: feedback.revision, kind: 'explain', target: security, text: 'Why is security not running?' });
+        feedback = await editFeedback(source, { revision: feedback.revision, kind: 'explain', target: security, text: 'Why is security opt-in?' });
         const collected = await takeFeedback(source);
-        assert.deepEqual(collected.items.map((item) => [item.kind, item.target.id]), [['add-reviewer', 'privacy']]);
+        assert.equal(collected.items.filter((item) => item.kind === 'add-reviewer').length, 4);
         feedback = await requestReviewer(source, { revision: collected.revision, perspective: 'performance' });
         assert.equal(feedback.items.at(-1).text, 'Add the performance reviewer to this review.');
         feedback = await dismissFeedback(source, { revision: feedback.revision, ids: [feedback.items.at(-1).id] });

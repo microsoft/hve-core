@@ -4,7 +4,7 @@ description: Follow a code review in a canvas beside the chat, see why the chang
 sidebar_position: 3
 sidebar_label: Canvas
 author: Microsoft
-ms.date: 2026-11-09
+ms.date: 2026-11-17
 ms.topic: how-to
 keywords:
   - code review canvas
@@ -74,25 +74,25 @@ When a lane holds more areas, select its title to list all of them over the page
 
 #### Review Flow
 
-The review flow shows who reviews the change and in what order, as five numbered steps:
+The review flow shows how the review runs across five numbered steps, prioritizing functional review by default while keeping non-functional vectors opt-in:
 
-| Step       | Who acts                                                  | What it shows                                                                                 |
-|------------|-----------------------------------------------------------|-----------------------------------------------------------------------------------------------|
-| Capture    | Code Review                                               | The files, hunks, and pull request comments it captured once, read-only                       |
-| Understand | Code Review, plus Code Review Orientation when it runs    | The areas, the reasons, and the change map                                                    |
-| Review     | The reviewers, side by side                               | One card per reviewer                                                                         |
-| Check      | Code Review, plus Code Review Walkback for investigations | Findings kept, set aside, and still being checked, and comparisons such as business alignment |
-| Report     | Code Review                                               | The outcome and whether the report is saved                                                   |
+| Step       | Who acts                                                          | What it shows                                                                               |
+|------------|-------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
+| Capture    | Code Review                                                       | The files, hunks, and pull request comments it captured once, read-only                     |
+| Understand | Code Review, plus general-purpose context tasks when they run     | The areas, the reasons, and the change map                                                  |
+| Review     | Functional review by default, plus requested non-functional tasks | Cards for running reviewers and opt-in non-functional controls                              |
+| Check      | Code Review, plus general-purpose investigation tasks             | Findings kept, set aside, and still being checked, and any explicitly requested comparisons |
+| Report     | Code Review                                                       | The outcome and whether the report is saved                                                 |
 
-Reviewers are grouped as **Core** (Functional, Standards, and Readiness) and **Non-functional** (Security, Accessibility, Privacy, Performance, Supply chain, and Responsible AI). Each card shows the reviewer's status, the agent that runs it, how many areas it has finished, the findings it raised that you can see, and the agent's reason for running it. A card marked **Added at your request** or **Added after the first plan** joined the review later.
+Reviewers are grouped as **Functional (default)** (Functional, Standards, and Readiness) and **Requested non-functional** (Security, RAI, SSSC, Performance, Privacy, and Accessibility). Each running card shows its status, vector pill, reference file, areas completed, and visible findings, plus the area list when a non-functional vector was scoped to specific areas.
 
-Privacy, Performance, Supply chain, and Responsible AI run only when someone adds them, and the agent marks one **Suggested** when the change touches what it covers. Under **Add a reviewer**, every reviewer that isn't running has a card:
+Non-functional vectors stay completely unloaded unless you request them. You can request them per area or across all areas:
 
-1. Select **Add** on its card. The card reads **Requested, not sent**, and a status note offers **Undo**.
-2. **Review and send** delivers the request now. Otherwise the agent collects it at its next checkpoint.
-3. When the agent adds the reviewer, its card moves into the review and shows its progress.
+1. In any selected **Area** section, use the **Optional non-functional reviews for this area** buttons (`+ security`, `+ rai`, `+ sssc`, `+ performance`, `+ privacy`, `+ accessibility`) to request specific vectors just for that area (for example, `security` on an auth area and `sssc` plus `rai` on a dependency/prompt area).
+2. Or under **Optional non-functional reviews** in **Review flow**, switch **Request scope** between the selected area and **All areas** and select **Add**.
+3. **Review and send** delivers queued requests immediately, or the agent collects them at its next checkpoint. Most reviews need no non-functional vectors at all.
 
-Adding a reviewer to a finished review reopens it. The outcome clears until the new reviewer finishes, and then the agent saves the report again. Fold the review flow with the button beside its title.
+Adding a reviewer to a finished review reopens it on the targeted areas until that reviewer finishes, and then the agent saves `review.md` again. Fold the review flow with the button beside its title.
 
 #### Why These Changes
 
@@ -128,21 +128,21 @@ The selected reason or area fills its parts. **Show as text** lists the same map
 
 #### Findings
 
-The Findings row opens with counts by severity, how many findings are being checked, and how many areas each perspective has checked. Findings group by severity: Critical and High start open, Medium and Low start folded, and rejected findings sit under **Set aside**. **Show** narrows the list to the selected area.
+The Findings row opens with counts by severity and by vector (`functional`, `security`, `rai`, `sssc`, `performance`, `privacy`), how many findings are being checked, and how many areas each perspective has checked. Findings group by severity: Critical and High start open, Medium and Low start folded, and rejected findings sit under **Set aside**. **Show** narrows the list to the selected area, and **Vector** filters by review vector when multiple vectors have findings.
 
-Each finding is one line. Select it to open the full card in place, which closes any other. A finding the agent hasn't verified yet reads **Being checked**.
+Each finding row carries its vector pill alongside its ID and claim so you can see which vector applies before expanding it. Select a row to open the full card in place, which closes any other. A finding the agent hasn't verified yet reads **Being checked**.
 
-Findings that arrive while you read wait behind **Show N new findings**, so the list never shifts under you. Until you show them, they also stay out of the diff, the file rows, and the counts on the board and the reasons; only that button, **Needs you**, and the stage rail count them. When the selected reason or area would hide one of them, **Show N new findings** clears that narrowing and says so.
+Findings that arrive while you read wait behind **Show N new findings**, so the list never shifts under you. Until you show them, they also stay out of the diff, the file rows, and the counts on the board and the reasons; only that button, **Needs you**, and the stage rail count them. When the selected reason, area, or vector filter would hide one of them, **Show N new findings** clears that narrowing and says so.
 
-The card shows the finding's severity, the agent's decision, the perspective that raised it, the consequence, a suggested change, the criterion it applies, and evidence chips that jump to the lines or pull request details involved. **Bookmark** and **Seen** are private marks for you. They don't change coverage, a finding's status, or the outcome.
+The card shows the finding's severity, vector pill, agent decision, consequence, suggested change, applied criterion, and evidence chips that jump to the lines or pull request details involved. **Bookmark** and **Seen** are private marks for you. They don't change coverage, a finding's status, or the outcome.
 
 #### Area, Files, and Diff
 
-Select an area to see its summary and before and after behavior, then its files and the selected file's diff, with findings and comments beside the lines they refer to. Diffs load when you open them.
+Select an area to see its summary, optional per-area non-functional review buttons, and before and after behavior, then its files and the selected file's diff, with vector-tagged findings and comments beside the lines they refer to. Diffs load when you open them.
 
 #### Discussion
 
-The pull request discussion stays separate from the agent's findings and sits folded at the end of Review; select its title to open it. Each comment shows its author, whether it is inline or part of the conversation, whether it is resolved (or that the resolution is unknown), and where it was originally made. Outdated or unmapped comments stay visible with that context.
+The pull request discussion stays separate from the agent's findings and sits folded at the end of Review; select its title to open it. Each comment carries a vector pill (`functional`, `security`, `rai`, `sssc`, `performance`, `privacy`) along with its author, inline or conversation badge, resolution state, and original anchor context. When comments span multiple vectors, a **Vector** filter narrows the discussion threads.
 
 ### Outcome
 

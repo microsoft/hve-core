@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-11-09
+ms.date: 2026-11-17
 ms.topic: guide
 keywords:
   - copilot
@@ -63,10 +63,10 @@ Use the self-contained `rpi-challenger` skill to interrogate a confirmed subject
 
 ### Code and Review Agents
 
-| Agent                 | Purpose                                                                                | Key Constraint                                                                         |
-|-----------------------|----------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
-| **security-reviewer** | OWASP vulnerability assessment with subagent-driven verification                       | Delegates all reference reading to subagents                                           |
-| **code-review**       | Runs the `code-review` skill across five focused perspectives on one captured snapshot | Review-only; sweep by default, guided on request; posting needs explicit human consent |
+| Agent                 | Purpose                                                                                     | Key Constraint                                                                    |
+|-----------------------|---------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
+| **security-reviewer** | OWASP vulnerability assessment with subagent-driven verification                            | Delegates all reference reading to subagents                                      |
+| **code-review**       | Prioritizes functional code review through the `code-review` skill on one captured snapshot | Functional by default; non-functional vectors opt-in; posting needs human consent |
 
 ### Related Workflow Skills
 
@@ -268,22 +268,20 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 ### code-review
 
-**Creates:** One folder per review at `.copilot-tracking/reviews/code-reviews/<date>/<review-id>/`, as defined by the `code-review-core` skill's `references/review-contract.md`:
+**Creates:** One folder per review at `.copilot-tracking/reviews/code-reviews/<date>/<review-id>/`, as defined by the `code-review` skill's `references/review-contract.md`:
 
 * `snapshots/<snapshot-id>/snapshot.json` (immutable capture of the reviewed change)
-* `review-state.json` (scope, work items, verified findings, limitations, and outcome)
-* `results/<snapshot-id>/<work-id>.json` (one result per perspective or context task)
+* `review-state.json` (scope, work items, verified vector-tagged findings, limitations, and outcome)
+* `results/<snapshot-id>/<work-id>.json` (one result per perspective or context/investigation task)
 * `review.md` (human-editable report, with a PR comment draft for PR and MR targets)
 
-**Skills:** The agent preloads `code-review` and `disclaimer-language` and follows the same workflow as `/code-review`.
-Each subagent under `.github/agents/coding-standards/subagents/` preloads `code-review-core` plus its responsibility skill: `code-review-functional`, `code-review-standards`, `code-review-accessibility`, `code-review-security`, `code-review-readiness`, `code-review-specialist` (the added non-functional reviewers), `code-review-context` (Orientation and Explainer), or `code-review-investigation` (Walkback).
+**Skills:** The agent preloads `code-review` and `disclaimer-language` and follows the same workflow as `/code-review`. All perspective and phase guidance lives under `.github/skills/coding-standards/code-review/references/`.
 
-**Workflow:** Resolve target → Capture snapshot → Set scope → Review inline or in parallel → Verify findings → Render report → Publish only with consent
+**Workflow:** Resolve target → Capture snapshot → Map areas and reasons → Run functional review (inline or parallel general-purpose tasks) → Verify findings → Render report → Publish only with consent
 
-**Critical:** Reviews a PR or MR, branch comparison, commit, local changes, or selected code. Sweep mode proceeds after a compact scope summary; guided mode waits for your choices.
-Profiles (`standard`, `full`, or `custom`) select among five perspectives (`functional`, `standards`, `accessibility`, `security`, `readiness`), and depth (`basic`, `standard`, or `comprehensive`) is set independently.
-Four more non-functional reviewers (`privacy`, `performance`, `supply-chain`, and `responsible-ai`) run only when added by a `custom` profile, a request, or the canvas; the agent suggests them when the change touches their surface.
-Small reviews run inline; substantial independent work goes to parallel subagents. An optional Code Review canvas shows the review, its reviewer flow, and collects feedback.
+**Critical:** Prioritizes functional review by default across codebase requirements, code quality and standards, unintended behaviors and side effects, refactored code paths, missed APIs/SDKs, missed abstractions, and unneeded edge-case checks.
+Non-functional review vectors (`security`, `rai`, `sssc`, `performance`, `privacy`, `accessibility`) and BRD/PRD/ADR alignment remain strictly unloaded unless explicitly requested by the user (per area or across all areas).
+Orchestrates parallel `general-purpose` tasks across vectors, phases, and areas, or reports recommended sessions back to a Project coordinator when operating inside a Project. An optional Code Review canvas displays vector pills (`functional`, `security`, `rai`, `sssc`, `performance`, `privacy`) on findings and comments and lets users request non-functional reviews per area.
 Review-only: source and Git state stay read-only, and staging or posting to a PR needs explicit human consent. Maturity: experimental.
 
 ### backlog-manager
@@ -322,8 +320,8 @@ Review-only: source and Git state stay read-only, and staging or posting to a PR
 ### Code Review
 
 1. Run `/code-review` with a target, or select **Code Review** from the agent picker and name the target
-2. Accept the scope summary, or add `mode=guided` to choose areas, perspectives, and depth yourself
-3. Optionally set `profile=standard|full|custom` and `depth=basic|standard|comprehensive`
+2. Accept the functional-first scope summary, or add `mode=guided` and optional area-scoped non-functional vectors (`security`, `rai`, `sssc`, `performance`, `privacy`)
+3. Optionally set `depth=basic|standard|comprehensive`
 4. Review `review.md` under `.copilot-tracking/reviews/code-reviews/<date>/<review-id>/` before acting on findings or approving any PR posting
 
 ### Creating Instructions

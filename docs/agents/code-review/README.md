@@ -22,26 +22,26 @@ tags:
   - code-review
   - coding-standards
 author: Microsoft
-ms.date: 2026-11-09
+ms.date: 2026-11-17
 ms.topic: concept
 estimated_reading_time: 10
 ---
 
-Code Review finds consequential defects in a change and records what it reviewed and what still needs evidence. The workflow lives in the `code-review` skill. You can run it with the `/code-review` command or select the **Code Review** agent, and both follow the same skill.
+Code Review prioritizes functional review so changed code meets the contribution bar of the codebase, catches unintended side effects and regressions, reuses existing APIs, SDKs, and abstractions, and clears out unneeded edge-case checks. Everything lives in one consolidated `code-review` skill. You can run it with `/code-review` or select the **Code Review** agent, and both follow the same skill.
 
-Each review captures the change once as an immutable snapshot, and every perspective works from that snapshot. Code Review verifies each finding against the captured lines and records a disposition for it. The report is a Markdown file you can edit, and in an interactive review nothing reaches a pull request until you confirm it.
+Each review captures the change once as an immutable snapshot. Functional review runs first by default, while non-functional vectors (`security`, `rai`, `sssc`, `performance`, `privacy`, `accessibility`) and BRD/PRD/ADR alignment remain completely unloaded unless you request them for specific areas or the whole review. Findings and discussion comments carry vector pills alongside severity, and `review.md` stays yours to edit before anything reaches a pull request.
 
 ## Why use Code Review
 
-Code Review ties each finding to the reviewed code and shows what each perspective covered:
+Code Review focuses reviewer attention on functional contribution quality first while keeping evidence traceable:
 
-| Need                         | How Code Review handles it                                                                                                                          |
-|------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| Review the change you mean   | Reviews a PR or MR, a named branch comparison, a commit, staged or unstaged local changes, or selected code, and asks when the target is ambiguous  |
-| Findings that match the code | Every perspective reviews the same captured snapshot, and each finding is anchored to captured changed lines                                        |
-| Focused review               | Functional, standards, accessibility, security, and readiness perspectives each have their own skill and criteria                                   |
-| Visible coverage             | The report shows what each perspective covered; blocked, unavailable, skipped, or stale required work leaves the review incomplete, with no outcome |
-| Human control                | You edit the report, and staging or posting to a pull request from an interactive review needs your explicit consent                                |
+| Need                        | How Code Review handles it                                                                                                                         |
+|-----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| Review the change you mean  | Reviews a PR or MR, a named branch comparison, a commit, staged or unstaged local changes, or selected code, and asks when the target is ambiguous |
+| Functional review first     | Checks codebase requirements, standards, unintended side effects, refactored paths, missed APIs/SDKs, missed abstractions, and unneeded edge cases |
+| Zero non-functional clutter | Security, RAI, SSSC, performance, privacy, accessibility, and BRD/PRD/ADR alignment stay unloaded unless you explicitly request them               |
+| Vector-tagged findings      | Findings and comments carry vector pills (`functional`, `security`, `rai`, `sssc`, `performance`, `privacy`) alongside severity                    |
+| Human control               | You edit `review.md`, and staging or posting to a pull request from an interactive review needs your explicit consent                              |
 
 > [!TIP]
 > To try it, stage a small change and run `/code-review staged changes`. Read the generated `review.md` before you act on any finding.
@@ -56,16 +56,16 @@ Code Review ties each finding to the reviewed code and shows what each perspecti
 Options follow the target, and each one is optional:
 
 ```text
-/code-review [target] [profile=standard|full|custom] [depth=basic|standard|comprehensive] [mode=sweep|guided]
+/code-review [target] [vectors=functional|security,rai,sssc,performance,privacy] [depth=basic|standard|comprehensive] [mode=sweep|guided]
 ```
 
 For example:
 
 ```text
 /code-review PR #482
-/code-review feature/search compared with main profile=full
+/code-review feature/search compared with main
 /code-review staged changes depth=comprehensive
-/code-review src/parser.ts lines 40-120 mode=guided
+/code-review src/auth/ vectors=functional,security mode=guided
 ```
 
 Code Review supports these targets:
@@ -93,17 +93,15 @@ Three independent options shape a review. The mode decides when Code Review stop
 
 In both modes the chosen scope stays visible and you can override it. Material ambiguity, such as an unclear target, still stops for your input.
 
-### Profiles
+### Functional default and opt-in non-functional vectors
 
-| Profile              | Perspectives                                                                                                                                                                                                                                                                                |
-|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `standard` (default) | Functional, standards, and readiness. Accessibility joins for interactive UI, markup, user-facing content, or accessibility documentation. Security joins for changed trust boundaries, authentication, secrets, parsing, networking, persistence, or confirmed Security Plan Drift context |
-| `full`               | Functional, standards, accessibility, security, and readiness. A perspective with nothing relevant to review returns a reasoned not-applicable result                                                                                                                                       |
-| `custom`             | The perspectives you choose. Code Review asks when the choice is ambiguous                                                                                                                                                                                                                  |
+| Category                  | Perspectives and vectors                                             | When it runs                                                                                                                                     |
+|---------------------------|----------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| Functional (default)      | `functional`, `standards`, `readiness` (vector: `functional`)        | Runs by default on every review to verify contribution quality, standards, bugs/side effects, API/SDK & abstraction fit, and unneeded edge cases |
+| Opt-in non-functional     | `security`, `rai`, `sssc`, `performance`, `privacy`, `accessibility` | Runs **only** when explicitly requested by you (in chat, arguments, or the Code Review canvas) for specific areas or across all areas            |
+| Opt-in plan/doc alignment | BRD, PRD, ADR alignment and Security Plan Drift                      | Loaded **only** when explicitly requested by you; never scanned or preloaded during a standard functional review                                 |
 
-Four more non-functional reviewers run only when someone adds them: privacy, performance, supply chain, and responsible AI. Add one with a `custom` profile, a request in chat, or the canvas's **Add** buttons. When the change touches what one of them covers, Code Review suggests it instead of running it. Adding a reviewer to a finished review reopens it until that reviewer finishes, and Code Review renders the report again afterward.
-
-Code Review records why it chose each reviewer as selected, suggested, or not needed, with a one-line reason. The report lists those choices, and the canvas shows them in its review flow.
+Adding an opt-in non-functional reviewer to one area (for example, `security` on an auth area and `sssc` plus `rai` on a dependency/prompt area) schedules work only on those areas. Adding one to a finished review reopens the review until that work finishes, then re-renders `review.md`.
 
 ### Depth
 
@@ -117,29 +115,30 @@ Depth sets how far each selected perspective follows the change, independently o
 
 Code Review uses `standard` unless you pick another depth or concrete risk in the change supports a different recommendation. A recommendation names the evidence and missing checks behind it; there's no fixed risk questionnaire. No depth authorizes source edits or a repository-wide audit.
 
-## Perspectives and workers
+## Vectors, references, and parallel task orchestration
 
-Each responsibility has its own skill and a matching subagent:
+All review guidance lives inside `.github/skills/coding-standards/code-review/` and its on-demand `references/` directory:
 
-| Responsibility  | Skill                       | Subagent                  | Focus                                                                                                                                                                                                                            |
-|-----------------|-----------------------------|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Functional      | `code-review-functional`    | Code Review Functional    | Behavioral defects and regressions, plus acceptance-criteria coverage for behavior                                                                                                                                               |
-| Standards       | `code-review-standards`     | Code Review Standards     | Departures from applicable repository instructions and domain skills, citing each criterion's source                                                                                                                             |
-| Accessibility   | `code-review-accessibility` | Code Review Accessibility | User barriers in changed interaction, markup, and content, separating static evidence from runtime evidence                                                                                                                      |
-| Security        | `code-review-security`      | Code Review Security      | Changed paths that permit a concrete security failure across a trust boundary                                                                                                                                                    |
-| Readiness       | `code-review-readiness`     | Code Review Readiness     | PR description, linked issues, checklists, required checks, validation evidence, and changed documentation                                                                                                                       |
-| Added reviewers | `code-review-specialist`    | Code Review Specialist    | Privacy, performance, supply chain, or responsible AI, one lens per assignment, with criteria from `privacy-by-design`, the project's stated budgets with `performance-slo-planner`, `supply-chain-security`, or `rai-standards` |
-| Orientation     | `code-review-context`       | Code Review Orientation   | Factual overview of changed areas, entry points, and affected consumers                                                                                                                                                          |
-| Explanation     | `code-review-context`       | Code Review Explainer     | Factual answer to a question about a symbol or area                                                                                                                                                                              |
-| Investigation   | `code-review-investigation` | Code Review Walkback      | One bounded evidence gap, answered without restarting the review                                                                                                                                                                 |
+| Phase or perspective | Vector pill     | Reference (loaded only when active) | Focus                                                                                                                 |
+|----------------------|-----------------|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| `functional`         | `functional`    | `references/functional.md`          | Contribution bar, bugs and side effects, refactored paths, missed APIs/SDKs, missed abstractions, unneeded edge cases |
+| `standards`          | `functional`    | `references/standards.md`           | Applicable repository instructions and language/domain skills with cited provenance                                   |
+| `readiness`          | `functional`    | `references/readiness.md`           | PR description, linked issues, checklists, required checks, validation evidence, and changed documentation            |
+| `context`            | n/a (phase)     | `references/context.md`             | Factual overview of changed areas, `reasons`, `changeMap`, and symbol or call-path explanations                       |
+| `investigation`      | n/a (phase)     | `references/investigation.md`       | Bounded walkback answering one specific evidence gap without restarting the review                                    |
+| `security`           | `security`      | `references/security.md`            | Opt-in: trust-boundary weaknesses, auth, secrets, injection, and requested Security Plan Drift                        |
+| `rai`                | `rai`           | `references/specialist.md`          | Opt-in: model calls, prompts, human oversight, disclosure, and misuse paths (`rai-standards`)                         |
+| `sssc`               | `sssc`          | `references/specialist.md`          | Opt-in: dependencies, lockfiles, SHA pinning, workflow permissions, checksums (`supply-chain-security`)               |
+| `performance`        | `performance`   | `references/specialist.md`          | Opt-in: complexity growth, blocking I/O, memory retention, and stated SLO budgets (`performance-slo-planner`)         |
+| `privacy`            | `privacy`       | `references/specialist.md`          | Opt-in: personal data collection, logging, storage, minimization, retention, and deletion (`privacy-by-design`)       |
+| `accessibility`      | `accessibility` | `references/accessibility.md`       | Opt-in: user barriers in changed interaction, markup, and content (`accessibility`)                                   |
 
-Each subagent preloads `code-review-core` and its responsibility skill. A worker writes only its assigned result file. It doesn't edit source, publish, pick the overall outcome, or dispatch other workers.
+Code Review does not rely on custom named `code-review-*` subagents. Instead:
 
-Orientation, Explainer, and Walkback return factual observations with no graded findings, and their work doesn't count as review coverage. When a Walkback question turns into open-ended research, the worker stops and recommends an `rpi-research` escalation, and Code Review decides whether to start it.
-
-Small reviews run inline. When the evidence fits one direct pass or the trace is tightly coupled, Code Review applies the perspective skills itself and writes the same result records. For larger independent work, it dispatches every selected worker that's ready in one parallel batch, and orientation can run alongside the perspectives without holding them back.
-
-If subagents aren't available, Code Review does the selected work inline when it can. Otherwise it records the work as unavailable, so a selected perspective never disappears without notice.
+* Small or tightly coupled changes run inline in the orchestrating agent.
+* Multi-area or multi-vector reviews dispatch parallel **`general-purpose` tasks**, scaling to any number of tasks needed per vector, phase, or area, with task-matched `reasoning_effort` (`low` through `max`) and `long_context` when large snapshots or call graphs require it.
+* Each `general-purpose` task follows the `code-review` skill, reads `references/review-contract.md` plus **only** its assigned reference file, focuses on its assigned areas, and writes only its assigned result JSON.
+* When operating inside a persistent Project with a Project coordinator, the orchestrating agent can report recommended code-review vector and phase sessions back to the coordinator for session delegation; otherwise it manages all tasks directly.
 
 The standards perspective takes its criteria from the repository instructions and skills that apply to the changed files. See [Language Skills](language-skills.md) to add your own.
 
@@ -190,7 +189,7 @@ Every review gets its own folder:
 └── review.md
 ```
 
-The `code-review-core` skill's [review contract](https://github.com/microsoft/hve-core/blob/main/.github/skills/coding-standards/code-review-core/references/review-contract.md) defines each record:
+The `code-review` skill's [review contract](https://github.com/microsoft/hve-core/blob/main/.github/skills/coding-standards/code-review/references/review-contract.md) defines each record:
 
 | Record                                 | Owner              | Contents                                                                                        |
 |----------------------------------------|--------------------|-------------------------------------------------------------------------------------------------|
@@ -265,9 +264,9 @@ See [Agentic Workflows](../../architecture/agentic-workflows.md) for the trigger
 | Requirement                     | Details                                                                                                                         |
 |---------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | VS Code and GitHub Copilot Chat | Agent mode enabled                                                                                                              |
-| HVE Core                        | The `hve-core` extension or plugin, which includes the Code Review skills, agent, and subagents                                 |
+| HVE Core                        | The `hve-core` extension or plugin, which includes the consolidated `code-review` skill and the Code Review agent               |
 | Git                             | The revisions under review must be in your local clone. Code Review doesn't fetch or check out branches                         |
-| Node.js                         | Runs the `code-review-core` helper that captures snapshots, updates review state, and renders the report                        |
+| Node.js                         | Runs the `code-review` helper (`scripts/review.mjs`) that captures snapshots, updates review state, and renders the report      |
 | Provider read access            | Optional. Needed for PR descriptions, checks, linked issues, and comments; without it, those checks are recorded as unavailable |
 | Canvas support                  | Optional. Needed only for the Code Review canvas                                                                                |
 

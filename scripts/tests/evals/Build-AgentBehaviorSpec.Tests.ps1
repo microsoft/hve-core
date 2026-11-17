@@ -1389,44 +1389,6 @@ console.log(JSON.stringify(results));
         'Use it to author these probes; that would contradict its contract.')
     }
     @{
-      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-diff-computation-conformance'; Grader = 'diff-computation-conformance-directory-grouping'; Count = 2
-      Accept = @('Group the 35 files by directory and analyze each group. Because the diff exceeds 2000 combined lines, review the most recent commits individually with git log --oneline and git show --stat.',
-        'Strategy: directory-grouped analysis (20-50 files). Escalation: over 2000 lines, so step through recent commits one at a time.')
-      Reject = @('STIMULUS_PROMPT',
-        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
-        'Analyze all 35 files with full diffs in one pass.',
-        'Use progressive batched analysis of 5-10 files at a time and summarize at the end.')
-    }
-    @{
-      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-diff-computation-conformance'; Grader = 'diff-computation-conformance-commit-review'; Count = 2
-      Accept = @('Group the 35 files by directory and analyze each group. Because the diff exceeds 2000 combined lines, review the most recent commits individually with git log --oneline and git show --stat.',
-        'Strategy: directory-grouped analysis (20-50 files). Escalation: over 2000 lines, so step through recent commits one at a time.')
-      Reject = @('STIMULUS_PROMPT',
-        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
-        'Analyze all 35 files with full diffs in one pass.',
-        'Use progressive batched analysis of 5-10 files at a time and summarize at the end.')
-    }
-    @{
-      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-review-artifacts-conformance'; Grader = 'review-artifacts-conformance-verdict-value'; Count = 2
-      Accept = @('Path: `.copilot-tracking/reviews/code-reviews/feature-login-fix/metadata.json`; verdict: `approve_with_comments`.',
-        'It writes .copilot-tracking/reviews/code-reviews/feature-login-fix/metadata.json with "verdict": "approve_with_comments".')
-      Reject = @('STIMULUS_PROMPT',
-        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
-        'Write `.copilot-tracking/reviews/feature-login-fix.json` with verdict `approve-with-comments`.',
-        'metadata.json under .copilot-tracking/reviews/ with verdict APPROVE_WITH_COMMENTS')
-    }
-    @{
-      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-review-artifacts-conformance'; Grader = 'review-artifacts-conformance-metadata-path'; Count = 2
-      Accept = @('Path: `.copilot-tracking/reviews/code-reviews/feature-login-fix/metadata.json`; verdict: `approve_with_comments`.',
-        'It writes .copilot-tracking/reviews/code-reviews/feature-login-fix/metadata.json with "verdict": "approve_with_comments".')
-      Reject = @('STIMULUS_PROMPT',
-        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
-        'Write `.copilot-tracking/reviews/feature-login-fix.json` with verdict `approve-with-comments`.',
-        'metadata.json under .copilot-tracking/reviews/ with verdict APPROVE_WITH_COMMENTS',
-        'Path: .copilot-tracking/reviews/code-reviews/feature_login_fix/metadata.json; verdict approve_with_comments.',
-        'Path: .copilot-tracking/reviews/code-reviews/feature/login-fix/metadata.json; verdict approve_with_comments.')
-    }
-    @{
       Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-adr-identity-conformance'; Grader = 'adr-identity-conformance-phase-order'; Count = 2
       Accept = @('Phases: 1. Frame, 2. Decide, 3. Govern. Entry modes: `capture`, `from-planner-handoff`, and `adopt-template`.',
         'It runs Frame then Decide then Govern; sessions enter via capture, from-planner-handoff, or adopt-template.')

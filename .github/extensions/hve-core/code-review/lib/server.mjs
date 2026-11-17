@@ -4,7 +4,7 @@
 import http from 'node:http';
 import fs from 'node:fs/promises';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
-import { check, object } from '../../../../skills/coding-standards/code-review-core/scripts/lib/model.mjs';
+import { check, object } from '../../../../skills/coding-standards/code-review/scripts/lib/model.mjs';
 import { dismissFeedback, editFeedback, evidenceFor, markTarget, queueFeedback, refresh, reportFor, requestReviewer, restoreFeedback, sendFeedback, signature, unqueueFeedback } from './model.mjs';
 
 /** Feedback commands the page may send; `send` also needs the host's delivery function. */

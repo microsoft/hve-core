@@ -9,9 +9,24 @@ export class ReviewError extends Error {
     }
 }
 
-/** Perspectives whose work counts as review coverage; added reviewers run only when requested. */
-export const REVIEW_PERSPECTIVES = ['functional', 'standards', 'accessibility', 'security', 'readiness', 'privacy', 'performance', 'supply-chain', 'responsible-ai'];
+/** Perspectives whose work counts as review coverage; non-functional perspectives run only when explicitly requested. */
+export const FUNCTIONAL_PERSPECTIVES = ['functional', 'standards', 'readiness'];
+export const NON_FUNCTIONAL_PERSPECTIVES = ['security', 'rai', 'sssc', 'performance', 'privacy', 'accessibility'];
+export const REVIEW_PERSPECTIVES = [...FUNCTIONAL_PERSPECTIVES, ...NON_FUNCTIONAL_PERSPECTIVES];
 export const PERSPECTIVES = [...REVIEW_PERSPECTIVES, 'context', 'investigation'];
+export const REVIEW_VECTORS = ['functional', 'security', 'rai', 'sssc', 'performance', 'privacy', 'accessibility'];
+export const VECTOR_BY_PERSPECTIVE = Object.freeze({
+    functional: 'functional',
+    standards: 'functional',
+    readiness: 'functional',
+    security: 'security',
+    rai: 'rai',
+    sssc: 'sssc',
+    performance: 'performance',
+    privacy: 'privacy',
+    accessibility: 'accessibility',
+});
+export const perspectiveVector = (perspective) => VECTOR_BY_PERSPECTIVE[perspective] ?? null;
 export const REVIEWER_DECISIONS = ['selected', 'suggested', 'not-needed'];
 export const WORK_STATES = ['pending', 'in_progress', 'completed', 'blocked', 'unavailable', 'skipped', 'stale'];
 export const SEVERITIES = ['Critical', 'High', 'Medium', 'Low'];
@@ -126,15 +141,19 @@ function reasons(value, snapshot) {
 }
 
 /** Why each considered reviewer runs, is suggested, or is not needed. Work items stay the record of what runs. */
-function reviewerChoices(value) {
+function reviewerChoices(value, areaIds) {
     array(value, 'reviewers');
     check(value.length >= 1 && value.length <= REVIEW_PERSPECTIVES.length, `Record between 1 and ${REVIEW_PERSPECTIVES.length} reviewers, or null to remove them.`);
     for (const entry of value) {
-        object(entry, ['perspective', 'decision', 'reason'], 'reviewer');
+        object(entry, ['perspective', 'decision', 'reason'], 'reviewer', ['areaIds']);
         enumeration(entry.perspective, REVIEW_PERSPECTIVES, 'reviewer perspective');
         enumeration(entry.decision, REVIEWER_DECISIONS, 'reviewer decision');
         bounded(entry.reason, 'reviewer reason', 200);
         check(!/[\n\r\u2028\u2029]/.test(entry.reason), 'reviewer reason must be one line.');
+        if (own(entry, 'areaIds') && entry.areaIds !== null) {
+            ids(entry.areaIds, 'reviewer areas', areaIds);
+            check(entry.areaIds.length > 0, 'reviewer areaIds must be non-empty or null.');
+        }
     }
     check(new Set(value.map((entry) => entry.perspective)).size === value.length, 'Record each reviewer once.');
 }
@@ -296,7 +315,7 @@ export function validateSnapshot(snapshot) {
     object(snapshot.discussion, ['status', 'items', 'limitations'], 'discussion');
     enumeration(snapshot.discussion.status, ['complete', 'partial', 'unavailable', 'not_applicable'], 'discussion status');
     array(snapshot.discussion.items, 'discussion items').forEach((item) => {
-        object(item, ['id', 'author', 'body', 'replyTo', 'kind', 'path', 'line', 'side', 'commit', 'originalLine', 'originalCommit', 'resolution'], 'discussion item', ['originalPath', 'originalSide', 'startLine', 'originalStartLine', 'outdated']);
+        object(item, ['id', 'author', 'body', 'replyTo', 'kind', 'path', 'line', 'side', 'commit', 'originalLine', 'originalCommit', 'resolution'], 'discussion item', ['originalPath', 'originalSide', 'startLine', 'originalStartLine', 'outdated', 'vector']);
         for (const field of ['id', 'author', 'body']) text(item[field], `discussion ${field}`, field === 'body');
         enumeration(item.kind, ['inline', 'timeline'], 'discussion kind');
         enumeration(item.resolution, ['resolved', 'unresolved', 'unknown'], 'discussion resolution');
@@ -308,6 +327,7 @@ export function validateSnapshot(snapshot) {
         if (item.originalSide !== undefined && item.originalSide !== null) enumeration(item.originalSide, ['old', 'new'], 'original side');
         for (const field of ['startLine', 'originalStartLine']) if (item[field] !== undefined && item[field] !== null) integer(item[field], field, 1);
         if (item.outdated !== undefined) check(item.outdated === null || typeof item.outdated === 'boolean', 'outdated must be boolean or null.');
+        if (item.vector !== undefined && item.vector !== null) enumeration(item.vector, REVIEW_VECTORS, 'discussion vector');
     });
     check(new Set(snapshot.discussion.items.map((item) => item.id)).size === snapshot.discussion.items.length, 'Duplicate discussion IDs.');
     array(snapshot.discussion.limitations, 'discussion limitations').forEach((entry) => text(entry, 'limitation'));
@@ -353,12 +373,13 @@ export function validateAnchor(anchor, snapshot, assignedFiles, assignedHunks) {
 }
 
 function finding(value, snapshot, work, merged = false) {
-    object(value, ['id', 'severity', 'claim', 'consequence', 'anchors', 'criterion', 'remediation', ...(merged ? ['sources', 'disposition', 'reason'] : [])], 'finding', ['snippet']);
+    object(value, ['id', 'severity', 'claim', 'consequence', 'anchors', 'criterion', 'remediation', ...(merged ? ['sources', 'disposition', 'reason'] : [])], 'finding', ['snippet', 'vector']);
     id(value.id);
     enumeration(value.severity, SEVERITIES, 'severity');
     for (const field of ['claim', 'consequence', 'remediation']) text(value[field], field);
     if (value.criterion !== null) text(value.criterion, 'criterion');
     if (own(value, 'snippet')) text(value.snippet, 'snippet');
+    if (own(value, 'vector') && value.vector !== null) enumeration(value.vector, REVIEW_VECTORS, 'finding vector');
     check(array(value.anchors, 'anchors').length > 0, 'A finding requires evidence.');
     value.anchors.forEach((anchor) => validateAnchor(anchor, snapshot, work?.fileIds, work?.hunkIds));
     if (work && work.perspective !== 'readiness') check(value.anchors.every((anchor) => anchor.side !== 'metadata'), 'PR deliverable findings belong to readiness.');
@@ -369,6 +390,17 @@ function finding(value, snapshot, work, merged = false) {
         if (value.disposition === 'proposed') check(value.reason === null, 'Proposed findings have no parent decision.');
         else text(value.reason, 'disposition reason');
     }
+}
+
+export function findingVectors(state, entry) {
+    const vectors = [];
+    if (entry.vector && REVIEW_VECTORS.includes(entry.vector)) vectors.push(entry.vector);
+    for (const source of entry.sources ?? []) {
+        const work = (state.workItems ?? []).find((item) => item.id === source);
+        const mapped = work ? perspectiveVector(work.perspective) : null;
+        if (mapped && !vectors.includes(mapped)) vectors.push(mapped);
+    }
+    return vectors.length ? vectors : ['functional'];
 }
 
 function workItem(work, snapshot, areaIds) {
@@ -472,7 +504,7 @@ export function validateState(state, snapshot) {
     if (own(state.artifacts, 'reportDigest')) check(/^[a-f0-9]{64}$/.test(state.artifacts.reportDigest), 'Invalid report digest.');
     if (own(state, 'scope')) {
         object(state.scope, ['profile', 'depth', 'mode', 'rationale'], 'scope');
-        enumeration(state.scope.profile, ['basic', 'standard', 'full', 'custom'], 'profile');
+        enumeration(state.scope.profile, ['functional', 'basic', 'standard', 'full', 'custom'], 'profile');
         enumeration(state.scope.depth, ['basic', 'standard', 'comprehensive'], 'depth');
         enumeration(state.scope.mode, ['sweep', 'guided', 'host-managed'], 'mode');
         text(state.scope.rationale, 'scope rationale');
@@ -483,7 +515,7 @@ export function validateState(state, snapshot) {
     }
     if (own(state, 'reasons')) reasons(state.reasons, snapshot);
     if (own(state, 'changeMap')) changeMap(state.changeMap, snapshot, new Set((state.reasons ?? []).map((reason) => reason.id)));
-    if (own(state, 'reviewers')) reviewerChoices(state.reviewers);
+    if (own(state, 'reviewers')) reviewerChoices(state.reviewers, areas);
     check(state.status === execution(state), 'State status disagrees with evidence.');
     check(state.outcome === outcome(state), 'Review outcome disagrees with coverage or finding dispositions.');
     return state;
@@ -545,6 +577,7 @@ function appendFindings(next, work, findings) {
         const duplicate = next.findings.find((existing) => existing.claim === entry.claim && stableJson(existing.anchors) === stableJson(entry.anchors));
         if (duplicate) {
             if (!duplicate.sources.includes(work.id)) duplicate.sources.push(work.id);
+            if (!duplicate.vector && entry.vector) duplicate.vector = entry.vector;
             if (SEVERITIES.indexOf(entry.severity) < SEVERITIES.indexOf(duplicate.severity)) {
                 duplicate.severity = entry.severity;
                 duplicate.disposition = 'proposed';

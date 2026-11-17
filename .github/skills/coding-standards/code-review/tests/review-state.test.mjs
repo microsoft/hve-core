@@ -3,7 +3,7 @@
 
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { areaStatus, assess, finalizeState, initialState, mergeResult, newWork, reasonCoverage, validateSnapshot, validateState } from '../scripts/lib/model.mjs';
+import { areaStatus, assess, finalizeState, findingVectors, initialState, mergeResult, newWork, reasonCoverage, validateSnapshot, validateState } from '../scripts/lib/model.mjs';
 
 function setup() {
     const snapshot = {
@@ -275,16 +275,19 @@ describe('added reviewers and reviewer choices', () => {
         assert.deepEqual([next.status, next.outcome], ['completed', 'approve']);
     });
 
-    it('accepts reviewer choices that do not affect status and rejects malformed ones', () => {
+    it('accepts reviewer choices with optional area scopes and maps findings to canonical vectors', () => {
         const valid = () => [
             { perspective: 'functional', decision: 'selected', reason: 'Every review checks behavior.' },
-            { perspective: 'supply-chain', decision: 'suggested', reason: 'The change edits a lockfile.' },
+            { perspective: 'sssc', decision: 'selected', areaIds: ['area-one'], reason: 'User requested SSSC review on Application.' },
             { perspective: 'privacy', decision: 'not-needed', reason: 'No personal data is handled.' },
         ];
-        const { state, snapshot } = setup();
+        const { state, snapshot, result } = setup();
         state.reviewers = valid();
         assert.doesNotThrow(() => finalizeState(state, snapshot));
         assert.deepEqual([state.status, state.outcome], ['in_progress', null]);
+        state.workItems.push(newWork(snapshot, state.areas[0], 'rai', 'rai-3'));
+        const next = mergeResult(state, snapshot, { ...result, workItemId: 'rai-3', findings: [defect('rai-finding')] }, 'rai-key');
+        assert.deepEqual(findingVectors(next, next.findings[0]), ['rai']);
         const cases = [
             [(entries) => { entries[0].perspective = 'telemetry'; }, /reviewer perspective must be one of/],
             [(entries) => { entries[0].perspective = 'context'; }, /reviewer perspective must be one of/],
@@ -293,15 +296,17 @@ describe('added reviewers and reviewer choices', () => {
             [(entries) => { entries[0].reason = ''; }, /reviewer reason must be text/],
             [(entries) => { entries[0].reason = 'x'.repeat(201); }, /reviewer reason must be at most 200 characters/],
             [(entries) => { entries[0].reason = 'Every review\nchecks behavior.'; }, /reviewer reason must be one line/],
+            [(entries) => { entries[1].areaIds = ['missing-area']; }, /unknown ID/],
+            [(entries) => { entries[1].areaIds = []; }, /non-empty or null/],
             [(entries) => { entries.length = 0; }, /between 1 and 9 reviewers/],
             [(entries) => { entries[0].owner = 'agent'; }, /unsupported field/],
         ];
         for (const [mutate, expected] of cases) {
-            const { state: next, snapshot: captured } = setup();
+            const { state: current, snapshot: captured } = setup();
             const entries = valid();
             mutate(entries);
-            next.reviewers = entries;
-            assert.throws(() => validateState(next, captured), expected);
+            current.reviewers = entries;
+            assert.throws(() => validateState(current, captured), expected);
         }
     });
 });

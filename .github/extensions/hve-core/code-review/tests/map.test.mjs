@@ -10,7 +10,7 @@ function recorded() {
     return {
         title: 'After: the page draws its map with new modules', description: 'The page draws the map with two new modules and stops drawing impact per area.',
         boxes: [
-            { id: 'core', label: 'code-review-core/', parent: null },
+            { id: 'core', label: 'code-review/', parent: null },
             { id: 'canvas', label: 'extensions/hve-core/code-review/', parent: null },
             { id: 'ui', label: 'ui/', parent: 'canvas' },
         ],
@@ -114,7 +114,7 @@ describe('change map model', () => {
     it('says each view in words, by box, with change marks and link changes', () => {
         const model = { source: 'recorded', ...recorded() };
         const changes = mapText(model, 'changes');
-        assert.deepEqual(changes.boxes.map((box) => box.label), ['code-review-core/', 'ui/']);
+        assert.deepEqual(changes.boxes.map((box) => box.label), ['code-review/', 'ui/']);
         assert.ok(changes.boxes[1].parts.includes('app.mjs (changed · R2): before, Drew impact per area; after, Draws one change map'));
         assert.ok(changes.boxes[1].parts.includes('impactMap (removed · R2): was Drew area impact links'));
         assert.deepEqual(changes.parts, ['review-state.json']);

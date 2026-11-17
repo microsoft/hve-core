@@ -38,12 +38,6 @@ checkout:
     .github/PULL_REQUEST_TEMPLATE.md
     .github/instructions/
     .github/skills/coding-standards/code-review/
-    .github/skills/coding-standards/code-review-core/
-    .github/skills/coding-standards/code-review-functional/
-    .github/skills/coding-standards/code-review-standards/
-    .github/skills/coding-standards/code-review-accessibility/
-    .github/skills/coding-standards/code-review-security/
-    .github/skills/coding-standards/code-review-readiness/
     .github/skills/coding-standards/hve-artifact-authoring/
     .github/skills/coding-standards/python-foundational/
     .github/skills/shared/telemetry-foundations/
@@ -115,12 +109,10 @@ this run:
 
 1. `.github/skills/coding-standards/code-review/SKILL.md`, including its
    Host-managed automation section
-2. `.github/skills/coding-standards/code-review-core/SKILL.md` and its
-   `references/review-contract.md`
-3. The `SKILL.md` of each perspective skill under
-   `.github/skills/coding-standards/`: `code-review-functional`,
-   `code-review-standards`, `code-review-accessibility`,
-   `code-review-security`, and `code-review-readiness`
+2. `.github/skills/coding-standards/code-review/references/review-contract.md`
+3. The perspective references under
+   `.github/skills/coding-standards/code-review/references/`: `functional.md`,
+   `standards.md`, `accessibility.md`, `security.md`, and `readiness.md`
 4. For accessibility, `.github/skills/accessibility/accessibility/SKILL.md`
    and only the files under its `references/frameworks/` that the changed
    surface needs
@@ -132,12 +124,12 @@ this run:
 Run the skill with these fixed settings:
 
 * Profile `full`: the functional, standards, accessibility, security, and
-  readiness perspectives.
+  readiness perspectives explicitly requested by this workflow contract.
 * Depth `basic`.
 * No human pauses. Accept the change scope derived from the PR diff and treat
   derived choices as agent-owned.
 * Apply each perspective inline. Do not dispatch subagents.
-* Keep review state in memory. Do not run the `code-review-core` helper, write
+* Keep review state in memory. Do not run the `code-review` helper CLI, write
   tracking files or a local report, or open a canvas.
 * This run supplies no business-alignment sources or Security Plan Drift
   baseline, so those comparisons do not run.

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { check, object } from '../../../../skills/coding-standards/code-review-core/scripts/lib/model.mjs';
+import { check, findingVectors, object } from '../../../../skills/coding-standards/code-review/scripts/lib/model.mjs';
 import { openReview, recordInterpretation, takeFeedback, TARGET_KINDS, validateTarget } from './model.mjs';
 
 const schema = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
@@ -50,7 +50,7 @@ export async function invokeAction(registry, context) {
         state: state.statePath, status: state.status, outcome: state.outcome, stale: state.stale, warning: state.warning, focus: record.focus,
         areas: state.areas.map((area) => ({ id: area.id, title: area.title, status: area.status, perspectives: area.work.map((work) => ({ id: work.id, perspective: work.perspective, status: work.status })) })),
         files: state.files.slice(0, 50).map((file) => ({ id: file.id, path: file.newPath ?? file.oldPath, status: file.status })),
-        findings: state.findings.slice(0, 50).map((finding) => ({ id: finding.id, severity: finding.severity, disposition: finding.disposition })),
+        findings: state.findings.slice(0, 50).map((finding) => ({ id: finding.id, severity: finding.severity, vectors: findingVectors(state, finding), disposition: finding.disposition })),
         reviewers: state.reviewers,
         totals: { files: state.files.length, findings: state.findings.length, summaryLimit: 50 },
         feedback: { revision: state.feedback.revision, queued: state.feedback.items.filter((item) => item.status === 'queued').length, awaitingInterpretation: state.feedback.items.filter((item) => item.status === 'sent').map((item) => item.id) },

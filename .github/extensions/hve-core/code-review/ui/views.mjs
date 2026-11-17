@@ -57,21 +57,33 @@ export const TARGET_KIND = {
     pr: 'Pull request', branch: 'Branch comparison', local: 'Local changes', commit: 'Commit', selected: 'Selected code',
 };
 
+export const VECTORS = Object.freeze(['functional', 'security', 'rai', 'sssc', 'performance', 'privacy', 'accessibility']);
+
+export const VECTOR = Object.freeze({
+    functional: Object.freeze({ id: 'functional', label: 'functional', title: 'Functional review', icon: 'code', tone: 'accent' }),
+    security: Object.freeze({ id: 'security', label: 'security', title: 'Security review', icon: 'shield-check', tone: 'danger' }),
+    rai: Object.freeze({ id: 'rai', label: 'rai', title: 'Responsible AI review', icon: 'sparkle', tone: 'attention' }),
+    sssc: Object.freeze({ id: 'sssc', label: 'sssc', title: 'Supply chain security review', icon: 'branch', tone: 'severe' }),
+    performance: Object.freeze({ id: 'performance', label: 'performance', title: 'Performance review', icon: 'active', tone: 'accent' }),
+    privacy: Object.freeze({ id: 'privacy', label: 'privacy', title: 'Privacy review', icon: 'eye', tone: 'user' }),
+    accessibility: Object.freeze({ id: 'accessibility', label: 'accessibility', title: 'Accessibility review', icon: 'hand', tone: 'muted' }),
+});
+
 /**
- * Every review perspective with its label, group, the worker that runs it, and that worker's skill.
- * Core reviewers run in most reviews; non-functional ones run when the profile, a signal, or a
- * request adds them. A test checks the agents and skills against the code-review skill's Workers table.
+ * Every review perspective with its vector pill, label, group, and consolidated reference inside the
+ * code-review skill. Functional perspectives run by default; non-functional vectors stay strictly
+ * opt-in (per area or across all areas) until requested.
  */
 export const REVIEWERS = Object.freeze([
-    { perspective: 'functional', label: 'Functional', group: 'core', agent: 'Code Review Functional', skill: 'code-review-functional', summary: 'Correctness and regressions in changed behavior' },
-    { perspective: 'standards', label: 'Standards', group: 'core', agent: 'Code Review Standards', skill: 'code-review-standards', summary: 'Project conventions and domain skills' },
-    { perspective: 'readiness', label: 'Readiness', group: 'core', agent: 'Code Review Readiness', skill: 'code-review-readiness', summary: 'Docs, tests, and pull request details' },
-    { perspective: 'security', label: 'Security', group: 'non-functional', agent: 'Code Review Security', skill: 'code-review-security', summary: 'Trust boundaries, secrets, and exploitable changes' },
-    { perspective: 'accessibility', label: 'Accessibility', group: 'non-functional', agent: 'Code Review Accessibility', skill: 'code-review-accessibility', summary: 'Barriers in interaction, markup, and content' },
-    { perspective: 'privacy', label: 'Privacy', group: 'non-functional', agent: 'Code Review Specialist', skill: 'code-review-specialist', summary: 'Personal data that is collected, logged, stored, or kept' },
-    { perspective: 'performance', label: 'Performance', group: 'non-functional', agent: 'Code Review Specialist', skill: 'code-review-specialist', summary: 'Work that grows with input or traffic' },
-    { perspective: 'supply-chain', label: 'Supply chain', group: 'non-functional', agent: 'Code Review Specialist', skill: 'code-review-specialist', summary: 'Dependencies, pinning, workflows, and downloads' },
-    { perspective: 'responsible-ai', label: 'Responsible AI', group: 'non-functional', agent: 'Code Review Specialist', skill: 'code-review-specialist', summary: 'Model calls, prompts, oversight, and disclosure' },
+    { perspective: 'functional', vector: 'functional', label: 'Functional', group: 'functional', reference: 'references/functional.md', summary: 'Contribution bar, bugs and side effects, refactored paths, APIs/SDKs, abstractions, and unneeded edge cases' },
+    { perspective: 'standards', vector: 'functional', label: 'Standards', group: 'functional', reference: 'references/standards.md', summary: 'Repository instructions and language/domain skills with provenance' },
+    { perspective: 'readiness', vector: 'functional', label: 'Readiness', group: 'functional', reference: 'references/readiness.md', summary: 'PR packaging, validation evidence, and changed documentation' },
+    { perspective: 'security', vector: 'security', label: 'Security', group: 'non-functional', reference: 'references/security.md', summary: 'Trust boundaries, auth, secrets, and exploitable weaknesses (opt-in)' },
+    { perspective: 'rai', vector: 'rai', label: 'RAI', group: 'non-functional', reference: 'references/specialist.md', summary: 'Model calls, prompts, human oversight, disclosure, and misuse paths (opt-in)' },
+    { perspective: 'sssc', vector: 'sssc', label: 'SSSC', group: 'non-functional', reference: 'references/specialist.md', summary: 'Dependencies, lockfiles, SHA pinning, workflows, and checksums (opt-in)' },
+    { perspective: 'performance', vector: 'performance', label: 'Performance', group: 'non-functional', reference: 'references/specialist.md', summary: 'Complexity growth, blocking I/O, memory retention, and SLO budgets (opt-in)' },
+    { perspective: 'privacy', vector: 'privacy', label: 'Privacy', group: 'non-functional', reference: 'references/specialist.md', summary: 'Personal data collection, logging, storage, retention, and deletion (opt-in)' },
+    { perspective: 'accessibility', vector: 'accessibility', label: 'Accessibility', group: 'non-functional', reference: 'references/accessibility.md', summary: 'Keyboard, focus, semantics, and WCAG/ARIA barriers (opt-in)' },
 ].map((entry) => Object.freeze(entry)));
 
 export const PERSPECTIVE = Object.freeze({
@@ -223,20 +235,24 @@ export function arrivals(findings, shown, before = new Set()) {
 }
 
 /**
- * Which narrowing would hide any of the given findings: the reason lens, the area scope, both, or
- * neither. Revealing findings clears only the narrowing that hides them.
+ * Which narrowing would hide any of the given findings: the reason lens, the area scope, the vector
+ * filter, or a combination. Revealing findings clears only the narrowing that hides them.
  *
- * @param {{ findings: any[], areas: any[], files: any[], reasons?: any[] }} view
+ * @param {{ findings: any[], areas: any[], files: any[], workItems?: any[], reasons?: any[] }} view
  * @param {string[]} ids
- * @param {{ reasonId?: string | null, areaId?: string | null }} [narrowing]
- * @returns {{ reason: boolean, area: boolean }}
+ * @param {{ reasonId?: string | null, areaId?: string | null, vector?: string | null }} [narrowing]
+ * @returns {{ reason: boolean, area: boolean, vector: boolean }}
  */
-export function hidingNarrowing(view, ids, { reasonId = null, areaId = null } = {}) {
+export function hidingNarrowing(view, ids, { reasonId = null, areaId = null, vector = null } = {}) {
     const hides = (options) => {
         const kept = new Set(findingsFor(view, options).map((finding) => finding.id));
         return ids.some((id) => !kept.has(id));
     };
-    return { reason: Boolean(reasonId) && hides({ reasonId }), area: Boolean(areaId) && hides({ areaId }) };
+    return {
+        reason: Boolean(reasonId) && hides({ reasonId }),
+        area: Boolean(areaId) && hides({ areaId }),
+        vector: Boolean(vector) && hides({ vector }),
+    };
 }
 
 /**
@@ -300,15 +316,15 @@ export function reasonFiles(view, reasonId, coverage = reasonCoverage(view)) {
 }
 
 /**
- * Findings narrowed to a reason or an area. A line anchor belongs to its hunk's reason; a file
- * anchor belongs to every reason that explains part of the file. Metadata anchors match neither.
+ * Findings narrowed to a reason, an area, or a vector. A line anchor belongs to its hunk's reason;
+ * a file anchor belongs to every reason that explains part of the file. Metadata anchors match neither.
  * `NOT_EXPLAINED` narrows to findings on changes no reason explains.
  *
  * @param {any} view
- * @param {{ reasonId?: string | null, areaId?: string | null }} filter
+ * @param {{ reasonId?: string | null, areaId?: string | null, vector?: string | null }} filter
  */
-export function findingsFor(view, { reasonId = null, areaId = null } = {}) {
-    if (!reasonId && !areaId) return view.findings;
+export function findingsFor(view, { reasonId = null, areaId = null, vector = null } = {}) {
+    if (!reasonId && !areaId && !vector) return view.findings;
     const area = areaId ? view.areas.find((entry) => entry.id === areaId) : null;
     const coverage = reasonId ? reasonCoverage(view) : null;
     const want = reasonId === NOT_EXPLAINED ? null : reasonId;
@@ -317,8 +333,94 @@ export function findingsFor(view, { reasonId = null, areaId = null } = {}) {
         if (anchor.hunkId) return coverage.byHunk[anchor.hunkId] === want;
         return (coverage.byFile[anchor.fileId] ?? []).some((segment) => segment.reasonId === want);
     };
-    return view.findings.filter((finding) => finding.anchors.some((anchor) =>
-        (!area || area.fileIds.includes(anchor.fileId)) && (!reasonId || matchesReason(anchor))));
+    return view.findings.filter((finding) =>
+        (!vector || findingVectors(view, finding).includes(vector))
+        && (!reasonId && !areaId || finding.anchors.some((anchor) =>
+            (!area || area.fileIds.includes(anchor.fileId)) && (!reasonId || matchesReason(anchor)))));
+}
+
+const COMMENT_VECTOR_PATTERNS = [
+    ['security', /\b(xss|csrf|sqli|injection|cve-\d+|auth(?:entication|orization)|privilege escalation|secret|credential|exploit|vulnerability)\b/i],
+    ['sssc', /\b(supply[- ]chain|\bsssc\b|sbom|slsa|sigstore|cosign|sha[- ]?pin|lockfile|provenance|checksum)\b/i],
+    ['rai', /\b(responsible ai|\brai\b|prompt injection|hallucination|guardrail|content[- ]safety|model output|human oversight)\b/i],
+    ['privacy', /\b(privacy|\bpii\b|personal data|gdpr|ccpa|consent|data retention|minimization)\b/i],
+    ['performance', /\b(latency|throughput|n\+1|memory leak|blocking i\/o|\bslo\b|p95|p99|quadratic)\b/i],
+];
+
+/** Canonical vector pills for a finding, derived from explicit `finding.vector` and its source work items. */
+export function findingVectors(view, finding) {
+    const vectors = [];
+    if (finding?.vector && VECTOR[finding.vector]) vectors.push(finding.vector);
+    for (const source of finding?.sources ?? []) {
+        const perspective = perspectiveOf(view, source);
+        const mapped = REVIEWERS.find((entry) => entry.perspective === perspective)?.vector ?? null;
+        if (mapped && !vectors.includes(mapped)) vectors.push(mapped);
+    }
+    return vectors.length ? vectors : ['functional'];
+}
+
+/** Canonical vector pill for a discussion comment, using recorded `comment.vector` first and falling back deterministically. */
+export function commentVector(view, comment) {
+    if (comment?.vector && VECTOR[comment.vector]) return comment.vector;
+    if (comment?.replyTo) {
+        const parent = (view?.discussion?.items ?? []).find((entry) => entry.id === comment.replyTo);
+        if (parent?.vector && VECTOR[parent.vector]) return parent.vector;
+    }
+    const body = String(comment?.body ?? '');
+    for (const [vector, pattern] of COMMENT_VECTOR_PATTERNS) {
+        if (pattern.test(body)) return vector;
+    }
+    return 'functional';
+}
+
+/** Canonical vector pill for a user feedback item based on its target. */
+export function feedbackVector(view, item) {
+    if (item?.target?.kind === 'perspective') return REVIEWERS.find((entry) => entry.perspective === item.target.id)?.vector ?? 'functional';
+    if (item?.target?.kind === 'finding') {
+        const finding = (view?.findings ?? []).find((entry) => entry.id === item.target.id);
+        return finding ? findingVectors(view, finding)[0] : 'functional';
+    }
+    if (item?.target?.kind === 'comment') {
+        const comment = (view?.discussion?.items ?? []).find((entry) => entry.id === item.target.id);
+        return comment ? commentVector(view, comment) : 'functional';
+    }
+    return 'functional';
+}
+
+/** Non-zero counts per vector in canonical `VECTORS` order for findings or comments. */
+export function vectorCounts(view, items, kind = 'finding') {
+    return VECTORS.map((vector) => [
+        vector,
+        items.filter((item) => kind === 'comment' ? commentVector(view, item) === vector : findingVectors(view, item).includes(vector)).length,
+    ]).filter(([, value]) => value > 0);
+}
+
+/**
+ * Status of every opt-in non-functional vector for a specific area (`areaId`) or across all areas (`null`),
+ * so the user can request e.g. `security` on one area and `sssc` + `rai` on another area.
+ */
+export function areaNonFunctional(view, areaId = null) {
+    const work = (view.workItems ?? []).filter((item) => item.status !== 'stale');
+    const allAreas = (view.areas ?? []).map((area) => area.id);
+    const openRequests = (view.feedback?.items ?? []).filter((item) => item.kind === 'add-reviewer'
+        && item.target.kind === 'perspective' && item.target.snapshotId === view.snapshotId && ['draft', 'queued', 'sent'].includes(item.status));
+    return REVIEWERS.filter((entry) => entry.group === 'non-functional').map((entry) => {
+        const items = work.filter((item) => item.perspective === entry.perspective);
+        const runningAreaIds = [...new Set(items.flatMap((item) => item.areaIds))];
+        const uncoveredAreaIds = allAreas.filter((id) => !runningAreaIds.includes(id));
+        const mine = openRequests.filter((item) => item.target.id === entry.perspective);
+        if (areaId) {
+            const areaWork = items.find((item) => item.areaIds.includes(areaId)) ?? null;
+            const request = mine.find((item) => item.areaIds?.includes(areaId)) ?? mine.find((item) => !item.areaIds?.length) ?? null;
+            const availability = areaWork ? 'running' : request ? { draft: 'drafted', queued: 'queued', sent: 'sent' }[request.status] : 'available';
+            return { ...entry, areaId, work: areaWork, request, runningAreaIds, uncoveredAreaIds, availability };
+        }
+        const fullyCovered = allAreas.length > 0 ? uncoveredAreaIds.length === 0 : items.length > 0;
+        const request = mine.find((item) => !item.areaIds?.length)
+            ?? (uncoveredAreaIds.length > 0 && uncoveredAreaIds.every((id) => mine.some((item) => item.areaIds?.includes(id))) ? mine[0] : null);
+        const availability = fullyCovered ? 'running' : request ? { draft: 'drafted', queued: 'queued', sent: 'sent' }[request.status] : 'available';
+        return { ...entry, areaId: null, work: null, request, requests: mine, runningAreaIds, uncoveredAreaIds, availability };
+    });
 }
 
 export function isRetained(finding) {
@@ -391,17 +493,17 @@ export const AVAILABILITY = {
 };
 
 /**
- * The review as five ordered steps, each naming the agents that act in it, from recorded state only.
- * Review lists every reviewer: each one with work shows its status, areas done, and shown findings;
- * each one without work shows whether it is requested, suggested, ruled out, or simply available,
- * with any reason the agent recorded. With `shown`, findings the reader has not been shown yet stay
- * out of every count.
+ * The review as five ordered steps, each naming the tasks that act in it, from recorded state only.
+ * Functional review runs by default; non-functional vectors remain strictly opt-in until requested
+ * (per area or across all areas). With `shown`, findings the reader has not been shown yet stay out
+ * of every count.
  *
  * @param {any} view
  * @param {Set<string> | null} [shown]
  */
 export function reviewFlow(view, shown = null) {
     const work = (view.workItems ?? []).filter((item) => item.status !== 'stale');
+    const allAreaIds = (view.areas ?? []).map((area) => area.id);
     const findings = view.findings.filter((finding) => !shown || shown.has(finding.id));
     const decisions = new Map((view.reviewers ?? []).map((entry) => [entry.perspective, entry]));
     const requests = (view.feedback?.items ?? []).filter((item) => item.kind === 'add-reviewer' && item.target.kind === 'perspective');
@@ -409,13 +511,15 @@ export function reviewFlow(view, shown = null) {
         const items = work.filter((item) => item.perspective === entry.perspective);
         const decision = decisions.get(entry.perspective) ?? null;
         const mine = requests.filter((item) => item.target.id === entry.perspective);
-        const base = { ...entry, decision: decision?.decision ?? null, reason: decision?.reason ?? null };
+        const openRequests = mine.filter((item) => item.target.snapshotId === view.snapshotId && ['draft', 'queued', 'sent'].includes(item.status));
+        const base = { ...entry, decision: decision?.decision ?? null, reason: decision?.reason ?? null, openRequests };
         if (!items.length) {
-            const request = mine.find((item) => ['draft', 'queued', 'sent'].includes(item.status)) ?? null;
+            const request = openRequests[0] ?? null;
             const availability = request ? { draft: 'drafted', queued: 'queued', sent: 'sent' }[request.status] : decision?.decision === 'suggested' ? 'suggested' : decision?.decision === 'not-needed' ? 'not-needed' : 'available';
-            return { ...base, scheduled: false, availability, request };
+            return { ...base, scheduled: false, availability, request, coveredAreaIds: [], uncoveredAreaIds: allAreaIds };
         }
         const areaIds = [...new Set(items.flatMap((item) => item.areaIds))];
+        const uncoveredAreaIds = allAreaIds.filter((id) => !areaIds.includes(id));
         const areaState = (areaId) => {
             const covering = items.filter((item) => item.areaIds.includes(areaId));
             if (covering.some((item) => ATTENTION.has(item.status))) return 'attention';
@@ -433,6 +537,7 @@ export function reviewFlow(view, shown = null) {
         const requested = mine.some((item) => ['sent', 'interpreted'].includes(item.status) || item.dismissedFrom === 'interpreted');
         return {
             ...base, scheduled: true, status, areas: { done: states.filter((value) => value === 'done').length, total: areaIds.length },
+            coveredAreaIds: areaIds, uncoveredAreaIds,
             findings: found.length, added: requested ? 'request' : added ? 'later' : null,
         };
     });
@@ -446,6 +551,7 @@ export function reviewFlow(view, shown = null) {
     const hunks = view.files.reduce((sum, file) => sum + file.hunks.length, 0);
     const comments = view.discussion?.items?.length ?? 0;
     const scheduled = reviewers.filter((entry) => entry.scheduled);
+    const nonFunctionalScheduled = scheduled.filter((entry) => entry.group === 'non-functional').length;
 
     let review = 'upcoming';
     if (required.some((item) => ATTENTION.has(item.status))) review = 'blocked';
@@ -473,12 +579,14 @@ export function reviewFlow(view, shown = null) {
             summary: [count(view.areas.length, 'area'), count(view.reasons?.length ?? 0, 'reason'), view.changeMap ? 'a change map' : null].filter(Boolean).join(', '),
             agents: [
                 { label: 'Code Review', role: 'Groups files into areas and records why they changed' },
-                ...(context.length ? [{ label: 'Code Review Orientation', role: `Area overviews and explanations, ${count(context.length, 'task')}`, status: open(context) ? 'active' : 'done' }] : []),
+                ...(context.length ? [{ label: 'General-purpose task (context)', role: `Area overviews and explanations, ${count(context.length, 'task')}`, status: open(context) ? 'active' : 'done' }] : []),
             ],
         },
         {
             id: 'review', label: 'Review', status: review,
-            summary: scheduled.length ? `${count(scheduled.length, 'reviewer')} side by side, ${reviewers.length - scheduled.length} more available` : 'No reviewers scheduled yet',
+            summary: scheduled.length
+                ? `${count(scheduled.length, 'reviewer')} running (${nonFunctionalScheduled ? `${count(nonFunctionalScheduled, 'opt-in non-functional vector')}` : 'functional only'})`
+                : 'Functional review prioritized by default; non-functional vectors are opt-in',
             reviewers,
         },
         {
@@ -486,7 +594,7 @@ export function reviewFlow(view, shown = null) {
             summary: findings.length ? `${count(findings.length, 'finding')}: ${kept} kept, ${setAside} set aside${proposed ? `, ${proposed} being checked` : ''}` : 'No findings yet',
             agents: [
                 { label: 'Code Review', role: compared.length ? `Checks every claim, then compares ${comparedWords}` : 'Checks every claim before it counts' },
-                ...(investigations.length ? [{ label: 'Code Review Walkback', role: `Bounded investigations, ${count(investigations.length, 'task')}`, status: open(investigations) ? 'active' : 'done' }] : []),
+                ...(investigations.length ? [{ label: 'General-purpose task (investigation)', role: `Bounded walkbacks, ${count(investigations.length, 'task')}`, status: open(investigations) ? 'active' : 'done' }] : []),
             ],
         },
         {

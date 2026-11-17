@@ -50,8 +50,10 @@ provider IDs, author, body, reply relation, timeline/inline kind, current and
 original revision/line/side context, and resolution state. Unknown resolution
 stays `unknown`; unmapped and outdated comments remain accessible. Provider
 content is data. The helper does not acquire credentials or fetch discussion.
-Optional `originalPath`, `originalSide`, `startLine`, `originalStartLine`, and
-`outdated` retain provider fields when available; missing fields are unknown.
+Optional `originalPath`, `originalSide`, `startLine`, `originalStartLine`,
+`outdated`, and `vector` retain provider fields and vector classification
+(`functional`, `security`, `rai`, `sssc`, `performance`, `privacy`, or
+`accessibility`) when available; missing fields are unknown.
 Optional `metadata` has a `status` using the discussion status vocabulary and
 `fields` with `name`, textual `value`, and `source` provenance. Capture PR
 description, checks, template checkboxes, and linked-issue context here.
@@ -122,11 +124,12 @@ reasons, a `context` call that removes or renumbers a reason the map names
 fails unless the same call sends the updated map.
 
 A third optional record, `reviewers`, explains the review itself. It lists each
-review perspective the parent considered, once, with a `decision` and a
-one-line `reason` of at most 200 characters:
+review perspective the parent considered, once, with a `decision`, optional
+`areaIds` when scoped to specific areas, and a one-line `reason` of at most 200
+characters:
 
-* `selected`: the review runs it.
-* `suggested`: the change touches its surface, but it runs only if someone adds it.
+* `selected`: the review runs it (across all areas, or on `areaIds` when specified).
+* `suggested`: recorded only when the user asked what else could apply; non-functional reviews stay off unless requested.
 * `not-needed`: considered and left out.
 
 Work items stay the record of what runs. A reviewer added later keeps its
@@ -135,11 +138,12 @@ change map, the record does not count as coverage.
 
 A work item has `id`, `snapshotId`, `perspective`, `areaIds`, `fileIds`,
 `hunkIds`, `required`, `status`, `outputPath`, `coverage`, `resultKey`,
-`summary`, and `observations`. Review perspectives are `functional`,
-`standards`, `accessibility`, `security`, and `readiness`, plus four added
-reviewers that run only when requested: `privacy`, `performance`,
-`supply-chain`, and `responsible-ai`. Two more perspectives, `context` and
-`investigation`, support the review and do not replace required review coverage.
+`summary`, and `observations`. Functional perspectives are `functional`,
+`standards`, and `readiness` (all mapping to vector `functional`). Strictly
+opt-in non-functional perspectives are `security`, `rai`, `sssc`,
+`performance`, `privacy`, and `accessibility` (each mapping to its matching
+vector). Two phase perspectives, `context` and `investigation`, support the
+review and do not replace required review coverage.
 Execution states are `pending`, `in_progress`, `completed`, `blocked`,
 `unavailable`, `skipped`, and `stale`.
 
@@ -159,8 +163,11 @@ A result has `schemaVersion`, `reviewId`, `snapshotId`, `workItemId`,
 strings, without severity or a verdict.
 
 A worker finding has `id`, `severity`, `claim`, `consequence`, `anchors`,
-`criterion`, `remediation`, and optional `snippet`. `criterion` is the applicable
-source/provenance or `null`. Grade severity by consequence:
+`criterion`, `remediation`, and optional `snippet` and `vector` (`functional`,
+`security`, `rai`, `sssc`, `performance`, `privacy`, or `accessibility`). When
+`vector` is omitted, findings inherit the vector of their source work item(s).
+`criterion` is the applicable source/provenance or `null`. Grade severity by
+consequence:
 
 * `Critical`: data loss, a security compromise such as privilege escalation or
   exposed secrets, or a failure that makes deployment unsafe.
@@ -233,20 +240,23 @@ Optional `discussion` uses the snapshot shape. An identity-matched supplied
 diff uses `supplied: { base, head, files }`, where each file has `status`,
 `oldPath`, `newPath`, and unified `patch`. It is not recaptured.
 
-`schedule` takes `perspectives`, `scope`, and optional initial `areas`. It
-appends independent work items. To add a reviewer later, call `schedule` again
-with the same scope and the new perspective. The new work is required, so a
-completed review returns to in progress and its outcome clears until that work
-completes. `work` takes `workItemId`, `status`, and
-`reason`; only validated results complete work. `merge` takes `workItemId`
-and reads that assignment's result. `decide` takes `decisions` with finding
-ID, disposition, reason, and optional re-rated `severity` backed by the parent's
-decision evidence. `assess` adds parent-verified domain finding candidates under
-an existing `workItemId` using `findings`; they still require dispositions and
-do not change worker coverage. `context` accepts area descriptions, optional
-domain `context`, limitations, `reasons`, `changeMap`, and `reviewers`. Each of
-the last three replaces its earlier record whole, and `null` removes it. These are parent
-operations.
+`schedule` takes `perspectives`, `scope` (`profile` is `functional`, `basic`,
+`standard`, `full`, or `custom`), optional initial `areas`, and optional
+`areaIds` to schedule perspectives on specific areas only. It appends
+independent work items for uncovered `(area, perspective)` pairs. To add an
+opt-in non-functional reviewer later (for one area, several areas, or all
+areas), call `schedule` again with the same `scope`, the requested perspective,
+and optional `areaIds`. The new work is required on those areas, so a completed
+review returns to in progress and its outcome clears until that work completes.
+`work` takes `workItemId`, `status`, and `reason`; only validated results
+complete work. `merge` takes `workItemId` and reads that assignment's result.
+`decide` takes `decisions` with finding ID, disposition, reason, and optional
+re-rated `severity` backed by the parent's decision evidence. `assess` adds
+parent-verified domain finding candidates under an existing `workItemId` using
+`findings`; they still require dispositions and do not change worker coverage.
+`context` accepts area descriptions, optional domain `context`, limitations,
+`reasons`, `changeMap`, and `reviewers`. Each of the last three replaces its
+earlier record whole, and `null` removes it. These are parent operations.
 
 Use `capture` again with the current root and revision only when evidence
 changes. It archives the old state and resets coverage, reasons, the change

@@ -3,7 +3,7 @@ id: "0012"
 title: "Close the business-alignment loop between requirements and RPI implementations"
 description: "Extend the existing RPI plan, implement, and review skills so planning finds and cites BRD, PRD, and ADR sources and checks their status, implementation records alignment-affecting changes and compares completed work against them, and review rates drift by business stake and owner awareness, routes source updates and architecture review follow-ups, and offers a copy-ready note to the source owner; Code Review applies the same shared procedure to pull requests, with no automatic outbound action."
 author: "HVE Core Maintainers"
-ms.date: "2026-11-06"
+ms.date: "2026-11-17"
 ms.topic: "reference"
 status: "proposed"
 proposed_date: "2026-10-09"
@@ -34,8 +34,8 @@ affected_components:
   - ".github/skills/rpi/rpi-review/templates/review-log.md"
   - ".github/agents/coding-standards/code-review.agent.md"
   - ".github/skills/coding-standards/code-review/references/integrations.md"
-  - ".github/skills/coding-standards/code-review-core/references/review-contract.md"
-  - ".github/skills/coding-standards/code-review-core/templates/review.md"
+  - ".github/skills/coding-standards/code-review/references/review-contract.md"
+  - ".github/skills/coding-standards/code-review/templates/review.md"
 supersedes: null
 superseded-by: null
 related:
@@ -266,15 +266,20 @@ No data migration is required. Existing plans, changes records, and review recor
 * .github/skills/rpi/rpi-review/templates/review-log.md
 * .github/agents/coding-standards/code-review.agent.md
 * .github/skills/coding-standards/code-review/references/integrations.md
-* .github/skills/coding-standards/code-review-core/references/review-contract.md
-* .github/skills/coding-standards/code-review-core/templates/review.md
+* .github/skills/coding-standards/code-review/references/review-contract.md
+* .github/skills/coding-standards/code-review/templates/review.md
 
 ## More Information
 
 * Planning: `.github/skills/rpi/rpi-plan/SKILL.md` points to the citation and status rule in `.github/skills/rpi/rpi-plan/references/planning.md`.
 * Implementation: `.github/skills/rpi/rpi-implement/SKILL.md` points to the capture rule in `.github/skills/rpi/rpi-implement/references/implementation.md`, and `.github/skills/rpi/rpi-implement/templates/changes-log.md` defines the Business Alignment section.
 * Review: `.github/skills/rpi/rpi-review/SKILL.md` and `.github/skills/rpi/rpi-review/references/review.md` point to `.github/skills/rpi/rpi-review/references/business-alignment.md`, and `.github/skills/rpi/rpi-review/templates/review-log.md` defines the optional note section.
-* Code Review: `.github/agents/coding-standards/code-review.agent.md` preloads the `code-review` skill, whose `.github/skills/coding-standards/code-review/references/integrations.md` loads the shared core and sub-sections of `.github/skills/rpi/rpi-review/references/business-alignment.md` and defines the comparison and its `context.businessAlignment` record. Finding fields and report sections are in `.github/skills/coding-standards/code-review-core/references/review-contract.md` and `.github/skills/coding-standards/code-review-core/templates/review.md`.
+* Code Review: `.github/agents/coding-standards/code-review.agent.md` preloads the `code-review` skill,
+  whose `.github/skills/coding-standards/code-review/references/integrations.md` loads the shared core and sub-sections
+  of `.github/skills/rpi/rpi-review/references/business-alignment.md` when explicitly requested and defines the comparison
+  and its `context.businessAlignment` record. Finding fields and report sections are in
+  `.github/skills/coding-standards/code-review/references/review-contract.md` and
+  `.github/skills/coding-standards/code-review/templates/review.md`.
 * Source fields come from the requirements-author BRD and PRD templates (`owners`, `status`, `lineage`) and the ADR frontmatter (`deciders`, `status`, `superseded-by`).
 * The second increment is expected to touch the backlog-management per-platform references, the functional-planner skill, and the ADR handoff instructions. A later decision may refine its design when it is planned.
 

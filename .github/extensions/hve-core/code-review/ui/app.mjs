@@ -1,12 +1,13 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, count, h, icon, idChip, meta, prose, shortSha, svg, time } from './dom.mjs';
+import { badge, count, h, icon, idChip, meta, prose, shortSha, svg, time, vectorPill } from './dom.mjs';
 import {
-    anchorLabel, arrivals, AVAILABILITY, boardLanes, bySeverity, DISPOSITION, EXECUTION, FEEDBACK_KIND, feedbackState, fileAnnotations,
-    fileLabel, fileStats, fileStatus, findingGroups, findingsFor, hidingNarrowing, hunkAnnotations, isMarked, isRetained, matches, needsAttention, needsYou, perspectiveProgress,
-    NOT_EXPLAINED, OUTCOME, PERSPECTIVE, perspectiveOf, plainText, reasonCoverage, reasonFiles, resolveFocus, REVIEWER_STATUS, REVIEWERS, reviewFlow, SEVERITY, splitPath,
-    STAGE_STATUS, stageFor, stages, targetPresent, targetSummary,
+    anchorLabel, areaNonFunctional, arrivals, AVAILABILITY, boardLanes, bySeverity, commentVector, DISPOSITION, EXECUTION, FEEDBACK_KIND, feedbackState,
+    feedbackVector, fileAnnotations, fileLabel, fileStats, fileStatus, findingGroups, findingsFor, findingVectors, hidingNarrowing, hunkAnnotations,
+    isMarked, isRetained, matches, needsAttention, needsYou, NOT_EXPLAINED, OUTCOME, PERSPECTIVE, perspectiveOf, perspectiveProgress, plainText,
+    reasonCoverage, reasonFiles, resolveFocus, REVIEWER_STATUS, REVIEWERS, reviewFlow, SEVERITY, splitPath, STAGE_STATUS, stageFor, stages,
+    targetPresent, targetSummary, VECTOR, vectorCounts,
 } from './views.mjs';
 import { layoutMap, MAP_VIEWS, mapModel, tagWords } from './map.mjs';
 import { closeMapPreview, renderMap } from './diagram.mjs';
@@ -18,8 +19,9 @@ const ui = {
     stage: 'review', target: null, focus: null, filter: '', follow: true, live: 'connecting',
     navHidden: false, steerHidden: false, drawer: null, boardOpen: true, boardLane: null, flowOpen: true, shortcuts: true, reportText: null,
     remoteFocus: '', needsIndex: -1, composer: { id: null, target: null, saved: '' }, loaded: false,
-    mapView: 'changes', mapPinned: null, mapText: false, reason: null,
-    expandedFinding: null, groupOpen: new Map(), findingArea: false, shownFindings: new Set(), newlyShown: new Set(), heldIds: new Set(), discussionOpen: false,
+    mapView: 'changes', mapPinned: null, mapText: false, reason: null, addScope: 'area',
+    expandedFinding: null, groupOpen: new Map(), findingArea: false, findingVector: null, commentVector: null,
+    shownFindings: new Set(), newlyShown: new Set(), heldIds: new Set(), discussionOpen: false,
 };
 const MAP_VIEW_WORDS = { changes: 'Changes', before: 'Before', after: 'After' };
 let mapCache = { key: null, model: null, layout: null };
@@ -141,11 +143,16 @@ function revealFinding(findingId) {
     clearHidingNarrowing([findingId]);
 }
 
-/** Clears the reason lens or area scope when either would hide one of the findings; returns which. */
+/** Clears the reason lens, area scope, or vector filter when it would hide one of the findings; returns which. */
 function clearHidingNarrowing(ids) {
-    const hidden = hidingNarrowing(view, ids, { reasonId: ui.reason, areaId: ui.findingArea ? ui.focus?.areaId ?? null : null });
+    const hidden = hidingNarrowing(view, ids, {
+        reasonId: ui.reason,
+        areaId: ui.findingArea ? ui.focus?.areaId ?? null : null,
+        vector: ui.findingVector,
+    });
     if (hidden.reason) ui.reason = null;
     if (hidden.area) ui.findingArea = false;
+    if (hidden.vector) ui.findingVector = null;
     return hidden;
 }
 
@@ -373,25 +380,33 @@ function renderNav() {
         sections.push(list);
         if (!areas.length) sections.push(h('p', { class: 'empty' }, filter ? 'No areas or files match the filter.' : 'The review has no areas yet.'));
         // Held arrivals stay out of the navigator until the reader shows them.
-        const findings = view.findings.filter((finding) => ui.shownFindings.has(finding.id) && matches(filter, finding.claim, finding.id, finding.severity))
+        const findings = view.findings.filter((finding) => ui.shownFindings.has(finding.id)
+            && matches(filter, finding.claim, finding.id, finding.severity, findingVectors(view, finding).join(' ')))
             .sort((left, right) => Number(left.disposition === 'rejected') - Number(right.disposition === 'rejected') || bySeverity(left, right));
         sections.push(h('h2', { class: 'nav-title' }, 'Findings', count(findings.length)));
         if (findings.length) {
             sections.push(h('ul', { class: 'nav-list' }, findings.map((finding) => {
                 const severity = SEVERITY[finding.severity];
+                const vectors = findingVectors(view, finding);
                 return navItem({
-                    key: `nav-finding-${finding.id}`, iconName: severity.icon, tone: severity.tone, label: plainText(finding.claim), title: `${finding.severity}: ${plainText(finding.claim)}`,
+                    key: `nav-finding-${finding.id}`, iconName: severity.icon, tone: severity.tone,
+                    label: `[${vectors.join(', ')}] ${plainText(finding.claim)}`,
+                    title: `${finding.severity} (${vectors.join(', ')}): ${plainText(finding.claim)}`,
                     current: ui.focus.findingId === finding.id, onClick: () => select(about('finding', finding.id), { stage: 'review' }),
                 });
             })));
         }
-        const threads = view.discussion.items.filter((comment) => !comment.replyTo && matches(filter, comment.author, comment.body));
+        const threads = view.discussion.items.filter((comment) => !comment.replyTo && matches(filter, comment.author, comment.body, commentVector(view, comment)));
         sections.push(h('h2', { class: 'nav-title' }, 'Discussion', count(view.discussion.items.length)));
         if (threads.length) {
-            sections.push(h('ul', { class: 'nav-list' }, threads.map((comment) => navItem({
-                key: `nav-comment-${comment.id}`, iconName: 'message', tone: 'user', label: `${comment.author}: ${plainText(comment.body)}`, title: plainText(comment.body),
-                current: ui.focus.commentId === comment.id, onClick: () => select(about('comment', comment.id), { stage: 'review' }),
-            }))));
+            sections.push(h('ul', { class: 'nav-list' }, threads.map((comment) => {
+                const vec = commentVector(view, comment);
+                return navItem({
+                    key: `nav-comment-${comment.id}`, iconName: 'message', tone: 'user',
+                    label: `[${vec}] ${comment.author}: ${plainText(comment.body)}`, title: `[${vec}] ${plainText(comment.body)}`,
+                    current: ui.focus.commentId === comment.id, onClick: () => select(about('comment', comment.id), { stage: 'review' }),
+                });
+            })));
         }
     } else {
         const outline = ui.stage === 'capture'
@@ -573,6 +588,7 @@ function reviewView() {
     nodes.push(row('row-area', area.title, 'nodes', [idChip(area.id, { kind: 'area' }), badge(status)],
         perspectiveChips(area.work),
         area.summary ? prose(area.summary) : h('p', { class: 'empty' }, 'The agent has not summarized this area yet.'),
+        areaNonFunctionalBar(area),
         h('div', { class: 'btn-row' },
             h('button', { type: 'button', class: 'btn btn-compact', dataset: { key: `next-${area.id}` }, on: { click: () => prepare('review-next', target) } }, icon('flag'), 'Review next'),
             h('button', { type: 'button', class: 'btn btn-compact', dataset: { key: `explain-${area.id}` }, on: { click: () => prepare('explain', target) } }, icon('bulb'), 'Explain'),
@@ -595,15 +611,47 @@ function reviewView() {
     return nodes;
 }
 
+/** Per-area opt-in non-functional vector controls right inside the selected Area section. */
+function areaNonFunctionalBar(area) {
+    const entries = areaNonFunctional(view, area.id).filter((entry) => entry.availability !== 'running');
+    if (!entries.length) return null;
+    return h('div', { class: 'area-nf' },
+        meta('Optional non-functional reviews for this area (off unless requested):'),
+        h('div', { class: 'chip-row' }, entries.map((entry) => {
+            if (entry.availability === 'available') {
+                return h('button', {
+                    type: 'button', class: 'btn btn-compact nf-pill', dataset: { key: `area-add-${area.id}-${entry.perspective}` },
+                    title: `${entry.summary}. Request for ${area.title}.`,
+                    'aria-label': `Request ${entry.label} review for ${area.title}`,
+                    on: { click: () => run(() => addReviewer(entry, [area.id])) },
+                }, icon('plus'), entry.vector);
+            }
+            const state = AVAILABILITY[entry.availability];
+            const dismissible = entry.request && entry.request.status !== 'sent' && (!entry.request.areaIds?.length || entry.request.areaIds.length === 1);
+            return h('span', { class: 'nf-pending' },
+                badge(state, { text: `${entry.vector}: ${state.label.toLowerCase()}` }),
+                dismissible ? h('button', {
+                    type: 'button', class: 'btn btn-compact', dataset: { key: `area-dismiss-${area.id}-${entry.perspective}` },
+                    'aria-label': `Dismiss ${entry.label} request for ${area.title}`,
+                    on: { click: () => run(() => dismissItems([entry.request.id], `The ${entry.label} request for ${area.title} was dismissed.`,
+                        { focus: () => document.querySelector(`[data-key="area-add-${CSS.escape(area.id)}-${CSS.escape(entry.perspective)}"]`) })) },
+                }, icon('x'), 'Dismiss') : null);
+        })));
+}
+
 // Review flow
 
-/** Who reviews the change and in what order: five steps on a rail, with Add for reviewers that are not running. */
+/** Who reviews the change and in what order: five steps on a rail, prioritizing functional review with opt-in per-area non-functional vectors. */
 function reviewFlowRow() {
     const flow = reviewFlow(view, ui.shownFindings);
-    const running = flow.reviewers.filter((entry) => entry.scheduled).length;
-    const suggested = flow.reviewers.filter((entry) => !entry.scheduled && entry.availability === 'suggested').length;
-    const requested = flow.reviewers.filter((entry) => entry.request).length;
-    const summary = [`${running} ${running === 1 ? 'reviewer' : 'reviewers'} running`, suggested ? `${suggested} suggested` : null, requested ? `${requested} requested` : null].filter(Boolean).join(', ');
+    const running = flow.reviewers.filter((entry) => entry.scheduled);
+    const nonFunctional = running.filter((entry) => entry.group === 'non-functional').length;
+    const requested = flow.reviewers.filter((entry) => entry.openRequests?.length).length;
+    const summary = [
+        `${running.length} ${running.length === 1 ? 'reviewer' : 'reviewers'} running`,
+        nonFunctional ? `${nonFunctional} non-functional` : 'functional only',
+        requested ? `${requested} requested` : null,
+    ].filter(Boolean).join(', ');
     const words = ui.flowOpen ? 'Collapse the review flow' : 'Expand the review flow';
     return h('section', { class: `row flow-row${ui.flowOpen ? '' : ' is-folded'}`, id: 'row-flow', tabIndex: -1, 'aria-labelledby': 'row-flow-title' },
         h('div', { class: 'row-head' },
@@ -611,7 +659,7 @@ function reviewFlowRow() {
             h('button', { type: 'button', class: 'btn btn-icon row-toggle', 'aria-expanded': ui.flowOpen, 'aria-controls': 'reviewFlow', title: words, dataset: { key: 'flow-toggle' },
                 on: { click: () => { ui.flowOpen = !ui.flowOpen; render(); } } }, icon('chevron'), h('span', { class: 'visually-hidden' }, words))),
         h('div', { class: 'row-text', id: 'reviewFlow', hidden: !ui.flowOpen },
-            h('p', { class: 'meta' }, 'Who reviews this change, in order. The reviewers in step 3 work side by side, and the agent checks every claim before it counts.'),
+            h('p', { class: 'meta' }, 'Functional review runs first by default with parallel general-purpose tasks. Non-functional vectors stay unloaded unless you request them for a specific area or the whole review.'),
             h('ol', { class: 'flow' }, flow.steps.map((step, index) => flowStep(step, index + 1)))));
 }
 
@@ -633,60 +681,95 @@ const REQUEST_RANK = { queued: 0, drafted: 0, sent: 0, suggested: 1, available: 
 
 function reviewerGroups(reviewers) {
     const running = reviewers.filter((entry) => entry.scheduled);
-    const available = reviewers.filter((entry) => !entry.scheduled).sort((left, right) => REQUEST_RANK[left.availability] - REQUEST_RANK[right.availability]);
-    const group = (title, entries, card, extra = '') => entries.length
+    const selectedArea = view.areas.find((area) => area.id === ui.focus?.areaId) ?? null;
+    const useAreaScope = Boolean(selectedArea) && view.areas.length > 1 && ui.addScope === 'area';
+    const scopedNonFunctional = areaNonFunctional(view, useAreaScope ? selectedArea.id : null)
+        .filter((entry) => entry.availability !== 'running')
+        .sort((left, right) => REQUEST_RANK[left.availability] - REQUEST_RANK[right.availability]);
+    const unscheduledFunctional = reviewers.filter((entry) => entry.group === 'functional' && !entry.scheduled);
+    const scopeControl = selectedArea && view.areas.length > 1
+        ? h('div', { class: 'flow-scope' },
+            h('fieldset', { class: 'segmented compact' }, h('legend', {}, 'Request scope'),
+                [['area', `Area: ${selectedArea.title}`], ['all', 'All areas']].map(([value, label]) => h('label', {}, h('input', {
+                    type: 'radio', name: 'nfScope', value, checked: (useAreaScope ? 'area' : 'all') === value, dataset: { key: `nf-scope-${value}` },
+                    on: { change: () => { ui.addScope = value; render(); } },
+                }), h('span', {}, label)))))
+        : null;
+    const group = (title, entries, card, extra = '', head = null) => entries.length
         ? h('div', { class: `flow-group${extra}` }, h('h5', { class: 'flow-group-title' }, title, count(entries.length)),
-            h('ul', { class: 'reviewer-grid' }, entries.map((entry) => h('li', {}, card(entry)))))
+            head, h('ul', { class: 'reviewer-grid' }, entries.map((entry) => h('li', {}, card(entry)))))
         : null;
     return h('div', { class: 'flow-reviewers' },
-        running.length ? null : h('p', { class: 'empty' }, 'The agent chooses reviewers after it groups the files. You can add one now.'),
-        group('Core', running.filter((entry) => entry.group === 'core'), reviewerCard),
-        group('Non-functional', running.filter((entry) => entry.group === 'non-functional'), reviewerCard),
-        group('Add a reviewer', available, availableCard, ' flow-add'));
+        running.length ? null : h('p', { class: 'empty' }, 'The agent schedules functional review after grouping the files. Non-functional reviews remain off unless requested.'),
+        group('Functional (default)', running.filter((entry) => entry.group === 'functional'), reviewerCard),
+        group('Requested non-functional', running.filter((entry) => entry.group === 'non-functional'), reviewerCard),
+        group('Optional non-functional reviews (off unless requested)', scopedNonFunctional,
+            (entry) => availableCard(entry, useAreaScope ? selectedArea : null), ' flow-add', scopeControl),
+        group('Additional functional perspectives', unscheduledFunctional, (entry) => availableCard(entry, null), ' flow-add'));
 }
 
 function reviewerCard(entry) {
     const status = REVIEWER_STATUS[entry.status];
     const added = entry.added === 'request' ? 'Added at your request' : entry.added === 'later' ? 'Added after the first plan' : null;
     const found = entry.findings ? `, ${entry.findings} ${entry.findings === 1 ? 'finding' : 'findings'}` : '';
+    const partialScope = view.areas.length > 1 && entry.coveredAreaIds?.length && entry.coveredAreaIds.length < view.areas.length
+        ? entry.coveredAreaIds.map((areaId) => view.areas.find((area) => area.id === areaId)?.title ?? areaId).join(', ')
+        : null;
     return h('article', { class: `reviewer-card tone-${status.tone}`, id: `reviewer-${entry.perspective}`, tabIndex: -1, title: entry.summary },
         h('div', { class: 'reviewer-head' }, h('h6', { class: 'reviewer-name' }, entry.label), badge(status)),
-        h('p', { class: 'meta reviewer-agent' }, entry.agent),
+        h('div', { class: 'chip-row' }, vectorPill(entry.vector), meta(entry.reference)),
         h('p', { class: 'reviewer-stats' }, `${entry.areas.done} of ${entry.areas.total} ${entry.areas.total === 1 ? 'area' : 'areas'} done${found}`),
+        partialScope ? meta(`Scoped to: ${partialScope}`) : null,
         entry.reason ? h('p', { class: 'reviewer-why' }, entry.reason) : null,
         added ? h('p', { class: 'meta reviewer-added' }, icon('plus'), added) : null);
 }
 
-function availableCard(entry) {
-    const state = AVAILABILITY[entry.availability];
+function availableCard(entry, scopedArea = null) {
+    const state = AVAILABILITY[entry.availability] ?? AVAILABILITY.available;
     const request = entry.request;
+    const areaIds = scopedArea ? [scopedArea.id] : null;
+    const targetWords = scopedArea ? scopedArea.title : 'all areas';
     let action = null;
     if (!request) {
-        action = h('button', { type: 'button', class: 'btn btn-compact', dataset: { key: `add-${entry.perspective}` }, 'aria-label': `Add the ${entry.label} reviewer`,
-            on: { click: () => run(() => addReviewer(entry)) } }, icon('plus'), 'Add');
+        action = h('button', {
+            type: 'button', class: 'btn btn-compact', dataset: { key: `add-${entry.perspective}${scopedArea ? `-${scopedArea.id}` : ''}` },
+            'aria-label': `Add ${entry.label} (${entry.vector}) review to ${targetWords}`,
+            on: { click: () => run(() => addReviewer(entry, areaIds)) },
+        }, icon('plus'), scopedArea ? `Add to ${scopedArea.title}` : 'Add');
     } else if (request.status !== 'sent') {
-        action = h('button', { type: 'button', class: 'btn btn-compact', dataset: { key: `request-dismiss-${entry.perspective}` }, 'aria-label': `Dismiss the request to add ${entry.label}`,
+        action = h('button', {
+            type: 'button', class: 'btn btn-compact', dataset: { key: `request-dismiss-${entry.perspective}` },
+            'aria-label': `Dismiss the request to add ${entry.label}`,
             on: { click: () => run(() => dismissItems([request.id], `The request to add ${entry.label} was dismissed. It will not be sent.`,
-                { focus: () => document.querySelector(`#reviewer-${CSS.escape(entry.perspective)}`) })) } }, icon('x'), 'Dismiss');
+                { focus: () => document.querySelector(`#reviewer-${CSS.escape(entry.perspective)}`) })) },
+        }, icon('x'), 'Dismiss');
     }
-    return h('article', { class: `reviewer-card is-available is-${entry.availability} tone-${state.tone}`, id: `reviewer-${entry.perspective}`, tabIndex: -1 },
-        h('div', { class: 'reviewer-head' }, h('h6', { class: 'reviewer-name' }, entry.label), entry.availability === 'available' ? null : badge(state)),
+    const requestScope = request?.areaIds?.length
+        ? `Requested for: ${request.areaIds.map((areaId) => view.areas.find((area) => area.id === areaId)?.title ?? areaId).join(', ')}`
+        : null;
+    return h('article', { class: `reviewer-card is-available is-${entry.availability} tone-${state.tone}`, id: entry.scheduled ? null : `reviewer-${entry.perspective}`, tabIndex: -1 },
+        h('div', { class: 'reviewer-head' }, h('h6', { class: 'reviewer-name' }, entry.label), entry.availability === 'available' ? vectorPill(entry.vector) : badge(state)),
         h('p', { class: 'meta reviewer-agent' }, entry.summary),
+        requestScope ? meta(requestScope) : null,
         entry.reason ? h('p', { class: 'reviewer-why' }, entry.reason) : null,
         action ? h('div', { class: 'btn-row' }, action) : null);
 }
 
-/** Queues a request to add one reviewer; the agent collects it at its next checkpoint or when you send. */
-async function addReviewer(entry) {
+/** Queues a request to add one reviewer (for specific areas or the whole review). */
+async function addReviewer(entry, areaIds = null) {
+    const areaTitles = areaIds?.length ? areaIds.map((areaId) => view.areas.find((area) => area.id === areaId)?.title ?? areaId).join(', ') : null;
     const result = await api('/api/feedback', { action: 'request-reviewer', input: {
-        revision: view.feedback.revision, perspective: entry.perspective, text: `Add the ${entry.label} reviewer to this review.`,
+        revision: view.feedback.revision,
+        perspective: entry.perspective,
+        ...(areaIds?.length ? { areaIds } : {}),
+        text: areaTitles ? `Add the ${entry.label} (${entry.vector}) reviewer to ${areaTitles}.` : `Add the ${entry.label} (${entry.vector}) reviewer to this review.`,
     } });
     const itemId = result.items.at(-1).id;
     await refresh();
     document.querySelector(`#reviewer-${CSS.escape(entry.perspective)}`)?.focus({ preventScroll: true });
-    note(`${entry.label} is requested. Review and send delivers it now, or the agent collects it at its next checkpoint.`, 'accent', 'inbox',
+    note(`${entry.label} (${entry.vector}) is requested${areaTitles ? ` for ${areaTitles}` : ''}. Review and send delivers it now, or the agent collects it at its next checkpoint.`, 'accent', 'inbox',
         { label: 'Undo', run: () => run(() => dismissItems([itemId], `The request to add ${entry.label} was dismissed.`,
-            { undo: false, focus: () => document.querySelector(`[data-key="add-${CSS.escape(entry.perspective)}"]`) })) });
+            { undo: false, focus: () => document.querySelector(`[data-key^="add-${CSS.escape(entry.perspective)}"]`) ?? $('row-flow') })) });
 }
 
 /**
@@ -1012,12 +1095,12 @@ function hunkBlocks(file, data) {
             h('div', { class: 'hunk-code' }, h('div', { class: 'hunk-head' }, h('span', {}, `@@ -${hunk.oldStart},${hunk.oldCount} +${hunk.newStart},${hunk.newCount} @@`), hunkReason(hunk)), table),
             hasNotes ? h('div', { class: 'hunk-notes', 'aria-label': 'Findings and comments on these lines' },
                 ...notes.findings.map((finding) => h('div', { class: 'note-card' },
-                    h('div', { class: 'note-head' }, badge(SEVERITY[finding.severity], { strong: true }), badge(DISPOSITION[finding.disposition] ?? DISPOSITION.proposed)),
+                    h('div', { class: 'note-head' }, badge(SEVERITY[finding.severity], { strong: true }), ...findingVectors(view, finding).map(vectorPill), badge(DISPOSITION[finding.disposition] ?? DISPOSITION.proposed)),
                     h('p', { class: 'note-title' }, finding.claim),
                     h('div', {}, h('button', { type: 'button', class: 'id-chip', 'data-kind': 'finding', dataset: { key: `note-finding-${finding.id}` }, title: 'Open this finding',
                         on: { click: () => select(about('finding', finding.id), { stage: 'review', flash: true }) } }, finding.id, icon('go-to'))))),
                 ...notes.comments.map((comment) => h('div', { class: 'note-card is-comment' },
-                    h('div', { class: 'note-head' }, h('span', { class: 'comment-author' }, icon('person'), comment.author), resolutionBadge(comment)),
+                    h('div', { class: 'note-head' }, h('span', { class: 'comment-author' }, icon('person'), comment.author), vectorPill(commentVector(view, comment)), resolutionBadge(comment)),
                     prose(comment.body, 'prose small'),
                     h('div', {}, h('button', { type: 'button', class: 'id-chip', 'data-kind': 'comment', dataset: { key: `note-comment-${comment.id}` }, title: 'Open this comment',
                         on: { click: () => select(about('comment', comment.id), { stage: 'review', flash: true }) } }, comment.id, icon('go-to')))))) : null);
@@ -1060,17 +1143,25 @@ function foldedRow(id, title, iconName, open, onToggle, headExtras, ...content) 
     return section;
 }
 
-/** Findings narrowed by the reason lens and, when chosen, the selected area. */
+/** Findings narrowed by the reason lens, selected area, and selected vector pill. */
 function scopedFindings() {
-    return findingsFor(view, { reasonId: ui.reason, areaId: ui.findingArea ? ui.focus?.areaId ?? null : null });
+    return findingsFor(view, {
+        reasonId: ui.reason,
+        areaId: ui.findingArea ? ui.focus?.areaId ?? null : null,
+        vector: ui.findingVector,
+    });
 }
 
 /**
- * Findings: severity counts and a progress line, then severity groups of one-line rows that expand
- * in place, one at a time. Findings that arrive after the page loaded wait behind "Show N new
- * findings" so nothing moves until the reader asks.
+ * Findings: severity counts, vector pills, and a progress line, then severity groups of one-line rows
+ * that carry vector pills and expand in place, one at a time. Findings that arrive after the page
+ * loaded wait behind "Show N new findings" so nothing moves until the reader asks.
  */
 function findingsRow() {
+    const allShown = findingsFor(view, { reasonId: ui.reason, areaId: ui.findingArea ? ui.focus?.areaId ?? null : null })
+        .filter((finding) => ui.shownFindings.has(finding.id));
+    const availableVectors = vectorCounts(view, allShown.filter(isRetained), 'finding');
+    if (ui.findingVector && !availableVectors.some(([vector]) => vector === ui.findingVector)) ui.findingVector = null;
     const scoped = scopedFindings();
     const visible = scoped.filter((finding) => ui.shownFindings.has(finding.id));
     const held = arrivals(view.findings, ui.shownFindings);
@@ -1078,6 +1169,7 @@ function findingsRow() {
     const checking = visible.filter((finding) => finding.disposition === 'proposed').length;
     const setAside = visible.length - retained.length;
     const counts = Object.keys(SEVERITY).map((severity) => [severity, retained.filter((finding) => finding.severity === severity).length]).filter(([, value]) => value);
+    const byVector = vectorCounts(view, retained, 'finding');
     const progress = perspectiveProgress(view);
     const area = view.areas.find((entry) => entry.id === ui.focus?.areaId) ?? null;
     if (!area) ui.findingArea = false;
@@ -1085,6 +1177,11 @@ function findingsRow() {
         [['all', 'All areas'], ['area', area.title]].map(([value, label]) => h('label', {}, h('input', {
             type: 'radio', name: 'findingScope', value, checked: (ui.findingArea ? 'area' : 'all') === value, dataset: { key: `finding-scope-${value}` },
             on: { change: () => { ui.findingArea = value === 'area'; render(); } },
+        }), h('span', {}, label)))) : null;
+    const vectorFilter = availableVectors.length > 1 ? h('fieldset', { class: 'segmented compact' }, h('legend', {}, 'Vector'),
+        [[null, 'All vectors'], ...availableVectors.map(([vec, total]) => [vec, `${vec} (${total})`])].map(([value, label]) => h('label', {}, h('input', {
+            type: 'radio', name: 'findingVector', value: value ?? 'all', checked: ui.findingVector === value, dataset: { key: `finding-vector-${value ?? 'all'}` },
+            on: { change: () => { ui.findingVector = value; render(); } },
         }), h('span', {}, label)))) : null;
     const lens = ui.reason ? (ui.reason === NOT_EXPLAINED ? badge({ label: 'Not explained yet', icon: 'question', tone: 'muted' }) : idChip(ui.reason, { kind: 'reason', title: `Findings on changes reason ${ui.reason} explains` })) : null;
     const show = held.count ? h('button', {
@@ -1096,15 +1193,16 @@ function findingsRow() {
         ? (scoped.length ? 'Every finding here is new; show them above.' : 'No findings match this narrowing.')
         : 'No findings are recorded. Check coverage and evidence limits before drawing a conclusion.';
     return row('row-findings', 'Findings', 'shield-check', [count(retained.length), lens],
-        h('ul', { class: 'finding-summary', 'aria-label': 'Findings by severity' },
+        h('ul', { class: 'finding-summary', 'aria-label': 'Findings by severity and vector' },
             counts.map(([severity, value]) => h('li', {}, badge(SEVERITY[severity], { strong: true }), h('span', { class: 'count-text' }, String(value)))),
+            byVector.map(([vector, value]) => h('li', {}, vectorPill(vector), h('span', { class: 'count-text' }, String(value)))),
             checking ? h('li', {}, badge(DISPOSITION.proposed), h('span', { class: 'count-text' }, String(checking))) : null,
             setAside ? h('li', { class: 'meta' }, `${setAside} set aside`) : null),
         progress.length ? h('p', { class: 'finding-progress' }, h('span', {}, 'Areas checked: '), progress.map((entry, index) => [
             index ? ' \u00b7 ' : null, h('strong', {}, PERSPECTIVE[entry.perspective] ?? entry.perspective), ` ${entry.done} of ${entry.total}`,
             entry.attention ? `, ${entry.attention} ${entry.attention === 1 ? 'needs' : 'need'} attention` : entry.active ? `, ${entry.active} running` : null,
         ])) : null,
-        scope || show ? h('div', { class: 'finding-tools' }, scope, show) : null,
+        scope || vectorFilter || show ? h('div', { class: 'finding-tools' }, scope, vectorFilter, show) : null,
         groups.length ? h('div', { class: 'finding-groups' }, groups.map(findingGroup)) : h('p', { class: 'empty' }, empty));
 }
 
@@ -1120,15 +1218,16 @@ function findingGroup(group) {
         h('ul', { class: 'finding-rows', id: `group-${group.id}`, hidden: !open }, group.findings.map(findingRow)));
 }
 
-/** A finding as one line that expands in place into its full card; opening one closes the other. */
+/** A finding as one line carrying its vector pills that expands in place into its full card. */
 function findingRow(finding) {
     const expanded = ui.expandedFinding === finding.id;
     const disposition = DISPOSITION[finding.disposition] ?? DISPOSITION.proposed;
+    const vectors = findingVectors(view, finding);
     return h('li', { class: `finding-row${expanded ? ' is-expanded' : ''}` },
         h('button', {
             type: 'button', class: 'finding-row-head', 'aria-expanded': expanded, 'aria-controls': expanded ? `finding-${finding.id}` : null, dataset: { key: `finding-row-${finding.id}` },
             on: { click: () => { ui.expandedFinding = expanded ? null : finding.id; render(); } },
-        }, icon('chevron', 'icon chev'), idChip(finding.id, { kind: 'finding' }), h('span', { class: 'finding-row-claim' }, plainText(finding.claim)),
+        }, icon('chevron', 'icon chev'), idChip(finding.id, { kind: 'finding' }), ...vectors.map(vectorPill), h('span', { class: 'finding-row-claim' }, plainText(finding.claim)),
         ui.newlyShown.has(finding.id) ? badge({ label: 'New', icon: 'sparkle', tone: 'accent' }) : null,
         finding.disposition === 'accepted' ? null : badge(disposition)),
         expanded ? findingCard(finding) : null);
@@ -1136,7 +1235,7 @@ function findingRow(finding) {
 
 /**
  * Shows held findings in place, opening their groups, and moves focus to the first of them. A reason
- * lens or area scope that would hide any of them is cleared, and the announcement says so.
+ * lens, area scope, or vector filter that would hide any of them is cleared, and the announcement says so.
  */
 function showArrivals(ids) {
     const hidden = clearHidingNarrowing(ids);
@@ -1151,23 +1250,37 @@ function showArrivals(ids) {
     const first = ids.map((id) => document.querySelector(`[data-key="finding-row-${CSS.escape(id)}"]`)).find(Boolean);
     first?.focus({ preventScroll: true });
     first?.scrollIntoView({ block: 'nearest' });
-    const widened = [hidden.reason ? 'reasons' : null, hidden.area ? 'areas' : null].filter(Boolean).join(' and ');
+    const widened = [hidden.reason ? 'reasons' : null, hidden.area ? 'areas' : null, hidden.vector ? 'vectors' : null].filter(Boolean).join(' and ');
     announce(`Showing ${ids.length} new ${ids.length === 1 ? 'finding' : 'findings'}.${widened ? ` The list now covers all ${widened}.` : ''}`);
 }
 
-/** The pull request discussion, folded at the end of Review; inline comments also show in the diff. */
+/** The pull request discussion, folded at the end of Review, with vector pills on comments. */
 function discussionRow() {
     const discussion = view.discussion;
     const statusMeta = { complete: { label: 'Imported', icon: 'check-circle', tone: 'success' }, partial: { label: 'Partly imported', icon: 'half', tone: 'attention' },
         unavailable: { label: 'Unavailable', icon: 'slash-circle', tone: 'muted' }, not_applicable: { label: 'Not applicable', icon: 'dash-circle', tone: 'muted' } };
-    const roots = discussion.items.filter((comment) => !comment.replyTo || !discussion.items.some((entry) => entry.id === comment.replyTo));
+    const byVector = vectorCounts(view, discussion.items, 'comment');
+    if (ui.commentVector && !byVector.some(([vec]) => vec === ui.commentVector)) ui.commentVector = null;
+    const allRoots = discussion.items.filter((comment) => !comment.replyTo || !discussion.items.some((entry) => entry.id === comment.replyTo));
+    const matchesThread = (comment) => !ui.commentVector || commentVector(view, comment) === ui.commentVector
+        || discussion.items.some((reply) => reply.replyTo === comment.id && commentVector(view, reply) === ui.commentVector);
+    const roots = allRoots.filter(matchesThread);
     const thread = (comment) => h('li', {}, commentCard(comment), (() => {
         const replies = discussion.items.filter((entry) => entry.replyTo === comment.id);
         return replies.length ? h('ul', { class: 'replies' }, replies.map(thread)) : null;
     })());
+    const vectorSummary = byVector.length ? h('ul', { class: 'finding-summary', 'aria-label': 'Comments by vector' },
+        byVector.map(([vec, total]) => h('li', {}, vectorPill(vec), h('span', { class: 'count-text' }, String(total))))) : null;
+    const vectorFilter = byVector.length > 1 ? h('div', { class: 'finding-tools' },
+        h('fieldset', { class: 'segmented compact' }, h('legend', {}, 'Vector'),
+            [[null, 'All vectors'], ...byVector.map(([vec, total]) => [vec, `${vec} (${total})`])].map(([value, label]) => h('label', {}, h('input', {
+                type: 'radio', name: 'commentVector', value: value ?? 'all', checked: ui.commentVector === value, dataset: { key: `comment-vector-${value ?? 'all'}` },
+                on: { change: () => { ui.commentVector = value; render(); } },
+            }), h('span', {}, label))))) : null;
     return foldedRow('row-discussion', 'Pull request discussion', 'message', ui.discussionOpen, () => { ui.discussionOpen = !ui.discussionOpen; render(); },
         [badge(statusMeta[discussion.status] ?? statusMeta.unavailable), count(discussion.items.length)],
         discussion.limitations.length ? h('div', { class: 'notice tone-attention' }, h('p', { class: 'notice-title' }, icon('info'), 'Import limits'), h('ul', {}, discussion.limitations.map((text) => h('li', {}, text)))) : null,
+        vectorSummary, vectorFilter,
         roots.length ? h('ul', { class: 'thread-list' }, roots.map(thread)) : h('p', { class: 'empty' }, discussion.status === 'not_applicable' ? 'This target has no provider discussion.' : 'No discussion was imported.'));
 }
 
@@ -1175,11 +1288,12 @@ function findingCard(finding) {
     const target = about('finding', finding.id);
     const seen = isMarked(view.feedback, 'seen', target);
     const bookmarked = isMarked(view.feedback, 'bookmarks', target);
+    const vectors = findingVectors(view, finding);
     const perspectives = [...new Set((finding.sources ?? []).map((source) => perspectiveOf(view, source)).filter(Boolean))];
     return h('article', { class: 'finding', id: `finding-${finding.id}`, tabIndex: -1, 'aria-current': ui.focus.findingId === finding.id ? 'true' : null, 'aria-labelledby': `finding-${finding.id}-title` },
         h('div', { class: 'finding-head' },
-            badge(SEVERITY[finding.severity], { strong: true }), idChip(finding.id, { kind: 'finding' }), badge(DISPOSITION[finding.disposition] ?? DISPOSITION.proposed),
-            ...perspectives.map((entry) => badge({ label: PERSPECTIVE[entry] ?? entry, icon: 'eye', tone: 'muted' })),
+            badge(SEVERITY[finding.severity], { strong: true }), ...vectors.map(vectorPill), idChip(finding.id, { kind: 'finding' }), badge(DISPOSITION[finding.disposition] ?? DISPOSITION.proposed),
+            ...perspectives.filter((entry) => entry !== vectors[0]).map((entry) => badge({ label: PERSPECTIVE[entry] ?? entry, icon: 'eye', tone: 'muted' })),
             seen ? badge({ label: 'Seen', icon: 'check', tone: 'muted' }) : null,
             h('span', { class: 'finding-actions' },
                 h('button', { type: 'button', class: 'btn btn-icon', 'aria-pressed': bookmarked, title: bookmarked ? 'Remove bookmark' : 'Bookmark', dataset: { key: `bookmark-${finding.id}` },
@@ -1206,6 +1320,7 @@ function findingCard(finding) {
 function commentCard(comment) {
     const target = about('comment', comment.id);
     const focus = resolveFocus(view, target);
+    const vector = commentVector(view, comment);
     const place = (path, line, commit, side = null) => `${path}${line ? `:${line}` : ''}${side ? ` (${side === 'new' ? 'after' : 'before'})` : ''}${commit ? ` at ${shortSha(commit)}` : ''}`;
     const current = comment.path ? place(comment.path, comment.line, comment.commit, comment.side) : null;
     const originalPath = comment.originalPath ?? comment.path;
@@ -1215,6 +1330,7 @@ function commentCard(comment) {
     return h('article', { class: 'comment', id: `comment-${comment.id}`, tabIndex: -1, 'aria-current': ui.focus.commentId === comment.id ? 'true' : null, 'aria-labelledby': `comment-${comment.id}-title` },
         h('div', { class: 'comment-head' },
             h('h4', { class: 'comment-author', id: `comment-${comment.id}-title` }, icon('person'), comment.author),
+            vectorPill(vector),
             badge({ label: comment.kind === 'inline' ? 'Inline' : 'Conversation', icon: comment.kind === 'inline' ? 'code' : 'message', tone: 'user' }),
             resolutionBadge(comment), comment.outdated ? badge({ label: 'Outdated', icon: 'clock', tone: 'muted' }) : null, idChip(comment.id, { kind: 'comment' })),
         prose(comment.body),
@@ -1244,13 +1360,15 @@ function outcomeView() {
     else if (view.status === 'incomplete') explanation = 'The review is incomplete, so it has no outcome.';
     else explanation = `The outcome appears once every required area is reviewed and every finding is verified. ${pendingWork} required ${pendingWork === 1 ? 'task is' : 'tasks are'} still open and ${proposed} ${proposed === 1 ? 'finding awaits' : 'findings await'} verification.`;
     const severityCounts = Object.keys(SEVERITY).map((level) => [level, retained.filter((finding) => finding.severity === level).length]).filter(([, value]) => value);
+    const byVector = vectorCounts(view, retained, 'finding');
     return [
         row('row-outcome', 'Outcome', 'flag', [],
             h('div', { class: `outcome-card tone-${outcome.tone}` },
                 h('p', { class: 'outcome-verdict' }, icon(outcome.icon), outcome.label),
                 prose(explanation, 'prose small'),
                 reasons.length ? h('ul', { class: 'steer-list' }, reasons.map((text) => h('li', { class: 'omission' }, icon('alert'), prose(text, 'prose small')))) : null,
-                severityCounts.length ? h('div', { class: 'chip-row' }, meta('Retained findings'), severityCounts.map(([level, value]) => badge(SEVERITY[level], { strong: true, text: `${value} ${level}` }))) : null)),
+                severityCounts.length ? h('div', { class: 'chip-row' }, meta('Retained findings'), severityCounts.map(([level, value]) => badge(SEVERITY[level], { strong: true, text: `${value} ${level}` })),
+                    byVector.map(([vec, value]) => h('span', { class: 'chip-row' }, vectorPill(vec), meta(String(value))))) : null)),
         row('row-report', 'Report', 'file', [],
             view.artifacts?.report ? h('p', { class: 'meta' }, 'Saved as ', h('code', {}, view.artifacts.report), ' in the review folder. It is yours to edit; this view is read-only.') : h('p', { class: 'empty' }, 'No report has been saved yet.'),
             view.artifacts?.report ? h('div', { class: 'btn-row' }, h('button', { type: 'button', class: 'btn', dataset: { key: 'read-report' }, on: { click: () => run(readReport) } }, icon('file'), ui.reportText === null ? 'Read the saved report' : 'Reload the report')) : null,
@@ -1336,8 +1454,9 @@ function feedbackItem(item) {
     if (item.status === 'draft') actions = [h('button', { type: 'button', class: 'btn btn-compact', dataset: key('edit'), on: { click: () => editDraft(item) } }, icon('pencil'), 'Edit'), dismiss];
     else if (item.status === 'queued') actions = [h('button', { type: 'button', class: 'btn btn-compact', dataset: key('edit'), on: { click: () => run(() => editQueued(item)) } }, icon('pencil'), 'Edit'), dismiss];
     else if (item.status === 'interpreted') actions = [dismiss];
+    const areaChips = (item.areaIds ?? []).map((areaId) => idChip(view.areas.find((area) => area.id === areaId)?.title ?? areaId, { kind: 'area' }));
     return h('article', { class: 'feedback-item' },
-        h('div', { class: 'chip-row' }, badge(state), meta(FEEDBACK_KIND[item.kind] ?? item.kind), targetChip(item.target)),
+        h('div', { class: 'chip-row' }, badge(state), vectorPill(feedbackVector(view, item)), meta(FEEDBACK_KIND[item.kind] ?? item.kind), targetChip(item.target), ...areaChips),
         h('p', { class: 'feedback-item-text' }, item.text || '(empty draft)'),
         item.delivery?.status === 'failed' ? h('p', { class: 'field-error' }, icon('alert'), `${item.delivery.error ?? 'Delivery failed.'} The agent can still collect it.`) : null,
         item.interpretation ? h('div', { class: 'readback' }, h('p', { class: 'meta' }, icon('sparkle'), ' The agent understood'), prose(item.interpretation.text, 'prose small'),
@@ -1519,7 +1638,8 @@ function renderSendList() {
     sendRevision = view.feedback.revision;
     const queued = view.feedback.items.filter((item) => item.status === 'queued');
     $('sendList').replaceChildren(...(queued.length ? queued.map((item) => h('article', { class: 'feedback-item' },
-        h('div', { class: 'chip-row' }, badge(feedbackState(item)), meta(FEEDBACK_KIND[item.kind] ?? item.kind), idChip(targetLabel(item.target)),
+        h('div', { class: 'chip-row' }, badge(feedbackState(item)), vectorPill(feedbackVector(view, item)), meta(FEEDBACK_KIND[item.kind] ?? item.kind), idChip(targetLabel(item.target)),
+            ...(item.areaIds ?? []).map((areaId) => idChip(view.areas.find((area) => area.id === areaId)?.title ?? areaId, { kind: 'area' })),
             item.target.snapshotId !== view.snapshotId ? badge({ label: 'Earlier snapshot', icon: 'clock', tone: 'attention' }) : null),
         h('p', { class: 'feedback-item-text' }, item.text),
         h('div', { class: 'btn-row' }, h('button', { type: 'button', class: 'btn btn-compact', dataset: { key: `send-dismiss-${item.id}` }, 'aria-label': `Dismiss this ${FEEDBACK_KIND[item.kind]?.toLowerCase() ?? 'item'}`,
@@ -1761,6 +1881,8 @@ async function load() {
         evidence.clear();
         ui.reportText = null;
         ui.reason = null;
+        ui.findingVector = null;
+        ui.commentVector = null;
         ui.mapPinned = null;
         ui.expandedFinding = null;
         ui.groupOpen.clear();

@@ -594,6 +594,45 @@ button.id-chip[aria-pressed="true"] {
   stroke-width: 2;
 }
 
+.vector-pill {
+  border: 1px solid color-mix(in srgb, var(--tone) 38%, var(--cr-border-muted));
+  font-family: var(--cr-mono);
+  font-size: 11.5px;
+}
+
+.area-nf {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px dashed var(--cr-border);
+  border-radius: var(--cr-radius-lg);
+  background: var(--cr-bg-subtle);
+}
+
+.nf-pill {
+  font-family: var(--cr-mono);
+}
+
+.nf-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.flow-scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.flow-scope .segmented > legend {
+  float: inline-start;
+  margin-inline-end: 8px;
+  color: var(--cr-fg-muted);
+  font: var(--cr-t-meta);
+}
+
 .count {
   display: inline-flex;
   align-items: center;

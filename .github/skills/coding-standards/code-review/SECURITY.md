@@ -1,9 +1,9 @@
 ---
-title: Code Review Core Skill Security Model
+title: Code Review Skill Security Model
 description: 'STRIDE model for local review capture, imported results, and contained review persistence.'
 author: microsoft/hve-core
 ms.topic: reference
-ms.date: 2026-11-06
+ms.date: 2026-11-17
 keywords:
   - code-review
   - STRIDE
@@ -11,7 +11,7 @@ keywords:
 estimated_reading_time: 5
 ---
 <!-- markdownlint-disable-file -->
-# Code Review Core Skill Security Model
+# Code Review Skill Security Model
 
 The Node entry point `scripts/review.mjs` uses `scripts/lib/model.mjs`,
 `snapshot.mjs`, `storage.mjs`, and `operations.mjs` to capture Git evidence,
@@ -62,7 +62,7 @@ other processes running as that operator remain trusted.
 
 ```mermaid
 flowchart TD
-    accTitle: Code Review Core data flow
+    accTitle: Code Review data flow
     accDescr: Untrusted repository and imported JSON enter a local validator; validated snapshots and parent decisions are written to a contained review directory.
     subgraph INPUT["Source and imported data"]
         REPO["Repository"]

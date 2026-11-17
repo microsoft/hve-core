@@ -3,7 +3,7 @@ title: AI Artifacts Architecture
 description: Agent, skill, and instruction model for Copilot customizations in the Copilot harness
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-06
+ms.date: 2026-11-17
 ms.topic: concept
 keywords:
   - ai artifacts
@@ -202,7 +202,7 @@ Agents reach skills by name. A skill listed under `skills:` loads when the agent
 ```yaml
 ---
 name: Code Review
-description: 'Review changes through the shared Code Review skill, with focused perspectives, snapshot-backed evidence, and an optional canvas.'
+description: 'Prioritize functional code review through the consolidated code-review skill, with parallel general-purpose task orchestration, strictly opt-in non-functional vectors, and an optional Code Review canvas.'
 tools:
   - agent
   - execute
@@ -221,7 +221,11 @@ Copilot injects each preloaded skill's `SKILL.md` body at session start. Files t
 
 ### Subagent Dispatch
 
-A parent names each subagent in its body by the subagent's `name` value, such as Code Review Functional. The `task` tool dispatches by that name, so nesting depth under `.github/agents` does not matter. A parent with a `tools` list needs `agent` in it. A subagent sets `user-invocable: false` to stay out of the agent picker and leaves `agent` out of its own `tools` list when it must not dispatch further. Subagents never receive `ask_user`.
+A parent names each custom subagent in its body by the subagent's `name` value, such as Codebase Profiler,
+or dispatches standard `general-purpose` tasks when dedicated subagent files are unnecessary.
+The `task` tool dispatches custom subagents by `name`, so nesting depth under `.github/agents` does not matter.
+A parent with a `tools` list needs `agent` in it. A subagent sets `user-invocable: false` to stay out of the
+agent picker and leaves `agent` out of its own `tools` list when it must not dispatch further. Subagents never receive `ask_user`.
 
 ### Instruction Glob Patterns
 

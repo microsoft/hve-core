@@ -214,24 +214,41 @@ describe('reasons and the change map through the helper', () => {
 });
 
 describe('added reviewers through the helper', () => {
-    it('adds a reviewer under the same scope, stores reviewer choices, and lists them in the report', async (t) => {
+    it('adds non-functional reviewers per area or whole review, stores reviewer choices, and renders vector pills', async (t) => {
         const { root, base } = await repository(t);
+        await fs.writeFile(path.join(root, 'deps.txt'), 'pinned\n');
+        await gitCommand(root, ['add', '--', 'deps.txt']);
         const head = await changedCommit(root);
         const captured = await captureReview(root, { kind: 'branch', base, head });
-        const state = await schedule(captured, 0, { perspectives: ['functional'], scope });
-        const added = await schedule(captured, state.revision, { perspectives: ['performance'], scope });
-        assert.deepEqual(added.workItems.map((work) => [work.perspective, work.required]), [['functional', true], ['performance', true]]);
-        await assert.rejects(schedule(captured, added.revision, { perspectives: ['privacy'], scope: { ...scope, depth: 'comprehensive' } }), /changed scope/);
+        const [firstFile, secondFile] = captured.snapshot.files;
+        const areas = [
+            { id: 'area-auth', title: 'Auth', fileIds: [firstFile.id], summary: '', before: '', after: '', impact: [] },
+            { id: 'area-deps', title: 'Dependencies', fileIds: [secondFile.id], summary: '', before: '', after: '', impact: [] },
+        ];
+        const state = await schedule(captured, 0, { perspectives: ['functional'], scope, areas });
+        const scopedSecurity = await schedule(captured, state.revision, { perspectives: ['security'], areaIds: ['area-auth'], scope });
+        const scopedSpecialists = await schedule(captured, scopedSecurity.revision, { perspectives: ['sssc', 'rai'], areaIds: ['area-deps'], scope });
+        assert.deepEqual(scopedSpecialists.workItems.map((work) => [work.perspective, work.areaIds]), [
+            ['functional', ['area-auth']],
+            ['functional', ['area-deps']],
+            ['security', ['area-auth']],
+            ['sssc', ['area-deps']],
+            ['rai', ['area-deps']],
+        ]);
+        await assert.rejects(schedule(captured, scopedSpecialists.revision, { perspectives: ['security'], areaIds: ['area-auth'], scope }), /already runs/);
+        const expandedSecurity = await schedule(captured, scopedSpecialists.revision, { perspectives: ['security'], scope });
+        assert.equal(expandedSecurity.workItems.filter((work) => work.perspective === 'security').length, 2);
+        await assert.rejects(schedule(captured, expandedSecurity.revision, { perspectives: ['privacy'], scope: { ...scope, depth: 'comprehensive' } }), /changed scope/);
         const reviewers = [
             { perspective: 'functional', decision: 'selected', reason: 'Every review checks behavior.' },
-            { perspective: 'performance', decision: 'suggested', reason: 'The loop <now> reads *every* line.' },
+            { perspective: 'security', decision: 'selected', areaIds: ['area-auth'], reason: 'User requested <security> on *Auth*.' },
         ];
-        const updated = await updateContext(captured, added.revision, { reviewers });
+        const updated = await updateContext(captured, expandedSecurity.revision, { reviewers });
         assert.deepEqual(updated.reviewers, reviewers);
         await renderReport(captured, updated.revision);
         const report = await readText(captured.root, 'review.md');
         assert.match(report, /Reviewer functional: selected\. Every review checks behavior\./);
-        assert.match(report, /Reviewer performance: suggested\. The loop \\<now\\> reads \\\*every\\\* line\./);
+        assert.match(report, /Reviewer security: selected \(area-auth\)\. User requested \\<security\\> on \\\*Auth\\\*\./);
         const cleared = await updateContext(captured, (await loadReview(captured)).state.revision, { reviewers: null });
         assert.equal(Object.hasOwn(cleared, 'reviewers'), false);
     });

@@ -9,7 +9,7 @@ description: 'Human review, evidence freshness, and publication boundaries for C
 Persist `review-state.json` and the human-editable `review.md` before delivering
 a completed local review. On storage failure, report that the result was not
 saved; preserve supported findings without claiming persisted completion.
-The core renderer loads the canonical Code-Review disclaimer. Missing disclaimer
+The `code-review` renderer loads the canonical Code-Review disclaimer. Missing disclaimer
 content blocks report delivery; do not substitute a paraphrase.
 
 Keep the final human-review checkbox unchecked. PR/MR reports also contain a

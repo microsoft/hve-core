@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: MIT
 
 import fs from 'node:fs/promises';
-import { areaStatus, assess, check, finalizeState, id, mergeResult, newWork, object, PERSPECTIVES, reasonCoverage, SEVERITIES, stableJson, text, unassignedFiles, validateResult } from './model.mjs';
+import { areaStatus, assess, check, finalizeState, findingVectors, id, mergeResult, newWork, object, PERSPECTIVES, reasonCoverage, SEVERITIES, stableJson, text, unassignedFiles, validateResult } from './model.mjs';
 import { digest, exists, loadReview, readJson, readText, updateState, writeJson, writeText } from './storage.mjs';
 
 export async function schedule(location, revision, request) {
-    object(request, ['perspectives', 'scope'], 'schedule', ['areas']);
+    object(request, ['perspectives', 'scope'], 'schedule', ['areas', 'areaIds']);
     check(Array.isArray(request.perspectives) && request.perspectives.length > 0 && request.perspectives.every((entry) => PERSPECTIVES.includes(entry)),
         'Select known perspectives.', 'invalid_input');
     return updateState(location, revision, (state, snapshot) => {
@@ -25,12 +25,25 @@ export async function schedule(location, revision, request) {
                 summary: '', before: '', after: '', impact: [],
             }];
         }
-        for (const area of state.areas) {
+        let targetAreas = state.areas;
+        if (request.areaIds !== undefined) {
+            check(Array.isArray(request.areaIds) && request.areaIds.length > 0, 'Select at least one area.', 'invalid_input');
+            const knownAreas = new Set(state.areas.map((area) => area.id));
+            check(new Set(request.areaIds).size === request.areaIds.length && request.areaIds.every((areaId) => knownAreas.has(areaId)),
+                'Schedule areaIds must name distinct current areas.', 'invalid_input');
+            targetAreas = state.areas.filter((area) => request.areaIds.includes(area.id));
+        }
+        let added = 0;
+        for (const area of targetAreas) {
             for (const perspective of new Set(request.perspectives)) {
+                const active = state.workItems.some((work) => work.status !== 'stale' && work.perspective === perspective && work.areaIds.includes(area.id));
+                if (active) continue;
                 const workId = `${perspective}-${state.workItems.length + 1}`;
                 state.workItems.push(newWork(snapshot, area, perspective, workId));
+                added++;
             }
         }
+        check(added > 0, 'Every requested perspective already runs on the selected areas.', 'invalid_input');
         return finalizeState(state, snapshot);
     });
 }
@@ -158,17 +171,18 @@ export async function renderReport(location, revision) {
             `Review: ${state.reviewId}. Snapshot: ${state.snapshotId}.`,
             `Execution: ${state.status}. Outcome: ${state.outcome ?? 'not available'}.`,
             `Target: ${snapshot.target.kind}; base ${snapshot.target.base ?? 'not applicable'}; head ${snapshot.target.head ?? 'not applicable'}.`,
-            ...(state.reviewers ?? []).map((entry) => `Reviewer ${entry.perspective}: ${entry.decision}. ${markdownText(entry.reason)}`),
+            ...(state.reviewers ?? []).map((entry) => `Reviewer ${entry.perspective}: ${entry.decision}${entry.areaIds?.length ? ` (${entry.areaIds.map(markdownText).join(', ')})` : ''}. ${markdownText(entry.reason)}`),
             ...state.areas.map((area) => `${markdownText(area.title)}: ${areaStatus(state, area.id)}.`),
             ...state.workItems.map((work) => `${work.id} (${work.perspective}): ${work.status}. ${markdownText(work.summary)}`),
         ].join('\n\n');
         const findings = state.findings.map((finding) => {
+            const vectors = findingVectors(state, finding).map((vector) => `[${vector}]`).join(' ');
             const anchors = finding.anchors.map((anchor) => {
                 if (anchor.side === 'metadata') return `PR metadata: ${markdownText(anchor.field)}`;
                 const file = snapshot.files.find((entry) => entry.id === anchor.fileId);
                 return `${markdownText(anchor.side === 'old' ? file.oldPath : file.newPath ?? file.oldPath)} (${anchor.side}${anchor.startLine === null ? '' : ` ${anchor.startLine}-${anchor.endLine}`})`;
             }).join('; ');
-            return `### ${finding.id}: ${markdownText(finding.claim)}\n\n${finding.severity}; ${finding.disposition}. ${anchors}.\n\n${markdownText(finding.consequence)}\n\nSuggested change: ${markdownText(finding.remediation)}\n\n${markdownText(finding.reason ?? 'Awaiting parent verification.')}`;
+            return `### ${finding.id}: ${markdownText(finding.claim)}\n\n${finding.severity}; ${vectors}; ${finding.disposition}. ${anchors}.\n\n${markdownText(finding.consequence)}\n\nSuggested change: ${markdownText(finding.remediation)}\n\n${markdownText(finding.reason ?? 'Awaiting parent verification.')}`;
         }).join('\n\n') || 'No findings recorded. See coverage before interpreting this as a completed review.';
         const context = [
             ...state.limitations.map((entry) => `${entry.blocking ? 'Blocking' : 'Limitation'}: ${markdownText(entry.summary)}`),

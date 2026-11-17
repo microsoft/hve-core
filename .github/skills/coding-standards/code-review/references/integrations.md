@@ -1,12 +1,13 @@
 ---
-description: 'Conditional business alignment, security-plan correlation, and specialist routing for Code Review.'
+description: 'Opt-in BRD/PRD/ADR business alignment and Security Plan Drift correlation for Code Review. Read only when explicitly requested by the user.'
 ---
 
-# Conditional review integrations
+# Explicit opt-in review integrations
 
-Load the relevant section only when its input exists. These comparisons use
-the captured review surface and the owning capability's criteria; they do not
-start another review lane or widen source-write authority.
+> [!IMPORTANT]
+> Read this reference and load its target skills **only** when the user explicitly requests BRD/PRD/ADR alignment or Security Plan Drift correlation. Never scan the workspace for `.adr-config.yml`, `brd_id`, `prd_id`, or security plans during a default functional review.
+
+Load only the section the user explicitly requested. These comparisons use the captured review snapshot and never widen source-write authority.
 
 ## Business alignment
 
@@ -101,16 +102,8 @@ baseline fields. If the capability, baseline, or required location is missing,
 disclose the limitation and leave the rest of the review intact. An executed
 correlation is not also a specialist referral.
 
-## Other specialists
+## Non-functional specialist follow-ups
 
-Privacy, performance, supply chain, and responsible AI have added reviewers that
-run inside the review, as the `code-review` skill's Scope and depth section
-describes; suggest those first. Each names a deeper follow-up for a full audit
-beyond the captured change.
+Non-functional vectors (`security`, `rai`, `sssc`, `performance`, `privacy`, and `accessibility`) run inside Code Review **only** when explicitly requested by the user (per area or across all areas), as `SKILL.md` defines. Do not preload their references or external skills unprompted.
 
-For other concerns, or for that deeper audit, recommend specialist work only
-when changed-surface signals support it and the runtime exposes a relevant
-capability. Name the concern, evidence, capability, and reason for a separate
-follow-up; avoid a fixed catalog. Missing capabilities remain explicit.
-Production telemetry criteria come from `telemetry-foundations`. No referral
-grants permission for installs, broader audits, or source edits.
+When an explicitly requested non-functional vector uncovers risks that require a broader repository-wide assessment beyond the captured diff, record the owning planner or review workflow in `observations` without launching it or widening write authority. Production telemetry emitter conventions belong to `telemetry-foundations`.

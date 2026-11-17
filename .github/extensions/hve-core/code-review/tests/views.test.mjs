@@ -4,11 +4,11 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { describe, it } from 'node:test';
-import { REVIEW_PERSPECTIVES } from '../../../../skills/coding-standards/code-review-core/scripts/lib/model.mjs';
+import { REVIEW_PERSPECTIVES } from '../../../../skills/coding-standards/code-review/scripts/lib/model.mjs';
 import {
-    arrivals, boardLanes, DISPOSITION, feedbackState, fileAnnotations, fileLabel, fileStats, findingGroups, findingsFor, hidingNarrowing, hunkAnnotations, needsYou, NOT_EXPLAINED,
-    perspectiveProgress,
-    reasonCoverage, reasonFiles, resolveFocus, REVIEWERS, reviewFlow, safeWebUrl, stageFor, stages, targetPresent, targetSummary,
+    areaNonFunctional, arrivals, boardLanes, commentVector, DISPOSITION, feedbackState, feedbackVector, fileAnnotations, fileLabel, fileStats,
+    findingGroups, findingsFor, findingVectors, hidingNarrowing, hunkAnnotations, needsYou, NOT_EXPLAINED, perspectiveProgress, reasonCoverage,
+    reasonFiles, resolveFocus, REVIEWERS, reviewFlow, safeWebUrl, stageFor, stages, targetPresent, targetSummary, VECTOR, vectorCounts,
 } from '../ui/views.mjs';
 
 function fixture() {
@@ -196,10 +196,10 @@ describe('stage rail, attention, and steering views', () => {
         view.reasons[1].hunkIds = [];
         assert.deepEqual(reasonFiles(view, NOT_EXPLAINED), ['file-two', 'file-binary']);
         assert.deepEqual(findingsFor(view, { reasonId: NOT_EXPLAINED }).map((finding) => finding.id), ['line', 'file']);
-        assert.deepEqual(hidingNarrowing(view, ['line', 'first'], { reasonId: NOT_EXPLAINED, areaId: 'area-two' }), { reason: true, area: true });
-        assert.deepEqual(hidingNarrowing(view, ['line', 'file'], { reasonId: NOT_EXPLAINED, areaId: 'area-two' }), { reason: false, area: false });
-        assert.deepEqual(hidingNarrowing(view, ['first'], { areaId: 'area-two' }), { reason: false, area: true });
-        assert.deepEqual(hidingNarrowing(view, ['meta'], {}), { reason: false, area: false });
+        assert.deepEqual(hidingNarrowing(view, ['line', 'first'], { reasonId: NOT_EXPLAINED, areaId: 'area-two' }), { reason: true, area: true, vector: false });
+        assert.deepEqual(hidingNarrowing(view, ['line', 'file'], { reasonId: NOT_EXPLAINED, areaId: 'area-two' }), { reason: false, area: false, vector: false });
+        assert.deepEqual(hidingNarrowing(view, ['first'], { areaId: 'area-two' }), { reason: false, area: true, vector: false });
+        assert.deepEqual(hidingNarrowing(view, ['meta'], {}), { reason: false, area: false, vector: false });
         const focus = (id) => resolveFocus(view, { kind: 'reason', id, snapshotId: view.snapshotId });
         assert.deepEqual([focus('R1').fileId, focus('R1').areaId, focus('R1').mapped], ['file-one', 'area-one', true]);
         assert.deepEqual([focus('R9').fileId, focus('R9').mapped], [null, false]);
@@ -244,7 +244,7 @@ describe('stage rail, attention, and steering views', () => {
     });
 });
 
-describe('review flow', () => {
+describe('review flow and vectors', () => {
     const work = (id, perspective, status, extra = {}) => ({
         id, perspective, status, required: !['context', 'investigation'].includes(perspective), areaIds: extra.areaIds ?? ['area-one'],
         coverage: { fileIds: [], hunkIds: [], notApplicable: extra.notApplicable ?? null },
@@ -265,9 +265,9 @@ describe('review flow', () => {
                 { perspective: 'functional', decision: 'selected', reason: 'Every review checks behavior.' },
                 { perspective: 'security', decision: 'not-needed', reason: 'No trust boundary changed.' },
                 { perspective: 'privacy', decision: 'suggested', reason: 'The change logs request bodies.' },
-                { perspective: 'supply-chain', decision: 'not-needed', reason: 'No dependency changed.' },
+                { perspective: 'sssc', decision: 'not-needed', reason: 'No dependency changed.' },
             ],
-            feedback: { items: [request('fb-1', 'performance', 'queued'), request('fb-2', 'accessibility', 'sent'), request('fb-3', 'responsible-ai', 'dismissed', { dismissedFrom: 'queued' })], bookmarks: [], seen: [] },
+            feedback: { items: [request('fb-1', 'performance', 'queued', { areaIds: ['area-two'] }), request('fb-2', 'accessibility', 'sent'), request('fb-3', 'rai', 'dismissed', { dismissedFrom: 'queued' })], bookmarks: [], seen: [] },
             findings: [
                 { id: 'kept', severity: 'High', disposition: 'accepted', sources: ['functional-1'], anchors: [] },
                 { id: 'checking', severity: 'Low', disposition: 'proposed', sources: ['functional-2'], anchors: [] },
@@ -278,29 +278,83 @@ describe('review flow', () => {
     }
     const byId = (flow) => Object.fromEntries(flow.reviewers.map((entry) => [entry.perspective, entry]));
 
-    it('orders five steps and names their agents from recorded state', () => {
+    it('orders five steps and names general-purpose tasks from recorded state', () => {
         const flow = reviewFlow(flowView(), new Set(['kept', 'checking', 'aside']));
         assert.deepEqual(flow.steps.map((step) => [step.id, step.status]), [['capture', 'done'], ['understand', 'active'], ['review', 'active'], ['check', 'active'], ['report', 'upcoming']]);
         const [capture, understand, review, check] = flow.steps;
         assert.equal(capture.summary, '1 file, 1 hunk, 3 pull request comments');
         assert.equal(understand.summary, '2 areas, 1 reason');
-        assert.deepEqual(understand.agents.map((agent) => agent.label), ['Code Review', 'Code Review Orientation']);
-        assert.equal(review.summary, '2 reviewers side by side, 7 more available');
+        assert.deepEqual(understand.agents.map((agent) => agent.label), ['Code Review', 'General-purpose task (context)']);
+        assert.equal(review.summary, '2 reviewers running (1 opt-in non-functional vector)');
         assert.equal(check.summary, '3 findings: 1 kept, 1 set aside, 1 being checked');
-        assert.deepEqual(check.agents.map((agent) => agent.label), ['Code Review', 'Code Review Walkback']);
+        assert.deepEqual(check.agents.map((agent) => agent.label), ['Code Review', 'General-purpose task (investigation)']);
     });
 
-    it('reports each reviewer as running, requested, suggested, ruled out, or available, counting only shown findings', () => {
-        const reviewers = byId(reviewFlow(flowView(), new Set(['kept', 'checking', 'aside'])));
+    it('reports each reviewer and area-scoped non-functional availability accurately', () => {
+        const view = flowView();
+        const reviewers = byId(reviewFlow(view, new Set(['kept', 'checking', 'aside'])));
         assert.deepEqual([reviewers.functional.status, reviewers.functional.areas, reviewers.functional.findings], ['active', { done: 1, total: 2 }, 2]);
         assert.deepEqual([reviewers.security.status, reviewers.security.added, reviewers.security.reason], ['not-applicable', 'later', 'No trust boundary changed.']);
         assert.deepEqual([reviewers.performance.scheduled, reviewers.performance.availability, reviewers.performance.request.id], [false, 'queued', 'fb-1']);
         assert.equal(reviewers.accessibility.availability, 'sent');
         assert.deepEqual([reviewers.privacy.availability, reviewers.privacy.reason], ['suggested', 'The change logs request bodies.']);
-        assert.equal(reviewers['supply-chain'].availability, 'not-needed');
-        assert.equal(reviewers['responsible-ai'].availability, 'available');
+        assert.equal(reviewers.sssc.availability, 'not-needed');
+        assert.equal(reviewers.rai.availability, 'available');
         assert.equal(reviewers.readiness.availability, 'available');
-        assert.equal(byId(reviewFlow(flowView())).functional.findings, 3);
+        assert.equal(byId(reviewFlow(view)).functional.findings, 3);
+
+        const areaOneNf = Object.fromEntries(areaNonFunctional(view, 'area-one').map((entry) => [entry.perspective, entry.availability]));
+        const areaTwoNf = Object.fromEntries(areaNonFunctional(view, 'area-two').map((entry) => [entry.perspective, entry.availability]));
+        assert.equal(areaOneNf.security, 'running');
+        assert.equal(areaTwoNf.security, 'available', 'security runs on area-one but remains available to request on area-two');
+        assert.equal(areaOneNf.performance, 'available');
+        assert.equal(areaTwoNf.performance, 'queued', 'performance was requested specifically for area-two');
+        assert.equal(areaOneNf.accessibility, 'sent');
+        assert.equal(areaTwoNf.accessibility, 'sent', 'whole-review accessibility request covers both areas');
+    });
+
+    it('tags findings, comments, and feedback across all six core vectors and filters by vector', () => {
+        for (const key of ['functional', 'security', 'rai', 'sssc', 'performance', 'privacy']) {
+            assert.equal(VECTOR[key].label, key);
+        }
+        const view = flowView({
+            workItems: [
+                work('standards-1', 'standards', 'completed'),
+                work('security-2', 'security', 'completed'),
+                work('rai-3', 'rai', 'completed'),
+                work('sssc-4', 'sssc', 'completed'),
+                work('perf-5', 'performance', 'completed'),
+                work('priv-6', 'privacy', 'completed'),
+            ],
+            findings: [
+                { id: 'f-func', severity: 'Medium', disposition: 'accepted', sources: ['standards-1'], anchors: [{ fileId: 'file-one', hunkId: 'hunk-one' }] },
+                { id: 'f-sec', severity: 'High', disposition: 'accepted', sources: ['security-2'], anchors: [{ fileId: 'file-one', hunkId: 'hunk-one' }] },
+                { id: 'f-rai', severity: 'Medium', disposition: 'accepted', sources: ['rai-3'], anchors: [{ fileId: 'file-one', hunkId: 'hunk-one' }] },
+                { id: 'f-sssc', severity: 'High', disposition: 'accepted', sources: ['sssc-4'], anchors: [{ fileId: 'file-one', hunkId: 'hunk-one' }] },
+                { id: 'f-perf', severity: 'Low', disposition: 'accepted', sources: ['perf-5'], anchors: [{ fileId: 'file-one', hunkId: 'hunk-one' }] },
+                { id: 'f-priv', severity: 'High', disposition: 'accepted', sources: ['priv-6'], anchors: [{ fileId: 'file-one', hunkId: 'hunk-one' }] },
+            ],
+            discussion: {
+                items: [
+                    { id: 'c-explicit', body: 'Check this line.', vector: 'rai' },
+                    { id: 'c-sec', body: 'Potential SQL injection vulnerability here.' },
+                    { id: 'c-sssc', body: 'Verify SHA-pin and lockfile provenance.' },
+                    { id: 'c-priv', body: 'Do not log PII without consent.' },
+                    { id: 'c-perf', body: 'Watch p99 latency and blocking I/O.' },
+                    { id: 'c-func', body: 'Return early when the array is empty.' },
+                ],
+            },
+        });
+        assert.deepEqual(view.findings.map((entry) => findingVectors(view, entry)[0]), ['functional', 'security', 'rai', 'sssc', 'performance', 'privacy']);
+        assert.deepEqual(vectorCounts(view, view.findings, 'finding'), [
+            ['functional', 1], ['security', 1], ['rai', 1], ['sssc', 1], ['performance', 1], ['privacy', 1],
+        ]);
+        assert.deepEqual(findingsFor(view, { vector: 'sssc' }).map((entry) => entry.id), ['f-sssc']);
+        assert.deepEqual(hidingNarrowing(view, ['f-rai'], { vector: 'security' }), { reason: false, area: false, vector: true });
+        assert.deepEqual(view.discussion.items.map((comment) => commentVector(view, comment)), ['rai', 'security', 'sssc', 'privacy', 'performance', 'functional']);
+        assert.equal(feedbackVector(view, { target: { kind: 'finding', id: 'f-priv' } }), 'privacy');
+        assert.equal(feedbackVector(view, { target: { kind: 'perspective', id: 'sssc' } }), 'sssc');
+        assert.equal(feedbackVector(view, { target: { kind: 'comment', id: 'c-sec' } }), 'security');
     });
 
     it('marks a reviewer added at your request and finishes the flow once the report is saved', () => {
@@ -319,12 +373,13 @@ describe('review flow', () => {
         assert.equal(reviewFlow({ ...view, status: 'incomplete', outcome: null }).steps[4].status, 'blocked');
     });
 
-    it('names every review perspective, with each worker and skill listed in the code-review Workers table', async () => {
+    it('maps every review perspective to its vector and reference in code-review/SKILL.md', async () => {
         assert.deepEqual(REVIEWERS.map((entry) => entry.perspective).sort(), [...REVIEW_PERSPECTIVES].sort());
         const skill = await fs.readFile(new URL('../../../../skills/coding-standards/code-review/SKILL.md', import.meta.url), 'utf8');
-        const rows = skill.slice(skill.indexOf('## Workers')).split('\n').filter((line) => line.startsWith('|'));
+        const rows = skill.slice(skill.indexOf('## Vectors, perspectives, and on-demand references')).split('\n').filter((line) => line.startsWith('|'));
         for (const entry of REVIEWERS) {
-            assert.ok(rows.some((row) => row.includes(`\`${entry.skill}\``) && row.includes(entry.agent)), `${entry.agent} and ${entry.skill} share a Workers row`);
+            assert.ok(rows.some((row) => row.includes(`\`${entry.perspective}\``) && row.includes(`\`${entry.vector}\``) && row.includes(`(${entry.reference})`)),
+                `${entry.perspective} maps to ${entry.vector} and ${entry.reference} in SKILL.md`);
         }
     });
 
@@ -333,7 +388,7 @@ describe('review flow', () => {
         assert.equal(targetPresent(view, { kind: 'reason', id: 'R1', snapshotId: 'snapshot-one' }), true);
         assert.equal(targetPresent(view, { kind: 'reason', id: 'R2', snapshotId: 'snapshot-one' }), false);
         assert.equal(targetPresent(view, { kind: 'file', id: 'file-one', snapshotId: 'snapshot-old' }), false);
-        assert.equal(targetPresent(view, { kind: 'perspective', id: 'responsible-ai', snapshotId: 'snapshot-one' }), true);
+        assert.equal(targetPresent(view, { kind: 'perspective', id: 'rai', snapshotId: 'snapshot-one' }), true);
         assert.equal(feedbackState({ status: 'dismissed' }).label, 'Dismissed');
     });
 });

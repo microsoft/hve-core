@@ -4,7 +4,7 @@
 // DOM builders. All review text is untrusted: it enters the page through text nodes and
 // links restricted to http and https, never through HTML parsing.
 
-import { safeWebUrl } from './views.mjs';
+import { safeWebUrl, VECTOR } from './views.mjs';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -64,6 +64,12 @@ export function icon(name, className = 'icon') {
 /** A status chip: icon and word, tinted by tone. Strong badges mark levels and kinds. */
 export function badge(meta, { strong = false, text } = {}) {
     return h('span', { class: `badge tone-${meta.tone}${strong ? ' is-strong' : ''}` }, icon(meta.icon), text ?? meta.label);
+}
+
+/** A pill naming the review vector (functional, security, rai, sssc, performance, privacy). */
+export function vectorPill(vectorId) {
+    const entry = VECTOR[vectorId] ?? VECTOR.functional;
+    return h('span', { class: `badge vector-pill tone-${entry.tone}`, 'data-vector': entry.id, title: entry.title }, icon(entry.icon), entry.label);
 }
 
 export function idChip(value, { kind = null, title = null } = {}) {
