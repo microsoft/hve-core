@@ -16,6 +16,8 @@ environment:
     - ../../.github/skills/security/owasp-top-10
     - ../../.github/skills/security/owasp-cicd
     - ../../.github/skills/project-planning/architecture-review
+    - ../../.github/skills/finops/finops-value-evidence
+    - ../../.github/skills/finops/finops-value-valuation
 
 scoring:
   threshold: 0.7
@@ -98,3 +100,35 @@ stimuli:
         name: recommends-controls
         config:
           pattern: "(?i)branch.protect|code.review|sign|pin|restrict"
+
+  - name: finops-value-evidence-claim-and-collector-rules
+    prompt: |
+      Using the `finops-value-evidence` skill, explain why `-OutputPath` must live outside `-RepoRoot` when running `Collect-HveValueEvidence.ps1`, and list what fields a valid FinOps benefit claim requires before it can be marked `supported`.
+    tags:
+      category: skill-quality
+      skill: finops-value-evidence
+    graders:
+      - type: output-matches
+        name: explains-outside-repo-output-guard
+        config:
+          pattern: "(?is)(outside|read-only|mutate|dirty|statusStableDuringCollection)"
+      - type: output-matches
+        name: lists-required-claim-fields
+        config:
+          pattern: "(?is)(claim_id|category|hypothesis|baseline|target|evidence_links|owner)"
+
+  - name: finops-value-valuation-overlap-and-basis-rules
+    prompt: |
+      Using the `finops-value-valuation` skill, explain how `Measure-HveBenefitValue.ps1` prevents double-counting when a `speed` claim and a `capacity gained` claim share an `overlap_group`, and name the four monetary basis buckets.
+    tags:
+      category: skill-quality
+      skill: finops-value-valuation
+    graders:
+      - type: output-matches
+        name: explains-overlap-deduction
+        config:
+          pattern: "(?is)(overlap_group|primaryInGroup|deduct|overlapAdjustments)"
+      - type: output-matches
+        name: names-four-basis-buckets
+        config:
+          pattern: "(?is)(?=.*finance-approved)(?=.*stated-indicative)(?=.*modeled-counterfactual)(?=.*unmonetized-native-only)"

@@ -25,6 +25,14 @@
       "status": "pending",
       "issue": 3103
     },
+    "finops/finops-value-evidence": {
+      "status": "exempt",
+      "reason": "Runs read-only fixed-argument local git commands against the operator's repository, refuses symbolic links and inside-repository output paths, and writes one SHA-256 manifest JSON; no network or credentials."
+    },
+    "finops/finops-value-valuation": {
+      "status": "exempt",
+      "reason": "Evaluates operator-supplied local JSON benefit claims and HVE evidence snapshots with strict decimal math, refuses symbolic links and remote paths, and writes only to stdout or the declared local output file; no network, credentials, or external subprocesses."
+    },
     "hve-core/architecture-diagrams": {
       "status": "exempt",
       "reason": "Renders an operator-authored DS_CATALOG_V1 catalog with a SafeLoader-based YAML loader under a 5 MB input cap and writes only to stdout; no network, credentials, or subprocess."

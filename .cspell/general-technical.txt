@@ -17,6 +17,7 @@ Poka
 Takt
 upsell
 activex
+actuals
 acunetix
 adrm
 adrs
@@ -359,6 +360,8 @@ coprocessing
 correlated
 correlations
 cosmosdb
+counterfactual
+counterfactuals
 cpps
 crc
 crossfilter
@@ -590,6 +593,7 @@ kusto
 kustomization
 kustomizations
 kustomize
+labour
 lacp
 lalogs
 ldap
@@ -658,7 +662,12 @@ mlflow
 moby
 modbus
 moduleid
+monetizable
 monetization
+monetize
+monetized
+monetizes
+monetizing
 moneybal
 mongodb
 monolithic
@@ -872,6 +881,8 @@ rebranded
 recalc
 recordsets
 reddy
+redeployable
+redeployed
 redgate
 redirections
 redtiger
@@ -1119,6 +1130,7 @@ unpublish
 unranked
 unredacted
 unregister
+unmonetized
 unsnooze
 untrusted
 upbound
