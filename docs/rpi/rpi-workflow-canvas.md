@@ -176,6 +176,8 @@ When one session takes on a new request, the new work gets its own research, pla
 
 Any chat can show another local session's RPI work and send input to that session's agent. A GitHub Copilot app Project is the usual case: the Project coordinates its sessions, each session runs RPI on its own when its work needs it, and you follow them all from the Project without switching chats.
 
+Only your own words approve a session's plan or start its Implementation: what you type in that session's chat, or a canvas item you send to its task, which that session's canvas confirms. The Project's messages to its sessions, even ones that quote you, guide their work. A session the Project started stops before Implementation until you approve in one of those two ways.
+
 ### Find a Session
 
 When the canvas has no session to show, it opens on the Not connected page, with the session picker above the request. The same picker appears in the session menu, under **Copilot sessions**, so you can switch sessions from a canvas that already shows one. It lists the local sessions on your machine that have RPI work, one per checkout.
