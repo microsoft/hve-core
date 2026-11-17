@@ -15,6 +15,19 @@ scoring:
     prompt: 0.85
     wall-time: 0.15
   threshold: 0.85
+# Stage the agent at the path turn 0 launches, plus the skills and instructions it loads.
+# Paths resolve from this spec's directory, three levels below the repository root.
+agent_environment:
+  skills:
+  - ../../../.github/skills/shared/disclaimer-language
+  - ../../../.github/skills/shared/untrusted-content-boundary
+  - ../../../.github/skills/shared/planner-identity
+  - ../../../.github/skills/project-planning/privacy-standards
+  files:
+  - src: ../../../.github/agents/privacy/privacy-planner.agent.md
+    dest: .github/agents/privacy/privacy-planner.agent.md
+  - src: ../../../.github/instructions/shared/coaching-patterns.instructions.md
+    dest: .github/instructions/shared/coaching-patterns.instructions.md
 stimuli:
 - name: data-minimization-unjustified-collection
   turns:

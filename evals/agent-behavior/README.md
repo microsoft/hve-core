@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-11-09
+ms.date: 2026-11-17
 ---
 
 ## Purpose
@@ -11,7 +11,7 @@ This suite requires every user-invocable hve-core agent to have at least one fun
 
 The complement to [baseline-equivalence](../baseline-equivalence/README.md) is intentional: baseline-equivalence asserts the customization layer does not alter underlying model behavior beyond documented divergences, while agent-behavior asserts each agent actually performs its declared job.
 
-The suite is organized around four behavioral classes (research-writer, code-reviewer, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; the generated inventory contains 55 enrolled agents, including 24 subagents.
+The suite is organized around four behavioral classes (research-writer, code-reviewer, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; the generated inventory contains 55 enrolled agents, including 23 subagents.
 
 ## Layout
 
@@ -92,6 +92,8 @@ Three coverage kinds are distinct and do not overlap:
 * The [baseline-equivalence](../baseline-equivalence/README.md) harness provides A/B regression detection between the empty baseline and the customized environment.
 
 A per-stimulus `agent_environment.skills` list is concatenated with the suite-level list rather than replacing it, so an isolated stimulus loads its agent-declared skills in addition to the suite-level skills. Declare the skills the agent's contract names and do not assume the suite-level skills are excluded.
+
+Some stimuli intentionally stage fewer skills than their agent preloads. A stimulus that declares a response-only or isolated behavior-contract scenario, tests a missing source such as `security-planner-disclaimer-source-missing`, or stages a synthetic policy fixture instead of the agent omits the agent's preloads, because staging them would change or defeat the behavior under test.
 
 Vally has no agent-routing option, and staging an `.agent.md` at its normal `.github/agents/` path does not place it in model context. Workspace instructions are the supported channel, which is why isolated functional stimuli remap the agent file rather than copying it to its original location.
 
@@ -341,8 +343,13 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | system-architecture-reviewer   | research-writer  | light     | [.github/agents/project-planning/system-architecture-reviewer.agent.md](../../.github/agents/project-planning/system-architecture-reviewer.agent.md)                     |
 | ux-ui-designer                 | research-writer  | light     | [.github/agents/project-planning/ux-ui-designer.agent.md](../../.github/agents/project-planning/ux-ui-designer.agent.md)                                                 |
 
-The maintained stimulus inventory totals 65 agents: 32 parent agents plus 33
-enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/).
+The generated inventory totals 55 agents: 32 parent agents plus 23
+enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/),
+with 54 partials on disk while `code-review` coverage is deferred. The
+table above lists the 31 user-invocable parents; the repository-only
+`backlog-grooming` parent also has a partial but declares
+`user-invocable: false`, so the coverage check in `Test-EvalSpec.ps1` counts 31
+parents.
 Subagents without a matching stimulus partial remain excluded from the matrix
 run set and are documented separately in the inventory generator and related
 eval research. [AGENTS.yml](AGENTS.yml) remains generator-owned and is refreshed

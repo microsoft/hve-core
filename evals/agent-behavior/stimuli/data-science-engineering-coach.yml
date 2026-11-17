@@ -300,6 +300,8 @@ stimuli:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
         - ../../.github/skills/data-science-engineering/evaluation-design
         - ../../.github/skills/rpi/rpi-research
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       scenario: evaluation-current-fact-research
@@ -330,6 +332,8 @@ stimuli:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
         - ../../.github/skills/data-science-engineering/evaluation-design
         - ../../.github/skills/rpi/rpi-research
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       scenario: evaluation-current-fact-blocked
@@ -460,6 +464,8 @@ stimuli:
         - ../../.github/skills/rpi/rpi-plan-critique
         - ../../.github/skills/rpi/rpi-implement
         - ../../.github/skills/rpi/rpi-review
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     simulation:
       tool_overrides:
         powershell:
@@ -560,6 +566,8 @@ stimuli:
           dest: .copilot-tracking/reviews/logs/2026-09-21/synthetic-pipeline-review.md
       skills:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       scenario: data-science-rpi-execution-return
@@ -603,6 +611,8 @@ stimuli:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
         - ../../.github/skills/data-science-engineering/dataops
         - ../../.github/skills/project-planning/adr-author
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
       # Replace the staged scanner with an always-unavailable stub so every
       # invocation route, including wrapper scripts and subagents, sees the
       # same outage. Commands run after skills are copied into the workspace.
@@ -686,6 +696,8 @@ stimuli:
     agent_environment:
       skills:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
       files:
         - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
           dest: .github/copilot-instructions.md
@@ -710,6 +722,8 @@ stimuli:
     agent_environment:
       skills:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
       files:
         - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
           dest: .github/copilot-instructions.md
@@ -735,6 +749,8 @@ stimuli:
     agent_environment:
       skills:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
       files:
         - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
           dest: .github/copilot-instructions.md
@@ -760,6 +776,8 @@ stimuli:
     agent_environment:
       skills:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
       files:
         - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
           dest: .github/copilot-instructions.md
@@ -785,6 +803,8 @@ stimuli:
     agent_environment:
       skills:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
       files:
         - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
           dest: .github/copilot-instructions.md
@@ -813,6 +833,8 @@ stimuli:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
         - ../../.github/skills/data-science-engineering/data-catalog
         - ../../.github/skills/project-planning/adr-author
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
       files:
         - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
           dest: .github/copilot-instructions.md
@@ -842,6 +864,8 @@ stimuli:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
         - ../../.github/skills/data-science-engineering/data-catalog
         - ../../.github/skills/project-planning/adr-author
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
       files:
         - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
           dest: .github/copilot-instructions.md
@@ -871,6 +895,8 @@ stimuli:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
         - ../../.github/skills/data-science-engineering/data-catalog
         - ../../.github/skills/project-planning/adr-author
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
       files:
         - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
           dest: .github/copilot-instructions.md
@@ -898,6 +924,8 @@ stimuli:
       skills:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
         - ../../.github/skills/data-science-engineering/data-catalog
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
       files:
         - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
           dest: .github/copilot-instructions.md
