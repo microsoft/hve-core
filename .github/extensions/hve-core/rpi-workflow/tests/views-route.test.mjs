@@ -152,6 +152,20 @@ describe('announcements', () => {
         assert.equal(components.uncertainAnnouncement(before, after), '1 item may already have been sent. Check the chat in Offline trail maps; it is not sent again.');
         assert.equal(components.uncertainAnnouncement(after, after), null, 'the same items are not announced again');
     });
+
+    it('announce items this chat relayed when the other session\'s canvas did not take them, once, and leave out items whose send announced the relay', () => {
+        const { session, ids } = withComments(['Keep the header row.', 'Quote the commas.']);
+        const page = (doc) => ({ session: doc, otherTasks: [], delivery: { sessionId: CHILD, sessionName: NAME }, ownSessionId: OWN.sessionId });
+        const before = page(session);
+        const relayed = page(markDelivered(session, [ids[0]], 'send', LATER, { messageId: 'm1', route: 'relay', relayedVia: OWN.sessionId }).session);
+        assert.equal(components.relayAnnouncement(before, relayed), "Relayed to Offline trail maps: 1 item went to this chat's agent, which forwards it.");
+        assert.equal(components.relayAnnouncement(relayed, relayed), null, 'the same items are not announced again');
+        const elsewhere = page(markDelivered(session, [ids[0]], 'send', LATER, { messageId: 'm1', route: 'relay', relayedVia: ELSEWHERE }).session);
+        assert.equal(components.relayAnnouncement(before, elsewhere), null, 'a relay through another session\'s chat is not this chat\'s');
+        const both = page(markDelivered(relayed.session, [ids[1]], 'send', LATER, { messageId: 'm2', route: 'relay', relayedVia: OWN.sessionId }).session);
+        assert.equal(components.relayAnnouncement(before, both, new Set([`trail-maps:${ids[1]}`])), "Relayed to Offline trail maps: 1 item went to this chat's agent, which forwards it.", 'an item sent straight to the relay was announced by its send');
+        assert.equal(components.relayAnnouncement(before, both), "Relayed to Offline trail maps: 2 items went to this chat's agent, which forwards them.");
+    });
 });
 
 describe('sent items show their route', () => {
@@ -256,6 +270,38 @@ describe('items whose delivery may have reached their session', () => {
         const session = rootSession().session;
         const ctx = contextFor(session, { otherTasks: [{ taskId: 'trail-maps-fixes', title: 'Fixes', status: 'running', statePath: 'x', pending: [], awaiting: 0, relayed: [], uncertain: ['FB-009'] }] });
         assert.deepEqual(components.uncertainFeedback(ctx.data), [{ taskId: 'trail-maps-fixes', id: 'FB-009' }]);
+    });
+});
+
+describe('hand-offs that no canvas confirmed within an hour', () => {
+    const HOUR = 60 * 60 * 1000;
+    /** Items held for a hand-off to the child's session at NOW. */
+    function handedOff(texts) {
+        const { session, ids } = withComments(texts);
+        return { session: claimDelivery(session, ids, NOW, { handoff: { sessionId: CHILD, entryId: 'entry-1', relayAfter: NOW } }).session, ids };
+    }
+    /** The page's context `ms` after the hand-off. */
+    const after = (session, ms) => Object.assign(contextFor(session), { now: Date.parse(NOW) + ms });
+
+    it('show Sending with no actions while the hand-off holds them, then Not confirmed with Discard as their only action', () => {
+        const { session, ids } = handedOff(['Handed off']);
+        const id = ids[0];
+        const item = session.feedback.find((entry) => entry.id === id);
+        const during = after(session, HOUR - 1);
+        assert.equal(components.stageOf(during, item).badge.label, 'Sending');
+        const held = components.steerPanel(during);
+        assert.equal(keyed(held, `fb-discard-${id}`), null, 'nothing to do while the hand-off holds it');
+        assert.match(textOf(html(held)), /With the agent \(1\)/);
+
+        const expired = after(session, HOUR);
+        assert.deepEqual(components.stageOf(expired, item), { badge: { icon: 'alert', label: 'Not confirmed', tone: 'attention' }, at: NOW, words: 'handed off; no canvas has confirmed it' });
+        const steer = components.steerPanel(expired);
+        const out = textOf(html(steer));
+        assert.match(out, /Not confirmed \(1\) These went to another session over an hour ago, and no canvas has confirmed them\. They still go out, once, if a canvas of either session runs again\. Discard any you no longer want sent\./);
+        assert.doesNotMatch(out, /With the agent/);
+        assert.ok(keyed(steer, `fb-discard-${id}`), 'Discard');
+        assert.equal(keyed(steer, `fb-edit-${id}`), null, 'no Edit');
+        assert.deepEqual([components.pendingItems(expired), components.sendItems(expired), components.agentQueueItems(expired)], [[], [], []], 'never offered for sending');
     });
 });
 

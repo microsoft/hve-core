@@ -8,6 +8,13 @@ import { externalLink } from './markdown.mjs';
 const REPOSITORY = 'https://github.com/microsoft/hve-core';
 const CONTRIBUTING = `${REPOSITORY}/blob/main/CONTRIBUTING.md`;
 
+/** A link with a data key, so the screen keeps focus on it when it renders again. */
+const keyedLink = (url, label, key) => {
+    const link = externalLink(url, label);
+    link.dataset.key = key;
+    return link;
+};
+
 /** Why the canvas shows no session, in words. */
 const REASONS = Object.freeze({
     'no-input': 'The canvas opened without an RPI session to show.',
@@ -94,8 +101,8 @@ export function notConnectedView(model, act) {
                 h('ol', { class: 'connect-steps' },
                     h('li', { text: 'Check that the chat uses the RPI Agent or an rpi skill. They work with RPI sessions and connect the canvas.' }),
                     h('li', { text: "Ask the agent to connect the canvas, as above. It can also open the canvas again with the session's state file." }),
-                    h('li', null, 'If it keeps happening, tell the hve-core maintainers: ', externalLink(bugReportUrl(details), 'report a bug'), ' with the details below, or ', externalLink(CONTRIBUTING, 'contribute a fix'), ' to microsoft/hve-core.')),
-                h('pre', { class: 'connect-details', tabindex: '0', 'aria-label': 'Details for a bug report' }, h('code', { text: details })),
+                    h('li', null, 'If it keeps happening, tell the hve-core maintainers: ', keyedLink(bugReportUrl(details), 'report a bug', 'connect-report'), ' with the details below, or ', keyedLink(CONTRIBUTING, 'contribute a fix', 'connect-contribute'), ' to microsoft/hve-core.')),
+                h('pre', { class: 'connect-details', tabindex: '0', 'aria-label': 'Details for a bug report', dataset: { key: 'connect-details' } }, h('code', { text: details })),
                 h('div', { class: 'btn-row' },
                     button('Copy details', { iconName: 'copy', onClick: () => act.copyDetails(details), title: 'Copies the details above; they include no file paths', attrs: { 'data-key': 'connect-copy-details' } })))));
 }

@@ -571,10 +571,11 @@ describe('a send to another session', () => {
      * returns true for a write that fails. Tests reassign `writes.failWrites` to let the canvas restart.
      * `hooks.beforeInboxWrite`, when set, runs once before the source writes an inbox entry. `withParent`
      * also stores the parent task's document, in the same session, and `joined` is the Copilot session
-     * this canvas joins, or null for none. `settleClock` gives the source process a clock the test moves
+     * this canvas joins, or null for none. `canDeliver` says whether this canvas's host can send messages.
+     * `settleClock` gives the source process a clock the test moves
      * (in `sourceClock.at`), so its claim window can pass without waiting.
      */
-    async function crossSetup(name, { claimWindowMs, failWrites = () => false, withParent = false, joined = PROJECT, settleClock = false } = {}) {
+    async function crossSetup(name, { claimWindowMs, failWrites = () => false, withParent = false, joined = PROJECT, settleClock = false, canDeliver } = {}) {
         const store = createStore({ root: path.join(tmp, name), pollMs: 20 });
         const child = await store.create({ ...childSession().session, id: storeIdFor(CHILD_TASK, FIXTURE_ROOT) });
         const parent = withParent ? await store.create({ ...rootSession().session, id: storeIdFor(ROOT_TASK, FIXTURE_ROOT) }) : null;
@@ -621,6 +622,7 @@ describe('a send to another session', () => {
                 chat.push(request);
                 return { messageId: `own-${chat.length}` };
             },
+            canDeliver,
             wakeOutbox: () => source.wakeOutbox(),
             claimWindowMs,
             markRetryMs: 1,
@@ -1220,6 +1222,30 @@ describe('a send to another session', () => {
             const sent = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items, digest: preview.json.digest, mode: 'send' } });
             assert.deepEqual([sent.status, sent.json.error.code], [503, 'delivery_unavailable']);
             assert.equal((await itemIn(f.store, f.child.id, mine.id)).handoff, undefined, 'nothing is held');
+            const queued = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items, digest: preview.json.digest, mode: 'queue' } });
+            assert.equal(queued.status, 200, JSON.stringify(queued.json));
+            assert.ok((await itemIn(f.store, f.child.id, mine.id)).queuedForAgentAt, 'Queue still marks the item for the agent');
+        } finally {
+            await f.stop();
+        }
+    });
+
+    it('refuses Send now to another session on either route when its host cannot send, writes nothing, and keeps Queue working', async () => {
+        const f = await crossSetup('cross-no-send', { canDeliver: () => false });
+        try {
+            const mine = await addComment(f.store, f.child.id, 'Keep the header row.');
+            const items = [{ taskId: CHILD_TASK, id: mine.id }];
+            for (const live of [false, true]) {
+                if (live) await f.childRunner.heartbeat();
+                const { preview, sent } = await sendItems(f, { items });
+                assert.equal(preview.json.route.kind, live ? 'inbox' : 'relay');
+                assert.deepEqual([sent.status, sent.json.error.code], [503, 'delivery_unavailable']);
+                assert.match(sent.json.error.message, /^This host cannot take messages from the canvas, so it cannot hand items to another session\./);
+                assert.deepEqual([(await f.store.loadInbox(CHILD)).entries, (await f.store.loadOutbox(PROJECT)).entries, f.chat.length, f.childChat.length], [[], [], 0, 0]);
+                const item = await itemIn(f.store, f.child.id, mine.id);
+                assert.deepEqual([item.state, item.handoff, item.deliveringSince], ['queued', undefined, undefined], 'nothing is held');
+            }
+            const preview = await request(f.url, { method: 'POST', pathname: '/api/delivery/preview', body: { items } });
             const queued = await request(f.url, { method: 'POST', pathname: '/api/delivery', body: { items, digest: preview.json.digest, mode: 'queue' } });
             assert.equal(queued.status, 200, JSON.stringify(queued.json));
             assert.ok((await itemIn(f.store, f.child.id, mine.id)).queuedForAgentAt, 'Queue still marks the item for the agent');

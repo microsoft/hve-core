@@ -14,9 +14,11 @@ import {
     discardFeedback,
     editFeedback,
     feedbackOverview,
+    HANDOFF_HOLD_MS,
     heldItemIds,
     isClaimed,
     isDeliveryUncertain,
+    isHandoffExpired,
     markDelivered,
     markDeliveryUncertain,
     markPickedUp,
@@ -62,6 +64,32 @@ describe('held items of a delivery', () => {
         assert.deepEqual([itemOf(released, 'FB-001').handoff, isClaimed(itemOf(released, 'FB-001'), LATER)], [undefined, false]);
         const uncertain = markDeliveryUncertain(held, ['FB-001'], LATER).session;
         assert.deepEqual([itemOf(uncertain, 'FB-001').handoff, isDeliveryUncertain(itemOf(uncertain, 'FB-001'))], [undefined, true]);
+    });
+
+    it('lets you discard a handed-off item once its hold has passed, never lets anything send it again, and ends the hold so neither session sends it', () => {
+        const held = claimDelivery(taskDoc(NOW), ['FB-001', 'FB-002'], NOW, { handoff: HANDOFF, note: 'FB-002' }).session;
+        const justBefore = new Date(Date.parse(NOW) + HANDOFF_HOLD_MS - 1).toISOString();
+        const expiredAt = new Date(Date.parse(NOW) + HANDOFF_HOLD_MS).toISOString();
+        assert.equal(isHandoffExpired(itemOf(held, 'FB-001'), justBefore), false);
+        assert.deepEqual(discardFeedback(held, ['FB-001'], justBefore).result, { discarded: [], skipped: ['FB-001'] }, 'a hold that has not expired cannot be discarded');
+        assert.equal(isHandoffExpired(itemOf(held, 'FB-001'), expiredAt), true);
+        assert.equal(isHandoffExpired(itemOf(markDeliveryUncertain(held, ['FB-001'], LATER).session, 'FB-001'), expiredAt), false, 'only a handoff that still holds its item expires');
+        assert.equal(isHandoffExpired(itemOf(claimDelivery(taskDoc(NOW), ['FB-001'], NOW).session, 'FB-001'), expiredAt), false, 'a send in the canvas\'s own chat has no handoff to expire');
+
+        assert.ok(isClaimed(itemOf(held, 'FB-001'), expiredAt), 'the item stays held');
+        assert.deepEqual(takeFeedback(held, expiredAt).result.map((item) => item.id), ['FB-003'], 'the agent cannot collect it');
+        assert.throws(() => claimDelivery(held, ['FB-001'], expiredAt), { code: 'invalid_state' });
+        assert.throws(() => editFeedback(held, 'FB-001', 'Changed.', expiredAt), { code: 'invalid_state' });
+        assert.throws(() => queueForAgent(held, ['FB-001'], expiredAt), { code: 'invalid_state' });
+        assert.deepEqual(feedbackOverview(held, expiredAt).pending.map((item) => item.id), ['FB-003'], 'it is not offered for sending');
+
+        const discarded = discardFeedback(held, ['FB-001', 'FB-002'], expiredAt);
+        assert.deepEqual(discarded.result, { discarded: ['FB-001', 'FB-002'], skipped: [] });
+        assert.equal(discarded.session.revision, held.revision + 1);
+        assert.deepEqual(['FB-001', 'FB-002'].map((id) => [itemOf(discarded.session, id).state, itemOf(discarded.session, id).handoff, itemOf(discarded.session, id).deliveringSince]), [['dismissed', undefined, undefined], ['dismissed', undefined, undefined]]);
+        assert.deepEqual(heldItemIds(discarded.session, ['FB-001', 'FB-002'], 'entry-1'), [], 'the target canvas finds nothing to send');
+        assert.deepEqual(claimRelay(discarded.session, 'entry-1', { pid: 7, at: expiredAt }, expiredAt, { policy: 'take' }).result.state, 'none', 'the source canvas finds nothing to relay');
+        assert.equal(markDelivered(discarded.session, ['FB-001'], 'send', expiredAt).result.length, 0, 'a late record does not revive it');
     });
 
     it('refuses a handoff without a Copilot session, an entry ID, or a relay time', () => {

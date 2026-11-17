@@ -15,7 +15,9 @@
  * The same runner watches the session's outbox, the handoffs this session's canvases made. When an
  * entry falls due and the target's inbox entry is still waiting, a process relays the items through
  * this session's chat. The relay claim on the items and the removal of the inbox entry happen under
- * locks, so an item is relayed only when the target never claimed it, and at most once.
+ * locks, so an item is relayed only when the target never claimed it, and at most once. A process
+ * that cannot send relays nothing; once a due entry has waited past the stale window, it withdraws
+ * the target's entry the same way and releases the items unsent.
  *
  * An outbox entry is `pending` while its handoff is being recorded, and `committed` once the entry may be
  * relayed. A pending entry is never relayed. Once it has been pending past the claim window, it is
@@ -470,9 +472,10 @@ export function createInboxRunner(deps) {
      * Relays the items the claim still holds, once the target's entry is withdrawn or was never
      * claimed. The items go through this session's chat and are recorded as relayed. A send that
      * fails before the chat takes it releases the claim; a send whose outcome is unknown marks its
-     * items uncertain.
+     * items uncertain. With `giveUp`, nothing is sent: the items return to unsent, the hand-off's
+     * note is dismissed, and the entry is removed, because no process of this session could relay them.
      */
-    async function relayItems(entry, claim, ids) {
+    async function relayItems(entry, claim, ids, giveUp = false) {
         let held;
         let message;
         try {
@@ -490,6 +493,12 @@ export function createInboxRunner(deps) {
             held = doc ? relayItemIds(doc, entry.id, claim) : [];
             if (held.length === 0) {
                 await forgetOutbox(entry.id);
+                return;
+            }
+            if (giveUp) {
+                await store.update(entry.taskDoc, (current) => releaseHandoff(current, entry.id, iso(now())), { by: 'agent' });
+                await forgetOutbox(entry.id);
+                log(`Items RPI canvas ${entry.handle} handed to session ${entry.target} were released and not sent: no canvas of this session could relay them.`, 'warning');
                 return;
             }
             message = composeRelayDelivery(doc, held, { handle: entry.handle, sessionId: entry.target });
@@ -545,10 +554,13 @@ export function createInboxRunner(deps) {
     /**
      * Acts on one due outbox entry. Its items are relayed only by the process that holds their relay
      * claim, and only once the target's inbox entry is withdrawn or was never there. A fresh claim
-     * by another process, or an entry the target's process owns, is left for a later check.
+     * by another process, or an entry the target's process owns, is left for a later check. A process
+     * that cannot send leaves a due entry to the session's other processes for the stale window; after
+     * that it takes the same claims and withdrawal a relay takes, then releases the items unsent.
      */
     async function relay(entry) {
-        if (!canDeliver()) {
+        const giveUp = !canDeliver();
+        if (giveUp && now() - Date.parse(entry.relayAfter) <= claimStaleMs) {
             outboxDirty = true;
             return;
         }
@@ -567,7 +579,7 @@ export function createInboxRunner(deps) {
         } else if (result.state === 'lapsed') {
             await settleUncertain(entry, sessionId);
         } else {
-            await relayItems(entry, claim, result.ids);
+            await relayItems(entry, claim, result.ids, giveUp);
         }
     }
 

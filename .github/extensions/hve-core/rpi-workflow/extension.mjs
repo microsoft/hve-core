@@ -36,6 +36,8 @@ const sources = createSourceController({
     ownSessionId: () => joined?.sessionId ?? null,
 });
 const pickups = createPickupTracker({ store, log: (message) => log(message, 'warning') });
+/** Whether this process's host can send chat messages; hand-offs and the inbox runner both need it. */
+const canDeliver = () => typeof joined?.send === 'function';
 /** This process's runner for the joined session, once it starts; null while the session is unknown. */
 let inbox = null;
 
@@ -77,6 +79,7 @@ const registry = createInstanceRegistry({
             showSession: (session) => sources.show(record, { session }, { candidates: record.candidates ?? [process.cwd()] }),
             showSample: () => sources.show(record, { task: 'sample' }, {}),
             deliver: createDelivery({ getSession: () => joined }),
+            canDeliver,
             pickups,
             wakeOutbox: () => inbox?.wakeOutbox(),
             resolveSession: (sessionId) => resolveSessionWorkspace(sessionId, { root: sessionRoot() }),
@@ -145,7 +148,7 @@ if (joined?.sessionId) {
         sessionId: joined.sessionId,
         deliver: createDelivery({ getSession: () => joined }),
         pickups,
-        canDeliver: () => typeof joined?.send === 'function',
+        canDeliver,
         log,
     });
     inbox.start().catch(() => {});

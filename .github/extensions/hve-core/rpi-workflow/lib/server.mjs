@@ -76,6 +76,8 @@ const TASK_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
 const ROUTE_KINDS = new Set(['own', 'inbox', 'relay']);
 /** What a hand-off says when this canvas has no Copilot session to send from. */
 const HAND_OFF_UNAVAILABLE = 'The canvas is not connected to a Copilot session. Your items stay here; ask the agent to collect them with take_feedback.';
+/** What a hand-off says when this canvas's host cannot send messages, so it could never relay the items. */
+const HAND_OFF_NO_SEND = "This host cannot take messages from the canvas, so it cannot hand items to another session. Your items stay here; Queue keeps them for that session's agent to collect at its next checkpoint.";
 /** Session errors that mean the session, or the RPI work in it, is not there; any other session error is a conflict. */
 const MISSING_SESSION_CODES = new Set(['session_not_found', 'source_not_found']);
 
@@ -202,6 +204,7 @@ export function clientInfoFrom(body) {
  *   getCanvas?: () => { handle: string, instanceId: string } | null,
  *   getJoinedSessionId?: () => string | null,
  *   deliver?: (request: { prompt: string, displayPrompt: string, ids: string[] }) => Promise<void>,
+ *   canDeliver?: () => boolean,
  *   log?: (message: string, level?: string) => void,
  *   now?: () => string,
  *   getSource?: () => { kind?: string, reason?: string, detail?: string | null, boundSession?: string | null, workspace?: { root: string } | null, follow?: { paused: boolean }, follower?: { start: () => void, stop: () => void } } | undefined,
@@ -220,6 +223,7 @@ export function clientInfoFrom(body) {
  *   openPanel?: (request: { session: string }) => Promise<{ outcome: 'opened' | 'focused', instanceId: string }>,
  *   getExtensionId?: () => string | null | undefined,
  * }} deps `resolveSession` reads a local Copilot session's workspace, which open-panel requires before it asks for a panel.
+ *   `canDeliver` says whether this process's host can send chat messages; a hand-off needs it, because this process relays the items when the other session's canvas does not take them.
  */
 export function createCanvasServer(deps) {
     const { store, getSessionId } = deps;
@@ -240,6 +244,7 @@ export function createCanvasServer(deps) {
     const deliver = deps.deliver ?? (async () => {
         throw new ModelError('delivery_unavailable', 'This canvas is not connected to a Copilot session.');
     });
+    const canDeliver = deps.canDeliver ?? (() => true);
     const resolveSession = deps.resolveSession ?? ((sessionId) => resolveSessionWorkspace(sessionId));
     const log = deps.log ?? (() => {});
     const now = deps.now ?? (() => new Date().toISOString());
@@ -660,6 +665,9 @@ export function createCanvasServer(deps) {
         const sender = deps.getJoinedSessionId?.();
         if (typeof sender !== 'string' || !sender) {
             throw new ModelError('delivery_unavailable', HAND_OFF_UNAVAILABLE);
+        }
+        if (!canDeliver()) {
+            throw new ModelError('delivery_unavailable', HAND_OFF_NO_SEND);
         }
         const from = sender.toLowerCase();
         const target = route.sessionId;

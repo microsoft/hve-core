@@ -97,6 +97,30 @@ export function shownMain() {
     return [...document.querySelectorAll('main')].find((element) => !element.closest('[hidden]')) ?? null;
 }
 
+/**
+ * Runs `replace`, which renders `region` again, and keeps focus where it was: on the control with the same ID,
+ * else the same data key, else on `fallback()`, so focus never drops to the page body. Focus outside the region
+ * stays where it is, and so does a focused control that `replace` kept.
+ *
+ * @param {Element} region
+ * @param {() => Element | null} fallback the element, usually the region's heading, that takes focus when the focused control is gone
+ * @param {() => void} replace
+ * @param {(element: Element) => boolean} focus focuses an element and says whether focus landed
+ */
+export function keepingFocus(region, fallback, replace, focus) {
+    const keyOf = (element) => element.dataset?.key || element.getAttribute('data-key') || null;
+    const active = document.activeElement;
+    const inside = Boolean(active) && active !== region && region.contains(active);
+    const anchor = inside ? { id: active.getAttribute('id') || null, key: keyOf(active) } : null;
+    replace();
+    if (!anchor || region.contains(document.activeElement)) return;
+    const same = (element) => (Boolean(anchor.id) && element.getAttribute('id') === anchor.id) || (Boolean(anchor.key) && keyOf(element) === anchor.key);
+    const target = [...region.querySelectorAll('*')].find(same);
+    if (target && focus(target)) return;
+    const heading = fallback();
+    if (heading) focus(heading);
+}
+
 // Times read in the reader's language and time zone, through the browser's own formatters.
 const RELATIVE = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
 const SHORT_DATE = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });

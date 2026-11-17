@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, button, clear, decisionAlias, fullTime, h, icon, idTag, PHASE_META, PHASE_STATUS, phaseTabText, plural, relTime, sr } from './dom.mjs';
-import { confirmPress, deliveryNotices, deliveryRequest, disclosure, failedPanel, filePreview, handAnnouncement, hasMarginHome, panelOutcome, presentationControl, revealRow, reviewSheet, ROUTE_CHANGED_NOTE, routeBlock, sendItems, sendShape, sessionLabel, sessionMenuNodes, staleAnnouncement, steerPanel, uncertainAnnouncement, waitingCount } from './components.mjs';
+import { badge, button, clear, decisionAlias, fullTime, h, icon, idTag, keepingFocus, PHASE_META, PHASE_STATUS, phaseTabText, plural, relTime, sr } from './dom.mjs';
+import { confirmPress, deliveryNotices, deliveryRequest, disclosure, failedPanel, filePreview, handAnnouncement, hasMarginHome, panelOutcome, pickerAnnouncement, presentationControl, relayAnnouncement, revealRow, reviewSheet, ROUTE_CHANGED_NOTE, routeBlock, sendItems, sendShape, sessionLabel, sessionMenuNodes, staleAnnouncement, steerPanel, uncertainAnnouncement, waitingCount } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
 import { notConnectedView } from './connect-view.mjs';
@@ -483,6 +483,9 @@ function listIds(ids) {
     return `${ids.slice(0, 3).join(', ')}, and ${ids.length - 3} more`;
 }
 
+/** Items this page sent straight to the relay, as `taskId:id`; their send announced the relay, so it is not announced again. */
+const relaySent = new Set();
+
 function announceChanges(previous, next, moved = false) {
     if (!previous) return;
     const messages = [];
@@ -500,6 +503,8 @@ function announceChanges(previous, next, moved = false) {
     if (read.length) messages.push(`The agent read back ${listIds(read)}. ${read.length === 1 ? 'It is' : 'They are'} in Your feedback, where you can correct ${read.length === 1 ? 'it' : 'them'}.`);
     const uncertain = uncertainAnnouncement(previous, next);
     if (uncertain) messages.push(uncertain);
+    const relayed = relayAnnouncement(previous, next, relaySent);
+    if (relayed) messages.push(relayed);
     if (previous.session.session.activePhase !== next.session.session.activePhase) {
         messages.push(`The agent moved to ${PHASE_META[next.session.session.activePhase].label}${moved ? '; the canvas moved with it' : ''}.`);
     }
@@ -877,14 +882,17 @@ const act = {
             announce(`Showing ${name}.`);
             focusQuietly($('taskTitle'));
         } catch (error) {
-            state.copilot = { ...state.copilot, showError: `Could not show that session: ${error.message}` };
+            const message = `Could not show that session: ${error.message}`;
+            state.copilot = { ...state.copilot, showError: message };
             renderCopilotPicker();
+            announce(message);
         }
     },
-    /** Fetches the picker's sessions again, unless a fetch is already running. */
+    /** Fetches the picker's sessions again, unless a fetch is already running, and announces what it found. */
     refreshSessions() {
         if (state.copilot.loading) return;
-        loadCopilotSessions();
+        announce('Looking for sessions.');
+        loadCopilotSessions({ announceOutcome: true });
         renderCopilotPicker();
     },
     /** Follows the agent again: its running loop and the phase it works in. */
@@ -1148,6 +1156,9 @@ const act = {
         try {
             const result = await api('/api/delivery', deliveryRequest(send.preview, items, mode, send.note));
             const handle = state.data.canvas?.handle;
+            if (result.route?.kind === 'relay') {
+                for (const hand of result.handedOff ?? []) for (const id of hand.ids) relaySent.add(`${hand.taskId}:${id}`);
+            }
             Object.assign(state.ui.send, freshSend());
             $('sendSheet').close();
             announce(mode === 'queue'
@@ -1441,7 +1452,8 @@ function toggleSessionMenu(open) {
     if (show && !state.data) return;
     menu.hidden = !show;
     $('sessionBtn').setAttribute('aria-expanded', String(show));
-    state.copilot = { ...state.copilot, note: null };
+    // Outcomes of an earlier open are not shown, or spoken, again.
+    state.copilot = { ...state.copilot, note: null, showError: null };
     if (!show) return;
     loadCopilotSessions();
     renderSessionMenu();
@@ -1457,9 +1469,12 @@ const pickerShown = () => Boolean(state.notConnected) || (Boolean(state.data) &&
 
 /**
  * Starts fetching the sessions the picker lists. The loading state is set at once, so the caller's next render
- * shows it, and the answer re-renders the picker. The page does not poll.
+ * shows it, and the answer re-renders the picker. With `announceOutcome`, as for Refresh, the answer is also
+ * announced. The page does not poll.
+ *
+ * @param {{ announceOutcome?: boolean }} [options]
  */
-function loadCopilotSessions() {
+function loadCopilotSessions({ announceOutcome = false } = {}) {
     const request = ++copilotRequest;
     state.copilot = { ...state.copilot, loading: true, error: null };
     return api('/api/copilot-sessions').then(
@@ -1469,6 +1484,7 @@ function loadCopilotSessions() {
         if (request !== copilotRequest) return;
         state.copilot = { ...state.copilot, loading: false, ...outcome };
         renderCopilotPicker();
+        if (announceOutcome) announce(pickerAnnouncement(outcome));
     });
 }
 
@@ -1516,17 +1532,18 @@ async function loadSessions() {
 function renderSessionMenu() {
     const menu = $('sessionMenu');
     const { session } = state.data;
-    const keepFocus = menu.contains(document.activeElement) ? document.activeElement.dataset.key ?? null : null;
-    menu.replaceChildren(...sessionMenuNodes(context(), {
-        following: state.following !== false,
-        onShow: (task) => {
-            toggleSessionMenu(false);
-            act.showTask({ statePath: task.statePath });
-        },
-        picker: { model: pickerModel(), ...pickerActions() },
-    }));
-    if (session.source?.kind === 'rpi') renderSessionList();
-    if (keepFocus) menu.querySelector(`[data-key="${CSS.escape(keepFocus)}"]`)?.focus({ preventScroll: true });
+    // The picker's fetch re-renders the menu while focus may sit on its title or any control, so focus is kept by ID or key.
+    keepingFocus(menu, () => $('sessionMenuTitle'), () => {
+        menu.replaceChildren(...sessionMenuNodes(context(), {
+            following: state.following !== false,
+            onShow: (task) => {
+                toggleSessionMenu(false);
+                act.showTask({ statePath: task.statePath });
+            },
+            picker: { model: pickerModel(), ...pickerActions() },
+        }));
+        if (session.source?.kind === 'rpi') renderSessionList();
+    }, focusQuietly);
 }
 
 function renderSessionList() {
@@ -1535,7 +1552,7 @@ function renderSessionList() {
     const current = state.data.session.followUps.tree.key;
     const { loading, error, list, skipped } = state.sessions;
     const others = (list ?? []).filter((item) => item.key !== current);
-    holder.replaceChildren(...[
+    keepingFocus(holder, () => $('sessionMenuTitle'), () => holder.replaceChildren(...[
         error ? h('p', { class: 'field-error' }, icon('alert'), h('span', { text: `Sessions could not be listed: ${error}` })) : null,
         !error && loading && !list ? h('p', { class: 'meta', text: 'Loading sessions…' }) : null,
         list && !others.length ? h('p', { class: 'meta', text: 'No other sessions in this workspace.' }) : null,
@@ -1544,7 +1561,7 @@ function renderSessionList() {
                 h('span', { class: 'session-pick-name', text: item.name }),
                 h('span', { class: 'meta session-pick-meta', text: [item.date, plural(item.tasks, 'loop'), item.running ? `running: ${item.running.title}` : 'nothing running'].join(' · ') }))))) : null,
         skipped.length ? h('p', { class: 'meta', text: `${plural(skipped.length, 'state file')} outside a session folder ${skipped.length === 1 ? 'is' : 'are'} not shown; the problems notice lists ${skipped.length === 1 ? 'it' : 'them'}.` }) : null,
-    ].filter(Boolean));
+    ].filter(Boolean)), focusQuietly);
 }
 
 function renderRail() {
@@ -2000,7 +2017,6 @@ const connectScreen = {
 /** Renders the screen in place of the workspace; the header keeps the title, the canvas handle, and Appearance. */
 function renderNotConnected() {
     const answer = state.notConnected;
-    const focused = document.activeElement?.closest?.('#connectView [data-key]')?.dataset.key ?? null;
     document.body.classList.add('is-not-connected');
     $('workspace').hidden = true;
     // A page may have only one main element without the hidden attribute.
@@ -2015,8 +2031,8 @@ function renderNotConnected() {
     $('sessionBtn').hidden = true;
     const view = $('connectView');
     view.hidden = false;
-    clear(view).append(notConnectedView({ ...answer.notConnected, handle, editor: answer.editor?.name ?? null, now: Date.now(), ui: state.ui.connect, picker: pickerModel() }, { ...connectScreen, picker: pickerActions() }));
-    if (focused) view.querySelector(`[data-key="${CSS.escape(focused)}"]`)?.focus({ preventScroll: true });
+    // The picker's fetch and the agent's answer re-render the screen while focus may sit on any of its controls.
+    keepingFocus(view, () => $('connectTitle'), () => clear(view).append(notConnectedView({ ...answer.notConnected, handle, editor: answer.editor?.name ?? null, now: Date.now(), ui: state.ui.connect, picker: pickerModel() }, { ...connectScreen, picker: pickerActions() })), focusQuietly);
 }
 
 /** Renders the page; a failure shows its reason with Retry instead of leaving the page blank. */

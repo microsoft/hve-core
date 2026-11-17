@@ -3,7 +3,7 @@ title: RPI Workflow Canvas
 description: Follow an RPI session phase by phase in a canvas beside the chat, answer the agent's decisions, send it your input, and show other local sessions' RPI work from the session picker
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-11-13
+ms.date: 2026-11-17
 ms.topic: how-to
 keywords:
   - rpi workflow canvas
@@ -205,6 +205,8 @@ After you send, each item shows whether it went direct or was relayed, and throu
 
 An item whose delivery may already have reached its chat shows **May have been sent**, and a notice names the chat to check. The canvas never sends that item again. Check that chat, then discard the item.
 
+Items that no canvas confirms within an hour of the hand-off show **Not confirmed**. The canvas never sends them again, so discard any you no longer want. Until you do, a canvas of either session that runs again still delivers them, once.
+
 ### Provided Research and Plans
 
 The phase shows **Provided** when you or another session supplied its research or plan. Research that came with a provided plan also shows **Provided**, although it has no document of its own.
@@ -259,7 +261,7 @@ Single-key shortcuts pause while you type, and the shortcut list has a switch th
 | The host reports multiple matching canvas providers      | Ask the agent to retry lookup or opening with a host-reported `extensionId`, such as `project:rpi-workflow` when offered, and reuse that provider when reopening.            |
 | The canvas says Not connected                            | Pick a session in the session picker, or choose **Ask the agent** or **Copy request**.                                                                                       |
 | The canvas stopped moving with the agent                 | Following stopped when you chose another phase or started typing. Press **Follow agent** or `f`.                                                                             |
-| Review and send says it cannot send                      | The host does not accept messages from extensions. Use **Queue**, and the agent collects your items at its next checkpoint.                                                  |
+| Review and send says it cannot send                      | The host does not accept messages from extensions. Use **Queue**, and the agent of the task's session collects your items at its next checkpoint.                            |
 | An item stays at Sent                                    | Some hosts do not report pickups. The read-back still arrives.                                                                                                               |
 | **Open in VS Code** is missing                           | The canvas shows that button only when it finds VS Code. Use **Copy path**, or read the file in the canvas.                                                                  |
 | A list of problems appears above the phase               | The canvas names what it cannot read in the session's files. The RPI Agent fixes the files it is writing.                                                                    |

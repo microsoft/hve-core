@@ -645,11 +645,16 @@ export function table(caption, headers, rows, options = {}) {
 
 /** Matches the model's holds: a send holds its items for up to 10 minutes, and a handoff to another session until it settles. */
 const isSending = (ctx, item) => item.state === 'queued' && (Boolean(item.handoff) || (Boolean(item.deliveringSince) && ctx.now - Date.parse(item.deliveringSince) < 10 * 60 * 1000));
+/** Matches HANDOFF_HOLD_MS in lib/model.mjs: after an hour, a handoff that no canvas confirmed can be discarded. */
+const HANDOFF_HOLD_MS = 60 * 60 * 1000;
+/** Matches the model's expired handoffs: still held, so never sent again from here, and only discarded. */
+const isHandoffExpired = (ctx, item) => item.state === 'queued' && Boolean(item.handoff) && Boolean(item.deliveringSince) && ctx.now - Date.parse(item.deliveringSince) >= HANDOFF_HOLD_MS;
 /** Matches the model's uncertain items: a queued item whose delivery may have reached its session. Such items are only discarded. */
 const isUncertain = (item) => item.state === 'queued' && Boolean(item.deliveryUncertainAt);
 /** A sent item that this canvas's session relayed through its chat, and that the chat's agent has not picked up yet. */
 const isRelayPending = (item, own) => item.state === 'sent' && item.route === 'relay' && !item.pickedUpAt && Boolean(own) && item.relayedVia === own;
 const SENDING = Object.freeze({ icon: 'send', label: 'Sending', tone: 'accent' });
+const NOT_CONFIRMED = Object.freeze({ icon: 'alert', label: 'Not confirmed', tone: 'attention' });
 const QUEUED = Object.freeze({ icon: 'clock', label: 'Queued for the agent', tone: 'agent' });
 const HAS_IT = Object.freeze({ icon: 'sparkle', label: 'The agent has it', tone: 'agent' });
 const MAY_HAVE_BEEN_SENT = Object.freeze({ icon: 'alert', label: 'May have been sent', tone: 'attention' });
@@ -682,7 +687,8 @@ const joinWords = (...parts) => parts.filter(Boolean).join(', ') || null;
 /**
  * Where an item is and since when: its badge, the time it got there, and a few words on how.
  * Not sent, Queued for the agent, Sent, The agent has it, then Read back, Corrected, or Removed.
- * An item whose delivery may have reached its session shows May have been sent until it is discarded.
+ * An item whose delivery may have reached its session shows May have been sent until it is discarded,
+ * and a handoff that no canvas confirmed within its hold shows Not confirmed.
  *
  * @param {any} ctx
  * @param {any} item
@@ -690,6 +696,7 @@ const joinWords = (...parts) => parts.filter(Boolean).join(', ') || null;
  */
 export function stageOf(ctx, item) {
     if (isUncertain(item)) return { badge: MAY_HAVE_BEEN_SENT, at: item.deliveryUncertainAt, words: `check ${uncertainChat(ctx.data, item.uncertainIn)}; not sent again` };
+    if (isHandoffExpired(ctx, item)) return { badge: NOT_CONFIRMED, at: item.deliveringSince, words: 'handed off; no canvas has confirmed it' };
     if (isSending(ctx, item)) return { badge: SENDING, at: item.deliveringSince, words: null };
     if (item.state === 'queued') {
         return queuedForAgent(item)
@@ -810,8 +817,8 @@ function feedbackEditor(ctx, where, taskId, item) {
  */
 export function feedbackActions(ctx, where, group, item) {
     const keyOf = (name) => (where === 'dialog' ? `review-${name}-${group.taskId}-${item.id}` : `fb-${name}-${item.id}`);
-    // An item whose delivery may have reached its session is never sent again, so its only action is to discard it.
-    if (isUncertain(item)) {
+    // An item whose delivery may have reached its session, or whose handoff expired, is never sent again, so its only action is to discard it.
+    if (isUncertain(item) || isHandoffExpired(ctx, item)) {
         return [confirmButton(ctx, { key: keyOf('discard'), label: 'Discard', armedLabel: `Discard ${item.id}?`, onConfirm: () => ctx.act.discardFeedback([{ taskId: group.taskId, id: item.id }]) })];
     }
     const reachable = Boolean(item.target?.id);
@@ -852,8 +859,8 @@ function feedbackRow(ctx, item, group) {
     }
     const stage = stageOf(ctx, item);
     const tools = feedbackActions(ctx, 'steer', group, item);
-    // An item that may have been sent has one labeled action, which sits with the row's buttons; the others are icon buttons beside the stage chip.
-    const labeled = isUncertain(item) && !editing ? tools : [];
+    // An item that may have been sent, or whose handoff expired, has one labeled action, which sits with the row's buttons; the others are icon buttons beside the stage chip.
+    const labeled = (isUncertain(item) || isHandoffExpired(ctx, item)) && !editing ? tools : [];
     const iconTools = labeled.length ? [] : tools;
     return h('li', { class: 'fb-item', dataset: { item: item.id } },
         h('div', { class: 'fb-head' }, icon(kind.icon), h('span', { class: 'fb-kind' }, kind.label, feedbackTarget(ctx, item)), badge(stage.badge), iconTools.length && !editing ? h('span', { class: 'fb-tools' }, iconTools) : null),
@@ -913,7 +920,8 @@ export function steerPanel(ctx) {
 
     const pending = pendingItems(ctx);
     const agentQueue = agentQueueItems(ctx);
-    const inFlight = session.feedback.filter((item) => item.state === 'sent' || item.state === 'interpreted' || isSending(ctx, item));
+    const expired = session.feedback.filter((item) => isHandoffExpired(ctx, item));
+    const inFlight = session.feedback.filter((item) => item.state === 'sent' || item.state === 'interpreted' || (isSending(ctx, item) && !isHandoffExpired(ctx, item)));
     const uncertain = session.feedback.filter(isUncertain);
     const earlier = session.feedback.filter((item) => ['applied', 'corrected', 'dismissed'].includes(item.state));
     const loop = { taskId: session.task.id, title: session.task.title, shown: true };
@@ -924,12 +932,13 @@ export function steerPanel(ctx) {
         agentQueue.length ? [h('h4', { class: 'group-title', text: `Queued for the agent (${agentQueue.length})` }), h('p', { class: 'meta group-hint', text: 'The agent collects these at its next checkpoint: when it changes phase, finishes a task, asks you something, or ends its turn.' }), h('ul', { class: 'fb-list' }, agentQueue.map((item) => feedbackRow(ctx, item, loop)))] : null,
         inFlight.length ? [h('h4', { class: 'group-title', text: `With the agent (${inFlight.length})` }), h('ul', { class: 'fb-list' }, inFlight.map((item) => feedbackRow(ctx, item, loop)))] : null,
         uncertain.length ? [h('h4', { class: 'group-title', text: `May have been sent (${uncertain.length})` }), h('p', { class: 'meta group-hint', text: `Check ${uncertainWhere(ctx.data) ?? 'the chat each item names'} before you discard these. They are not sent again.` }), h('ul', { class: 'fb-list' }, uncertain.map((item) => feedbackRow(ctx, item, loop)))] : null,
+        expired.length ? [h('h4', { class: 'group-title', text: `Not confirmed (${expired.length})` }), h('p', { class: 'meta group-hint', text: 'These went to another session over an hour ago, and no canvas has confirmed them. They still go out, once, if a canvas of either session runs again. Discard any you no longer want sent.' }), h('ul', { class: 'fb-list' }, expired.map((item) => feedbackRow(ctx, item, loop)))] : null,
         earlier.length ? disclosure(ctx, 'earlier-feedback', 'earlier', `Feedback history (${earlier.length})`, h('ul', { class: 'fb-list' }, earlier.slice().reverse().map((item) => feedbackRow(ctx, item, loop)))) : null);
 
     return [
         steerSection('needs', 'Needs your input', needsCount, needsCount ? needs : h('p', { class: 'empty', text: 'Nothing needs you right now. Decisions the agent asks you about appear here.' }), { iconName: 'hand', className: needsCount ? 'has-items' : null }),
         steerSection('decided', 'Recorded decisions', decidedCount, decidedCount ? decided : h('p', { class: 'empty', text: 'No recorded decisions yet.' }), { iconName: 'sparkle' }),
-        steerSection('feedback', 'Your feedback', pending.length + agentQueue.length + inFlight.length + uncertain.length, feedback, { iconName: 'inbox' }),
+        steerSection('feedback', 'Your feedback', pending.length + agentQueue.length + inFlight.length + uncertain.length + expired.length, feedback, { iconName: 'inbox' }),
         steerSection('add', 'Add input', null, composer(ctx), { iconName: 'plus' }),
     ].filter(Boolean);
 }
@@ -1095,6 +1104,23 @@ export function uncertainAnnouncement(previous, next) {
     if (!fresh.length) return null;
     const where = uncertainWhere(next);
     return `${plural(fresh.length, 'item')} may already have been sent. Check ${where ?? 'the chat each item names'}; ${fresh.length === 1 ? 'it is' : 'they are'} not sent again.`;
+}
+
+/**
+ * The announcement for items that this canvas's session relayed through its chat since the page last showed the
+ * session, in the relay note's words: a hand-off that the other session's canvas did not take in time, or one that
+ * went straight to the relay. Items in `known`, as `taskId:id`, were announced when they were sent, so they are left
+ * out. Null when there are none new.
+ *
+ * @param {any} previous the state the page showed before, or null
+ * @param {any} next the state it shows now
+ * @param {Set<string>} [known]
+ */
+export function relayAnnouncement(previous, next, known = new Set()) {
+    const before = new Set(previous ? relayedFeedback(previous).map(itemKey) : []);
+    const fresh = relayedFeedback(next).filter((entry) => !before.has(itemKey(entry)) && !known.has(itemKey(entry)));
+    if (!fresh.length) return null;
+    return `Relayed to ${routeName(next.delivery ?? null)}: ${plural(fresh.length, 'item')} went to this chat's agent, which forwards ${fresh.length === 1 ? 'it' : 'them'}.`;
 }
 
 /** A status-area note for a delivery notice: its icon, its text, and its controls. */
@@ -1365,6 +1391,25 @@ function sessionRow(entry, shown, options) {
 }
 
 /**
+ * What a Refresh of the picker found, in words for the polite announcer: the failure, that no session has RPI
+ * work, or how many sessions each group lists.
+ *
+ * @param {{ list: { sessions: any[] } | null, error: string | null }} outcome
+ */
+export function pickerAnnouncement({ list, error }) {
+    if (error) return `Sessions could not be listed: ${error}`;
+    const sessions = list?.sessions ?? [];
+    if (!sessions.length) return 'No sessions with RPI work were found on this machine.';
+    const started = sessions.filter((entry) => entry.mine).length;
+    const others = sessions.length - started;
+    const parts = [
+        started ? `${plural(started, 'session')} this chat started` : null,
+        others ? `${plural(others, started ? 'other session' : 'session')} with RPI work` : null,
+    ].filter(Boolean);
+    return `Listed ${parts.join(' and ')}.`;
+}
+
+/**
  * The RPI sessions this conversation can show, as a group. It lists the sessions the conversation started
  * first, then the other local sessions with RPI work. Each row names the session, its repository and branch,
  * its task with phase and status in words, whether its canvas runs, and whether it is this chat or the one the
@@ -1396,7 +1441,8 @@ export function copilotSessionsPicker(model, options) {
         model.list && !model.loading && sessions.length === 0 ? h('p', { class: 'meta', text: 'No sessions with RPI work were found on this machine.' }) : null,
         started.length ? group('started', 'Sessions this chat started', started) : null,
         others.length ? group('others', 'Other sessions with RPI work', others) : null,
-        model.showError ? h('p', { class: 'field-error', role: 'alert' }, icon('alert'), h('span', { text: model.showError })) : null,
+        // The page announces a failed Show here once, when it happens, so the text that stays is not an alert.
+        model.showError ? h('p', { class: 'field-error' }, icon('alert'), h('span', { text: model.showError })) : null,
         model.note ? h('p', { class: ['copilot-note', 'notice', `tone-${model.note.tone}`] }, icon(model.note.icon, { className: 'status-note-icon' }), h('span', { text: model.note.text })) : null);
 }
 

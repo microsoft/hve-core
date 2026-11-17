@@ -10,11 +10,13 @@ import { PATHS, rootSession } from './helpers/rpi-fixture.mjs';
 let restore;
 let components;
 let connect;
+let dom;
 let makeContext;
 before(async () => {
     restore = installFakeDom();
     components = await import('../ui/components.mjs');
     connect = await import('../ui/connect-view.mjs');
+    dom = await import('../ui/dom.mjs');
     ({ makeContext } = await import('./helpers/render-views.mjs'));
 });
 after(() => restore());
@@ -177,18 +179,29 @@ describe('the picker\'s states', () => {
         assert.ok(byKey(node, 'menu-sessions-refresh'));
     });
 
-    it('says why Show here failed, as an alert, and shows the outcome of Open in new panel at the foot of the group', () => {
+    it('says why Show here failed as a field error that is not an alert, since the page announces it once, and shows the outcome of Open in new panel at the foot of the group', () => {
         const node = picker(idle({
             showError: 'Could not show that session: No RPI session state was found.',
             note: { tone: 'accent', icon: 'panel', text: 'Opened a canvas for Trail maps in a new panel.' },
             list: { sessions: [entry()], skipped: 0 },
         }), recorder().options());
-        const alert = within(node).find((item) => item.getAttribute('role') === 'alert');
-        assert.equal(textOf(alert), 'Could not show that session: No RPI session state was found.');
+        const error = withClass(node, 'field-error')[0];
+        assert.equal(textOf(error), 'Could not show that session: No RPI session state was found.');
+        assert.equal(within(node).some((item) => item.getAttribute('role') === 'alert'), false, 'a later render does not speak it again');
         const note = withClass(node, 'copilot-note')[0];
         assert.ok(note.classList.contains('tone-accent'));
         assert.equal(textOf(note), 'Opened a canvas for Trail maps in a new panel.');
         assert.equal(node.childNodes.at(-1), note, 'the notice is the last part of the group');
+    });
+
+    it('words what a Refresh found for the announcer: the failure, no sessions, or how many each group lists', () => {
+        assert.equal(components.pickerAnnouncement({ list: null, error: 'The session store is busy.' }), 'Sessions could not be listed: The session store is busy.');
+        assert.equal(components.pickerAnnouncement({ list: { sessions: [], skipped: 0 }, error: null }), 'No sessions with RPI work were found on this machine.');
+        const mine = entry();
+        const other = entry({ sessionId: OTHER, mine: false });
+        assert.equal(components.pickerAnnouncement({ list: { sessions: [mine, entry({ sessionId: LIVE }), other], skipped: 0 }, error: null }), 'Listed 2 sessions this chat started and 1 other session with RPI work.');
+        assert.equal(components.pickerAnnouncement({ list: { sessions: [mine], skipped: 0 }, error: null }), 'Listed 1 session this chat started.');
+        assert.equal(components.pickerAnnouncement({ list: { sessions: [other, entry({ sessionId: LIVE, mine: false })], skipped: 0 }, error: null }), 'Listed 2 sessions with RPI work.');
     });
 
     it('is a named group, so assistive technology reads it as one', () => {
@@ -275,5 +288,76 @@ describe('the picker in the session menu', () => {
         const root = menu({ kind: 'sample', picker: { model: idle(), onShow: () => {}, onOpen: () => {}, onRefresh: () => {} } });
         assert.deepEqual(headingsOf(root, 'h3'), ['Loops in this session', 'Copilot sessions']);
         assert.match(textOf(root), /The sample has no other loops to show\./);
+    });
+});
+
+describe('focus when the picker\'s answer renders its region again', () => {
+    /** Focuses the element, as the page's focusQuietly does for one it can show. */
+    const focus = (element) => {
+        element.focus();
+        return document.activeElement === element;
+    };
+    const handlers = { onShow: () => {}, onOpen: () => {}, onRefresh: () => {} };
+
+    /** The session menu's region, rendered again by `paint(model)` with the picker's model. */
+    function menuRegion() {
+        const { session } = rootSession();
+        const ctx = makeContext(session, 'followup');
+        ctx.act = { showTask: () => {} };
+        const region = document.createElement('div');
+        const paint = (model) => region.replaceChildren(...components.sessionMenuNodes(ctx, { following: true, picker: { model, ...handlers } }));
+        return { region, paint };
+    }
+
+    it('keeps focus on the session menu\'s title, which the menu takes as it opens, when the fetched list renders the menu again', () => {
+        const { region, paint } = menuRegion();
+        paint(idle({ loading: true, list: null }));
+        const title = within(region).find((node) => node.getAttribute('id') === 'sessionMenuTitle');
+        title.focus();
+        dom.keepingFocus(region, () => null, () => paint(idle({ list: { sessions: [entry()], skipped: 0 } })), focus);
+        assert.notEqual(document.activeElement, title, 'the menu was rendered again');
+        assert.equal(document.activeElement.getAttribute('id'), 'sessionMenuTitle');
+        assert.ok(region.contains(document.activeElement), 'focus never drops to the page body');
+    });
+
+    it('keeps focus on a picker control by its key, and moves it to the heading when the control is gone', () => {
+        const { region, paint } = menuRegion();
+        const heading = () => within(region).find((node) => node.getAttribute('id') === 'sessionMenuTitle');
+        const listed = idle({ list: { sessions: [entry(), entry({ sessionId: OTHER, name: 'Search API', mine: false })], skipped: 0 } });
+        paint(listed);
+        byKey(region, `menu-show-${OTHER}`).focus();
+        dom.keepingFocus(region, heading, () => paint(listed), focus);
+        assert.equal(document.activeElement.getAttribute('data-key'), `menu-show-${OTHER}`);
+        dom.keepingFocus(region, heading, () => paint(idle({ list: { sessions: [entry()], skipped: 0 } })), focus);
+        assert.equal(document.activeElement, heading(), 'the heading takes focus when the session left the list');
+    });
+
+    it('keeps focus on the Not connected screen\'s links and details block, and moves it to the screen\'s title when the focused control is gone', () => {
+        const region = document.createElement('div');
+        const idleView = { asking: false, askedAt: 0, retryAfterMs: 30000, error: null, helpOpen: true };
+        const acts = { ask: () => {}, copyRequest: () => {}, copyDetails: () => {}, showSample: () => {}, toggleHelp: () => {}, picker: handlers };
+        const paint = (over = {}) => region.replaceChildren(connect.notConnectedView({ reason: 'no-input', detail: null, request: 'RPI canvas 3WF0: connect this canvas.', canAsk: true, handle: '3WF0', editor: null, now: NOW, ui: idleView, picker: idle(), ...over }, acts));
+        const title = () => within(region).find((node) => node.getAttribute('id') === 'connectTitle');
+        paint();
+        for (const key of ['connect-report', 'connect-contribute', 'connect-details']) {
+            const before = byKey(region, key) ?? within(region).find((node) => node.dataset.key === key);
+            assert.ok(before, `${key} is keyed`);
+            before.focus();
+            dom.keepingFocus(region, title, () => paint(), focus);
+            assert.notEqual(document.activeElement, before);
+            assert.equal(document.activeElement.dataset.key, key);
+        }
+        byKey(region, 'connect-ask').focus();
+        dom.keepingFocus(region, title, () => paint({ canAsk: false }), focus);
+        assert.equal(document.activeElement, title(), 'the title takes focus when Ask the agent is gone');
+    });
+
+    it('leaves focus alone when it is outside the region', () => {
+        const { region, paint } = menuRegion();
+        paint(idle());
+        const outside = document.createElement('button');
+        outside.focus();
+        dom.keepingFocus(region, () => null, () => paint(idle({ loading: true, list: null })), focus);
+        assert.equal(document.activeElement, outside);
     });
 });

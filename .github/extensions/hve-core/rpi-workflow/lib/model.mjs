@@ -579,7 +579,8 @@ export function editFeedback(session, feedbackId, value, now) {
 
 /**
  * Discards each named item that has not been sent and is not being sent, and lists the
- * ones it skipped. One revision for all of them.
+ * ones it skipped. An item whose handoff to another session has expired is discarded too, and
+ * its hold ends with it, so neither session's canvas sends it afterwards. One revision for all of them.
  *
  * @param {any} session
  * @param {string[]} ids
@@ -591,10 +592,12 @@ export function discardFeedback(session, ids, now) {
     const skipped = [];
     for (const id of ids) {
         const item = typeof id === 'string' ? next.feedback.find((entry) => entry.id === id) : null;
-        if (!item || !unsent(item, now)) {
+        const expired = isHandoffExpired(item, now);
+        if (!item || !(unsent(item, now) || expired)) {
             skipped.push(String(id));
             continue;
         }
+        if (expired) next = releaseDelivery(next, [id], now).session;
         next = transitionFeedback(next, id, 'dismissed', { by: 'user' }, now).session;
         discarded.push(id);
     }
@@ -612,9 +615,17 @@ export const SUGGESTION_DIFF_MAX = 20000;
 export const CLAIM_STALE_MS = 10 * 60 * 1000;
 
 /**
+ * How long a handoff to another session holds its items before you may discard them. It is well past
+ * the claim window and the stale windows of a send and a relay, so a running canvas of either session
+ * settles the handoff first; a handoff still held after it waits on a session that may not run again.
+ */
+export const HANDOFF_HOLD_MS = 60 * 60 * 1000;
+
+/**
  * True while a delivery holds a queued item, so takes and other deliveries skip it. A handoff to
  * another session's inbox holds its items until they are sent, relayed, marked uncertain, or
- * released, however long that takes; any other hold lapses after the claim window.
+ * released, however long that takes; any other hold lapses after the claim window. A handoff held
+ * past `HANDOFF_HOLD_MS` still holds its items, so nothing sends them again, but they can be discarded.
  *
  * @param {any} item
  * @param {string} now ISO time
@@ -624,6 +635,20 @@ export function isClaimed(item, now) {
     if (!item?.deliveringSince) return false;
     const age = Date.parse(now) - Date.parse(item.deliveringSince);
     return Number.isFinite(age) && age < CLAIM_STALE_MS;
+}
+
+/**
+ * True when a queued item's handoff to another session has held it for `HANDOFF_HOLD_MS` or longer
+ * without settling. The item can be discarded; it is never sent again from this canvas, and the
+ * handoff still delivers it, once, if a canvas of either session runs again first.
+ *
+ * @param {any} item
+ * @param {string} now ISO time
+ */
+export function isHandoffExpired(item, now) {
+    if (item?.state !== 'queued' || !item.handoff || !item.deliveringSince) return false;
+    const age = Date.parse(now) - Date.parse(item.deliveringSince);
+    return Number.isFinite(age) && age >= HANDOFF_HOLD_MS;
 }
 
 /**
@@ -857,9 +882,9 @@ export function heldItemIds(session, ids, entryId) {
 }
 
 /**
- * Settles a handoff that did not stand: each item it holds is released, and its note, when it has
- * one, is dismissed. Only items still held by `entryId` change. A handoff that did not stand has no
- * relay claim, because only committed entries are relayed.
+ * Settles a handoff that did not stand, or one that no process of its session could relay: each
+ * item it holds is released, along with any relay claim on it, and its note, when it has one, is
+ * dismissed. Only items still held by `entryId` change.
  *
  * @param {any} session
  * @param {string} entryId

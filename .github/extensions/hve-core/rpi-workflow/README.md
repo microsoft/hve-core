@@ -2,7 +2,7 @@
 title: RPI Workflow Canvas
 description: Canvas extension for following and steering RPI sessions through research, planning, implementation, review, and follow-up
 author: Microsoft
-ms.date: 2026-11-13
+ms.date: 2026-11-17
 ms.topic: reference
 keywords:
   - canvas
@@ -120,10 +120,11 @@ Everything you add waits in the canvas until you send or queue it. Review and se
   Discard all, which asks the same way, naming how many items and loops; and Close.
   Lines above the buttons say what each does, and Queue disappears once everything is queued. The review closes after you send or queue, after Discard all, or when you discard its last item.
 
-Your feedback in the steering panel lists the shown loop's items: Not sent yet, Queued for the agent, With the agent, May have been sent, and Feedback history. Each unsent item has Go to, Edit, and Discard, and a queued one also has Take back, which returns it to Not sent yet until you send or queue it again. The others have Go to.
+Your feedback in the steering panel lists the shown loop's items: Not sent yet, Queued for the agent, With the agent, May have been sent, Not confirmed, and Feedback history. Each unsent item has Go to, Edit, and Discard, and a queued one also has Take back, which returns it to Not sent yet until you send or queue it again. The others have Go to.
 A sent item to another session shows whether it went direct or was relayed, and through which chat. An item that may have been sent shows the badge May have been sent, names the chat that may hold it, and offers Discard as its only action.
+Items handed to another session that no canvas has confirmed after an hour show Not confirmed and offer Discard as their only action. They are never sent again from the canvas. Until you discard them, a canvas of either session that runs again still delivers them, once.
 
-The status area at the bottom of the document shows two delivery notices. In the canvas whose chat relayed items, a notice that begins "Relayed to" names the session until this chat's agent takes them, and that notice can be dismissed. An item that may have been sent shows a notice that asks you to check the chat it names; those items are never sent again, and you can discard them once you have checked.
+The status area at the bottom of the document shows two delivery notices. In the canvas whose chat relayed items, a notice that begins "Relayed to" names the session until this chat's agent takes them, and that notice can be dismissed. It is also announced, unless the send that relayed the items already said so. An item that may have been sent shows a notice that asks you to check the chat it names; those items are never sent again, and you can discard them once you have checked.
 
 The RPI Agent checks the canvas with `take_feedback` at its checkpoints and collects what you queued. When it asks you a question, it offers Answered in the canvas: choose it after you answer here, and the agent collects your answers before it goes on.
 
@@ -288,7 +289,7 @@ While the picker is on screen, the outcome of Open in new panel appears at its f
 
 A Wait notice for a different session says "another session" in place of NAME. When the host cannot open the panel, the canvas sends the chat one fixed line, `RPI canvas <handle>: open an RPI Workflow canvas for session <session ID>.`, and reports Asked. It sends at most one such line every 30 seconds, so a request within that time gets the Wait notice.
 
-If Show here fails, the picker says so with the reason. While the list loads, it says "Looking for sessions…" If the list cannot be read, it says "Sessions could not be listed," with the reason. When no session has RPI work, it says "No sessions with RPI work were found on this machine." Refresh fetches the list again.
+If Show here fails, the picker says so with the reason, and the page announces it once. While the list loads, it says "Looking for sessions…" If the list cannot be read, it says "Sessions could not be listed," with the reason. When no session has RPI work, it says "No sessions with RPI work were found on this machine." Refresh fetches the list again, and the page announces what it found. When the list renders again, focus stays on the control or heading that had it.
 
 ## Real RPI Sessions
 
@@ -403,6 +404,7 @@ The extension keeps its data under `~/.copilot/extension-data/hve-core-rpi-workf
 * `outbox/<session>.json` holds the handoffs that this session's canvases made to other sessions and have not settled. Each names the task document, the target session, the canvas handle, the time after which the items may be relayed, and whether Send now finished writing it (`pending`, then `committed`). The item text stays in the task document.
   A pending entry is never relayed. One still pending after ten minutes belongs to a Send now that did not finish, so the canvas releases its items, and you can send them again.
 * A canvas process running for a session claims each waiting entry in its inbox and sends the items into that session's chat once. An entry whose send was not confirmed leaves its items marked May have been sent, and the canvas does not send them again. Once an outbox entry's time has passed and its target has not claimed the items, the source canvas relays them through its own chat.
+  A canvas process whose host cannot send messages leaves a due entry to the session's other processes for ten minutes. Then it withdraws the target's entry, so the target can no longer take the items, and returns them to Not sent yet without sending them.
 
 ## Security and Privacy
 
@@ -430,7 +432,8 @@ Your user account is their only boundary: any process running as you can read or
 * An earlier document is read-only in the canvas: comment on the current one, or ask the agent. Research, Plan, Implement, and Review switch documents; Follow-up and the steering panel always show the current work.
 * Artifacts that stray far from the RPI templates still render, but sections the canvas does not recognize appear only in the record rows.
 * Following goes to whichever loop of the session runs, so a subagent that runs its own RPI loop in the session looks like any other loop, and the canvas can follow into it; use the session menu to go back, which stops following. With several running loops, which happens only when an earlier conversation stopped without saying so, it picks the one that changed last.
-* Send now needs a host that accepts messages from extensions. When it does not, the review says so, and the items stay unsent until the agent collects them with `take_feedback`; Queue works either way. The canvas does not attach items to your next message, because VS Code does not show extension attachments. The Not connected page then offers Copy request without Ask the agent.
+* Send now needs a host that accepts messages from extensions. When it does not, the review says so, and the items stay unsent until the agent collects them with `take_feedback`; Queue works either way. Items of another session's task are refused the same way, because this chat's agent forwards them when that session's canvas does not take them.
+  The canvas does not attach items to your next message, because VS Code does not show extension attachments. The Not connected page then offers Copy request without Ask the agent.
 * Cloud sessions are not listed. A cloud session has no local workspace, so the picker never shows it, and the canvas cannot read its tasks or show its decisions. Run the sessions you want to follow as local sessions.
 * Sessions that share one checkout share its RPI tasks, so the picker lists that checkout once, under its most recently updated session. A session this chat started is always listed, and other sessions in its checkout are left out.
 * A session that runs an older hve-core build neither announces a running canvas nor takes inbox items, so Send now relays its items through this chat's agent.

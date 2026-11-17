@@ -707,6 +707,27 @@ describe('outbox relay', () => {
         store.close();
     });
 
+    it('leaves a due hand-off to the session\'s other processes while a process that cannot send waits out the stale window, then withdraws the target entry and releases the items unsent', async () => {
+        const store = createStore({ root: path.join(scratch, 'cannot-send') });
+        await seedRelay(store, { relayAfter: NOW, inbox: { state: 'waiting', owner: null }, note: 'FB-002' });
+        const sends = [];
+        const clock = fakeClock();
+        const runner = runnerFor(store, clock, { sessionId: SOURCE, canDeliver: () => false, deliver: relayOnce(sends) });
+        await runner.start();
+        await clock.advance(CLAIM_STALE_MS);
+        assert.equal((await store.loadOutbox(SOURCE)).entries.length, 1, 'the entry waits for a process that can send');
+        assert.equal((await store.loadInbox(SESSION)).entries.length, 1, 'the target may still take its entry');
+        assert.equal(itemOf(await store.load(TASK_DOC), 'FB-001').handoff.entryId, 'entry-1', 'the items stay held');
+        await clock.advance(2_000);
+        assert.deepEqual(sends, [], 'nothing is sent');
+        assert.deepEqual([(await store.loadInbox(SESSION)).entries, (await store.loadOutbox(SOURCE)).entries], [[], []], 'the target entry is withdrawn before the items are released');
+        const doc = await store.load(TASK_DOC);
+        assert.deepEqual([itemOf(doc, 'FB-001').state, itemOf(doc, 'FB-001').handoff, itemOf(doc, 'FB-001').deliveringSince], ['queued', undefined, undefined], 'the item can be sent or queued again');
+        assert.equal(itemOf(doc, 'FB-002').state, 'dismissed', 'the note is dismissed');
+        await runner.stop();
+        store.close();
+    });
+
     it('retries a relay whose target inbox cannot be read yet, and relays once the file can be read', async () => {
         const root = path.join(scratch, 'unreadable-target');
         const store = createStore({ root });
