@@ -57,33 +57,7 @@ Skeleton:
 </div>
 ```
 
-Worked example (Security Planner):
-
-```html
-<div>
-  <h3>Security Control: {mitigation_name}</h3>
-  <p><strong>Threat:</strong> {threat_id} - {threat_description}</p>
-  <p><strong>Bucket:</strong> {bucket_name}</p>
-  <p><strong>Standards:</strong> {owasp_ref}, {nist_ref}</p>
-  <h4>Implementation</h4>
-  <p>{implementation_details}</p>
-  <h4>Acceptance Criteria</h4>
-  <ul>
-    <li>{criterion_1}</li>
-    <li>{criterion_2}</li>
-  </ul>
-</div>
-```
-
-Each planner substitutes its own field block (NIST characteristic + threat + control surface for RAI; framework + criterion + surface + personas + evidence + tradeoff for Accessibility; supply-chain control + Scorecard check + adoption type for SSSC; data category + processing purpose + DPIA reference + lawful basis + risk tier for Privacy).
-
-Planner-specific ADO description field block (the keys substituted into the `<!-- planner-specific field block goes here -->` slot):
-
-* RAI — `characteristic`, `subcategory`, `principle`, `maturity_level`, `tradeoff_ref` (when applicable).
-* Security — `threat_id`, `stride_category`, `bucket`, `risk_level`.
-* SSSC — Scorecard Check, Risk Level, Effort, Adoption Type, Prerequisite, Adoption Steps, Source References (Workflow, Script, Documentation).
-* Accessibility — `framework`, `criterion`, `surface`, `wcag_level`, `severity`, `category`, `risk_tier`, `tradeoff_ref` (when applicable). Add an assistive-technology validation note when `severity` is `critical` or `major`.
-* Privacy — `data_category`, `processing_purpose`, `dpia_ref`, `lawful_basis`, `risk_tier`.
+Fill the field block with the active planner's handoff fields. Keep the implementation, acceptance criteria, and human-review block in every rendered item.
 
 ## GitHub Issue Template
 
@@ -102,13 +76,7 @@ cross_planner_refs: ["{wi_id_1}"]
 ---
 ```
 
-Planner-specific augmentation fields (added to the same YAML block, not replacing it):
-
-* RAI — `characteristic`, `subcategory`, `principle`, `maturity_level`, `tradeoff_ref`, `horizon`, `standards`.
-* Security — `threat_id`, `stride_category`, `risk_level`, `bucket`, `standards`.
-* SSSC — `scorecard_check`, `risk_level`, `adoption_type`, `effort`, `standards`.
-* Accessibility — `framework`, `criterion`, `surface`, `wcag_level`, `severity`, `category`, `risk_tier`, `tradeoff_ref`, `standards`.
-* Privacy — `data_category`, `processing_purpose`, `dpia_ref`, `lawful_basis`, `risk_tier`, `standards`.
+Add the active planner's handoff fields to the same YAML header. Keep the shared keys, including `standards`, rather than replacing the header with a domain-specific one.
 
 Markdown body skeleton:
 

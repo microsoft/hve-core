@@ -21,9 +21,9 @@ Before generating backlog items, confirm that the assessment has covered the ess
 
 Generate work items from the evidence register and maturity observations using the appropriate backlog format. Keep the output concise, attributable, and suitable for downstream review.
 
-### Delegation to Shared Backlog Templates
+### RAI Handoff Fields
 
-For the full dual-format ADO and GitHub templates, content sanitization guidance, autonomy-tier vocabulary, disclaimer placement, and work-item ID naming rules, load the `backlog-templates` skill. This handoff reference stays focused on the RAI-specific review expectations and the final handoff decisions.
+Use `backlog-templates` for the format skeletons, sanitization, autonomy tiers, disclaimer placement, and IDs. In the ADO description and GitHub YAML header, record `characteristic`, `subcategory`, `principle`, `maturity_level`, and any applicable `tradeoff_ref`. Link the threat and control surface in the summary. Include `horizon` and the applicable `standards` in the GitHub header.
 
 Content sanitization: no secrets, credentials, internal URLs, or PII in work item content. Apply this alongside the `backlog-templates` sanitization rules, which cover paths, state JSON, and standards identifiers but not these values.
 
