@@ -90,6 +90,8 @@ Every entry mode scans these supporting context sources alongside its mode-speci
 
 During Phase 1, ask whether the user has backlog output preferences: dual-format ADO and GitHub work items (`both`), ADO-only (`ado`), or GitHub-only (`github`). Capture the answer in `state.json` under `userPreferences.targetSystem` using the allowed values `ado`, `github`, or `both`. When the user supplies a custom backlog template, store it under `.copilot-tracking/sssc-plans/references/` and still record the closest matching `targetSystem` value.
 
+For optional outputs, offer an SBOM or a Scorecard improvement projection. Record the choices as `sbom` and `scorecardProjection` under `userPreferences.includeOptionalArtifacts`. Signing is a separate decision at handoff.
+
 Before Phase 1 scoping is complete, ask whether the user has evaluation standards, workflow inventories, or output format requirements to store in `.copilot-tracking/sssc-plans/references/`.
 
 Present the scan results as a checklist before Phase 1 questions: ✅ for discovered artifacts and supporting context with file paths and brief descriptions, and ❌ for expected sources that were not found. When a document-seeded mode (`from-prd`, `from-brd`, or `from-security-plan`) finds no primary artifact, fall back to `capture` and explain the switch.

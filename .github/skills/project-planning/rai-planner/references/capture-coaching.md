@@ -16,6 +16,8 @@ Capture mode is the default starting posture for a fresh RAI assessment. It shou
 * out-of-scope, prohibited, or high-risk uses
 * output and reporting preferences for the final handoff
 
+When confirming optional outputs, offer a Transparency Note and a Monitoring Summary. Record the choices as `transparencyNote` and `monitoringSummary` under `userPreferences.includeOptionalArtifacts`. Signing is a separate decision at handoff.
+
 ## Exploration-First Stance
 
 Apply these rules during capture:
