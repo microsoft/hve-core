@@ -128,7 +128,7 @@ stimuli:
     category: code-qa
     prompt: "Explain step by step how a fizzbuzz implementation works for the first 15 numbers."
     invariants: [mentions-fizz-buzz]
-    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [code-review, rpi-agent], policy: equivalent}
+    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
         name: mentions-fizz-buzz
@@ -142,7 +142,7 @@ stimuli:
     category: code-qa
     prompt: "Explain what this Python error means: IndexError: list index out of range."
     invariants: [mentions-index-or-range]
-    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [code-review, rpi-agent], policy: equivalent}
+    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
         name: mentions-index-or-range
@@ -381,7 +381,7 @@ stimuli:
     # baseline run only, so this grader records whether the uncustomized model chose
     # a particular illustration, which differs by model and cannot evidence that the
     # customization changed behavior.
-    tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [code-review, rpi-agent], policy: equivalent}
+    tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
         name: mentions-print-paren

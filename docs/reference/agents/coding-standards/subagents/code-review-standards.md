@@ -1,9 +1,9 @@
 ---
 title: Code Review Standards
-description: Thin skill-backed perspective subagent that reviews a precomputed diff against project coding standards and writes structured findings
-sidebar_position: 7
+description: Review assigned evidence against applicable project criteria and return the shared worker result.
+sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-09
 ms.topic: reference
 keywords:
   - agent
@@ -23,13 +23,14 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Thin skill-backed perspective subagent that reviews a precomputed diff against project coding standards and writes structured findings
+Review assigned evidence against applicable project criteria and return the shared worker result.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-Code Review dispatches Standards to check a precomputed diff against applicable coding-standards skills. Findings must trace to a loaded skill, not the worker's stylistic preferences. Functional correctness stays with the Functional perspective; users invoke Code Review rather than this worker directly.
+Code Review dispatches Standards to check assigned changes against applicable repository instructions and matching skills. It preloads `code-review-core` and `code-review-standards`, and every finding cites the instruction or exact skill name and criterion behind it. Functional correctness stays with the functional perspective.
 
 ## Example usage
 
-The parent supplies changed extensions and files, depth, exclusions, the diff, and `task.outputs.standards`. The worker loads matching skills, records each finding's skill provenance, and writes JSON results. If no skill matches, it returns the normal empty findings structure with the coverage limitation instead of inventing project rules.
+The parent supplies the work item, assigned files and hunks, depth, applicable criteria, and the result path. The worker selects each matching skill with its origin, applies instruction precedence, and writes a shared result whose observations list every criteria source it used.
+If no instructions or skills apply, it records standards evidence as unavailable and returns that gap without inventing project rules.

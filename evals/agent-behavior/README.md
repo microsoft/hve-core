@@ -2,16 +2,16 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-11-07
+ms.date: 2026-11-17
 ---
 
 ## Purpose
 
-This suite covers every user-invocable hve-core agent with at least one functional stimulus and at least one functional grader, so a regression in any single agent's behavior is detectable from a per-agent eval run.
+This suite requires every user-invocable hve-core agent to have at least one functional stimulus and at least one functional grader. Code Review currently lacks that coverage after retirement of its obsolete eval contracts; replacement model coverage is deferred.
 
 The complement to [baseline-equivalence](../baseline-equivalence/README.md) is intentional: baseline-equivalence asserts the customization layer does not alter underlying model behavior beyond documented divergences, while agent-behavior asserts each agent actually performs its declared job.
 
-The suite is organized around four behavioral classes (research-writer, code-reviewer, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; the maintained stimulus inventory contains 63 enrolled agents, including 31 subagents.
+The suite is organized around four behavioral classes (research-writer, code-reviewer, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; the generated inventory contains 55 enrolled agents, including 23 subagents.
 
 ## Layout
 
@@ -21,7 +21,7 @@ evals/agent-behavior/
 ├── AGENTS.yml          # authoritative inventory (slug, path, class, cost_tier)
 ├── eval.yaml           # generated executable spec - do not edit by hand
 └── stimuli/
-  └── <agent-slug>.yml  # one partial per inventoried agent (63 files)
+  └── <agent-slug>.yml  # 54 partials; Code Review coverage is deferred
 ```
 
 The partials in [stimuli/](stimuli/) are the source of truth for stimuli. The top-level [eval.yaml](eval.yaml) is regenerated from those partials by [scripts/evals/Build-AgentBehaviorSpec.ps1](../../scripts/evals/Build-AgentBehaviorSpec.ps1). The inventory at [AGENTS.yml](AGENTS.yml) is regenerated from the agent frontmatter on disk by [scripts/evals/Build-AgentInventory.ps1](../../scripts/evals/Build-AgentInventory.ps1) and the agent-behavior generator only reads slugs whose partials exist in [stimuli/](stimuli/).
@@ -34,6 +34,9 @@ The generator concatenates every [stimuli/](stimuli/) partial, prepends the file
 # Regenerate the spec from partials
 pwsh -NoProfile -File scripts/evals/Build-AgentBehaviorSpec.ps1 -Force
 
+# Refresh enrollment after adding or retiring partials
+pwsh -NoProfile -File scripts/evals/Build-AgentInventory.ps1 -Force
+
 # Drift check (CI-safe): exit 0 if eval.yaml matches rendered output, exit 1 + diff if not
 pwsh -NoProfile -File scripts/evals/Build-AgentBehaviorSpec.ps1 -WhatIf
 ```
@@ -41,6 +44,17 @@ pwsh -NoProfile -File scripts/evals/Build-AgentBehaviorSpec.ps1 -WhatIf
 When the drift check fails, a unified diff is written to [logs/agent-behavior-spec-drift.diff](../../logs/agent-behavior-spec-drift.diff). Inspect that file, re-run the generator with `-Force`, and commit the regenerated [eval.yaml](eval.yaml) alongside any stimulus partial change in the same commit.
 
 The drift check is wired into the repository's `ci:eval:lint:vally` npm script in [package.json](../../package.json) so vally lint cannot pass while [eval.yaml](eval.yaml) is out of sync with the partials.
+
+### Retired grader aliases
+
+[Build-GraderLineageMap.ps1](../../scripts/evals/Build-GraderLineageMap.ps1) owns an explicit retired-source list. When historical revisions cannot be regenerated, use its retirement-only operation:
+
+```bash
+npm run eval-grader-lineage:retire
+npm run lint:eval-grader-lineage
+```
+
+Retirement verifies the map committed at `HEAD`, removes only listed aliases, and checks every retained target before writing. It refuses unrelated uncommitted map changes. Historical revisions, source/target digests, 1240 source-to-target pairs, and 171 generated copies remain unchanged. The active map contains 397 aliases after retiring the 14 Code Review aliases. `lint:eval-grader-lineage` only checks the map; it never prunes or regenerates it.
 
 ## RPI Assessment Policy Regressions
 
@@ -82,6 +96,14 @@ A per-stimulus `agent_environment.skills` list is concatenated with the suite-le
 Some stimuli intentionally stage fewer skills than their agent preloads. A stimulus that declares a response-only or isolated behavior-contract scenario, tests a missing source such as `security-planner-disclaimer-source-missing`, or stages a synthetic policy fixture instead of the agent omits the agent's preloads, because staging them would change or defeat the behavior under test.
 
 Vally has no agent-routing option, and staging an `.agent.md` at its normal `.github/agents/` path does not place it in model context. Workspace instructions are the supported channel, which is why isolated functional stimuli remap the agent file rather than copying it to its original location.
+
+### Deferred Code Review coverage
+
+The primary Code Review agent stays enrolled because the inventory always includes parent agents. Its nine workers, including Code Review Specialist, stay out of the inventory under the existing partial-backed enrollment rule. Their nine stimulus partials, the main expectation file, the resume fixture, and three shared Code Review conformance cases are retired without replacements.
+
+Changed-artifact coverage is missing for all ten Code Review agents and these ten skills: `code-review`, `code-review-core`, `code-review-context`, `code-review-functional`, `code-review-standards`, `code-review-accessibility`, `code-review-security`, `code-review-readiness`, `code-review-specialist`, and `code-review-investigation`. Parent coverage and stimulus-presence gates remain unchanged and unsatisfied; deterministic runtime or generator tests do not replace model coverage.
+
+The three shared baseline-equivalence scenarios retain their `rpi-agent` routing but no longer backlink Code Review. Unrelated RPI business-alignment cases remain. Code Review confirmation evidence for proposed [ADR-0012](../../docs/planning/adrs/0012-close-the-business-alignment-loop-in-rpi.md) is deliberately deferred, not passed. A later authorized eval effort must restore coverage before merge readiness can be claimed.
 
 ### Data Science Coach RPI Scenarios
 
@@ -211,36 +233,6 @@ Agents that analyze code, diffs, or artifacts and surface issues, risks, or reco
 
 * `header-present` - No code-reviewer agents currently declare a `Start responses with:` directive. This grader is omitted for all 8 members of this class.
 
-#### Worked Example: code-review
-
-```yaml
-# evals/agent-behavior/stimuli/code-review.yml
-stimuli:
-  - name: code-review-identifies-security
-    prompt: |
-      Review this diff and identify any security concerns:
-      ```diff
-      -password = input("Enter password: ")
-      +password = getpass("Enter password: ")
-      ```
-    tags:
-      category: agent-behavior
-    graders:
-      - type: output-matches
-        name: findings-table-present
-        config:
-          pattern: '(?m)^\|.*\|.*\|'
-      - type: output-matches
-        name: severity-vocab
-        config:
-          pattern: '(?i)(security|credential|password|risk|severity)'
-      - type: output-matches
-        name: no-source-edit
-        config:
-          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
-          negate: true
-```
-
 ### Class 3: workitem-manager
 
 Agents that convert user requests, PRDs, or triage input into work item drafts (ADO, GitHub, Jira).
@@ -351,8 +343,9 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | system-architecture-reviewer   | research-writer  | light     | [.github/agents/project-planning/system-architecture-reviewer.agent.md](../../.github/agents/project-planning/system-architecture-reviewer.agent.md)                     |
 | ux-ui-designer                 | research-writer  | light     | [.github/agents/project-planning/ux-ui-designer.agent.md](../../.github/agents/project-planning/ux-ui-designer.agent.md)                                                 |
 
-The maintained stimulus inventory totals 63 agents: 32 parent agents plus 31
-enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/). The
+The generated inventory totals 55 agents: 32 parent agents plus 23
+enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/),
+with 54 partials on disk while `code-review` coverage is deferred. The
 table above lists the 31 user-invocable parents; the repository-only
 `backlog-grooming` parent also has a partial but declares
 `user-invocable: false`, so the coverage check in `Test-EvalSpec.ps1` counts 31

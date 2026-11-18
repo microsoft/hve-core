@@ -3,7 +3,7 @@ title: AI Artifacts Architecture
 description: Agent, skill, and instruction model for Copilot customizations in the Copilot harness
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-06
 ms.topic: concept
 keywords:
   - ai artifacts
@@ -202,7 +202,7 @@ Agents reach skills by name. A skill listed under `skills:` loads when the agent
 ```yaml
 ---
 name: Code Review
-description: 'Human-gated code review orchestrator'
+description: 'Review changes through the shared Code Review skill, with focused perspectives, snapshot-backed evidence, and an optional canvas.'
 tools:
   - agent
   - execute
@@ -213,6 +213,7 @@ tools:
   - ask_user
 skills:
   - disclaimer-language
+  - code-review
 ---
 ```
 
