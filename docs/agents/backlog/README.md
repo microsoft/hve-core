@@ -2,7 +2,7 @@
 title: Backlog Management
 description: Cross-platform work item discovery, triage, sprint planning, and execution for Azure DevOps, GitHub, and Jira
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-11-18
 ms.topic: concept
 keywords:
   - backlog management
@@ -18,7 +18,7 @@ estimated_reading_time: 7
 sidebar_position: 1
 ---
 
-Backlog management automates the work item lifecycle across Azure DevOps, GitHub, and Jira. One set of workflows serves all three trackers: the commands resolve which tracker backs your workspace at runtime and read the matching platform reference, so you do not choose a platform-specific variant.
+Backlog management uses the same planning and execution workflows across Azure DevOps, GitHub, and Jira. When you already know the tracker, start with `/ado-backlog` for Azure Boards or `/github-backlog` for GitHub issues. These entry points select the provider's fields, relationships, and commands without changing the approval rules for tracker writes.
 
 > Backlog management is a constraint-satisfaction problem. Each workflow handles a bounded scope, reducing errors by limiting the decisions any single step makes.
 

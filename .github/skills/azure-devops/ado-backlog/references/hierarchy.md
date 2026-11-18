@@ -5,7 +5,7 @@ description: 'Azure DevOps work item hierarchy rules, type validation, and field
 <!-- markdownlint-disable-file -->
 # Azure DevOps Hierarchy Reference
 
-Azure DevOps hierarchy delta for the [functional-planner](../SKILL.md) skill. Read this with the core five-phase model and the selected framework lens. Concrete command surfaces, field vocabulary, the `WI` reference prefix, and action verbs come from the Azure DevOps reference of the `backlog-management` skill; this file adds only the PRD hierarchy rules and tracking path.
+Apply these rules during read-only PRD planning with `functional-planner` and its selected framework lens. Use the [Azure Boards bindings](platform.md) for commands, fields, and relationship semantics.
 
 ## Tracking Path
 
@@ -30,7 +30,7 @@ Plan conservatively against the project's process; validate types with read-only
 Hierarchy rules:
 
 * A Feature requires an Epic parent; a User Story requires a Feature parent.
-* An item holds at most one hierarchical parent. `System.Parent` is a single-valued hierarchical link, so a Feature that belongs to more than one Epic takes its owning Epic as `System.Parent` and records every additional Epic as a `Related` trace link with a one-line reason.
+* Apply [Relationship Semantics](platform.md#relationship-semantics) to distinguish the owning parent from any additional Epic associations.
 * A Feature without a new Epic may attach to an existing ADO Epic as its single parent.
 * Do not create placeholder links solely to satisfy the hierarchy; Bug and Task links are optional traceability.
 * When hierarchy support is unclear for the process, flatten the plan and mark the relationship decision `needs_review`.
@@ -38,9 +38,9 @@ Hierarchy rules:
 
 ## Field Mapping
 
-Map only fields validated for the target type (see the Azure DevOps reference of the `backlog-management` skill for the field vocabulary):
+Map only fields validated for the target type (see [Field Vocabulary](platform.md#field-vocabulary)):
 
-* `System.WorkItemType` drawn from the Epic / Feature / User Story / Bug set.
+* `System.WorkItemType` drawn from the validated types in the supported hierarchy above.
 * `System.Parent` as `none`, a `{{TEMP-N}}` reference to a planned item, or an existing `System.Id`. Exactly one value.
 * A relationships block listing any `Related` associations, each with its target and reason.
 * `Microsoft.VSTS.Common.AcceptanceCriteria` per User Story from the PRD's success criteria.

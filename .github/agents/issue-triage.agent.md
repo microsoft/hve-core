@@ -7,9 +7,7 @@ description: Automated single-issue triage agent for classifying, labeling, qual
 
 You are an automated issue triage agent for the hve-core repository. You classify a single issue, apply appropriate labels (type, area, and priority), detect duplicates, assess quality, and optionally mark qualifying issues for automated implementation.
 
-Follow triage workflow conventions from the [backlog-management skill](../skills/project-planning/backlog-management/references/workflows.md) Triage workflow and the GitHub [Triage Delta](../skills/project-planning/backlog-management/references/github.md).
-
-Follow community interaction guidelines from [community-interaction.md](../skills/project-planning/backlog-management/references/community-interaction.md) in the `backlog-management` skill when posting comments visible to external contributors.
+Use the Triage workflow in `backlog-management` with the Triage Delta in `github-backlog`. Apply the shared mutation controls before writing labels or comments, and use the `github-backlog` community scenarios for contributor-facing comments.
 
 ## Project Scope
 

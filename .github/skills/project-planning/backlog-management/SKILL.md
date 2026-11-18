@@ -1,6 +1,6 @@
 ---
 name: backlog-management
-description: "Shared backlog conventions for Azure DevOps, GitHub, and Jira. Use for platform resolution, autonomy tiers, sanitization guards, and story quality, and for Azure DevOps pull request creation and build status or log retrieval."
+description: "Shared backlog conventions for Azure DevOps, GitHub, and Jira. Use for tracker resolution, planning and execution lifecycles, authorization, sanitization, and story quality."
 license: MIT
 user-invocable: false
 compatibility: "Hosts: vscode, github-coding-agent. Reference-only conventions; the consuming skill supplies tracker access."
@@ -12,7 +12,7 @@ metadata:
 
 # Backlog Management
 
-Shared, platform-agnostic conventions for backlog managers across Azure DevOps, GitHub, and Jira. This skill owns the structural core that every platform reuses: how planning files are named and laid out, how planned items are identified, how candidate work is compared to existing work, how autonomy gates mutations, how outbound text is sanitized, and how an interrupted workflow resumes. Each platform contributes only its small delta (the command surface, field vocabulary, reference-ID prefix, and action verbs) through a per-platform reference.
+This skill owns the conventions shared by Azure DevOps, GitHub, and Jira: how planning files are laid out, how planned items are identified, how candidate work is compared to existing work, how autonomy gates mutations, how outbound text is sanitized, and how an interrupted workflow resumes. The selected platform supplies its commands, field vocabulary, reference-ID prefix, and action verbs.
 
 ## When to Use
 
@@ -24,7 +24,7 @@ Use this skill when running any backlog workflow for a supported platform:
 * Sprint and iteration planning — analyze a delivery window for coverage, capacity, dependencies, and gaps, and recommend grooming candidates.
 * Execution — process a reviewed handoff into sequential create, update, transition or move, and comment operations.
 
-Read the platform-agnostic conventions below, then load the reference that matches the active platform for its concrete command surface and vocabulary.
+Resolve the target platform, then use only its [platform bindings](#platform-bindings).
 
 ## How This Skill Is Organized
 
@@ -33,11 +33,12 @@ Read the platform-agnostic conventions below, then load the reference that match
 * [references/story-quality.md](references/story-quality.md) — work-item quality at epic, feature, user story, and task level: title and description conventions, acceptance criteria, definition of done, scope and sizing signals, evidence sourcing, completeness dimensions, and the authoring and refinement coaching loop.
 * [references/sprint-planning.md](references/sprint-planning.md) — the platform-agnostic sprint and iteration planning protocol: container binding, coverage and capacity analysis, gap and dependency detection, grooming recommendations, and the sprint-plan template.
 * [references/task-planning.md](references/task-planning.md) — assigned-work retrieval and enrichment: identity-scoped retrieval, repository-context gathering, discussion integration, and the implementation handoff record.
-* [references/ado.md](references/ado.md) — Azure DevOps platform delta: MCP ADO command surface, namespaced field vocabulary, the `WI` reference prefix, action verbs, PRD hierarchy (Epic → Feature → User Story), relationship semantics, and work-item tracking paths.
-* [references/ado-pull-request.md](references/ado-pull-request.md) — Azure DevOps pull request creation: work item discovery and linking, reviewer identification from git history, the seven-phase creation protocol, and its planning-file formats.
-* [references/ado-build-info.md](references/ado-build-info.md) — Azure DevOps build and pipeline information: pipeline tool surface, build location by PR, build ID, or branch, log extraction, and summarization rules.
-* [references/github.md](references/github.md) — GitHub platform delta: MCP GitHub command surface, supported operations, field vocabulary and field matrix, search syntax, issue body and type strategy, label taxonomy, milestone protocol, the `IS` reference prefix, action verbs, community-communication guardrails, PRD sub-issue hierarchy, and issue tracking paths.
-* [references/jira.md](references/jira.md) — Jira platform delta: command surface (delegated to the `jira` skill), field vocabulary, the `JI` reference prefix, action verbs, PRD hierarchy and field-mapping rules, triage and update decisions, and Jira tracking paths.
+
+## Platform Bindings
+
+* Azure DevOps: use `ado-backlog` for Azure Boards commands, field mappings, relationships, and tracking paths.
+* GitHub: use `github-backlog` for issue operations, pull request fields, community comments, and tracking paths.
+* Jira: use the [Jira bindings](references/jira.md) for issue fields, transitions, and tracking paths, and `jira` for CLI access.
 
 ## Platform Resolution
 
@@ -57,7 +58,7 @@ Resolve the platform from the strongest available signal, in this order:
 
 When more than one platform remains plausible, summarize the two most likely options with a brief rationale and ask the user to choose. Do not guess a tracker and do not run the workflow against every candidate.
 
-A readiness probe is a non-interactive capability check that runs across all three platforms before signal 4 is used. It never prompts, never launches a setup workflow, and never mutates:
+A readiness probe is a non-interactive capability check used only for signal 4. It never prompts, launches setup, or mutates:
 
 | Platform     | Non-interactive readiness probe                                                                        |
 |--------------|--------------------------------------------------------------------------------------------------------|
@@ -67,13 +68,7 @@ A readiness probe is a non-interactive capability check that runs across all thr
 
 ### Step 2: Run the full preflight for the resolved platform
 
-The full preflight runs once, after the platform is resolved. It may resolve identity and may run interactive credential setup, which is why it never runs as a probe.
-
-| Platform     | Preflight check                                                                                                                                                                                                                                                                                                                  |
-|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Azure DevOps | MCP `ado/*` tools available and an explicit `project` resolvable; call `ado/core_get_identity_ids` to establish authenticated user context before assignment.                                                                                                                                                                    |
-| GitHub       | MCP `github/*` tools available and identity resolvable via `github/get_me`; the target `owner/repo` is known.                                                                                                                                                                                                                    |
-| Jira         | A terminal is available for the `jira` skill CLI. The CLI loads supported missing values from `~/.jira.env` in-process without shell evaluation. When its value-free validation reports missing variables, stop and route the user to the separate `jira` credential-setup workflow; do not source the file or run setup inline. |
+Run the Command Surface preflight in the selected [platform bindings](#platform-bindings) once. Establish access, scope, and any required identity before the workflow continues.
 
 ### Inferred-Platform Confirmation
 
@@ -85,7 +80,7 @@ This confirmation is independent of the autonomy mode. Full autonomy removes per
 
 ### Step 3: Report the readiness verdict
 
-When a platform's prerequisites are unmet, do not route work to it. Name the missing prerequisite and continue with the platforms that are available. A missing prerequisite is reported, never worked around: do not substitute a different platform for the one the user named, and do not proceed with a partial credential set.
+If the selected tracker's access, identity, or scope cannot be established, report which check failed. Do not send the work to another tracker or proceed with partial credentials.
 
 Record the resolved platform and its verdict in `planning-log.md` so a resumed workflow does not re-resolve from a changed environment.
 

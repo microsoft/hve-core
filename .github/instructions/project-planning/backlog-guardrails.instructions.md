@@ -1,5 +1,5 @@
 ---
-description: 'Always-on mutation guardrail for backlog tracking roots: require backlog-management activation before any tracker-bound mutation and stop when it is unavailable'
+description: 'Require the backlog-management destination, authorization, sanitization, and review controls before a tracker-bound mutation from a backlog tracking root'
 applyTo: '**/.copilot-tracking/workitems/**, **/.copilot-tracking/github-issues/**, **/.copilot-tracking/jira-issues/**'
 ---
 
@@ -11,9 +11,9 @@ This file names the controls; it does not restate them. The `backlog-management`
 
 ## Required Activation
 
-Activate the `backlog-management` skill before any tracker-bound create, update, comment, transition, close, or payload confirmation that originates from these roots.
+Activate the `backlog-management` skill before any tracker-bound create, update, link, comment, transition, close, or payload confirmation that originates from these roots.
 
-When the skill does not resolve, stop before the mutation. Report that platform resolution, the autonomy tiers, the sanitization guards, and the human review triggers are unavailable, and ask the user how to proceed. Do not reconstruct any of them locally and do not proceed with an unguarded mutation.
+If any required control cannot be applied, keep the proposal local. Report the unresolved destination, approval, or payload check; do not send the mutation.
 
 Read-only analysis, planning, and file authoring inside these roots do not require activation, because they produce no external change.
 

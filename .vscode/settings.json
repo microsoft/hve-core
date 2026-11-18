@@ -75,11 +75,13 @@
   "chat.agentSkillsLocations": {
     ".github/skills": true,
     ".github/skills/accessibility": true,
+    ".github/skills/azure-devops": true,
     ".github/skills/coding-standards": true,
     ".github/skills/data-science-engineering": true,
     ".github/skills/design-thinking": true,
     ".github/skills/engagement-reporting": true,
     ".github/skills/experimental": true,
+    ".github/skills/git": true,
     ".github/skills/hve-core": true,
     ".github/skills/installer": true,
     ".github/skills/project-planning": true,

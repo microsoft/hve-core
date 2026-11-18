@@ -5,11 +5,11 @@ description: 'GitHub platform bindings for backlog workflows: issue types, label
 <!-- markdownlint-disable-file -->
 # GitHub Platform Reference
 
-GitHub delta for the [backlog-management](../SKILL.md) skill. Read this with the core conventions and [workflows.md](workflows.md). This reference names GitHub's command surface, supported operations, field vocabulary and field matrix, search query syntax, issue body and type strategy, label taxonomy, milestone protocol, reference-ID prefix, action verbs, community-communication guardrails, PRD hierarchy rules, and tracking paths. Everything structural — planning-file lifecycle, similarity, autonomy, sanitization, state persistence — comes from the core.
+Use these bindings with the workflow protocols in `backlog-management`. They map those protocols to GitHub issues and pull request fields; the shared skill owns the planning lifecycle and mutation controls.
 
 ## Command Surface
 
-GitHub backlog operations run through the MCP GitHub tools. Call `mcp_github_get_me` before operations that need the current user context. GitHub treats pull requests as a superset of issues sharing one number space, so the Issues API can set fields on a PR that the Pull Requests API cannot.
+Preflight: verify the GitHub MCP tools are reachable, resolve the target `owner/repo`, and establish the authenticated identity with `mcp_github_get_me`. GitHub issues and pull requests share one number space, so the Issues API can set fields on a PR that the Pull Requests API cannot.
 
 | Category      | Tool                                 | Purpose                                                                                                                                                                                                                                                                                       |
 |---------------|--------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -47,7 +47,7 @@ Every planned GitHub operation resolves to exactly one row. An action that has n
 Operation rules:
 
 * `labels` uses replacement semantics on every call. Compute the full target set as `(current_labels - removed) + added` before writing; a partial list silently drops labels.
-* Close operations run after every field update and comment planned for the same issue, per the Operation Contract in [workflows.md](workflows.md).
+* Close operations run after every field update and comment planned for the same issue, per the Operation Contract in `backlog-management`.
 * Sub-issue links run only after both the parent and the child exist.
 * A community-visible explanatory comment posts before the state change it explains; see Community Communication below.
 
@@ -62,7 +62,7 @@ GitHub treats pull requests as a superset of issues sharing one number space, so
 
 ### Error Cases (GitHub specifics)
 
-The shared Error Handling table in [workflows.md](workflows.md) defines the required behavior. These are the GitHub signals that select each row.
+The shared Error Handling table in the `backlog-management` workflow protocols defines the required behavior. These are the GitHub signals that select each row.
 
 | GitHub signal                              | Shared error case               |
 |--------------------------------------------|---------------------------------|
@@ -83,6 +83,8 @@ The shared Error Handling table in [workflows.md](workflows.md) defines the requ
 | Item types              | Org issue types when enabled (validate with `mcp_github_list_issue_types`); sub-issues carry hierarchy |
 | Priority scale          | Label-based (repository convention; no native priority field)                                          |
 | Action verbs            | Create, Update, Link, Close, Comment, No Change                                                        |
+| Analysis file           | `issue-analysis.md` for discovery; `artifact-analysis.md` for PRD planning                             |
+| Plan file               | `issues-plan.md`                                                                                       |
 | Planning-type additions | Beyond the core enum, GitHub uses `sprint` (milestone organization) and `backlog` (refinement)         |
 
 Map the core three-tier autonomy model onto GitHub operations. Validated label and milestone updates are low-risk and auto-execute under Full and Partial. Creates, closes, sub-issue links, comments, and ambiguous duplicate handling gate on the user under Partial and Manual. The core Three-Tier Autonomy Model defines the tiers themselves.
@@ -132,7 +134,7 @@ Required and optional fields per operation. These requirements apply to issues a
 
 ## Search Query Syntax
 
-The platform-agnostic Search Protocol in [workflows.md](workflows.md) owns the five steps. GitHub supplies the query syntax:
+Apply the Search Protocol in `backlog-management` with GitHub query syntax:
 
 * Scope every query with `repo:{owner}/{repo}` plus `is:issue` and a state qualifier.
 * Compose keyword groups as `("term one" OR term2)` and join groups with a space, which GitHub treats as `AND`.
@@ -233,15 +235,7 @@ Honor [community-interaction.md](community-interaction.md) in this skill and `co
 
 ## Relationship Semantics
 
-Plan conservatively.
-
-* GitHub has no native Epic/Feature/Story taxonomy. Model hierarchy with sub-issue relationships (`mcp_github_sub_issue_write`) and, when the org enables issue types, the `type` field.
-* Prefer one parent tracking issue per major product outcome, with child issues linked as sub-issues.
-* Use org issue types only after `mcp_github_list_issue_types` confirms support; otherwise convey level through labels and sub-issue nesting.
-* When hierarchy support is unclear, flatten the plan and mark the relationship decision as `Needs Review`.
-* Record relationships in planning files even when the final GitHub linkage (sub-issue versus label) differs by repository configuration.
-
-A sub-issue link is legal only when both the parent and the child already exist, so link operations always follow their creates.
+Express parent-child relationships with sub-issues, not labels or milestones. Use the [supported hierarchy](hierarchy.md#supported-hierarchy) to validate a proposed parent. A sub-issue link is legal only when both endpoints exist, so link operations always follow their creates.
 
 ## Interaction Templates
 
@@ -249,11 +243,7 @@ Use the Issue Body Template above for issue bodies, and the scenario templates n
 
 ## PRD-to-Work-Item Planning
 
-PRD-driven planning produces planning-only artifacts under `.copilot-tracking/github-issues/prds/<artifact-normalized-name>/` (`issue-analysis.md`, `issues-plan.md`, `planning-log.md`, `handoff.md`) for a separate execution pass. During planning, do not call `mcp_github_issue_write`, `mcp_github_add_issue_comment`, or `mcp_github_sub_issue_write`.
-
-Hierarchy rules are defined by Relationship Semantics above.
-
-The PRD plan extends the shared `issues-plan.md` template with a `parent` field (`none`, a `{{TEMP-N}}` reference, or an existing `#number`), a `needs_review` flag, and an acceptance-criteria block and relationships block per item.
+Use the [GitHub hierarchy](hierarchy.md) for PRD paths, read-only capability validation, and fields in the reviewable sub-issue plan.
 
 ## Triage Delta
 
@@ -353,7 +343,7 @@ Process higher-priority issues first: `security` (highest, expedite) → `bug` (
 
 ## Sprint Planning Delta
 
-The platform-agnostic protocol lives in [sprint-planning.md](sprint-planning.md). GitHub resolves its bindings as follows.
+Use the sprint-planning protocol in `backlog-management` with the following GitHub bindings.
 
 | Binding                 | GitHub resolution                                                                                                                                                                                                                                                      |
 |-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

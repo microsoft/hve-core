@@ -338,7 +338,7 @@ Current live consumers:
 
 * The Backlog Manager agent selects the scenario and prepares sanitized community-facing text.
 * The GitHub Backlog Executor subagent posts the comment and performs the state change, in that order.
-* [github.md](github.md) in this skill: its Community Communication section owns the comment-before-closure contract.
+* The [GitHub bindings](platform.md#community-communication) own the comment-before-closure contract.
 * The repository's Issue Triage agent writes single-issue triage comments.
 
 Templates are self-contained. Select the scenario that matches the trigger condition and fill the placeholders from the issue or PR context. Always post the explanatory comment via `mcp_github_add_issue_comment` before the state-changing call, so the contributor sees the reason before the change lands.
