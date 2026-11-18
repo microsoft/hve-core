@@ -3,7 +3,7 @@ title: Plugin Manifest Scripts
 description: PowerShell tooling for synchronizing and validating the HVE Core plugin manifest
 ---
 
-PowerShell tooling for synchronizing root `plugin.json` with the complete distributable HVE Core component set and validating the one-entry marketplace locator. Discovery remains limited to tracked package-scoped artifacts under `.github`.
+PowerShell tooling for synchronizing root `plugin.json` with the complete distributable HVE Core component set and validating each marketplace locator against its own manifest. Discovery remains limited to tracked package-scoped artifacts under `.github`.
 
 ## Scripts
 
@@ -61,13 +61,15 @@ Check mode writes nothing and exits nonzero on manifest or locator drift.
 
 ## Locator Validation
 
-Check mode requires `.github/plugin/marketplace.json` to contain exactly one `hve-core` entry whose relative, contained source holds `plugin.json`; that source is `.`, the repository root. It verifies parity for every retained manifest metadata field, source containment, manifest existence, component coverage, and the absence of recipe fields such as `agents`, `commands`, `rules`, `skills`, `extensions`, `hooks`, or `x-hve` on the locator entry.
+The catalog at `.github/plugin/marketplace.json` includes the root All plugin. Each locator has a unique name and source and matches the metadata in its source's tracked `plugin.json`. Locators must not declare recipe fields such as `agents`, `commands`, `rules`, `skills`, `extensions`, `hooks`, or `x-hve`.
+
+An additional manifest can select components from the All inventory. Its paths must resolve inside its own source directory to the same tracked components, under the same component kinds. Sync checks these manifests but writes only the root manifest. Adding a locator does not add a VSIX.
 
 The Copilot CLI registration `microsoft/hve-core` tracks `main`; there are no release-channel plugin registrations. The catalog always locates the plugin root relative to the registered repository ref.
 
 ## Release Boundary
 
-Plugin validation produces no package archive or release evidence document. Release workflows package, attest, and publish one VSIX separately. The Copilot CLI installs the plugin directly from the repository root at the selected ref.
+Plugin validation produces no package archive or release evidence document. Release workflows package, attest, and publish one VSIX separately. The shipped `hve-core` locator points to the repository root.
 
 ---
 
