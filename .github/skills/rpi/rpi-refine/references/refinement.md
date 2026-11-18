@@ -69,12 +69,8 @@ Subagents are never required, and `subagents=none` or an environment without a d
 
 When dispatching targeted subagents, run independent lookups in parallel and pass each one a specific question, the directories or files to search, and a read-only boundary (no file edits and no nested subagents):
 
-* Select each subagent's reasoning effort from the narrow lookup it performs:
-  * `low` for mechanical symbol, call-site, export, or config-key enumeration.
-  * `high` for convention, SDK, test-overlap, and documentation-duplication searches across workspace areas.
-  * `max` for tracing cross-module invariants or subtle reachability paths. In `deep` depth, use `max` for non-mechanical lookups.
-  * Honor any user- or caller-set effort override. If a dispatch fails because the model does not support the requested effort, retry once with `reasoning_effort` set to `medium` and record that fallback.
-* Subagent returns are raw search inputs: read the cited workspace files yourself, perform the subtractive judgment in the main agent, discard anything that adds ceremony or weakens a trust boundary, and record each targeted subagent's task, effort, effort source, and verification result under `### Scope and Evidence`.
+* Omit model and reasoning-effort overrides unless the current request or applicable persistent user instructions explicitly require that value for the helper.
+* Subagent returns are raw search inputs: read the cited workspace files yourself, perform the subtractive judgment in the main agent, discard anything that adds ceremony or weakens a trust boundary, and record each targeted subagent's task and verification result under `### Scope and Evidence`.
 
 ## Depth tiers
 

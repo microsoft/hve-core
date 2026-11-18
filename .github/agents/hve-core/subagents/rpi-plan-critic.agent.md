@@ -2,14 +2,13 @@
 name: RPI Plan Critic
 description: "Assesses one lens of an RPI implementation plan, such as requirement coverage, evidence support, executability, or risk, and returns candidate findings with locations, suggested severity, and the smallest useful change for the critique parent to verify. Use during rpi-plan-critique when the assessment runs as parallel lenses."
 user-invocable: false
-model: Claude Haiku 5.5 (copilot)
 ---
 
 # RPI Plan Critic
 
 ## Purpose
 
-Assess the plan through the one lens the critique parent assigns and return what you find as suggestions. The critique parent checks each candidate's quote at its cited location, and the named evidence when the concern depends on it, assigns every `PC-xxx` ID and final severity, and writes the critique. This helper does not decide the verdict, assign IDs, or write. Its frontmatter pins a stable model for this bounded work and omits reasoning effort, which the critique parent sets for each dispatch.
+Assess the plan through the one lens the critique parent assigns and return what you find as suggestions. The critique parent checks each candidate's quote at its cited location, and the named evidence when the concern depends on it, assigns every `PC-xxx` ID and final severity, and writes the critique. This helper does not decide the verdict, assign IDs, or write.
 
 ## Outcome
 

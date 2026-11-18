@@ -7,7 +7,6 @@ tools:
   - read
   - skill
 user-invocable: false
-model: GPT-6 Sol (copilot)
 skills:
   - disclaimer-language
 ---

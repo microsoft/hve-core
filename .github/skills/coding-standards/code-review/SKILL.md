@@ -101,19 +101,9 @@ Subagents receive no parent custom instructions. Give every task a self-containe
 3. Describe the areas of focus: concrete questions, changed entry points, suspected side effects, candidate codebase APIs/SDKs or abstractions to check, applicable acceptance criteria, or the bounded investigation question.
 4. State the write and authority boundary: keep reviewed source and Git state strictly read-only, write only the validated result via `node scripts/review.mjs result` (or return structured findings/observations if running in memory), never touch `review-state.json` or `review.md`, never publish, and never spawn nested subagents.
 
-### Selecting reasoning effort and long context
+### Dispatch preferences
 
-When the runtime supports subagent configuration and user or persistent instructions permit or request task-appropriate overrides, match reasoning effort and context tier to the task's workload (otherwise omit overrides so harness defaults apply):
-
-| Workload                                                                                                            | Recommended `reasoning_effort` | `context_tier`             |
-|---------------------------------------------------------------------------------------------------------------------|--------------------------------|----------------------------|
-| PR metadata/template checks (`readiness` on small diffs) or mechanical symbol/call-site enumeration                 | `low`                          | `default`                  |
-| Area overview, `reasons`/`changeMap` drafting (`context`), or straightforward single-area convention checks         | `medium`                       | `default`                  |
-| Standard `functional` review (bugs, side effects, API/SDK & abstraction fit, unneeded edge cases) or opt-in vectors | `high`                         | `default`                  |
-| Subtle concurrency/state invariants, cross-module regressions, backward logic tracing, or `comprehensive` depth     | `xhigh` or `max`               | `default` / `long_context` |
-| Large multi-file areas, wide caller/callee graphs, or large captured diffs where standard context risks truncation  | Match complexity above         | `long_context`             |
-
-If a task dispatch fails because the active model does not support the requested `reasoning_effort` or `long_context`, retry once with `reasoning_effort: "medium"` (or default context tier) and record the fallback.
+Review depth determines what to check. Omit `model`, `reasoning_effort`, and `context_tier` unless the current request or applicable persistent user instructions explicitly require that value for the subagent. If an explicit setting is unsupported, report the limitation rather than substituting another value.
 
 ### Project coordinator integration
 

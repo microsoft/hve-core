@@ -93,7 +93,7 @@ Append events in order. Never rewrite or delete an earlier row. The latest event
 * Review depth and provenance: {{surface_standard_or_deep}}; {{default_significant_change_repeat_loop_or_explicit_user_request}}
 * Candidate identity: {{task_id_scope_and_artifact_revision}}
 * Review execution: {{started_Complete_Partial_or_Blocked}}
-* Helper use: {{none_or_each_helper_lane_with_its_question_reasoning_effort_and_effort_source_and_what_was_verified_at_the_cited_evidence}}
+* Helper use: {{none_or_each_helper_lane_with_its_question_and_what_was_verified_at_the_cited_evidence}}
 * Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
 * Plan critique: {{latest_plan_critique_path_or_skipped}}
 * Changes: .copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md

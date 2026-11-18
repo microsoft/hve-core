@@ -39,7 +39,7 @@ Read [references/refinement.md](references/refinement.md) for the four subtracti
 * Stable task identity and requested scope: full task, `Pxx`, or `Pxx-Txx`
 * Current task-centered plan, changes record, relevant research, changed workspace files, validation results, blockers, remaining work, and follow-up items
 * Review depth and provenance: `standard` by default, `surface` for a significant-change repeat loop or explicit surface request, or `deep` only from explicit user direction
-* Targeted helper reasoning effort: `auto` by default, which selects each targeted subagent's effort from what that lookup checks, or a level the user or caller sets for every helper or named tasks
+* Targeted helper reasoning effort: `auto` means omit the override. Pass a supported level only when explicitly requested for that helper.
 * Subagent use: `auto` by default, which lets the main agent dispatch regular subagents for bounded targeted lookups when a dispatch tool is available, or direction from the user or coordinating Project such as `none`
 * Decision participation: `user-owned`, `agent-owned`, or `user-retained`, with parent context and provenance
 * Canonical refinement-record path and parent orchestration context when present
