@@ -1,9 +1,9 @@
 ---
 title: Security/Standards Mapping
 description: "OWASP and NIST security standards references with rpi-research activation for CIS, WAF, CAF, and other runtime lookups"
-sidebar_position: 3
+sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - instruction

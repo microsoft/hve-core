@@ -1,9 +1,9 @@
 ---
 title: pull-request
-description: "Prepare, create, or update a GitHub pull request with targeted preflight, repair commits, scoped push consent, and separate PR-write approval. Route Azure DevOps to backlog-management."
+description: "Prepare, create, or update a GitHub pull request with targeted preflight, repair commits, scoped push consent, and separate PR-write approval."
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-10-20
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Prepare, create, or update a GitHub pull request with targeted preflight, repair commits, scoped push consent, and separate PR-write approval. Route Azure DevOps to backlog-management.
+Prepare, create, or update a GitHub pull request with targeted preflight, repair commits, scoped push consent, and separate PR-write approval.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
