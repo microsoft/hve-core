@@ -247,7 +247,7 @@ Phase advancement updates `currentPhase` and sets phase-specific completion flag
 
 ### Session Start Display
 
-On the first turn of any SSSC Planner session, display the canonical disclaimer block defined in the `disclaimer-language` skill (SSSC Planning section) verbatim. Record the display by setting `state.disclaimerShownAt` to an ISO-8601 timestamp. Do not advance to any phase work before the disclaimer is shown for the session.
+On the first turn of any SSSC Planner session, display the SSSC Planning CAUTION block from `security-disclaimers` verbatim. Record the display by setting `state.disclaimerShownAt` to an ISO-8601 timestamp. Do not advance to any phase work before the disclaimer is shown for the session.
 
 Append each disclaimer and exit reminder to `state.noticeLog` with the source file and relevant phase details.
 
@@ -259,7 +259,7 @@ When introducing standards mappings, assessments, gap analyses, or handoff mater
 
 ### Exit Point Reminder
 
-At each of the following exit points, re-surface a brief one-line professional-review reminder. Use the canonical wording in the `disclaimer-language` skill (SSSC Planning section) for the reminder text.
+At each of the following exit points, re-surface a brief one-line professional-review reminder. Use the canonical wording in `security-disclaimers` (SSSC Planning section) for the reminder text.
 
 1. **Phase 6 completion (handoff success path)** — Display the reminder immediately before presenting the final handoff summary.
 2. **Compact handoff** — Display the reminder when the orchestrator hands off to ADO or GitHub backlog workflows.
@@ -272,7 +272,7 @@ Each reminder must state that the generated assessment is AI-assisted and requir
 
 The planner inherits the Resume Sequence and Post-Summarization Recovery in the `planner-identity` skill. SSSC-specific notes on inherited steps:
 
-* Resume Sequence step 2 (disclaimer redisplay) applies; the SSSC Planning CAUTION block in the `disclaimer-language` skill is the text source, `state.disclaimerShownAt` is the gating field, and `state.noticeLog` records the redisplayed notice.
+* Resume Sequence step 2 (disclaimer redisplay) applies; the SSSC Planning CAUTION block in `security-disclaimers` is the text source, `state.disclaimerShownAt` is the gating field, and `state.noticeLog` records the redisplayed notice.
 * Resume Sequence step 4 checks for partially written `supply-chain-assessment.md`, `standards-mapping.md`, `gap-analysis.md`, and `sssc-backlog.md` in addition to the generic per-phase outputs.
 * Post-Summarization Recovery step 3 reconstructs context from `supply-chain-assessment.md`, `standards-mapping.md`, `gap-analysis.md`, and `sssc-backlog.md` rather than from prior chat history.
 

@@ -372,7 +372,7 @@ Approval date: {{approval_date}}
 
 {{disclaimer_text}}
 
-*Guidance*: Populate this section from the `disclaimer-language` skill when the PRD is prepared for governed use.
+*Guidance*: Populate this section with the PRD Requirements Planning CAUTION from `project-planning-disclaimers` when the PRD is prepared for governed use.
 
 ---
 

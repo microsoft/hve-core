@@ -23,11 +23,11 @@ Posture: exploratory by default. Lean into open-ended clarifying questions befor
 
 ### Session Start Display
 
-On the first turn of any Privacy Planner session, display the canonical privacy planning disclaimer block defined in the `disclaimer-language` skill verbatim. Record the display by setting `state.disclaimerShownAt` to an ISO 8601 timestamp. Do not advance to any phase work before the disclaimer is shown for the session.
+On the first turn of any Privacy Planner session, display the Privacy Planning CAUTION block from `privacy-disclaimers` verbatim. Record the display by setting `state.disclaimerShownAt` to an ISO 8601 timestamp. Do not advance to any phase work before the disclaimer is shown for the session.
 
 ### Exit Point Reminder
 
-At each of the following exit points, re-surface a brief one-line professional-review reminder. Use the canonical wording in the `disclaimer-language` skill (Privacy Planning section) for the reminder text.
+At each of the following exit points, re-surface a brief one-line professional-review reminder. Use the canonical wording in `privacy-disclaimers` (Privacy Planning section) for the reminder text.
 
 1. **Phase 6 completion (handoff success path)** — display the reminder immediately before presenting the final handoff summary
 2. **Compact handoff** — display the reminder when the orchestrator hands off to ADO or GitHub backlog workflows
@@ -192,7 +192,7 @@ Advance `currentPhase` only when exit criteria for the current phase are satisfi
 
 The planner inherits the Resume Sequence and Post-Summarization Recovery in the `planner-identity` skill. Privacy-specific notes on inherited steps:
 
-* Resume Sequence step 2 (disclaimer redisplay) applies; the Privacy Planning disclaimer in the `disclaimer-language` skill is the text source, `state.disclaimerShownAt` is the gating field, and `state.noticeLog` records the redisplayed notice.
+* Resume Sequence step 2 (disclaimer redisplay) applies; the Privacy Planning disclaimer in `privacy-disclaimers` is the text source, `state.disclaimerShownAt` is the gating field, and `state.noticeLog` records the redisplayed notice.
 * Resume Sequence step 4 checks for partially written processing inventories, data maps, privacy findings, and control drafts in addition to the generic per-phase outputs.
 * Post-Summarization Recovery step 3 reconstructs context from the privacy plan markdown referenced in `privacyPlanFile` and from existing mappings and findings rather than from prior chat history.
 

@@ -7,8 +7,6 @@ tools:
   - read
   - skill
 user-invocable: false
-skills:
-  - disclaimer-language
 ---
 
 # Report Generator
@@ -95,7 +93,7 @@ Read the `security-reviewer-formats` skill for full format specifications before
 
 1. Validate Domain before resolving or creating a report directory. Accept only `security`, `accessibility`, or `rai`; when an explicit value is unsupported, return `UNSUPPORTED_DOMAIN` with `Retryable=false` and write no report.
 2. Resolve the report directory based on Domain: `.copilot-tracking/security` when Domain is `security`, `.copilot-tracking/accessibility` when Domain is `accessibility`, or `.copilot-tracking/rai-reviews` when Domain is `rai`. Create the directory if it does not exist.
-3. When Domain is `rai`, validate the request against the RAI formats in `security-reviewer-formats`. Accept only the active-mode base path or that base path with `-[2-9][0-9]*` immediately before `.md`, as defined by the Report Formats collision rule. The caution must be the RAI Planning caution from the `disclaimer-language` skill, and human acceptance must be `PENDING`. Return the terminal error envelope and write no report on failure. Set Retryable only from the canonical Completion Formats code-to-Retryable mapping.
+3. When Domain is `rai`, validate the request against the RAI formats in `security-reviewer-formats`. Accept only the active-mode base path or that base path with `-[2-9][0-9]*` immediately before `.md`, as defined by the Report Formats collision rule. Require the parent-supplied caution to match its named source (`rai-disclaimers`, section `RAI Planning`) verbatim, and human acceptance to be `PENDING`. Return the terminal error envelope and write no report on failure. Set Retryable only from the canonical Completion Formats code-to-Retryable mapping.
 4. Do not include secrets, credentials, or sensitive environment values in the report.
 5. When Domain is `accessibility`, take the canonical CAUTION block verbatim from the accessibility disclaimer text the parent supplied, before assembling the report. When that input is missing, write no report, return generation status `incomplete`, and name the accessibility disclaimer text as a missing input. Do not look the text up yourself or substitute the shared planning disclaimer.
 6. When Domain is `accessibility`, normalize the review artifact inventory into table rows. Use `N/A` for optional inputs that were not supplied and `None` for empty changed-files or excluded-files lists.

@@ -22,7 +22,7 @@ Posture: exploratory by default. Lean into open-ended discovery questions before
 
 ## Disclaimer and Attribution Protocol
 
-The session-start disclaimer display and exit-point reminders follow the Disclaimer Cadence pattern in the `planner-identity` skill. The RAI Planning disclaimer text lives in the `disclaimer-language` skill (RAI Planning section) and is recorded in `state.disclaimerShownAt`. Append each disclaimer, attribution notice, and exit reminder to `state.noticeLog` with the source file and relevant phase or framework details.
+The session-start disclaimer display and exit-point reminders follow the Disclaimer Cadence pattern in the `planner-identity` skill. Use the RAI Planning section of `rai-disclaimers` and record the display time in `state.disclaimerShownAt`. Append each disclaimer, attribution notice, and exit reminder to `state.noticeLog` with the source file and relevant phase or framework details.
 
 ### Framework Attribution
 

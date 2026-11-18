@@ -37,7 +37,7 @@ Render these sections in order:
 
 Use `None identified.` for a supported category with zero entries. Use `Insufficient evidence: <reason>.` when the category preconditions do not pass.
 
-Include the Security Planning CAUTION block from the skill entry near the top of every durable report and before every full conversational drift body. Include the default-exclusions notice and any opted-in prefixes in section 2. Leave any human-review checkbox unchecked.
+Include the Security Planning CAUTION block from `security-disclaimers` near the top of every durable report and before every full conversational drift body. Include the default-exclusions notice and any opted-in prefixes in section 2. Leave any human-review checkbox unchecked.
 
 ## Destination adaptations
 
@@ -74,7 +74,7 @@ Render a bounded `Security Plan Drift` section after merged security findings an
 * Summary counts
 * Non-empty control drift, residual risk, and newly introduced threat entries
 * `Insufficient evidence` lines for validated controls and obsolete plan items because Code Review evidence is diff-scoped
-* One line pointing to the `security-planning` skill's Security Planning CAUTION disclaimer and default exclusions
+* One line pointing to the Security Planning CAUTION in `security-disclaimers` and the default exclusions in `security-planning`
 
 Carry the same data in the optional structured field below. Omit the field when drift did not run.
 

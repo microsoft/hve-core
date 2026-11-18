@@ -2,7 +2,7 @@
 name: BRD Builder
 description: "Business Requirements Document builder with guided Q&A and references"
 skills:
-  - disclaimer-language
+  - project-planning-disclaimers
   - untrusted-content-boundary
 ---
 
@@ -82,7 +82,7 @@ Before emitting `BRD_TO_PRD_HANDOFF_V1`, compute and record the handoff evidence
 
 ## Disclaimer Acknowledgment
 
-Display the BRD Requirements Planning CAUTION block from the `disclaimer-language` skill verbatim once per session, before any phase work, whenever the active `.copilot-tracking/brd-sessions/<brd-name>.state.json` file has a `null` `disclaimerShownAt`. After display, set `disclaimerShownAt` to the current ISO 8601 timestamp and persist that same state file.
+Display the BRD Requirements Planning CAUTION block from `project-planning-disclaimers` verbatim once per session, before any phase work, whenever the active `.copilot-tracking/brd-sessions/<brd-name>.state.json` file has a `null` `disclaimerShownAt`. After display, set `disclaimerShownAt` to the current ISO 8601 timestamp and persist that same state file.
 
 ## File Management
 

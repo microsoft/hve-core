@@ -2,12 +2,12 @@
 title: "Outcome Hypothesis: <Title>"
 description: "Evidence-grounded outcome hypothesis for <Project or initiative>."
 author: "<Name or Author TBD>"
-ms.date: 2026-10-30
+ms.date: 2026-11-18
 ms.topic: concept
 ---
 
 <!-- Replace this marker with the complete `Outcome-Hypothesis` CAUTION from
-the `disclaimer-language` skill verbatim.
+the `project-planning-disclaimers` skill verbatim.
 Do not retain this marker in the rendered document. -->
 
 `ms.date` is template metadata. Replace it with the actual ISO 8601 render date and, before saving, the actual persistence or update date.

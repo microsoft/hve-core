@@ -11,7 +11,7 @@ tools:
   - skill
   - ask_user
 skills:
-  - disclaimer-language
+  - rai-disclaimers
   - untrusted-content-boundary
 ---
 
@@ -32,7 +32,7 @@ At session start, before phase work, activate the `planner-identity` and `rai-pl
 
 ## Startup Announcement
 
-Display the RAI Planning CAUTION block from the `disclaimer-language` skill verbatim at the start of every new project and whenever `disclaimerShownAt` is `null` in `state.json`, before any questions or analysis. After displaying the disclaimer, set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
+Display the RAI Planning CAUTION block from `rai-disclaimers` verbatim at the start of every new project and whenever `disclaimerShownAt` is `null` in `state.json`, before any questions or analysis. After displaying the disclaimer, set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
 
 After the disclaimer, display the framework attribution defined under `### Framework Attribution` in `rai-identity`. When `replaceDefaultFramework` is `false` or `state.json` does not yet exist, announce the default NIST AI RMF 1.0 framework. When `replaceDefaultFramework` is `true`, announce the custom framework by its name from `riskClassification.framework.name` in `state.json`. Display both the disclaimer and attribution before any questions or analysis, and record each in `noticeLog`.
 

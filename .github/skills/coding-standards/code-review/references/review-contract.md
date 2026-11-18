@@ -203,8 +203,8 @@ Incomplete work has `outcome: null`. For a completed review:
 
 ## Reports and publication
 
-Render from the validated state and the bundled report template. Activate
-`disclaimer-language` and supply its exact Code-Review CAUTION block. Missing
+Render from the validated state and the bundled report template. The renderer
+reads the exact [Code-Review CAUTION](code-review-disclaimer.md). Missing
 disclaimer content blocks report delivery. Always leave human sign-off unchecked.
 PR/MR reports also contain a human-editable general comment draft with its own
 unchecked posting consent. Keep stakeholder note drafts local.

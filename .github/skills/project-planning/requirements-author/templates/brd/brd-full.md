@@ -388,7 +388,7 @@ Approval date: {{approval_date}}
 
 {{disclaimer_text}}
 
-*Guidance*: Populate this section from the `disclaimer-language` skill when the BRD is prepared for governed use.
+*Guidance*: Populate this section with the BRD Requirements Planning CAUTION from `project-planning-disclaimers` when the BRD is prepared for governed use.
 
 ---
 

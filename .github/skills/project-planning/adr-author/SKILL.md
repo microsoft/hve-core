@@ -87,7 +87,7 @@ Activities:
 6. **Final write** — write the ADR to `docs/planning/adrs/{NNNN}-{slug}.md`. The path is derived from the allocator-issued `NNNN` and the slugified ADR title.
 7. **Handoff trigger** — emit the dual-format (ADO + GitHub) work items per `adr-handoff.instructions.md`. This skill stops at handoff emission; routing is the agent's responsibility.
 
-Govern uses the autonomy and disclaimer banners required by `references/adr-identity.md` and the `disclaimer-language` skill. Do not duplicate those texts here; load them at runtime.
+Govern uses the autonomy banner required by `references/adr-identity.md` and the ADR Planning CAUTION from `project-planning-disclaimers`. Load them at runtime.
 
 ## Supersession Lineage Rules (Summary)
 
