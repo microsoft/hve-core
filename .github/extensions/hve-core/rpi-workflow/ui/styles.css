@@ -1633,6 +1633,92 @@ details > summary:hover {
   font: var(--rw-t-meta);
 }
 
+/* The RPI sessions picker: each session is a card with its task, its canvas state, and its controls, all in words. */
+
+.copilot-sessions {
+  display: grid;
+  gap: 8px;
+}
+
+.copilot-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.copilot-head > h3 {
+  margin: 0;
+}
+
+.copilot-head .btn {
+  flex: none;
+}
+
+.copilot-sessions .field-error,
+.copilot-status {
+  margin: 0;
+}
+
+.copilot-list-title {
+  margin: 4px 0 0;
+  color: var(--rw-fg-muted);
+  font: 600 12px/18px var(--rw-font);
+}
+
+.copilot-session-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.copilot-session-card {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--rw-border-muted);
+  border-radius: var(--rw-radius-lg);
+  background: var(--rw-bg);
+}
+
+.copilot-session-title {
+  font: 600 13px/20px var(--rw-font);
+  overflow-wrap: anywhere;
+}
+
+.copilot-session-card > .meta {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.copilot-reason {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.copilot-session-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+
+.copilot-session-card .btn-row {
+  margin-top: 2px;
+}
+
+.copilot-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font: var(--rw-t-ui);
+  overflow-wrap: anywhere;
+}
+
 /* Workspace */
 
 .workspace {
@@ -3326,6 +3412,33 @@ details > summary:hover {
 }
 
 .send-modes .icon {
+  margin-top: 2px;
+}
+
+/* Where Send now takes the items, in words, between the exact text and what Send now and Queue do. */
+.send-route {
+  margin: 14px 0 0;
+  color: var(--rw-fg-muted);
+  font: 400 12.5px/19px var(--rw-font);
+}
+
+.send-route[hidden] {
+  display: none;
+}
+
+.send-route .notice {
+  margin: 0 0 8px;
+}
+
+.send-route-line {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  margin: 0;
+}
+
+.send-route-line .icon {
   margin-top: 2px;
 }
 

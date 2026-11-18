@@ -128,8 +128,9 @@ Use one output mode and retain it throughout the artifact. Record the Research d
 * `executed`: rpi-research performed and synthesized task research.
 * `reused`: an explicit parent verified that existing research remains adequate.
 * `satisfied-and-skipped`: an explicit parent determined that supplied evidence is adequate without running new Research.
+* `provided`: an explicit parent records research that the user or another session supplied: an rpi-research artifact copied from another session, for which rpi-research does not run; the user's material in another form, which rpi-research makes into this artifact, keeping the user's content and decisions; or research that came with a provided plan, and that research has no document of its own.
 
-Only `executed` applies to a standalone rpi-research invocation. `reused` and `satisfied-and-skipped` are parent-owned dispositions for RPI Agent contexts.
+Only `executed` applies to a standalone rpi-research invocation. `reused`, `satisfied-and-skipped`, and `provided` are parent-owned dispositions for RPI Agent contexts.
 
 | Output mode                       | Recommendation action                                                                                  | Supports planning                                                                                        |
 |-----------------------------------|--------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|

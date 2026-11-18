@@ -19,6 +19,8 @@ export const CHILD_TASK = 'trail-maps-fixes';
 export const STALE_TASK = 'old-task';
 
 export const SESSION_KEY = `${DAY}/${ROOT_TASK}`;
+/** The workspace root the assembled fixture documents were read from. */
+export const FIXTURE_ROOT = '/work/trails';
 export const STALE_SESSION_KEY = `2026-01-10/${STALE_TASK}`;
 
 export const PATHS = {
@@ -718,6 +720,17 @@ export async function writeFixtureWorkspace(root) {
 /** Clock the assembled fixture documents use. */
 export const FIXTURE_NOW = '2026-01-15T12:00:00.000Z';
 
+/** The Copilot session that provided research or a plan in the fixtures. */
+export const SOURCE_SESSION = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+const COPIED_SHA256 = '9f2c4e1ab07d53e6c8f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f7a';
+
+/** `provided` evidence for an artifact copied from another session, in the rpi skill's form. */
+export const copiedEvidence = (artifactPath, session = SOURCE_SESSION) => `Copied from session ${session}, ${artifactPath}, sha256 ${COPIED_SHA256}`;
+/** `provided` evidence for material the user supplied, in the rpi skill's form. */
+export const suppliedEvidence = (description, date = '2026-01-15') => `Supplied by the user on ${date}: ${description}`;
+/** `provided` evidence for research that came with a provided plan, in the rpi skill's form. */
+export const cameWithPlanEvidence = (planEvidence) => `Came with the provided plan: ${planEvidence}`;
+
 /** An earlier piece of work in the fixture session, early-look, and a changes record no plan names. */
 export const EARLY = Object.freeze({
     research: `${T}/research/2026-01-14/early-look-research.md`,
@@ -781,7 +794,7 @@ export const rootSession = () => assembleSession({
         ],
     },
     git: { repository: 'contoso/trails', branch: 'feat/offline' },
-    root: '/work/trails',
+    root: FIXTURE_ROOT,
     now: FIXTURE_NOW,
 });
 

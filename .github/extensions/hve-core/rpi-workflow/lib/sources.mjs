@@ -1,8 +1,9 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { ModelError } from './model.mjs';
+import { isCopilotSessionId, ModelError } from './model.mjs';
 import { buildScenario, SCENARIO_ID, STAGES } from './scenario.mjs';
+import { resolveSessionStateRoot, resolveSessionWorkspace } from './source/sessions.mjs';
 import { agentTask, nextFollowTarget } from './source/tree.mjs';
 import { createFollower, listSessions, loadState, resolveState, resolveTask, resolveWorkspace, scanStates, sessionOf, sessionTreeOf } from './source/workspace.mjs';
 import { lineageStatusOf } from './source/assemble.mjs';
@@ -10,15 +11,39 @@ import { lineageStatusOf } from './source/assemble.mjs';
 export const DEFAULT_STAGE = 'implement';
 const TASK_REF_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
 const STATE_PATH_MAX = 400;
+const OPEN_KEYS = Object.freeze(['scenario', 'stage', 'task', 'state', 'session', 'sessions']);
+/** The most Copilot sessions a canvas lists in its picker. */
+export const MAX_SESSIONS = 50;
+
+/**
+ * The Copilot sessions a picker lists, as session IDs: deduplicated and lowercased, in the order given.
+ * Refuses a value that is not a list of session IDs, and a list longer than MAX_SESSIONS.
+ *
+ * @param {unknown} value
+ * @param {(code: string, message: string) => Error} makeError
+ * @returns {string[]}
+ */
+export function sessionListOf(value, makeError) {
+    if (!Array.isArray(value) || !value.every((item) => isCopilotSessionId(item))) {
+        throw makeError('invalid_input', 'sessions must be a list of Copilot session IDs (UUIDs).');
+    }
+    if (value.length > MAX_SESSIONS) {
+        throw makeError('invalid_input', `sessions lists at most ${MAX_SESSIONS} Copilot sessions.`);
+    }
+    return [...new Set(value.map((id) => id.toLowerCase()))];
+}
 
 /**
  * Validates canvas open input: `state` opens the task whose state file it names, `task`
- * opens an RPI task by ID or `current`, and `scenario` and `stage` open the sample.
- * Returns the input, or an empty object when none was given.
+ * opens an RPI task by ID or `current`, `session` names the local Copilot session whose
+ * workspace holds the task (`state` is then relative to it, and alone it shows `current`),
+ * `scenario` and `stage` open the sample, and `sessions` lists the Copilot sessions the picker shows
+ * first, which combines with any other input. Returns the input with `sessions` normalized, or an
+ * empty object when none was given.
  *
  * @param {unknown} input
  * @param {(code: string, message: string) => Error} makeError
- * @returns {{ task?: string, state?: string, scenario?: string, stage?: string }}
+ * @returns {{ task?: string, state?: string, session?: string, sessions?: string[], scenario?: string, stage?: string }}
  */
 export function validateOpenInput(input, makeError) {
     if (input === undefined || input === null) {
@@ -29,7 +54,7 @@ export function validateOpenInput(input, makeError) {
     }
     const value = /** @type {Record<string, unknown>} */ (input);
     for (const key of Object.keys(value)) {
-        if (key !== 'scenario' && key !== 'stage' && key !== 'task' && key !== 'state') {
+        if (!OPEN_KEYS.includes(key)) {
             throw makeError('invalid_input', `Unknown input property: ${key}`);
         }
     }
@@ -48,10 +73,31 @@ export function validateOpenInput(input, makeError) {
     if (value.task !== undefined && (typeof value.task !== 'string' || (value.task !== 'current' && !TASK_REF_RE.test(value.task)) || value.task === 'sample')) {
         throw makeError('invalid_input', 'task must be "current" or a task ID; omit it to open the sample.');
     }
+    if (value.session !== undefined && !isCopilotSessionId(value.session)) {
+        throw makeError('invalid_input', 'session must be a Copilot session ID (a UUID), as in the name of its folder under session-state.');
+    }
+    if (value.session !== undefined && (value.stage !== undefined || value.scenario !== undefined)) {
+        throw makeError('invalid_input', 'session opens an RPI task in that session; stage and scenario apply only to the sample.');
+    }
     if ((value.task !== undefined || value.state !== undefined) && (value.stage !== undefined || value.scenario !== undefined)) {
         throw makeError('invalid_input', 'task and state open an RPI task from the workspace; stage and scenario apply only to the sample.');
     }
+    if (value.sessions !== undefined) {
+        return /** @type {any} */ ({ ...value, sessions: sessionListOf(value.sessions, makeError) });
+    }
     return /** @type {any} */ (value);
+}
+
+/**
+ * Splits validated open input into what the canvas shows and the picker's sessions. The sessions apply on every
+ * open, so they are never the input that a reopen or an open of a canvas that is already open replaces.
+ *
+ * @param {ReturnType<typeof validateOpenInput>} input
+ * @returns {{ target: Record<string, unknown>, sessions: string[] | undefined }}
+ */
+export function splitOpenInput(input) {
+    const { sessions, ...target } = /** @type {Record<string, unknown> & { sessions?: string[] }} */ (input);
+    return { target, sessions };
 }
 
 /**
@@ -66,13 +112,16 @@ export function validateOpenInput(input, makeError) {
  *
  * @param {Record<string, unknown>} requested validated open input
  * @param {{ open: boolean, remembered: any }} instance whether the instance is open here, and what it showed last in this conversation
- * @returns {{ keep: true } | { keep: false, restore: { state: string, paused: boolean } | { task: 'sample' } | null }}
+ * @returns {{ keep: true } | { keep: false, restore: { state: string, paused: boolean, session?: string } | { task: 'sample' } | null }}
  */
 export function openPlan(requested, instance) {
     if (instance.open) return Object.keys(requested).length === 0 ? { keep: true } : { keep: false, restore: null };
     const remembered = instance.remembered;
     if (remembered?.kind === 'rpi' && validStatePath(remembered.state)) {
-        return { keep: false, restore: { state: remembered.state.trim(), paused: remembered.paused === true } };
+        const restore = { state: remembered.state.trim(), paused: remembered.paused === true };
+        // A remembered session is restored as it was, so one that no longer reads leaves the canvas not connected.
+        if (remembered.session !== undefined && remembered.session !== null) restore.session = remembered.session;
+        return { keep: false, restore };
     }
     return { keep: false, restore: remembered?.kind === 'sample' ? { task: 'sample' } : null };
 }
@@ -82,15 +131,34 @@ function validStatePath(value) {
     return typeof value === 'string' && value.trim() !== '' && value.length <= STATE_PATH_MAX && !/[\u0000-\u001f]/.test(value) && /-state\.json$/.test(value.trim());
 }
 
-/** Why a canvas shows no session: it opened without one, or the session it showed is gone. */
-export const NOT_CONNECTED_REASONS = Object.freeze(['no-input', 'missing-session']);
+/** Why a canvas shows no session: it opened without one, or the session or state it showed cannot be read. */
+export const NOT_CONNECTED_REASONS = Object.freeze(['no-input', 'missing-session', 'session-not-found', 'session-no-workspace', 'session-no-tracking']);
+
+/** What the agent reads after "Not connected to an RPI session" for each reason that names one. */
+export const NOT_CONNECTED_WHY = Object.freeze({
+    'missing-session': '; the session it showed was not found',
+    'session-not-found': "; its Copilot session is not in this machine's session data",
+    'session-no-workspace': '; its Copilot session records no workspace',
+    'session-no-tracking': '; its workspace has no .copilot-tracking folder',
+});
+
+/** The not-connected reason for each session error a reopen can hit. */
+const REASON_BY_CODE = Object.freeze({
+    session_not_found: 'session-not-found',
+    session_invalid: 'session-not-found',
+    session_no_workspace: 'session-no-workspace',
+    session_no_tracking: 'session-no-tracking',
+});
+
+/** Two session IDs name the same session, whatever their letter case. */
+const sameSession = (a, b) => typeof a === 'string' && typeof b === 'string' && a.toLowerCase() === b.toLowerCase();
 
 /**
  * The prepared source of a canvas that shows no session, until the agent connects it with
  * `show_task`. Its session ID is empty, so nothing reads a session document for it.
  *
- * @param {'no-input' | 'missing-session'} reason
- * @param {string | null} [detail] the remembered state path that could not be read
+ * @param {'no-input' | 'missing-session' | 'session-not-found' | 'session-no-workspace' | 'session-no-tracking'} reason
+ * @param {string | null} [detail] the remembered state path, session ID, or folder that could not be read
  */
 export function notConnected(reason, detail = null) {
     return { sessionId: '', source: { kind: 'none', reason, detail: typeof detail === 'string' ? detail : null }, session: null, note: '' };
@@ -98,23 +166,32 @@ export function notConnected(reason, detail = null) {
 
 /**
  * Decides what a canvas instance shows, the bundled sample at a stage or an RPI task read
- * from the workspace, and moves an instance between them. A task's follower polls only
+ * from a workspace, and moves an instance between them. A task's follower polls only
  * while the instance's server has a page connected. While following, the canvas moves from
  * a task that is no longer running to the session's running task, wherever it sits;
  * showing a task that is not running, by hand or by `show_task`, pauses following until it
  * resumes.
+ *
+ * A task read through `session` belongs to that Copilot session's workspace, found from its
+ * local metadata. Requests that name a task without a session keep the session the instance
+ * shows, and the instance remembers it with the state path.
  *
  * @param {{
  *   store: ReturnType<typeof import('./store.mjs').createStore>,
  *   log?: (message: string) => void,
  *   now?: () => string,
  *   intervalMs?: number,
- * }} deps
+ *   sessionRoot?: () => string,
+ *   ownSessionId?: () => string | null | undefined,
+ * }} deps `sessionRoot` is the session-state folder; `ownSessionId` is the conversation's own session, which resolves as it does without `session`.
  */
 export function createSourceController(deps) {
     const { store } = deps;
     const log = deps.log ?? (() => {});
     const now = deps.now ?? (() => new Date().toISOString());
+    const sessionRoot = () => (deps.sessionRoot ? deps.sessionRoot() : resolveSessionStateRoot().root);
+    /** The workspace of a Copilot session that a request names. */
+    const resolveSession = (sessionId) => resolveSessionWorkspace(sessionId, { root: sessionRoot() });
 
     async function prepareSample(stage, replace) {
         const existing = await store.load(SCENARIO_ID);
@@ -139,9 +216,9 @@ export function createSourceController(deps) {
      * @param {{ task?: string, state?: string }} ref
      * @param {{ root: string, tracking: string } | null} workspace
      * @param {(string | null | undefined)[]} [candidates]
-     * @param {{ paused?: boolean }} [follow]
+     * @param {{ paused?: boolean, session?: string | null }} [options] `session` is the Copilot session the workspace belongs to, when one was named
      */
-    async function prepareTask(ref, workspace, candidates, follow = {}) {
+    async function prepareTask(ref, workspace, candidates, options = {}) {
         if (ref.state === undefined && (typeof ref.task !== 'string' || (ref.task !== 'current' && !TASK_REF_RE.test(ref.task)))) {
             throw new ModelError('invalid_input', 'task must be "current" or a task ID such as trail-maps.');
         }
@@ -153,11 +230,12 @@ export function createSourceController(deps) {
         const source = {
             kind: 'rpi',
             workspace: resolvedWorkspace,
+            boundSession: options.session ?? null,
             taskId: resolved.taskId,
             statePath: resolved.statePath,
             sessionKey: sessionOf(resolved.statePath)?.key ?? null,
             follower: /** @type {any} */ (null),
-            follow: { paused: follow.paused === true },
+            follow: { paused: options.paused === true },
             tasks: /** @type {any[]} */ ([]),
             record: /** @type {any} */ (null),
         };
@@ -196,7 +274,7 @@ export function createSourceController(deps) {
                 if (source?.kind !== 'rpi' || source.follow.paused) return;
                 const target = nextFollowTarget(source.tasks, source.statePath);
                 if (!target) return;
-                const prepared = await prepareTask({ state: target.statePath }, source.workspace);
+                const prepared = await prepareTask({ state: target.statePath }, source.workspace, undefined, { session: source.boundSession });
                 if (record.source !== source) return;
                 attach(record, prepared, { moved: { from: source.taskId, to: prepared.source.taskId, title: target.title } });
             }
@@ -235,7 +313,9 @@ export function createSourceController(deps) {
         const source = record.source;
         // A canvas that shows no session keeps its last place, so a session that returns can still reopen.
         if (source?.kind === 'none') return;
-        const shown = source?.kind === 'rpi' ? { kind: 'rpi', state: source.statePath, paused: source.follow?.paused === true } : { kind: 'sample' };
+        const shown = source?.kind === 'rpi'
+            ? { kind: 'rpi', state: source.statePath, paused: source.follow?.paused === true, ...(source.boundSession ? { session: source.boundSession } : {}) }
+            : { kind: 'sample' };
         record.remembering = store.rememberInstance(record.instanceId, shown, { hostSessionId: record.hostSessionId }).catch((error) => log(`Could not remember what canvas ${record.instanceId} shows: ${error instanceof Error ? error.message : 'error'}`));
     }
 
@@ -246,7 +326,7 @@ export function createSourceController(deps) {
     }
 
     async function switchTo(record, ref, paused) {
-        const prepared = await prepareTask(ref, record.source.workspace, undefined, { paused });
+        const prepared = await prepareTask(ref, record.source.workspace, undefined, { paused, session: record.source.boundSession });
         attach(record, prepared);
         void followRunning(record);
         return prepared;
@@ -261,21 +341,64 @@ export function createSourceController(deps) {
         }
     }
 
+    /**
+     * Prepares a `state` or `task` request in one workspace: the given workspace, or the one the
+     * candidates name when none is given.
+     *
+     * @param {{ task?: string, state?: string, paused?: boolean }} request
+     * @param {{ root: string, tracking: string } | null} workspace
+     * @param {(string | null | undefined)[] | undefined} candidates
+     * @param {string | null} session the Copilot session the workspace belongs to, when one was named
+     */
+    function prepareRpi(request, workspace, candidates, session) {
+        const options = { paused: request.paused === true, session };
+        return request.state !== undefined
+            ? prepareTask({ state: request.state }, workspace, candidates, options)
+            : prepareTask({ task: request.task ?? 'current' }, workspace, candidates, options);
+    }
+
     return {
         /**
-         * Prepares a source without attaching it: `{ state }` or `{ task }` reads a task from
-         * the workspace, `task: "sample"`, a stage, or a scenario prepares the sample, and a
+         * Prepares a source without attaching it. `session` reads the task from that local Copilot
+         * session's workspace, and a session alone is its current task. `{ state }` or `{ task }`
+         * reads a task from `context.workspace` (with `context.session` as its session), or from the
+         * candidates' workspace. `task: "sample"`, a stage, or a scenario prepares the sample, and a
          * request with none of these is not connected.
          *
-         * @param {{ task?: string, state?: string, stage?: string, scenario?: string, replace?: boolean, paused?: boolean }} request `paused` keeps following paused for `state`
-         * @param {{ workspace?: { root: string, tracking: string } | null, candidates?: (string | null | undefined)[] }} [context]
+         * @param {{ session?: string, task?: string, state?: string, stage?: string, scenario?: string, replace?: boolean, paused?: boolean }} request `paused` keeps following paused for a task
+         * @param {{ workspace?: { root: string, tracking: string } | null, session?: string | null, candidates?: (string | null | undefined)[] }} [context]
          */
-        prepare(request, context = {}) {
-            if (request.state !== undefined) return prepareTask({ state: request.state }, context.workspace ?? null, context.candidates, { paused: request.paused === true });
-            if (request.task !== undefined && request.task !== 'sample') return prepareTask({ task: request.task }, context.workspace ?? null, context.candidates);
+        async prepare(request, context = {}) {
+            if (request.session !== undefined) {
+                // The conversation's own session resolves from the candidates, as it does without `session`.
+                if (sameSession(request.session, deps.ownSessionId?.())) return prepareRpi(request, null, context.candidates, null);
+                const workspace = await resolveSession(request.session);
+                return prepareRpi(request, workspace, undefined, request.session.toLowerCase());
+            }
+            if (request.state !== undefined || (request.task !== undefined && request.task !== 'sample')) {
+                return prepareRpi(request, context.workspace ?? null, context.candidates, context.session ?? null);
+            }
             // Only a request that names the sample, or one of its stages, shows the sample.
             if (request.task === 'sample' || request.stage !== undefined || request.scenario !== undefined) return prepareSample(request.stage, request.replace);
-            return Promise.resolve(notConnected('no-input'));
+            return notConnected('no-input');
+        },
+
+        /**
+         * Prepares what a reopen restores from the instance's memory. A remembered session or task
+         * that no longer reads leaves the canvas not connected, with the reason, not an error: a
+         * reopen repeats an earlier input rather than asking for something new.
+         *
+         * @param {{ session?: string, task?: string, state?: string, paused?: boolean }} restore
+         * @param {{ candidates?: (string | null | undefined)[] }} [context]
+         */
+        async restore(restore, context = {}) {
+            try {
+                return await this.prepare(restore, context);
+            } catch (error) {
+                log(`Could not reopen ${restore.state ?? restore.task ?? 'the sample'}, so the canvas is not connected: ${error instanceof Error ? error.message : 'error'}`);
+                const detail = /** @type {any} */ (error)?.detail;
+                return notConnected(REASON_BY_CODE[/** @type {any} */ (error)?.code] ?? 'missing-session', typeof detail === 'string' ? detail : (restore.state ?? restore.session ?? null));
+            }
         },
 
         /**
@@ -293,15 +416,22 @@ export function createSourceController(deps) {
         /**
          * Shows what the agent asks for with `show_task` or `load_scenario`. A task it names that
          * is not running stays shown, with following paused as when the user chooses it on the
-         * page; `task: "current"` keeps following, because it asks for where the work is.
+         * page; `current`, and a session alone, keep following, because they ask for where the
+         * work is. A task named without `session` stays in the session the instance shows.
          *
          * @param {{ sessionId: string, source?: any, server?: any }} record
-         * @param {{ task?: string, state?: string, stage?: string, replace?: boolean }} request
+         * @param {{ session?: string, task?: string, state?: string, stage?: string, replace?: boolean }} request
          * @param {{ workspace?: any, candidates?: (string | null | undefined)[] }} [context]
          */
         async show(record, request, context = {}) {
-            const prepared = await this.prepare(request, context);
-            if (prepared.source.kind === 'rpi' && request.task !== 'current') {
+            const keeps = request.session === undefined && record.source?.kind === 'rpi' && (request.task !== undefined || request.state !== undefined);
+            const prepared = await this.prepare(request, {
+                candidates: context.candidates,
+                workspace: keeps ? record.source.workspace : context.workspace ?? null,
+                session: keeps ? record.source.boundSession ?? null : null,
+            });
+            const asksCurrent = request.task === 'current' || (request.session !== undefined && request.state === undefined && request.task === undefined);
+            if (prepared.source.kind === 'rpi' && !asksCurrent) {
                 const shown = prepared.source.tasks.find((task) => task.statePath === prepared.source.statePath);
                 if (shown?.status !== 'running') prepared.source.follow.paused = true;
             }
@@ -321,9 +451,9 @@ export function createSourceController(deps) {
         },
 
         /**
-         * Shows another task of the instance's session, or the parent a task continues
-         * from another session. Showing a task that is not running pauses following, and
-         * `paused` keeps it paused even for a running task.
+         * Shows another task of the instance's session, or the parent a task continues from another
+         * session folder. Showing a task that is not running pauses following, and `paused` keeps it
+         * paused even for a running task.
          *
          * @param {{ sessionId: string, source?: any, server?: any }} record
          * @param {{ taskId?: string, statePath?: string } | string} ref
@@ -423,6 +553,7 @@ export function sourceSummary(record, session) {
             kind: 'rpi',
             taskId: record.source.taskId,
             statePath: record.source.statePath,
+            boundSession: record.source.boundSession ?? null,
             artifacts: session.source?.artifacts ?? {},
             importedAt: session.source?.importedAt ?? null,
             warnings: session.source?.warnings ?? [],
