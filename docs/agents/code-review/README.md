@@ -22,7 +22,7 @@ tags:
   - code-review
   - coding-standards
 author: Microsoft
-ms.date: 2026-11-17
+ms.date: 2026-11-18
 ms.topic: concept
 estimated_reading_time: 10
 ---
@@ -119,6 +119,8 @@ Code Review uses `standard` unless you pick another depth or concrete risk in th
 
 All review guidance lives inside `.github/skills/coding-standards/code-review/` and its on-demand `references/` directory:
 
+:::table{caption="Review phases, perspectives, vector pills, and on-demand references"}
+
 | Phase or perspective | Vector pill     | Reference (loaded only when active) | Focus                                                                                                                 |
 |----------------------|-----------------|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
 | `functional`         | `functional`    | `references/functional.md`          | Contribution bar, bugs and side effects, refactored paths, missed APIs/SDKs, missed abstractions, unneeded edge cases |
@@ -132,6 +134,8 @@ All review guidance lives inside `.github/skills/coding-standards/code-review/` 
 | `performance`        | `performance`   | `references/specialist.md`          | Opt-in: complexity growth, blocking I/O, memory retention, and stated SLO budgets (`performance-slo-planner`)         |
 | `privacy`            | `privacy`       | `references/specialist.md`          | Opt-in: personal data collection, logging, storage, minimization, retention, and deletion (`privacy-by-design`)       |
 | `accessibility`      | `accessibility` | `references/accessibility.md`       | Opt-in: user barriers in changed interaction, markup, and content (`accessibility`)                                   |
+
+:::
 
 Code Review does not rely on custom named `code-review-*` subagents. Instead:
 
