@@ -62,9 +62,13 @@
     ".github/instructions/coding-standards": true,
     ".github/instructions/design-thinking": true,
     ".github/instructions/experimental": true,
+    ".github/instructions/git": true,
     ".github/instructions/hve-core": true,
+    ".github/instructions/privacy": true,
     ".github/instructions/project-planning": true,
+    ".github/instructions/rai": true,
     ".github/instructions/rai-planning": true,
+    ".github/instructions/rpi": true,
     ".github/instructions/security": true,
     ".github/instructions/shared": true
   },
