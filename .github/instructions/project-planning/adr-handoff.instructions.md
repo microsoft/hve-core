@@ -137,7 +137,7 @@ If `targetSystem` is unset at Govern exit, ask the user which backlog system(s) 
 
 ## Disclaimer Integration
 
-Every work item body and every peer-handoff artifact MUST include the standard disclaimer block. Reference the canonical text in the `disclaimer-language` skill and use the section that matches the planner identity. When an `ADR Planning` section is present in that shared file, use it; otherwise use the generic AI-assistance note shown in the templates below and link to the shared file.
+Include the ADR Planning CAUTION from `project-planning-disclaimers` in every work item body and peer-handoff artifact. Replace `{{adr_planning_caution_block}}` with the complete verbatim block in Markdown. In the HTML blockquote, replace `{{adr_planning_disclaimer_prose}}` with the same verbatim prose after the bold prefix.
 
 Before displaying any disclaimer to the user, record the timestamp:
 
@@ -177,7 +177,7 @@ HTML description template:
     <li>{criterion 2}</li>
   </ul>
   <blockquote>
-  <p><strong>Disclaimer</strong> — This work item was generated with assistance from AI based on an architectural decision record. Review and validate before use. See the shared disclaimer text in the <code>disclaimer-language</code> skill.</p>
+  <p><strong>Disclaimer:</strong> {{adr_planning_disclaimer_prose}}</p>
   <ul><li><input type="checkbox" disabled /> Reviewed and validated by a qualified human reviewer</li></ul>
   </blockquote>
 </div>
@@ -224,7 +224,8 @@ Markdown body template:
 * [ ] {criterion 1}
 * [ ] {criterion 2}
 
-> **Disclaimer** — This issue was generated with assistance from AI based on an architectural decision record. Review and validate before use. See the shared disclaimer text in the `disclaimer-language` skill.
+{{adr_planning_caution_block}}
+
 > - [ ] Reviewed and validated by a qualified human reviewer
 ```
 
@@ -290,7 +291,7 @@ After all handoffs complete, present a summary covering peers fired, work items 
 
 {recommended follow-up actions, including who to notify}
 
-> **Disclaimer** — See the `disclaimer-language` skill. All ADR-derived work items must be reviewed by a qualified human before execution.
+{{adr_planning_caution_block}}
 ```
 
 Log every generation event (create, skip, defer) and the reason for any skip.

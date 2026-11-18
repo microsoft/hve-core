@@ -1,9 +1,9 @@
 ---
 title: disclaimer-language
-description: "Verbatim CAUTION disclaimers for HVE planning, coaching, and review agents, one section per planner or review family, plus the session-state fields that track display. Preloaded by the agents that show them."
+description: "Verbatim CAUTION notices for Design Thinking Coaching, Data Science and Engineering Coaching, and Accessibility-Review, plus the session-state field that tracks display."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Verbatim CAUTION disclaimers for HVE planning, coaching, and review agents, one section per planner or review family, plus the session-state fields that track display. Preloaded by the agents that show them.
+Verbatim CAUTION notices for Design Thinking Coaching, Data Science and Engineering Coaching, and Accessibility-Review, plus the session-state field that tracks display.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

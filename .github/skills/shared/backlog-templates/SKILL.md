@@ -163,11 +163,12 @@ Notes:
 
 Every backlog handoff artifact (handoff summary, ADO output file, GitHub output file) emits a disclaimer block verbatim at the end of the file. The block is the source of authority that the planner emission was AI-assisted and requires qualified human review before execution.
 
-Source-of-truth split for the disclaimer text:
+Use only the emitting planner's notice:
 
-* RAI, Security, SSSC — Read the disclaimer text from the `disclaimer-language` skill under the corresponding planner section.
-* Privacy — Read the disclaimer text from the `disclaimer-language` skill under the Privacy Planning section.
-* Accessibility — Read the disclaimer text from the automatically applied `accessibility-identity.instructions.md` under the `Disclaimer Handling` heading. The L7 disclaimer lever pins the accessibility disclaimer to that file. Do not move it to the `disclaimer-language` skill.
+* RAI: `RAI Planning` in `rai-disclaimers`.
+* Security or SSSC: `Security Planning` or `SSSC Planning`, respectively, in `security-disclaimers`.
+* Privacy: `Privacy Planning` in `privacy-disclaimers`.
+* Accessibility: `Disclaimer Handling` in `accessibility-identity.instructions.md`. The L7 disclaimer lever pins the accessibility planning notice to that file.
 
 Placement rules:
 

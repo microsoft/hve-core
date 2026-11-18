@@ -1,9 +1,9 @@
 ---
 title: security-planning
 description: "Security planning and plan-drift analysis for STRIDE, standards, controls, backlog handoff, current findings, and TM7 generation."
-sidebar_position: 17
+sidebar_position: 19
 author: Microsoft
-ms.date: 2026-10-27
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill

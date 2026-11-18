@@ -54,7 +54,7 @@ Every finding and discussion comment carries a vector pill (`functional`, `secur
 
 ## Phases and workflow
 
-Activate `disclaimer-language` unless already preloaded and show the canonical Code-Review notice according to its cadence. Resolve this skill's installation directory before running `node scripts/review.mjs`.
+Read the [Code-Review CAUTION](references/code-review-disclaimer.md) before starting; use its verbatim block when presenting findings and in the rendered report. Resolve this skill's installation directory before running `node scripts/review.mjs`.
 
 1. Resolve target and capture snapshot:
    * Identify the explicit target before capturing: PR/MR identity and base/head revisions, named branch comparison, staged/unstaged/combined local mode, commit, or selected code. Reuse an existing review only when repository and target match. Ask when ambiguous; never guess a base branch, fetch, check out branches, or mix dirty local edits into a PR snapshot.

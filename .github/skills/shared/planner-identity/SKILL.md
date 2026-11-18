@@ -15,7 +15,7 @@ This skill is the shared scaffold for phase-based conversational planning agents
 
 Exploration-first questioning style, laddering, projective techniques, scope assessment, and raw-capture rules are defined in `shared/coaching-patterns.instructions.md` and apply on top of this base.
 
-Disclaimer copy lives in the `disclaimer-language` skill; this base defines the cadence pattern, not the text.
+Each planner identity names its canonical disclaimer source. This base defines when to display the notice, not its text.
 
 ## Scope of Inheritance
 
@@ -132,11 +132,11 @@ When the planner emits a user-facing disclaimer (RAI, SSSC, Security, Accessibil
 
 ### Session Start Display
 
-When creating a project state record, or when a recovered record has `disclaimerShownAt` set to `null`, display the planner's canonical disclaimer block from the `disclaimer-language` skill verbatim before any phase work begins. Record the display by setting `state.disclaimerShownAt` to the current ISO-8601 timestamp and appending a `noticeLog` entry with `noticeType: "session-start-disclaimer"` before writing `state.json`. If `disclaimerShownAt` already contains a timestamp, do not repeat the full disclaimer during normal continuation. If the user requests redisplay, show the full disclaimer, update `disclaimerShownAt` to the redisplay timestamp, and append a `session-start-disclaimer` entry with `details.reason: "user-requested-redisplay"`.
+When creating a project state record, or when a recovered record has `disclaimerShownAt` set to `null`, display the planner's canonical disclaimer block verbatim before any phase work begins. Record the display by setting `state.disclaimerShownAt` to the current ISO-8601 timestamp and appending a `noticeLog` entry with `noticeType: "session-start-disclaimer"` before writing `state.json`. If `disclaimerShownAt` already contains a timestamp, do not repeat the full disclaimer during normal continuation. If the user requests redisplay, show the full disclaimer, update `disclaimerShownAt` to the redisplay timestamp, and append a `session-start-disclaimer` entry with `details.reason: "user-requested-redisplay"`.
 
 ### Exit Point Reminder
 
-At each of the following exit points, surface a brief one-line professional-review reminder using the canonical wording in the `disclaimer-language` skill:
+At each of the following exit points, surface a brief one-line professional-review reminder using the wording from the planner's canonical notice:
 
 1. **Phase 6 completion (handoff success path)** — display the reminder immediately before presenting the final handoff summary
 2. **Compact handoff** — display the reminder when the orchestrator hands off to ADO, GitHub, or another backlog workflow

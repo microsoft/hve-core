@@ -1,9 +1,9 @@
 ---
 title: rai-standards
 description: "Consolidated Responsible AI standards reference: NIST AI RMF 1.0, AI STRIDE threat-modeling overlay, EU AI Act risk tiers, and an open-standards catalog with phase mapping"
-sidebar_position: 1
+sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill

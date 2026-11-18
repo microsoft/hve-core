@@ -152,7 +152,7 @@ export async function updateContext(location, revision, request) {
 const markdownText = (value) => String(value).replace(/[\\`*_[\]<>#]/g, '\\$&');
 
 export async function canonicalDisclaimer() {
-    const source = await fs.readFile(new URL('../../../../shared/disclaimer-language/SKILL.md', import.meta.url), 'utf8');
+    const source = await fs.readFile(new URL('../../references/code-review-disclaimer.md', import.meta.url), 'utf8');
     const block = source.replaceAll('\r\n', '\n').split('\n## Code-Review\n')[1]?.split('\n## ')[0]?.trim();
     check(block?.startsWith('> [!CAUTION]') && block.includes('qualified human reviewer'), 'Canonical Code-Review disclaimer is unavailable.', 'disclaimer_unavailable');
     return block;
