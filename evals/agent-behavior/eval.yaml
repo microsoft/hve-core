@@ -1614,7 +1614,7 @@ stimuli:
   - type: output-matches
     name: code-review-class-recipe-no-source-edit
     config:
-      pattern: (?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched)\s+\S{0,40}\.(?:js|mjs|ts|json|md)\b
+      pattern: (?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|\.mjs|package\.json)\b
       negate: true
 - name: code-review-default-boundary-and-task-orchestration
   prompt: |
