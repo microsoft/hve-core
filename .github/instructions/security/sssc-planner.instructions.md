@@ -534,7 +534,7 @@ Generate actionable work items from the gap analysis in dual format (ADO + GitHu
 
 ### Dual-Format Backlog Templates
 
-Both ADO and GitHub formats follow the canonical templates, field blocks, augmentation keys, and temporary-ID conventions defined in the `backlog-templates` skill. Read the SSSC entries under "ADO Work Item Template", "GitHub Issue Template", and "Work Item ID Naming Convention" at emission time. The markdown body skeleton in the skill is reused verbatim; SSSC fills `{planner_specific_summary_lines}` with the Scorecard Check, Risk Level, and Adoption Type one-liners.
+Use `backlog-templates` for the ADO and GitHub skeletons and the SSSC work-item IDs. Fill the ADO description with the supply-chain control, Scorecard Check, Risk Level, Effort, Adoption Type, Prerequisite, Adoption Steps, and Source References (workflow, script, documentation). In the GitHub YAML header, record `scorecard_check`, `risk_level`, `adoption_type`, `effort`, and `standards`. Fill `{planner_specific_summary_lines}` with the Scorecard Check, Risk Level, and Adoption Type one-liners.
 
 Work item hierarchy for supply chain security:
 
@@ -620,7 +620,7 @@ Assess which Badge tier the repository would qualify for after completing all wo
 
 Write ADO-formatted work items to `.copilot-tracking/workitems/backlog/{project-slug}-sssc/work-items.md`.
 
-Apply the ADO work item template per the convention in the `backlog-templates` skill, including the SSSC ADO field block enumerated under "ADO Work Item Template" in that skill, with:
+Use the ADO format in [Dual-Format Backlog Templates](#dual-format-backlog-templates), with:
 
 * HTML-formatted description fields
 * `WI-SSSC-{NNN}` sequential IDs
@@ -634,7 +634,7 @@ Set `state.json` field `handoffGenerated.ado` to `true` after writing.
 
 Write GitHub-formatted issues to `.copilot-tracking/github-issues/discovery/{project-slug}-sssc/issues-plan.md`.
 
-Apply the GitHub issue template per the convention in the `backlog-templates` skill, including the SSSC YAML augmentation keys enumerated under "GitHub Issue Template" in that skill, with:
+Use the GitHub format in [Dual-Format Backlog Templates](#dual-format-backlog-templates), with:
 
 * YAML metadata blocks
 * `{{SSSC-TEMP-N}}` temporary IDs

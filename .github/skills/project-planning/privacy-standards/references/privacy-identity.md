@@ -211,7 +211,7 @@ The planner inherits the 3-5 per turn cadence, emoji checklist, and seven rules 
 
 ## Backlog Handoff Contract
 
-The Privacy Planner is the fifth `backlog-templates` caller. It emits backlog-eligible findings using the shared ADO and GitHub templates, content sanitization rules, autonomy-tier vocabulary, disclaimer-block placement, and work-item ID conventions defined in the `backlog-templates` skill. The privacy-specific pieces below stay in this file per that skill's per-planner boundary.
+Render backlog-eligible privacy findings with the ADO and GitHub skeletons, sanitization rules, autonomy tiers, disclaimer placement, and work-item IDs from `backlog-templates`. Add the privacy fields below without replacing the shared fields.
 
 ### Privacy Augmentation Fields
 
