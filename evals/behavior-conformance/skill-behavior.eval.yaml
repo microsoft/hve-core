@@ -10515,3 +10515,84 @@ stimuli:
         name: skill-rpi-refine-subagents-none-no-failure-or-skip
         config:
           pattern: '(?i)(does\s+not\s+fail|without\s+failing|not\s+skip|never\s+mandatory|optional)'
+
+  - name: skill-code-review-knowledge
+    prompt: |
+      Using the `code-review` skill, name the tracking directory prefix where each review folder is created, the Node helper script relative to the skill root, and the six core review vector pills (excluding phase helpers and accessibility). If the skill cannot be read, report the task as blocked.
+    agent_environment:
+      skills:
+        - ../../.github/skills/coding-standards/code-review
+      files:
+        - src: ../../.github/skills/coding-standards/code-review
+          dest: .github/skills/coding-standards/code-review
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: code-review
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 769e218ce09c5617d0654bef4015c23cf053563157d6505c8ad6ba55b9a3b452
+    graders:
+      - type: output-matches
+        name: skill-code-review-knowledge-paths
+        config:
+          pattern: '(?is)(?=[\s\S]*\.copilot-tracking/reviews/code-reviews)(?=[\s\S]*scripts/review\.mjs)'
+      - type: output-matches
+        name: skill-code-review-knowledge-vectors
+        config:
+          pattern: '(?is)(?=[\s\S]*\bfunctional\b)(?=[\s\S]*\bsecurity\b)(?=[\s\S]*\brai\b)(?=[\s\S]*\bsssc\b)(?=[\s\S]*\bperformance\b)(?=[\s\S]*\bprivacy\b)'
+
+  - name: skill-code-review-tool-trigger
+    prompt: |
+      A contributor wants a pre-PR check of their staged git changes focused on behavioral bugs, missed codebase SDKs or abstractions, and unneeded internal edge-case branches, while keeping specialist checks off unless asked. Which skill under `.github/skills/coding-standards/**/SKILL.md` owns this workflow, and which subagent type does it dispatch for parallel area tasks? If the skills cannot be read, report the task as blocked.
+    agent_environment:
+      skills:
+        - ../../.github/skills/coding-standards/code-review
+        - ../../.github/skills/coding-standards/python-foundational
+      files:
+        - src: ../../.github/skills/coding-standards/code-review
+          dest: .github/skills/coding-standards/code-review
+        - src: ../../.github/skills/coding-standards/python-foundational
+          dest: .github/skills/coding-standards/python-foundational
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: code-review
+      shape: tool-trigger
+      advisory: "true"
+      prompt_sha256: 72aa53ba5dcdc6f8d1d4e31373c1eae165b5ff6b3ed16b31cf3de3979cdb3416
+    graders:
+      - type: output-matches
+        name: skill-code-review-tool-trigger-skill-name
+        config:
+          pattern: '(?i)(?:^|\W)code-review(?:\W|$)'
+      - type: output-matches
+        name: skill-code-review-tool-trigger-subagent-type
+        config:
+          pattern: '(?i)\bgeneral[-\s]purpose\b'
+
+  - name: skill-code-review-bleed-detection
+    prompt: |
+      During an ordinary `/code-review` run where the user did not ask for extra vectors or plan comparisons, should the orchestrating agent read `references/specialist.md` and `references/integrations.md` to scan the workspace for BRDs, PRDs, ADRs, `rai-standards`, or `supply-chain-security`? Explain briefly from the `code-review` skill. If the skill cannot be read, report the task as blocked.
+    agent_environment:
+      skills:
+        - ../../.github/skills/coding-standards/code-review
+      files:
+        - src: ../../.github/skills/coding-standards/code-review
+          dest: .github/skills/coding-standards/code-review
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: code-review
+      shape: bleed-detection
+      advisory: "true"
+      prompt_sha256: e943535aa245ae6e48c3f0f7cefa26b7932e5530bc98e382d0216a546664b69a
+    graders:
+      - type: output-matches
+        name: skill-code-review-bleed-detection-opt-in-gate
+        config:
+          pattern: '(?i)\b(no\b|never|do\s+not|must\s+not|should\s+not|unloaded|opt[-\s]in|explicitly\s+request(?:ed|s)?)\b'
+      - type: output-matches
+        name: skill-code-review-bleed-detection-functional-default
+        config:
+          pattern: '(?i)((?<!non[-\s])\bfunctional\b|opt[-\s]in|explicitly\s+request(?:ed|s)?|unloaded)'

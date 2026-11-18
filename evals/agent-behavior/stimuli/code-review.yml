@@ -1,0 +1,71 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+# cspell:ignore thenable unawaited
+stimuli:
+  - name: code-review-class-recipe
+    prompt: |
+      Review this selected code snippet directly in chat without running shell commands, editing files, or opening a canvas, and explain any behavioral defects and their consequences:
+      ```javascript
+      export async function loadAccount(cache, accountId) {
+        if (cache.has(accountId)) return cache.get(accountId);
+        const record = fetchAccount(accountId);
+        cache.set(accountId, record);
+        return record.profile;
+      }
+      ```
+    agent_environment:
+      files:
+        - src: ../../.github/agents/coding-standards/code-review.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/coding-standards/code-review
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: code-review-class-recipe-severity-and-finding
+        config:
+          pattern: '(?i)\b(critical|high|medium|low|severity|issue|risk|finding|recommend|remediation)\b'
+      - type: output-matches
+        name: code-review-class-recipe-async-defect
+        config:
+          pattern: '(?i)\b(await|awaited|unawaited|promise|undefined|asynchronous|thenable)\b'
+      - type: output-matches
+        name: code-review-class-recipe-no-source-edit
+        config:
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched)\s+\S{0,40}\.(?:js|mjs|ts|json|md)\b'
+          negate: true
+
+  - name: code-review-default-boundary-and-task-orchestration
+    prompt: |
+      Do not start a review and do not run any command. Read the staged Code Review instructions and skill, then answer in chat:
+      1. Which review vector runs by default when no extra vectors are requested, and are `references/security.md`, `references/specialist.md`, or `references/integrations.md` read during that default pass?
+      2. When orchestrating parallel tasks across areas or phases without a Project coordinator, what subagent type is dispatched rather than custom `code-review-*` subagents?
+      If the staged files cannot be read, report the task as blocked without inventing their rules.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/coding-standards/code-review.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/skills/coding-standards/code-review
+          dest: .github/skills/coding-standards/code-review
+      skills:
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/coding-standards/code-review
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: default-boundary-and-task-orchestration
+    graders:
+      - type: output-matches
+        name: code-review-default-vector-functional
+        config:
+          pattern: '(?i)(?<!non[-\s])\bfunctional\b'
+      - type: output-matches
+        name: code-review-zero-nonfunctional-preload
+        config:
+          pattern: '(?i)\b(opt[-\s]in|unloaded|explicitly\s+request(?:ed|s)?|(?:not|never)\s+(?:read|loaded|preloaded|pulled))\b'
+      - type: output-matches
+        name: code-review-general-purpose-tasks
+        config:
+          pattern: '(?i)\bgeneral[-\s]purpose\b'

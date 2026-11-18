@@ -1,13 +1,13 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, count, h, icon, idChip, meta, prose, shortSha, svg, time, vectorPill } from './dom.mjs';
+import { badge, count, h, icon, idChip, meta, prose, shortSha, time, vectorPill } from './dom.mjs';
 import {
     anchorLabel, areaNonFunctional, arrivals, AVAILABILITY, boardLanes, bySeverity, commentVector, DISPOSITION, EXECUTION, FEEDBACK_KIND, feedbackState,
     feedbackVector, fileAnnotations, fileLabel, fileStats, fileStatus, findingGroups, findingsFor, findingVectors, hidingNarrowing, hunkAnnotations,
     isMarked, isRetained, matches, needsAttention, needsYou, NOT_EXPLAINED, OUTCOME, PERSPECTIVE, perspectiveOf, perspectiveProgress, plainText,
     reasonCoverage, reasonFiles, resolveFocus, REVIEWER_STATUS, REVIEWERS, reviewFlow, SEVERITY, splitPath, STAGE_STATUS, stageFor, stages,
-    targetPresent, targetSummary, VECTOR, vectorCounts,
+    targetPresent, targetSummary, vectorCounts,
 } from './views.mjs';
 import { layoutMap, MAP_VIEWS, mapModel, tagWords } from './map.mjs';
 import { closeMapPreview, renderMap } from './diagram.mjs';

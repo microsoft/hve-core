@@ -136,7 +136,7 @@ describe('dismissing feedback', () => {
         feedback = await dismissFeedback(source, { revision: feedback.revision, ids: [draftId, queuedId] });
         assert.deepEqual(await statuses(source), [['dismissed', 'draft'], ['dismissed', 'queued']]);
         assert.deepEqual((await takeFeedback(source)).items, []);
-        feedback = await restoreFeedback(source, { revision: feedback.revision, ids: [draftId, queuedId] });
+        await restoreFeedback(source, { revision: feedback.revision, ids: [draftId, queuedId] });
         assert.deepEqual(await statuses(source), [['draft', null], ['queued', null]]);
         const taken = await takeFeedback(source);
         assert.deepEqual(taken.items.map((item) => item.id), [queuedId]);
@@ -178,7 +178,7 @@ describe('dismissing feedback', () => {
         assert.equal(page.feedback.bookmarks.length, 1);
         feedback = await unqueueFeedback(source, { revision: feedback.revision, ids: [queuedId] });
         await assert.rejects(queueFeedback(source, { revision: feedback.revision, ids: [draftId] }), /no longer in this review/);
-        feedback = await dismissFeedback(source, { revision: feedback.revision, ids: [draftId] });
+        await dismissFeedback(source, { revision: feedback.revision, ids: [draftId] });
         assert.equal((await readFeedback(source)).items[0].status, 'dismissed');
         assert.deepEqual((await takeFeedback(source)).items, []);
     });
@@ -240,7 +240,7 @@ describe('adding reviewers', () => {
         const review = { kind: 'review', id: source.state.reviewId, snapshotId: source.state.snapshotId };
         await assert.rejects(editFeedback(source, { revision: feedback.revision, kind: 'add-reviewer', target: review, text: 'Add one.' }), /Choose the reviewer/);
         const security = { kind: 'perspective', id: 'security', snapshotId: source.state.snapshotId };
-        feedback = await editFeedback(source, { revision: feedback.revision, kind: 'explain', target: security, text: 'Why is security opt-in?' });
+        await editFeedback(source, { revision: feedback.revision, kind: 'explain', target: security, text: 'Why is security opt-in?' });
         const collected = await takeFeedback(source);
         assert.equal(collected.items.filter((item) => item.kind === 'add-reviewer').length, 4);
         feedback = await requestReviewer(source, { revision: collected.revision, perspective: 'performance' });

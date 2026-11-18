@@ -2,12 +2,12 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-11-17
+ms.date: 2026-11-18
 ---
 
 ## Purpose
 
-This suite requires every user-invocable hve-core agent to have at least one functional stimulus and at least one functional grader. Code Review currently lacks that coverage after retirement of its obsolete eval contracts; replacement model coverage is deferred.
+This suite requires every user-invocable hve-core agent to have at least one functional stimulus and at least one functional grader.
 
 The complement to [baseline-equivalence](../baseline-equivalence/README.md) is intentional: baseline-equivalence asserts the customization layer does not alter underlying model behavior beyond documented divergences, while agent-behavior asserts each agent actually performs its declared job.
 
@@ -21,7 +21,7 @@ evals/agent-behavior/
 ├── AGENTS.yml          # authoritative inventory (slug, path, class, cost_tier)
 ├── eval.yaml           # generated executable spec - do not edit by hand
 └── stimuli/
-  └── <agent-slug>.yml  # 54 partials; Code Review coverage is deferred
+  └── <agent-slug>.yml  # one partial per enrolled agent (55 partials)
 ```
 
 The partials in [stimuli/](stimuli/) are the source of truth for stimuli. The top-level [eval.yaml](eval.yaml) is regenerated from those partials by [scripts/evals/Build-AgentBehaviorSpec.ps1](../../scripts/evals/Build-AgentBehaviorSpec.ps1). The inventory at [AGENTS.yml](AGENTS.yml) is regenerated from the agent frontmatter on disk by [scripts/evals/Build-AgentInventory.ps1](../../scripts/evals/Build-AgentInventory.ps1) and the agent-behavior generator only reads slugs whose partials exist in [stimuli/](stimuli/).
@@ -97,13 +97,11 @@ Some stimuli intentionally stage fewer skills than their agent preloads. A stimu
 
 Vally has no agent-routing option, and staging an `.agent.md` at its normal `.github/agents/` path does not place it in model context. Workspace instructions are the supported channel, which is why isolated functional stimuli remap the agent file rather than copying it to its original location.
 
-### Deferred Code Review coverage
+### Consolidated Code Review coverage
 
-The primary Code Review agent stays enrolled because the inventory always includes parent agents. The nine former Code Review worker subagents and nine separate `code-review-*` skills have been retired and consolidated into `.github/skills/coding-standards/code-review/`. Their stimulus partials, the main expectation file, the resume fixture, and three shared Code Review conformance cases remain retired until replacement stimuli are authored.
+The primary Code Review agent is covered by [stimuli/code-review.yml](stimuli/code-review.yml), and the consolidated `code-review` skill is covered in `evals/behavior-conformance/skill-behavior.eval.yaml`. The nine former Code Review worker subagents and nine separate `code-review-*` skills have been retired and consolidated into `.github/skills/coding-standards/code-review/`.
 
-Changed-artifact coverage is missing for the `code-review` agent and the consolidated `code-review` skill. Parent coverage and stimulus-presence gates remain unchanged and unsatisfied; deterministic runtime or generator tests do not replace model coverage.
-
-The three shared baseline-equivalence scenarios retain their `rpi-agent` routing but no longer backlink Code Review. Unrelated RPI business-alignment cases remain. Code Review confirmation evidence for proposed [ADR-0012](../../docs/planning/adrs/0012-close-the-business-alignment-loop-in-rpi.md) is deliberately deferred, not passed. A later authorized eval effort must restore coverage before merge readiness can be claimed.
+The three shared baseline-equivalence scenarios retain their `rpi-agent` routing without backlinking Code Review. Unrelated RPI business-alignment cases remain. Code Review business-alignment confirmation evidence for proposed [ADR-0012](../../docs/planning/adrs/0012-close-the-business-alignment-loop-in-rpi.md) remains tracked under that ADR until a dedicated business-alignment stimulus or native run records it.
 
 ### Data Science Coach RPI Scenarios
 
@@ -345,7 +343,7 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 
 The generated inventory totals 55 agents: 32 parent agents plus 23
 enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/),
-with 54 partials on disk while `code-review` coverage is deferred. The
+with 55 partials on disk. The
 table above lists the 31 user-invocable parents; the repository-only
 `backlog-grooming` parent also has a partial but declares
 `user-invocable: false`, so the coverage check in `Test-EvalSpec.ps1` counts 31
