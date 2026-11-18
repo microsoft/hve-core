@@ -36,21 +36,19 @@ privacy, verification, update, withdrawal, and human-review requirements.
 
 ## Cost and Model Choice
 
-Before starting a full real investigation, state the host-selected model, an anticipated AI-credit
+Before starting a full real investigation, state the host-selected model if exposed, an anticipated AI-credit
 and monetary cost range, and the basis and uncertainty of that estimate. Use current host pricing
 and comparable measured usage when available. Distinguish consumption value from additional
 billing and an estimate from a spending limit; do not present benchmark costs as a real-incident
 price guarantee. If pricing or a defensible estimate is unavailable, say so and agree a spending
 limit before proceeding rather than inventing a price.
 
-Ask whether to continue with the selected model, switch to the debugging model `gpt-5.6-luna`
-when available and current pricing establishes it as cheaper, or pause. If it is already selected,
-offer continue or pause rather than a redundant switch. Wait for the user's choice before evidence collection or
-the hypothesis-test loop. Switching models requires the host's supported control or a manual
-user change; verify the selected model rather than claiming that a prompt changed it. Explain
-that a cheaper model can change diagnostic quality, not just cost.
+Ask whether to proceed within the spending limit or pause. Wait for the user's choice before
+evidence collection or the hypothesis-test loop. Leave model selection to the session. If the
+user requests a change, use the host's supported control or a manual user change; do not claim
+the switch took effect without host confirmation.
 
-Record the selected model, estimate and pricing basis, approved spending limit, and retrievable
+Record the exposed model (or `unknown`), estimate and pricing basis, approved spending limit, and retrievable
 user decision in the Investigation record. Reconfirm after a material scope, model, or budget
 change. Honor an existing explicit choice and budget for the same scope, including a fixed-profile
 benchmark, without asking again. Cost consent does not authorize tools, data access, or effects,
