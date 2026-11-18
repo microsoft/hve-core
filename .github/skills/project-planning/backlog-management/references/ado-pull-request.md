@@ -30,6 +30,12 @@ Take these inputs from the request or the calling agent.
 * `noGates` (optional, default `false`): Skip user confirmation gates.
 * `includeMarkdown` (optional, default `true`): Include markdown file diffs in PR reference.
 
+Accept `base` and `draft` as aliases for `baseBranch` and `isDraft`; explicit platform-specific
+inputs take precedence. For a `prepare` request, use only local Git evidence through phases 1 and 2,
+apply content sanitization and untrusted-content guards, and return the description without calling
+Azure DevOps. For `create`, apply Mandatory Preflight and all phase gates before creating or linking.
+Updating an existing PR is outside this protocol; a local description can still be prepared.
+
 ## Deliverables
 
 * `pr-reference.xml` - Git diff and commit history
