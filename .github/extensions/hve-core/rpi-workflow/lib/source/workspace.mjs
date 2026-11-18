@@ -7,7 +7,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { buildTraces, ModelError } from '../model.mjs';
-import { assembleSession, lineageStatusOf, mergeImport } from './assemble.mjs';
+import { assembleSession, lineageStatusOf, mergeImport, withoutDispositions } from './assemble.mjs';
 import { titleOf, parseDocument } from './markdown.mjs';
 import { artifactKind, parseArtifact, parseState } from './parse.mjs';
 import { buildTree, humanizeSlug } from './tree.mjs';
@@ -367,8 +367,10 @@ export function skippedWarning(skipped) {
 }
 
 /**
- * Branch and `owner/repo` from `.git/HEAD` and the `origin` remote, when they are small
- * regular files under the root; null otherwise.
+ * Branch and `owner/repo` from the git directory's `HEAD` and the `origin` remote, when they are
+ * small regular files; null when there is no readable `HEAD`. A `.git` folder is the git
+ * directory. A `.git` file is a linked worktree's `gitdir:` pointer: its `HEAD` is in that
+ * directory, and the remote's `config` is in the common directory named by its `commondir` file.
  *
  * @param {string} root
  */
@@ -376,8 +378,7 @@ export async function readGit(root) {
     // Reads through one handle, so the type and size checks describe the file that is read.
     // O_NOFOLLOW refuses a linked file as it opens; where the platform lacks it, a link is
     // refused after opening.
-    const small = async (name, limit) => {
-        const target = path.join(root, '.git', name);
+    const small = async (target, limit) => {
         let handle;
         try {
             handle = await fs.open(target, fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW ?? 0));
@@ -395,27 +396,48 @@ export async function readGit(root) {
             await handle.close();
         }
     };
-    const head = await small('HEAD', 4096);
+    const dotGit = path.join(root, '.git');
+    const entry = await fs.stat(dotGit).catch(() => null);
+    let gitDir;
+    if (entry?.isDirectory()) {
+        gitDir = dotGit;
+    } else if (entry?.isFile()) {
+        const pointer = /^gitdir:[ \t]*(.+?)\s*$/m.exec((await small(dotGit, 4096)) ?? '')?.[1];
+        if (!pointer) return null;
+        gitDir = path.resolve(root, pointer);
+    } else {
+        return null;
+    }
+    const head = await small(path.join(gitDir, 'HEAD'), 4096);
     if (head === null) return null;
     const ref = /^ref:\s*refs\/heads\/(.+)$/m.exec(head)?.[1]?.trim();
     const branch = ref ?? (/^[0-9a-f]{40}/.exec(head.trim())?.[0].slice(0, 12) ?? null);
-    const config = await small('config', 65536);
+    const commondir = await small(path.join(gitDir, 'commondir'), 4096);
+    const commonDir = commondir?.trim() ? path.resolve(gitDir, commondir.trim()) : gitDir;
+    const config = await small(path.join(commonDir, 'config'), 65536);
     const remote = config ? /\[remote "origin"\][^[]*?\burl\s*=\s*(\S+)/.exec(config)?.[1] : null;
     const repository = remote ? /(?:github\.com|dev\.azure\.com|gitlab\.com)[:/](.+?)(?:\.git)?\/?$/.exec(remote)?.[1] ?? null : null;
     return { repository, branch };
 }
 
+const STORE_ID_MAX = 80;
+
 /**
- * Store ID for a task's document: `rpi-` plus the task ID, kept to the store's ID pattern
- * and length, with a short hash when the task ID had to be shortened or cleaned.
+ * Store ID for a task's document in one workspace: `rpi-` plus the task ID, then a short hash of
+ * the workspace root, so one task ID in two workspaces keeps two documents. A task ID that had to
+ * be cleaned or shortened also carries a hash of itself. The ID stays within the store's pattern
+ * and length.
  *
  * @param {string} taskId
+ * @param {string} root the workspace root's real path
  */
-export function storeIdFor(taskId) {
+export function storeIdFor(taskId, root) {
+    const suffix = `-${createHash('sha256').update(String(root)).digest('hex').slice(0, 10)}`;
     const clean = String(taskId).toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
-    const id = `rpi-${clean}`;
-    if (id.length <= 80 && clean === taskId) return id;
-    return `${id.slice(0, 70).replace(/-+$/, '')}-${createHash('sha256').update(String(taskId)).digest('hex').slice(0, 8)}`;
+    const room = STORE_ID_MAX - 'rpi-'.length - suffix.length;
+    if (clean === taskId && clean.length <= room) return `rpi-${clean}${suffix}`;
+    const taskHash = createHash('sha256').update(String(taskId)).digest('hex').slice(0, 8);
+    return `rpi-${clean.slice(0, room - taskHash.length - 1).replace(/-+$/, '')}-${taskHash}${suffix}`;
 }
 
 const MAX_SOURCE_CHECKS = 200;
@@ -605,7 +627,7 @@ export async function loadTask(workspace, statePath, now) {
     const scan = await scanStates(workspace);
     const tree = await sessionTreeOf(workspace, self, scan);
     const input = {
-        id: storeIdFor(self.state.taskId),
+        id: storeIdFor(self.state.taskId, workspace.root),
         state: self.state,
         artifacts,
         mismatched,
@@ -642,7 +664,7 @@ function earlierDocuments({ state, artifacts, files, earlier, input, findingOffs
     })]));
     // A work's document of a kind is the last listed one with its name.
     const ofWork = (key, name) => listed[key].filter((doc) => doc.name === name && doc.parsed).at(-1) ?? null;
-    const stopped = { ...state, activePhase: 'Follow-up', sessionStatus: 'stopped', blockers: [] };
+    const stopped = withoutDispositions({ ...state, activePhase: 'Follow-up', sessionStatus: 'stopped', blockers: [] });
     const assemblies = new Map();
     const assembleWork = (doc) => {
         const parts = Object.fromEntries(ARTIFACT_KEYS.map((key) => [key, key === doc.key ? doc : ofWork(key, doc.name)]));

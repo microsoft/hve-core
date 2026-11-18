@@ -31,6 +31,12 @@
         "active": true,
         "notes": "No patched braces release is available (affects <= 3.0.3); markdownlint-cli2, Docusaurus, and webpack tooling transitively require braces via micromatch and chokidar."
       }
+    },
+    {
+      "GHSA-fc5q-39xc-vjpf": {
+        "active": true,
+        "notes": "No patched picomatch release is available (affects <= 4.0.7); cspell, markdownlint-cli2, vally, vsce, Docusaurus, jest, and webpack tooling transitively require picomatch through micromatch, chokidar, cspell-glob, and tinyglobby, among others."
+      }
     }
   ],
   "report-type": "important",

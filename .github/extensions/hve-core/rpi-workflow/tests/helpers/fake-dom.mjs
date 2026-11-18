@@ -111,13 +111,31 @@ class FakeElement extends FakeNode {
         (this.listeners[type] ??= []).push(listener);
     }
 
-    /** Supports single simple selectors: `.class`, `#id`, or `tag`. */
+    contains(node) {
+        for (let current = node; current; current = current.parentNode) {
+            if (current === this) return true;
+        }
+        return false;
+    }
+
+    focus() {
+        globalThis.document.activeElement = this;
+    }
+
+    replaceChildren(...items) {
+        for (const child of [...this.childNodes]) this.removeChild(child);
+        this.append(...items);
+    }
+
+    /** Supports single simple selectors: `*`, `.class`, `#id`, or `tag`. */
     querySelectorAll(selector) {
-        const test = selector.startsWith('.')
-            ? (el) => el.classList.contains(selector.slice(1))
-            : selector.startsWith('#')
-                ? (el) => el.getAttribute('id') === selector.slice(1)
-                : (el) => el.localName === selector;
+        const test = selector === '*'
+            ? () => true
+            : selector.startsWith('.')
+                ? (el) => el.classList.contains(selector.slice(1))
+                : selector.startsWith('#')
+                    ? (el) => el.getAttribute('id') === selector.slice(1)
+                    : (el) => el.localName === selector;
         return elements(this).filter(test);
     }
 
@@ -126,7 +144,7 @@ class FakeElement extends FakeNode {
     }
 }
 
-/** Installs the fake document and Node globals; returns a restore function. */
+/** Installs the fake document and Node globals; returns a restore function. `focus()` sets `document.activeElement`. */
 export function installFakeDom() {
     const previous = { document: globalThis.document, Node: globalThis.Node };
     globalThis.Node = FakeNode;
@@ -135,6 +153,8 @@ export function installFakeDom() {
         createElementNS: (_ns, tag) => new FakeElement(tag),
         createTextNode: (text) => new FakeText(String(text)),
         createDocumentFragment: () => new FakeFragment(),
+        body: new FakeElement('body'),
+        activeElement: null,
     };
     return () => {
         globalThis.document = previous.document;

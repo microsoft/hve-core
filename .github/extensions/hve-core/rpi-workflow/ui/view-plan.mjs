@@ -65,6 +65,7 @@ function runBadge(critique, long = false) {
 export function outline(ctx) {
     const plan = ctx.data.session.plan;
     return [
+        ctx.data.session.sections['plan-source'] ? { id: 'plan-source', label: 'Source' } : null,
         { id: 'plan-summary', label: 'Summary' },
         plan.diagram ? { id: 'change-map', label: 'Change map' } : null,
         ...plan.phases.map((phase) => ({ id: phase.id, label: phase.title, prefix: phase.id, count: `${phase.tasks.filter((t) => t.status === 'done').length}/${phase.tasks.length}` })),
@@ -126,6 +127,14 @@ export function renderView(ctx) {
     const rows = [];
     const critique = plan.critique;
     const readiness = plan.readiness;
+    if (ctx.data.session.sections['plan-source']) {
+        rows.push(row(ctx, {
+            id: 'plan-source', idLabel: null, title: 'Source', level: 2,
+            actions: rowActions(ctx, { rowId: 'plan-source' }),
+            body: [sectionBody(ctx, 'plan-source')],
+            margin: notesFor(ctx, ['plan-source']).map((item) => marginNote(ctx, item)),
+        }));
+    }
     rows.push(row(ctx, {
         id: 'plan-summary', idLabel: null, title: 'Summary', level: 2,
         badges: [readiness ? badge(readiness.status === 'ready' ? { icon: 'check-circle', label: 'Ready to implement', tone: 'success' } : { icon: 'hand', label: 'Not ready', tone: 'attention' }) : null, updatedMark(ctx, 'plan-summary')],
