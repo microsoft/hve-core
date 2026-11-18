@@ -69,6 +69,7 @@ jobs:
           sparse-checkout: |
             scripts/release/Resolve-ReleasePromotionVersion.ps1
             scripts/release/Set-RepositoryVersion.ps1
+            scripts/plugins/PluginCatalog.psm1
             scripts/plugins/Sync-PluginManifest.ps1
           sparse-checkout-cone-mode: false
           persist-credentials: false

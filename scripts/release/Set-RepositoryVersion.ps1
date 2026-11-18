@@ -13,9 +13,8 @@
     - package.json $.version
     - package-lock.json $.version and $.packages[""].version
     - extension/templates/package.template.json $.version
-    - plugin.json $.version
-    - .github/plugin/marketplace.json $.metadata.version and the sole
-      $.plugins[0].version
+    - $.version in each catalog source's plugin.json, including the root
+    - .github/plugin/marketplace.json $.metadata.version and $.plugins[*].version
 
     Each field is replaced in place, so surrounding formatting is preserved and
     reapplying the same version produces no diff. The script performs no source
@@ -47,6 +46,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+Import-Module (Join-Path $PSScriptRoot '../plugins/PluginCatalog.psm1') -Force
+
 # Each target names the exact member locations that carry the repository
 # version. Locations are walked structurally, so a shape change fails loudly
 # instead of rewriting a same-named member nested elsewhere.
@@ -54,7 +55,6 @@ $script:VersionTarget = @(
     [ordered]@{
         Path     = 'package.json'
         Location = @(, @('version'))
-        Assert   = @('$.version')
     }
     [ordered]@{
         Path     = 'package-lock.json'
@@ -62,25 +62,10 @@ $script:VersionTarget = @(
             , @('version')
             , @('packages', '', 'version')
         )
-        Assert   = @('$.version', '$.packages[""].version')
     }
     [ordered]@{
         Path     = 'extension/templates/package.template.json'
         Location = @(, @('version'))
-        Assert   = @('$.version')
-    }
-    [ordered]@{
-        Path     = 'plugin.json'
-        Location = @(, @('version'))
-        Assert   = @('$.version')
-    }
-    [ordered]@{
-        Path     = '.github/plugin/marketplace.json'
-        Location = @(
-            , @('metadata', 'version')
-            , @('plugins', 0, 'version')
-        )
-        Assert   = @('$.metadata.version', '$.plugins[0].version')
     }
 )
 
@@ -254,39 +239,6 @@ function Set-JsonMemberValue {
     return $Content.Substring(0, $Span[0]) + $Value + $Content.Substring($Span[0] + $Span[1])
 }
 
-function Get-JsonMemberValue {
-    <#
-    .SYNOPSIS
-        Reads one of the supported version members from parsed JSON.
-
-    .PARAMETER Json
-        Parsed JSON content read as a hashtable.
-
-    .PARAMETER Path
-        Supported member expression.
-
-    .OUTPUTS
-        [string] Member value.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [System.Collections.IDictionary]$Json,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('$.version', '$.packages[""].version', '$.metadata.version', '$.plugins[0].version')]
-        [string]$Path
-    )
-
-    switch ($Path) {
-        '$.version' { return [string]$Json['version'] }
-        '$.packages[""].version' { return [string]$Json['packages']['']['version'] }
-        '$.metadata.version' { return [string]$Json['metadata']['version'] }
-        '$.plugins[0].version' { return [string]@($Json['plugins'])[0]['version'] }
-    }
-}
-
 function Set-RepositoryVersion {
     <#
     .SYNOPSIS
@@ -314,9 +266,18 @@ function Set-RepositoryVersion {
         [string]$Version
     )
 
-    $Planned = @()
+    $Catalog = Get-PluginCatalog -RepoRoot $RepoRoot
+    if ($Catalog.Violations.Count -gt 0) { throw ($Catalog.Violations -join [Environment]::NewLine) }
+    $Targets = $script:VersionTarget
+    $CatalogLocations = @(, @('metadata', 'version'))
+    for ($i = 0; $i -lt $Catalog.Entries.Count; $i++) {
+        $Targets += @{ Path = $Catalog.Entries[$i].ManifestPath; Location = @(, @('version')) }
+        $CatalogLocations += , @('plugins', $i, 'version')
+    }
+    $Targets += @{ Path = '.github/plugin/marketplace.json'; Location = $CatalogLocations }
 
-    foreach ($Target in $script:VersionTarget) {
+    $Planned = @()
+    foreach ($Target in $Targets) {
         $Path = Join-Path $RepoRoot $Target.Path
         if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
             throw "Version-tracked file not found: $($Target.Path)"
@@ -329,10 +290,11 @@ function Set-RepositoryVersion {
         }
 
         $Json = $Updated | ConvertFrom-Json -AsHashtable
-        foreach ($Assertion in $Target.Assert) {
-            $Actual = Get-JsonMemberValue -Json $Json -Path $Assertion
-            if ($Actual -ne $Version) {
-                throw "$($Target.Path) $Assertion is '$Actual' after update; expected '$Version'"
+        foreach ($Location in $Target.Location) {
+            $Actual = $Json
+            foreach ($Segment in $Location) { $Actual = $Actual[$Segment] }
+            if ($Actual -cne $Version) {
+                throw "$($Target.Path) $($Location -join '.') is '$Actual' after update; expected '$Version'"
             }
         }
 

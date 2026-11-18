@@ -40,7 +40,7 @@
         {
           "type": "json",
           "path": ".github/plugin/marketplace.json",
-          "jsonpath": "$.plugins[0].version"
+          "jsonpath": "$.plugins[*].version"
         }
       ]
     }

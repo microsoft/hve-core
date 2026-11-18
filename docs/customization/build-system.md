@@ -2,7 +2,7 @@
 title: Build System and Validation
 description: Understand plugin manifest synchronization, schema validation, npm scripts, and CI checks for customizing HVE Core
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-18
 ms.topic: how-to
 keywords:
   - build system
@@ -19,7 +19,7 @@ Root `plugin.json` is the deterministic distribution manifest for the one `hve-c
 
 `npm run plugin:sync` runs `Sync-PluginManifest.ps1`, which derives the manifest's `agents`, `rules` (instruction files), `skills` (distributable skills), and `extensions` (canvas packages) arrays from git-tracked package-scoped paths. It maps prompt files to `commands`, which stays empty because HVE Core ships no prompt files. It preserves plugin metadata, takes the version from root `package.json`, and declares no hooks.
 
-`npm run plugin:validate` runs manifest check mode followed by hook validation. Check mode writes nothing and verifies deterministic membership, the one-entry locator in `.github/plugin/marketplace.json`, metadata parity, source containment, and declared component coverage.
+`npm run plugin:validate` runs manifest check mode followed by hook validation. Check mode writes nothing. It verifies root membership and checks each locator in `.github/plugin/marketplace.json` against its own manifest for metadata parity, source containment, and tracked component coverage.
 
 Synchronize after a distributable artifact changes:
 

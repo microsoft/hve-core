@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-10-26
+ms.date: 2026-11-18
 ms.topic: overview
 keywords:
   - github actions
@@ -433,7 +433,7 @@ OIDC and `vsce`.
 
 ### Marketplace Build
 
-Both channel workflows validate the one-entry catalog and call the generic publisher for `hve-core`. The publisher validates inputs, downloads `hve-core-<version>.vsix`, verifies its lane-specific attestation, prepares the locked publisher toolchain from protected `main`, and publishes through Azure OIDC and `vsce`.
+Both channel workflows check the catalog version and call the generic publisher for the single `hve-core` VSIX. The publisher validates inputs, downloads `hve-core-<version>.vsix`, verifies its lane-specific attestation, prepares the locked publisher toolchain from protected `main`, and publishes through Azure OIDC and `vsce`.
 
 Stable and PreRelease package the same root `plugin.json` membership into the same extension identity. Each selected branch or exact-tag snapshot carries its own root manifest, README, and LICENSE. The channel controls version, release source, and the VS Code Marketplace pre-release flag, not component inclusion.
 

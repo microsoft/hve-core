@@ -3,7 +3,7 @@ title: AI Artifacts Architecture
 description: Agent, skill, and instruction model for Copilot customizations in the Copilot harness
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-17
+ms.date: 2026-11-18
 ms.topic: concept
 keywords:
   - ai artifacts
@@ -275,7 +275,7 @@ The one product identity includes every distributable agent, instruction, and sk
 
 Repository-root artifacts without a package segment are excluded. Paths are unique and ordinal-sorted. The manifest declares a hook only while one ships under the plugin root; the repository ships none today.
 
-`npm run plugin:validate` checks manifest drift, one-entry locator parity and containment, declared component coverage, and hooks without modifying files.
+`npm run plugin:validate` checks root manifest drift, each locator's metadata and source containment, declared component coverage, and hooks without modifying files.
 
 ### Direct Outputs
 

@@ -82,6 +82,7 @@ jobs:
           sparse-checkout: |
             scripts/release/Resolve-ReleasePromotionVersion.ps1
             scripts/release/Set-RepositoryVersion.ps1
+            scripts/plugins/PluginCatalog.psm1
             scripts/plugins/Sync-PluginManifest.ps1
           sparse-checkout-cone-mode: false
           persist-credentials: false
@@ -457,6 +458,12 @@ jobs:
               -Check
 
           git add -- "${RELEASE_OWNED_FILES[@]}"
+          # Stage only tracked manifests from the checked catalog, without
+          # broadening the conflict-resolution allowlist or interpreting globs.
+          jq -j '.plugins[] | (.source + "/plugin.json"), "\u0000"' .github/plugin/marketplace.json |
+            while IFS= read -r -d '' manifest; do
+              git --literal-pathspecs add -u -- "$manifest"
+            done
           if git diff --cached --quiet; then
             git reset --quiet
           else

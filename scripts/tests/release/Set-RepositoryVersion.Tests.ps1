@@ -71,6 +71,9 @@ BeforeAll {
   "skills": []
 }
 "@
+            'fixture/nested/plugin.json'                = @"
+{ "name": "focus", "version": "$Version", "description": "Focused fixture" }
+"@
             '.github/plugin/marketplace.json'           = @"
 {
   "name": "hve-core",
@@ -82,9 +85,10 @@ BeforeAll {
     "name": "Microsoft"
   },
   "plugins": [
+    { "name": "focus", "source": "./fixture/nested", "version": "$Version" },
     {
       "name": "hve-core",
-    "source": ".",
+      "source": ".",
       "description": "Fixture plugin",
       "version": "$Version"
     }
@@ -115,7 +119,7 @@ BeforeAll {
         param([string]$Root)
 
         $inventory = [ordered]@{}
-        foreach ($file in (Get-ChildItem -LiteralPath $Root -Recurse -File | Sort-Object FullName)) {
+        foreach ($file in (Get-ChildItem -LiteralPath $Root -Recurse -File -Force | Sort-Object FullName)) {
             $relative = $file.FullName.Substring($Root.Length).TrimStart([System.IO.Path]::DirectorySeparatorChar)
             $inventory[$relative] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
         }
@@ -132,25 +136,25 @@ Describe 'Set-RepositoryVersion' -Tag 'Unit' {
             $script:After = Get-FixtureInventory -Root $script:Root
         }
 
-        It 'Updates <Path> <Member>' -ForEach @(
-            @{ Path = 'package.json'; Member = '$.version'; Expected = '3.3.0' }
-            @{ Path = 'package-lock.json'; Member = '$.version'; Expected = '3.3.0' }
-            @{ Path = 'package-lock.json'; Member = '$.packages[""].version'; Expected = '3.3.0' }
-            @{ Path = 'extension/templates/package.template.json'; Member = '$.version'; Expected = '3.3.0' }
-            @{ Path = 'plugin.json'; Member = '$.version'; Expected = '3.3.0' }
-            @{ Path = '.github/plugin/marketplace.json'; Member = '$.metadata.version'; Expected = '3.3.0' }
-            @{ Path = '.github/plugin/marketplace.json'; Member = '$.plugins[0].version'; Expected = '3.3.0' }
+        It 'Updates the version in <Path>' -ForEach @(
+            @{ Path = 'package.json' }
+            @{ Path = 'package-lock.json' }
+            @{ Path = 'extension/templates/package.template.json' }
+            @{ Path = 'plugin.json' }
+            @{ Path = 'fixture/nested/plugin.json' }
         ) {
             $json = Get-Content -LiteralPath (Join-Path $script:Root $Path) -Raw | ConvertFrom-Json -AsHashtable
-            Get-JsonMemberValue -Json $json -Path $Member | Should -BeExactly $Expected
+            $json.version | Should -BeExactly '3.3.0'
         }
 
         It 'Reports every version-tracked file as changed' {
-            @($script:Result | Where-Object { $_.Changed }) | Should -HaveCount 5
+            @($script:Result | Where-Object { $_.Changed }).Path | Sort-Object |
+                Should -Be @($script:Before.Keys | Where-Object { $_ -ne '.release-please-manifest.json' } | Sort-Object)
         }
 
         It 'Leaves dependency versions in the lockfile untouched' {
             $lock = Get-Content -LiteralPath (Join-Path $script:Root 'package-lock.json') -Raw | ConvertFrom-Json -AsHashtable
+            $lock['packages']['']['version'] | Should -BeExactly '3.3.0'
             $lock['packages']['']['devDependencies']['left-pad'] | Should -BeExactly '1.2.3'
             $lock['packages']['node_modules/left-pad']['version'] | Should -BeExactly '1.2.3'
         }
@@ -170,14 +174,12 @@ Describe 'Set-RepositoryVersion' -Tag 'Unit' {
             @($script:After.Keys) | Should -Be @($script:Before.Keys)
         }
 
-        It 'Adds no source ref to the catalog entry' {
+        It 'Updates every locator version without changing membership, order, or source' {
             $catalog = Get-Content -LiteralPath (Join-Path $script:Root '.github/plugin/marketplace.json') -Raw | ConvertFrom-Json -AsHashtable
-            @($catalog['plugins'])[0]['source'] | Should -BeExactly '.'
-        }
-
-        It 'Keeps the catalog at one entry' {
-            $catalog = Get-Content -LiteralPath (Join-Path $script:Root '.github/plugin/marketplace.json') -Raw | ConvertFrom-Json -AsHashtable
-            @($catalog['plugins']) | Should -HaveCount 1
+            $catalog.metadata.version | Should -BeExactly '3.3.0'
+            $catalog.plugins.name | Should -Be @('focus', 'hve-core')
+            $catalog.plugins.source | Should -Be @('./fixture/nested', '.')
+            $catalog.plugins.version | Should -Be @('3.3.0', '3.3.0')
         }
     }
 
@@ -205,7 +207,7 @@ Describe 'Set-RepositoryVersion' -Tag 'Unit' {
             Remove-Item -LiteralPath (Join-Path $root 'plugin.json') -Force
 
             { Set-RepositoryVersion -RepoRoot $root -Version '3.3.0' } |
-                Should -Throw '*Version-tracked file not found: plugin.json*'
+                Should -Throw '*has no plugin manifest: plugin.json*'
         }
 
         It 'Rejects a version that is not three numeric segments' {
@@ -227,6 +229,17 @@ Describe 'Set-RepositoryVersion' -Tag 'Unit' {
 
             Get-FixtureInventory -Root $root | ConvertTo-Json |
                 Should -BeExactly ($before | ConvertTo-Json)
+        }
+
+        It 'Does not follow a linked source when planning version writes' {
+            $root = New-VersionFixture -Root (Join-Path $TestDrive 'linked')
+            $outside = New-VersionFixture -Root (Join-Path $TestDrive 'other')
+            $path = Join-Path $root 'fixture/nested/plugin.json'
+            Remove-Item -LiteralPath $path
+            New-Item -ItemType SymbolicLink -Path $path -Target (Join-Path $outside 'plugin.json') | Out-Null
+            $before = Get-FixtureInventory -Root $outside
+            { Set-RepositoryVersion -RepoRoot $root -Version '3.3.0' } | Should -Throw '*symbolic link*'
+            Get-FixtureInventory -Root $outside | ConvertTo-Json | Should -BeExactly ($before | ConvertTo-Json)
         }
     }
 }
