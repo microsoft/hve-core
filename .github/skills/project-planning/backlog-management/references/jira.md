@@ -9,7 +9,7 @@ Jira delta for the [backlog-management](../SKILL.md) skill. Read this with the c
 
 ## Command Surface
 
-Jira command execution is delegated to the `jira` skill. Activate that skill by name and run every command through the CLI entry point it resolves (`scripts/jira.py`, relative to the skill), not through a hard-coded path from this file; the two skills are packaged separately and this file's location does not predict the other's. When the `jira` skill does not resolve, report that the Jira command surface is unavailable and stop before any terminal execution rather than guessing a path. Confirm `JIRA_BASE_URL` and either `JIRA_API_TOKEN` or `JIRA_PAT` are set before any command; the `jira` skill documents authentication and audit logging.
+Use the `jira` skill's CLI (`scripts/jira.py`, relative to that skill) for every Jira command. Preflight requires a terminal and a target project key. Let the CLI validate `JIRA_BASE_URL` and either `JIRA_API_TOKEN` or `JIRA_PAT` in process. On incomplete credentials, stop and report variable names only; never use another command path or run credential setup inline.
 
 | Category | Command      | Purpose                                                                                                |
 |----------|--------------|--------------------------------------------------------------------------------------------------------|

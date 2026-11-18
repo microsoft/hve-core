@@ -43,32 +43,16 @@ This skill and the agents that consume it are strictly planning-only. During pla
 
 * Do not call any create, update, transition, comment, or link operation on Azure DevOps, GitHub, or Jira.
 * Produce only planning artifacts under the platform's `prds/` tracking path.
-* Validate types and fields with read-only discovery (for example, Jira `fields <PROJECT-KEY>`, ADO work-item reads, or GitHub `mcp_github_list_issue_types`) before proposing a hierarchy; never mutate to test support.
+* Use the selected platform's read-only discovery to validate types and fields before proposing a hierarchy; never mutate to test support.
 * End at a reviewable `handoff.md` that the `Backlog Manager` executes after user review.
 
-## Dependency Resolution
+## Platform Bindings
 
-This skill depends on named artifacts that a host may not have installed. Confirm each resolves before depending on it.
+Resolve the tracker with `backlog-management`, which supplies the planning lifecycle, similarity assessment, sanitization, and operation order. Use only the selected provider for hierarchy, fields, and tracking paths:
 
-* `backlog-management` supplies command surfaces, field vocabulary, reference-ID prefixes, similarity assessment, sanitization, and operation order.
-* `jira` supplies the Jira command surface and credential setup when Jira is the resolved platform.
-* `Backlog Manager` executes the finished handoff in a separate pass.
-
-When one does not resolve, warn the user by name, state the unavailable capability and its effect on this request, and stop the dependent step. Do not substitute another artifact, reimplement the missing conventions inline, or report a complete plan that depended on an artifact that never loaded.
-
-## How This Skill Is Organized
-
-* This file — the platform-agnostic core: the read-only boundary, the five-phase PRD model, similarity reuse, field-validation-before-create discipline, the framework-selection mechanism, the extensibility note, and the handoff contract.
-* [references/ado.md](references/ado.md) — Azure DevOps hierarchy delta: Epic → Feature → User Story rules, validated field mapping, single-parent plus `Related` trace semantics, `needs_review` flattening, and the `.copilot-tracking/workitems/prds/` tracking path.
-* [references/github.md](references/github.md) — GitHub hierarchy delta: sub-issue hierarchy, issue-type and label validation, milestone recommendation, `needs_review` flattening, and the `.copilot-tracking/github-issues/prds/` tracking path.
-* [references/jira.md](references/jira.md) — Jira hierarchy delta: Epic → Story → Task → Sub-task rules, `fields`-validated mapping, `needs_review` flattening, and the `.copilot-tracking/jira-issues/prds/` tracking path.
-* [references/frameworks/generic.md](references/frameworks/generic.md) — the default platform-native decomposition lens (repository-original).
-* [references/frameworks/scrum.md](references/frameworks/scrum.md) — the Scrum decomposition lens (paraphrased from the Scrum Guide).
-* [references/frameworks/kanban.md](references/frameworks/kanban.md) — the Kanban flow and right-sizing lens (paraphrased from the Kanban Guide).
-
-Framework lenses are grouped under `references/frameworks/` as a deliberate, direct-reference exception that separates them from the per-platform deltas. Every link above resolves directly from this file, so the grouping adds an axis without adding a hop.
-
-Command surfaces, field vocabularies, reference-ID prefixes, and action verbs are not restated here; they live in the per-platform references of the `backlog-management` skill, which this skill's per-platform references point at. Activate that skill by name; when it does not resolve, warn the user that command surfaces and field vocabulary are unavailable and stop rather than inventing them.
+* Azure DevOps: use `ado-backlog` and its `references/hierarchy.md` for Azure Boards types, parent and trace links, and validated fields.
+* GitHub: use `github-backlog` and its `references/hierarchy.md` for sub-issues, issue types, labels, and milestones.
+* Jira: use the [Jira hierarchy](references/jira.md), the Jira bindings in `backlog-management`, and `jira` for CLI reads.
 
 ## Five-Phase PRD Model
 
@@ -112,7 +96,7 @@ When the user selects, or you identify, a functional-planning or decomposition f
 
 Never propose a create payload against an unvalidated type or field.
 
-* Discover supported types and required fields with read-only calls before finalizing the plan (Jira `fields <PROJECT-KEY>`; ADO work-item type reads; GitHub `mcp_github_list_issue_types` and `mcp_github_get_label`).
+* Discover supported types and required fields through the active provider's read-only bindings before finalizing the plan.
 * Map only fields validated for the target type; capture both current and suggested values in the analysis file for any existing item.
 * When a needed type, field, or parent linkage is unconfirmed, mark it `needs_review` and flatten the affected relationship rather than guessing.
 
@@ -120,7 +104,7 @@ Never propose a create payload against an unvalidated type or field.
 
 The plan hands off to the `Backlog Manager` for a separate execution pass:
 
-* Produce the platform's plan file (ADO `work-items.md`; GitHub and Jira `issues-plan.md`) as the source of truth, plus `handoff.md` with ordered, checkbox-tracked operations.
+* Produce the selected provider's plan file as the source of truth, plus `handoff.md` with ordered, checkbox-tracked operations.
 * Order the handoff using the platform's operation order from the workflows reference of the `backlog-management` skill; mark any `needs_review` item.
 * Keep all content sanitized per the `backlog-management` skill before it could reach a platform.
 * State explicitly that execution is a separate, user-reviewed pass; this skill never executes the plan.
@@ -136,7 +120,6 @@ The plan hands off to the `Backlog Manager` for a separate execution pass:
 ## Stop rules
 
 * Stop when the platform cannot be resolved, or when the target project, repository, or project key is unknown.
-* Stop when `functional-planner`, `backlog-management`, `jira`, or `Backlog Manager` does not resolve; name the capability and its effect rather than reimplementing it.
 * Stop before proposing a create against a type or field that read-only discovery could not validate; mark it `needs_review` instead.
 * Stop when the PRD is ambiguous or contradictory about a requirement's scope, level, or acceptance criteria.
 * Never fabricate a requirement, acceptance criterion, or evidence source. Record the gap and ask.
@@ -154,7 +137,5 @@ The two framework lenses paraphrase third-party guides with attribution; neither
 | `references/frameworks/scrum.md`         | CC-BY-SA-4.0 | Paraphrase of The Scrum Guide (2020), CC BY-SA 4.0                 |
 | `references/frameworks/kanban.md`        | CC-BY-SA-4.0 | Paraphrase of The Kanban Guide (May 2025), treated as CC BY-SA 4.0 |
 | `references/frameworks/generic.md`       | CC-BY-4.0    | Repository-original                                                |
-| `references/ado.md`                      | CC-BY-4.0    | Repository-original                                                |
-| `references/github.md`                   | CC-BY-4.0    | Repository-original                                                |
 | `references/jira.md`                     | CC-BY-4.0    | Repository-original                                                |
 | `SKILL.md` and remaining package content | CC-BY-4.0    | Repository-original                                                |
