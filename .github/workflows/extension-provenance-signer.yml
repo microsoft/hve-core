@@ -4,6 +4,10 @@ name: Extension Provenance Signer
 
 on:
   workflow_call:
+    secrets:
+      RELEASE_APP_PRIVATE_KEY:
+        description: "Named binding for the environment-only release-governance key"
+        required: true
     inputs:
       source-ref:
         description: "Immutable source commit to package and attest (full commit SHA of this run)"
@@ -37,6 +41,17 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Validate governance key delivery
+        shell: bash
+        env:
+          RELEASE_APP_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$RELEASE_APP_KEY" ]; then
+            echo '::error::Release governance key is unavailable; verify the named caller binding and environment secret'
+            exit 1
+          fi
+
       - name: Generate governance-read Release App token
         id: app-token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
