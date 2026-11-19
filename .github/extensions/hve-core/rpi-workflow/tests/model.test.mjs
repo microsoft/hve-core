@@ -494,4 +494,15 @@ describe('validation and traces', () => {
         assert.deepEqual(traces['P04-T01'].slice(-2), ['P04-T01', added.result.id]);
         assert.ok(traces[added.result.id].includes('P04-T01'));
     });
+
+    it('traces and anchors refinement findings alongside acceptance findings', () => {
+        let s = buildScenario('review', Date.parse(NOW));
+        s.source = { kind: 'rpi', statePath: '.copilot-tracking/rpi-sessions/2026-11-12/s/t-state.json', artifacts: { research: null, plan: null, critique: null, changes: null, review: '.copilot-tracking/reviews/logs/2026-11-12/t-review.md', refinement: '.copilot-tracking/reviews/logs/2026-11-12/t-refinement.md' } };
+        assert.equal(artifactFor(s, 'review', 'refinement-summary'), '.copilot-tracking/reviews/logs/2026-11-12/t-refinement.md');
+        assert.equal(artifactFor(s, 'review', 'review-summary'), '.copilot-tracking/reviews/logs/2026-11-12/t-review.md');
+        s = upsertDecision(s, { owner: 'user', phase: 'review', title: 'Confirm RF-001 route', question: 'Route RF-001 to P05?', options: [{ label: 'Yes' }, { label: 'Defer' }], anchor: { rowId: 'RF-001' } }, NOW).session;
+        const decisionId = s.decisions.at(-1).id;
+        const traces = buildTraces(s);
+        assert.ok(traces['RF-001'].includes('CH-003') && traces['RF-001'].includes(decisionId), JSON.stringify(traces['RF-001']));
+    });
 });

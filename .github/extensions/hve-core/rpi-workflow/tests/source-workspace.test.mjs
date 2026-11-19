@@ -414,6 +414,91 @@ describe('loading and importing a task', () => {
         assert.ok(!loaded.warnings.some((text) => /\b(?:CH|DS|AL|RV|RD)-\d{3}\b/.test(text)), loaded.warnings.join(' | '));
     });
 
+    it('combines an earlier work\'s review and refinement into one Review document entry without duplicating snapshots', async () => {
+        const dual = path.join(tmp, 'dual-earlier');
+        await writeFixtureWorkspace(dual);
+        const documents = await writeEarlierWork(dual);
+        const earlyRefinement = '.copilot-tracking/reviews/logs/2026-10-18/early-look-refinement.md';
+        const soloRefinement = '.copilot-tracking/reviews/logs/2026-10-18/tile-cache-refinement.md';
+        await fs.mkdir(path.dirname(path.join(dual, earlyRefinement)), { recursive: true });
+        const refinementText = [
+            '# Refinement Review: Early tile cache',
+            '',
+            '## Executive Summary',
+            '* Assessment: Remove the custom retry wrapper.',
+            '* Review execution: Complete',
+            '* Assessed outcome: Refinements identified',
+            '',
+            '## Findings and Proposed Routes',
+            '<!-- rpi:refinement id=RF-001 -->',
+            '### RF-001 [Medium]: Custom retry wrapper duplicates retryWithBackoff',
+            '* Related scope: P02-T01',
+            '* Dimension: Conventions',
+            '* Current state and evidence: src/cache.js wraps fetch manually.',
+            '* What to remove or rework: Call retryWithBackoff directly.',
+            '* Impact: Cuts 20 lines.',
+            '* Resolution condition: Custom wrapper removed.',
+            '* Proposed destination: rpi-plan',
+            '* Smallest useful next action: Remove wrapper.',
+            '',
+            '## Parent Decision Record',
+            '### Decision History',
+            '| Event | Subject | Decision source | Status or value | Proposed destination | Final destination | Owner | More information needed | Smallest next action | Rationale |',
+            '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+            '| FD-001 | RF-001 | agent | accepted | rpi-plan | rpi-plan | rpi-plan | none | Remove wrapper | Simpler |',
+            '',
+        ].join('\n');
+        await fs.writeFile(path.join(dual, earlyRefinement), refinementText);
+        await fs.writeFile(path.join(dual, soloRefinement), refinementText);
+        await writeJson(dual, PATHS.rootState, {
+            ...ROOT_STATE,
+            documents: { ...documents, refinement: [earlyRefinement, soloRefinement] },
+        });
+        const loaded = await loadTask(await resolveWorkspace([dual]), PATHS.rootState, NOW);
+        const earlyLookEntries = loaded.session.documents.review.filter((entry) => entry.name === 'early-look');
+        const soloEntries = loaded.session.documents.review.filter((entry) => entry.name === 'tile-cache');
+        assert.equal(earlyLookEntries.length, 2, 'early-look pass-1 refinement merges into pass-1 review without adding a third picker entry');
+        assert.deepEqual(earlyLookEntries[0].snapshot.review.findings.map((finding) => finding.id), ['RV-001', 'RV-002', 'RF-001']);
+        assert.deepEqual(earlyLookEntries[1].snapshot.review.findings.map((finding) => finding.id), ['RV-001', 'RV-002'], 'pass-2 review without a pass-2 refinement stands alone');
+        assert.equal(soloEntries.length, 1, 'a refinement-only earlier work still appears once');
+        assert.deepEqual(soloEntries[0].snapshot.review.findings.map((finding) => finding.id), ['RF-001']);
+
+        // Symmetric numbered passes (review + review-2 and refinement + refinement-2) pair pass 1 with pass 1, not pass 2.
+        const rootReview2 = `.copilot-tracking/reviews/logs/2026-10-19/${ROOT_TASK}-review-2.md`;
+        const rootRefinement1 = `.copilot-tracking/reviews/logs/2026-10-18/${ROOT_TASK}-refinement.md`;
+        const rootRefinement2 = `.copilot-tracking/reviews/logs/2026-10-19/${ROOT_TASK}-refinement-2.md`;
+        await fs.mkdir(path.dirname(path.join(dual, rootReview2)), { recursive: true });
+        const rootReview1Text = await fs.readFile(path.join(dual, PATHS.review), 'utf8');
+        await fs.writeFile(path.join(dual, rootReview2), rootReview1Text.replaceAll('RV-001', 'RV-010').replaceAll('RV-002', 'RV-011'));
+        await fs.writeFile(path.join(dual, rootRefinement1), refinementText);
+        await fs.writeFile(path.join(dual, rootRefinement2), refinementText.replaceAll('RF-001', 'RF-020'));
+        await writeJson(dual, PATHS.rootState, {
+            ...ROOT_STATE,
+            artifact_paths: { ...ROOT_STATE.artifact_paths, review: rootReview2, refinement: rootRefinement2 },
+            documents: { ...documents, review: [...documents.review, rootReview2], refinement: [rootRefinement1, rootRefinement2] },
+        });
+        const symmetric = await loadTask(await resolveWorkspace([dual]), PATHS.rootState, NOW);
+        const symRootEntries = symmetric.session.documents.review.filter((entry) => entry.name === ROOT_TASK);
+        assert.equal(symRootEntries.length, 2, 'pass 1 combined snapshot plus pass 2 current entry');
+        assert.equal(symRootEntries[0].current, false);
+        assert.deepEqual(symRootEntries[0].snapshot.review.findings.map((finding) => finding.id), ['RV-001', 'RV-002', 'RF-001'], 'pass 1 pairs with pass-1 refinement, not pass-2');
+        assert.equal(symRootEntries[1].current, true);
+        assert.deepEqual(symmetric.session.review.findings.map((finding) => finding.id), ['RV-010', 'RV-011', 'RF-020']);
+
+        // Asymmetric numbered passes (review pass 1 current, refinement pass 1 earlier, refinement-2 current) keep pass-1 refinement standalone.
+        await writeJson(dual, PATHS.rootState, {
+            ...ROOT_STATE,
+            artifact_paths: { ...ROOT_STATE.artifact_paths, review: PATHS.review, refinement: rootRefinement2 },
+            documents: { ...documents, refinement: [rootRefinement1, rootRefinement2] },
+        });
+        const asymmetric = await loadTask(await resolveWorkspace([dual]), PATHS.rootState, NOW);
+        const asymRootEntries = asymmetric.session.documents.review.filter((entry) => entry.name === ROOT_TASK);
+        assert.equal(asymRootEntries.length, 2, 'current entry plus standalone earlier pass-1 refinement');
+        const earlierRefinement = asymRootEntries.find((entry) => !entry.current);
+        assert.ok(earlierRefinement, 'earlier pass-1 refinement is not dropped');
+        assert.deepEqual(earlierRefinement.snapshot.review.findings.map((finding) => finding.id), ['RF-001'], 'earlier pass-1 refinement does not pull the current review');
+    });
+
     it('keeps the current work\'s Provided research out of an earlier research document', async () => {
         const provided = path.join(tmp, 'provided-earlier');
         await writeFixtureWorkspace(provided);

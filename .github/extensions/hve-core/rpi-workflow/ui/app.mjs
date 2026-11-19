@@ -269,7 +269,7 @@ function resolve(ref) {
     if (/^P\d{2}(-T\d{2})?$/.test(id)) return { phase: state.ui.phase === 'implement' ? 'implement' : 'plan' };
     if (/^(FR|NFR|PC)-\d{3}$/.test(id)) return { phase: 'plan' };
     if (/^(CH|DS|AL)-\d{3}$/.test(id)) return { phase: 'implement' };
-    if (/^(RV|RD)-\d{3}$/.test(id)) return { phase: 'review' };
+    if (/^(RV|RD|RF|FD)-\d{3}$/.test(id)) return { phase: 'review' };
     if (/^FU-\d+$/.test(id)) return { phase: 'followup' };
     if (/^FB-\d{3}$/.test(id)) return item.target ? resolve(item.target.id) : null;
     if (item.doc) return { phase: item.doc };

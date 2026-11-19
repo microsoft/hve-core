@@ -32,6 +32,7 @@ export const PATHS = {
     critique: `${T}/reviews/plans/${DAY}/${ROOT_TASK}-plan-critique.md`,
     changes: `${T}/changes/${DAY}/${ROOT_TASK}-changes.md`,
     review: `${T}/reviews/logs/${DAY}/${ROOT_TASK}-review.md`,
+    refinement: `${T}/reviews/logs/${DAY}/${ROOT_TASK}-refinement.md`,
     childPlan: `${T}/plans/${DAY}/${CHILD_TASK}-plan.md`,
     childChanges: `${T}/changes/${DAY}/${CHILD_TASK}-changes.md`,
 };
@@ -75,7 +76,7 @@ export const CHILD_STATE = {
     artifact_paths: { research: PATHS.review, plan: PATHS.childPlan, critique: null, changes: PATHS.childChanges, review: null },
     confirmed_decisions: [
         { decision: 'Research disposition', status: 'reused', evidence: 'The review record' },
-        { decision: 'Review step', status: 'skip', evidence: 'Child-loop default' },
+        { decision: 'Review step', status: 'skip', evidence: 'Repeat-loop rule' },
         { decision: 'Plan readiness', status: 'ready', evidence: 'Plan' },
     ],
     blockers: [],
@@ -582,6 +583,66 @@ export const REVIEW = `<!-- markdownlint-disable-file -->
 | Follow-up item | Why outside immediate scope | Owner or next action | Assessment and route |
 |----------------|-----------------------------|----------------------|----------------------|
 | Second region | Not requested yet | user | optional |
+`;
+
+export const REFINEMENT = `<!-- markdownlint-disable-file -->
+# Refinement Review: Offline trail maps
+
+## Executive Summary
+
+* Assessment: One duplicate retry timer and one extra doc can be removed.
+* Why this matters: Cuts duplicate state in tile downloads.
+* Review execution: Complete
+* Assessed outcome: Refinements identified
+* Review depth: standard
+* Validation coverage: Unit tests passed.
+* Confidence and limitations: High.
+
+## What You May Not Know
+
+* An upgrade to IndexedDB batch writes is available once iOS baseline rises.
+
+## Findings and Proposed Routes
+
+<!-- rpi:refinement id=RF-001 -->
+### RF-001 [Medium]: Tile store duplicates existing retry helper
+
+* Related scope: P01-T01; CH-001
+* Dimension: Dependencies and SDKs
+* Current state and evidence: src/storage/tiles.ts builds a custom backoff timer.
+* What to remove or rework: Delete custom timer state and call \`retryWithBackoff\`.
+* Impact: Removes 48 lines of timer state.
+* Resolution condition: \`tiles.ts\` delegates retries to \`retryWithBackoff\`.
+* Proposed destination: rpi-plan
+* Smallest useful next action: Add a follow-up phase in \`rpi-plan\`.
+
+## Parent Decision Record
+
+### Current Disposition
+
+* Based on events: FD-001 to FD-002
+* Review execution: Complete
+* Final outcome: Refinements identified
+
+### Decision History
+
+| Event | Subject | Decision source | Status or value | Proposed destination | Final destination | Owner | More information needed | Smallest next action | Rationale |
+|-------|---------|-----------------|-----------------|----------------------|-------------------|-------|-------------------------|----------------------|-----------|
+| FD-001 | Review execution | agent | Complete | none | none | refinement parent | none | Record outcome | All lenses assessed |
+| FD-002 | RF-001 | agent | accepted | rpi-plan | rpi-plan | rpi-plan | none | Plan P03 | Removes duplicate timer logic |
+
+## Validation Evidence
+
+| Command | Scope | Status | Summary |
+|---------|-------|--------|---------|
+| npm test | All | Passed | 31 tests |
+
+## Refinement Record
+
+### Scope and Evidence
+
+* Task ID: ${ROOT_TASK}
+* Review depth and provenance: standard; default
 `;
 
 export const CHILD_PLAN = `<!-- markdownlint-disable-file -->

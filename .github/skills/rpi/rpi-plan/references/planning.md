@@ -13,8 +13,9 @@ Use one date and one lower-kebab-case name across a piece of work's durable arti
 * `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md`
 * `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
 * `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`
+* `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-refinement.md`
 
-The research, changes, and review paths belong to their respective RPI stages. Planning creates or revises only the plan and critique artifacts unless a justified research activation is required. A follow-up critique of the same plan adds a numbered suffix, such as `{{task_slug}}-plan-critique-2.md`, so earlier critiques stay intact.
+The research, changes, review, and refinement paths belong to their respective RPI stages. Planning creates or revises only the plan and critique artifacts unless a justified research activation is required. A follow-up critique of the same plan adds a numbered suffix, such as `{{task_slug}}-plan-critique-2.md`, so earlier critiques stay intact. When accepted `RV-xxx` or `RF-xxx` findings return to planning in a repeated RPI loop, revise the active plan by appending new `Pxx` phases that continue phase and task numbering while keeping completed `Pxx` phases checked, or start a new plan when the work begins a separate RPI session.
 
 A plan for a new request in a session that already has one is a new plan named for that request's work, so earlier plans stay intact. Use the name of the research written for the request, else the name the invoking agent gives the work, else a short lower-kebab-case name that describes the work and differs from the session's other document names, such as `task-board-polish`. That name replaces `{{task_slug}}` in the plan's and its critique's paths, and the plan's title names the work. Its phase, task, decision, `FR-`, and `NFR-` IDs continue from the earlier plans, so every ID stays unique in the session, and its research citations may name any of the session's research documents. Return the new path so the parent can list it.
 

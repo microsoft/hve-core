@@ -3,7 +3,7 @@ title: Agents
 description: Reference documentation for HVE Core agents.
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-10-27
+ms.date: 2026-11-13
 ms.topic: overview
 keywords:
   - reference

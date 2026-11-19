@@ -57,6 +57,8 @@
   --rw-hue-blue-bg: light-dark(#d1f0ff, #001a47);
   --rw-hue-brown: light-dark(#755f43, #b69a6d);
   --rw-hue-brown-bg: light-dark(#eeeae2, #241c14);
+  --rw-hue-cobalt: light-dark(#1547b8, #7db1ff);
+  --rw-hue-cobalt-bg: light-dark(#e3ecff, #0d1c3d);
   --rw-hue-coral: light-dark(#ba2e12, #f27d83);
   --rw-hue-coral-bg: light-dark(#ffe5db, #3c0614);
   --rw-hue-cyan: light-dark(#006a80, #07ace4);
@@ -71,6 +73,8 @@
   --rw-hue-lime-bg: light-dark(#e3f2b5, #141f0f);
   --rw-hue-olive: light-dark(#56682c, #a2a626);
   --rw-hue-olive-bg: light-dark(#f0f0ad, #171e0b);
+  --rw-hue-ochre: light-dark(#7a4c00, #e6a940);
+  --rw-hue-ochre-bg: light-dark(#fff0d4, #291b04);
   --rw-hue-orange: light-dark(#a24610, #ed8326);
   --rw-hue-orange-bg: light-dark(#ffe7d1, #311708);
   --rw-hue-pine: light-dark(#156f4b, #1bb673);
@@ -534,6 +538,8 @@ time {
 .id-chip[data-kind="AL"] { --id-hue: var(--rw-hue-pine); --id-tint: var(--rw-hue-pine-bg); }
 .id-chip[data-kind="RV"] { --id-hue: var(--rw-hue-red); --id-tint: var(--rw-hue-red-bg); }
 .id-chip[data-kind="RD"] { --id-hue: var(--rw-hue-auburn); --id-tint: var(--rw-hue-auburn-bg); }
+.id-chip[data-kind="RF"] { --id-hue: var(--rw-hue-cobalt); --id-tint: var(--rw-hue-cobalt-bg); }
+.id-chip[data-kind="FD"] { --id-hue: var(--rw-hue-ochre); --id-tint: var(--rw-hue-ochre-bg); }
 .id-chip[data-kind="FU"] { --id-hue: var(--rw-hue-pink); --id-tint: var(--rw-hue-pink-bg); }
 .id-chip[data-kind="FB"] { --id-hue: var(--rw-hue-plum); --id-tint: var(--rw-hue-plum-bg); }
 

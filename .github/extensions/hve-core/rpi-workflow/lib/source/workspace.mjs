@@ -28,7 +28,7 @@ export const SESSIONS_DIR = 'rpi-sessions';
 export const MAX_FILE_BYTES = 2 * 1024 * 1024;
 const MAX_STATE_FILES = 2000;
 const STATE_FILE_RE = /-state\.json$/;
-const ARTIFACT_KEYS = ['research', 'plan', 'critique', 'changes', 'review'];
+const ARTIFACT_KEYS = ['research', 'plan', 'critique', 'changes', 'review', 'refinement'];
 const SKIPPED_SHOWN = 5;
 
 const toPosix = (value) => value.split(path.sep).join('/');
@@ -532,7 +532,21 @@ const NAME_SUFFIX = Object.freeze({
     critique: /-plan-critique(?:-\d+)?$/,
     changes: /-changes$/,
     review: /-review(?:-\d+)?$/,
+    refinement: /-refinement(?:-review)?(?:-\d+)?$/,
 });
+
+const REVIEW_PASS_SUFFIX = Object.freeze({
+    review: /-review(?:-(\d+))?$/,
+    refinement: /-refinement(?:-review)?(?:-(\d+))?$/,
+});
+
+function reviewPassOf(target, key) {
+    const suffix = REVIEW_PASS_SUFFIX[key];
+    if (!suffix) return null;
+    const base = target.split('/').pop().replace(/\.md$/i, '');
+    const hit = suffix.exec(base);
+    return hit ? Number(hit[1] ?? 1) : 1;
+}
 
 /**
  * A document's work name: its file name without the folder, `.md`, and its kind's suffix, so
@@ -540,7 +554,7 @@ const NAME_SUFFIX = Object.freeze({
  * all name `task-board-polish`. A trailing number on a research document or plan stays in the name.
  *
  * @param {string} target workspace-relative path
- * @param {'research' | 'plan' | 'critique' | 'changes' | 'review'} key
+ * @param {'research' | 'plan' | 'critique' | 'changes' | 'review' | 'refinement'} key
  */
 export function documentName(target, key) {
     const base = target.split('/').pop().replace(/\.md$/i, '');
@@ -658,16 +672,26 @@ function earlierDocuments({ state, artifacts, files, earlier, input, findingOffs
     const listed = Object.fromEntries(ARTIFACT_KEYS.map((key) => [key, state.documents[key].map((target, index) => {
         const n = index + 1;
         const name = documentName(target, key);
-        if (target === state.artifacts[key]) return { key, n, name, current: true, parsed: artifacts[key] ?? null, path: files[key]?.path ?? target, mtimeMs: files[key]?.mtimeMs ?? null };
+        const pass = reviewPassOf(target, key);
+        if (target === state.artifacts[key]) return { key, n, name, pass, current: true, parsed: artifacts[key] ?? null, path: files[key]?.path ?? target, mtimeMs: files[key]?.mtimeMs ?? null };
         const entry = earlier[key].find((item) => item.n === n);
-        return { key, n, name, current: false, parsed: entry?.parsed ?? null, path: entry?.path ?? target, mtimeMs: entry?.mtimeMs ?? null };
+        return { key, n, name, pass, current: false, parsed: entry?.parsed ?? null, path: entry?.path ?? target, mtimeMs: entry?.mtimeMs ?? null };
     })]));
-    // A work's document of a kind is the last listed one with its name.
+    // A work's document of a kind is the last listed one with its name; earlier reviews and refinements pair by pass number.
     const ofWork = (key, name) => listed[key].filter((doc) => doc.name === name && doc.parsed).at(-1) ?? null;
+    const isReviewKind = (key) => key === 'review' || key === 'refinement';
+    const ofEarlierReviewPass = (key, name, pass) => listed[key].filter((doc) => !doc.current && doc.name === name && doc.pass === pass && doc.parsed).at(-1) ?? null;
     const stopped = withoutDispositions({ ...state, activePhase: 'Follow-up', sessionStatus: 'stopped', blockers: [] });
     const assemblies = new Map();
     const assembleWork = (doc) => {
-        const parts = Object.fromEntries(ARTIFACT_KEYS.map((key) => [key, key === doc.key ? doc : ofWork(key, doc.name)]));
+        const parts = Object.fromEntries(ARTIFACT_KEYS.map((key) => [
+            key,
+            key === doc.key
+                ? doc
+                : isReviewKind(doc.key) && isReviewKind(key)
+                    ? ofEarlierReviewPass(key, doc.name, doc.pass)
+                    : ofWork(key, doc.name),
+        ]));
         const cacheKey = `${doc.name}\n${ARTIFACT_KEYS.map((key) => parts[key]?.n ?? 0).join(',')}`;
         if (!assemblies.has(cacheKey)) {
             const used = Object.entries(parts).filter(([, part]) => part);
@@ -684,13 +708,23 @@ function earlierDocuments({ state, artifacts, files, earlier, input, findingOffs
         return assemblies.get(cacheKey);
     };
     const iso = (ms) => (Number.isFinite(ms) ? new Date(ms).toISOString() : null);
-    return Object.fromEntries(Object.entries(DOCUMENT_PHASES).map(([key, phase]) => [phase, listed[key].map((doc) => {
-        const entry = { n: doc.n, path: doc.path, name: doc.name, title: doc.parsed?.title || null, updatedAt: iso(doc.mtimeMs), current: doc.current, workTitle: ofWork('plan', doc.name)?.parsed.title || null };
+    const toDocEntry = (phase, doc, n) => {
+        const prefix = doc.key === 'refinement' && doc.parsed?.title ? `Refinement: ${doc.parsed.title}` : doc.parsed?.title || null;
+        const entry = { n, path: doc.path, name: doc.name, title: prefix, updatedAt: iso(doc.mtimeMs), current: doc.current, workTitle: ofWork('plan', doc.name)?.parsed.title || null };
         if (doc.current) return entry;
         if (!doc.parsed) return { ...entry, missing: true };
         const { session, parts, traces } = assembleWork(doc);
         return { ...entry, snapshot: snapshotOf(phase, session, traces, parts) };
-    })]));
+    };
+    const byPhase = Object.fromEntries(Object.entries(DOCUMENT_PHASES).map(([key, phase]) => [phase, listed[key].map((doc) => toDocEntry(phase, doc, doc.n))]));
+    if (listed.refinement.length) {
+        const hasCurrentReview = byPhase.review.some((entry) => entry.current);
+        const pairedEarlier = new Set(listed.review.filter((doc) => !doc.current && doc.parsed).map((doc) => `${doc.name}\n${doc.pass}`));
+        const extra = listed.refinement.filter((doc) => (doc.current ? !hasCurrentReview : !pairedEarlier.has(`${doc.name}\n${doc.pass}`)));
+        const offset = byPhase.review.length;
+        byPhase.review.push(...extra.map((doc, index) => toDocEntry('review', doc, offset + index + 1)));
+    }
+    return byPhase;
 }
 
 /** What an earlier document's view shows, from its work's assembled session; trace strips sit on these IDs. */
