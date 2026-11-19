@@ -3,7 +3,7 @@ title: Meeting Analyst
 description: Meeting transcript analyzer that extracts product requirements for PRD creation via work-iq-mcp
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                      |
-|-------------|------------------------------------------------------------|
-| Kind        | agent                                                      |
-| Source      | `.github/agents/project-planning/meeting-analyst.agent.md` |
-| Invocation  | Selected from the chat agent picker as `Meeting Analyst`   |
-| Interactive | Yes                                                        |
+| Field       | Value                                                                               |
+|-------------|-------------------------------------------------------------------------------------|
+| Kind        | agent                                                                               |
+| Source      | `.github/plugins/project-planning/agents/project-planning/meeting-analyst.agent.md` |
+| Invocation  | Selected from the chat agent picker as `Meeting Analyst`                            |
+| Interactive | Yes                                                                                 |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

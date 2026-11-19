@@ -3,7 +3,7 @@ title: risk-register
 description: "Create a qualitative risk register and mitigation plan using a Probability x Impact matrix. Use when a project needs structured risk identification, scoring, ownership, and response planning."
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                        |
 |-------------|----------------------------------------------------------------------------------------------|
 | Kind        | skill                                                                                        |
-| Source      | `.github/skills/security/risk-register`                                                      |
+| Source      | `.github/plugins/sdlc-security/skills/security/risk-register`                                |
 | Invocation  | Invoked directly as `/risk-register`; model invocation is disabled, so agents do not load it |
 | Interactive | No                                                                                           |
 <!-- END AUTO-GENERATED: metadata -->

@@ -1,9 +1,9 @@
 ---
 title: HVE Core Identity and Channels
-description: Understand the single HVE Core identity, its Copilot plugin registration, and its VS Code extension PreRelease and Stable channels
+description: Choose HVE Core All or focused Copilot plugins and understand the single VS Code extension's release channels
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-11-06
+ms.date: 2026-11-18
 ms.topic: overview
 keywords:
   - packages
@@ -11,11 +11,11 @@ keywords:
   - identity
 ---
 
-## One Product Identity
+## Choose Your Scope
 
-HVE Core publishes one plugin named `hve-core` and one VS Code extension named `ise-hve-essentials.hve-core`.
+The marketplace offers `hve-core` (All) and [seven focused alternatives](../plugins/hve-core#choose-a-plugin). Install All or selected topics. You do not need a common plugin to use a focused one.
 
-Root `plugin.json` lists every component for both. `.github/plugin/marketplace.json` holds one `hve-core` entry that points to the repository root and doesn't repeat that list. Plugin clients read the root README and LICENSE; the VSIX packages `extension/README.md` and `extension/LICENSE`.
+Root `plugin.json` lists every distributable component for All and remains the only input to `ise-hve-essentials.hve-core`. Each marketplace entry points to its own manifest. Focused plugins do not produce separate VSIX packages.
 
 ## Copilot Plugin
 
@@ -50,10 +50,10 @@ For a repository-owned copy, use the installer to copy every manifest component.
 With the plugin installed:
 
 1. Agents appear in the Copilot Chat agent picker.
-2. Instructions apply to matching files through their `applyTo` patterns.
+2. The manifest includes scoped rules. Whether the client automatically applies a rule when its `applyTo` matches depends on the host.
 3. Skills become available for semantic or explicit invocation, and user-invocable skills appear as slash commands. In VS Code, plugin skills carry the plugin name as a prefix, such as `/hve-core:rpi-research`.
 
-The VS Code extension delivers the same agents and skills to Copilot sessions, but its instructions may not reach them. Use the plugin when you rely on path-specific instructions. See [Use the VS Code Extension](install#use-the-vs-code-extension).
+The VS Code extension delivers the same agents and skills as All to Copilot sessions, but its instructions may not reach them. See [Use the VS Code Extension](install#use-the-vs-code-extension).
 
 The `hve-core` plugin includes `RPI Agent` and the `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` entry points.
 

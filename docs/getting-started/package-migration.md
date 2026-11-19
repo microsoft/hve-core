@@ -3,7 +3,7 @@ title: Migrate to the HVE Core Identity
 description: Move retired package installations to the single HVE Core plugin or extension and find replacements for retired slash commands
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-11-07
+ms.date: 2026-11-18
 ms.topic: how-to
 keywords:
   - migration
@@ -17,7 +17,7 @@ keywords:
 estimated_reading_time: 10
 ---
 
-HVE Core now publishes one `hve-core` plugin and one `ise-hve-essentials.hve-core` extension, both carrying every component. [HVE Core Identity and Channels](packages) explains how they relate.
+Keep `hve-core` for the complete plugin. The same marketplace also offers [focused plugins](../plugins/hve-core#choose-a-plugin); these are new install identities, not replacements required for an existing All install. The single VS Code extension remains `ise-hve-essentials.hve-core`. [HVE Core Identity and Channels](packages) explains how they relate.
 
 Neither GitHub Copilot nor VS Code migrates automatically between different published identities, so follow the steps for your host below.
 

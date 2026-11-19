@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-10-31
+ms.date: 2026-11-18
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -330,7 +330,7 @@ git commit -m "docs: update installation guide"
 git commit -m "feat!: redesign configuration schema"
 ```
 
-For more details, see the [commit message conventions in the `git-commit` skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/git-commit/references/commit-message.md).
+For more details, see the [commit message conventions in the `git-commit` skill](https://github.com/microsoft/hve-core/blob/main/.github/plugins/sdlc-git/skills/hve-core/git-commit/references/commit-message.md).
 
 ## For Maintainers
 

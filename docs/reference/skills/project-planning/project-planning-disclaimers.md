@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                          |
-|-------------|----------------------------------------------------------------|
-| Kind        | skill                                                          |
-| Source      | `.github/skills/project-planning/project-planning-disclaimers` |
-| Invocation  | Loaded on demand by referencing agents                         |
-| Interactive | No                                                             |
+| Field       | Value                                                                                   |
+|-------------|-----------------------------------------------------------------------------------------|
+| Kind        | skill                                                                                   |
+| Source      | `.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers` |
+| Invocation  | Loaded on demand by referencing agents                                                  |
+| Interactive | No                                                                                      |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

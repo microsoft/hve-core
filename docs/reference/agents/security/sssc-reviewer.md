@@ -3,7 +3,7 @@ title: SSSC Reviewer
 description: "Evidence-based reviewer for repository supply-chain security posture with audit, diff, and plan review modes"
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                  |
-|-------------|--------------------------------------------------------|
-| Kind        | agent                                                  |
-| Source      | `.github/agents/security/sssc-reviewer.agent.md`       |
-| Invocation  | Selected from the chat agent picker as `SSSC Reviewer` |
-| Interactive | Yes                                                    |
+| Field       | Value                                                                  |
+|-------------|------------------------------------------------------------------------|
+| Kind        | agent                                                                  |
+| Source      | `.github/plugins/sdlc-security/agents/security/sssc-reviewer.agent.md` |
+| Invocation  | Selected from the chat agent picker as `SSSC Reviewer`                 |
+| Interactive | Yes                                                                    |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

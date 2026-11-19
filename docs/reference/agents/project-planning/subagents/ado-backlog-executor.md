@@ -3,7 +3,7 @@ title: ADO Backlog Executor
 description: "Applies a dispatched Azure DevOps backlog operation set in one confirmed project. Creates, updates, links, comments on, and transitions work items."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                     |
-|-------------|---------------------------------------------------------------------------|
-| Kind        | agent                                                                     |
-| Source      | `.github/agents/project-planning/subagents/ado-backlog-executor.agent.md` |
-| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)  |
-| Interactive | No                                                                        |
+| Field       | Value                                                                                               |
+|-------------|-----------------------------------------------------------------------------------------------------|
+| Kind        | agent                                                                                               |
+| Source      | `.github/plugins/sdlc-azure-devops/agents/project-planning/subagents/ado-backlog-executor.agent.md` |
+| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)                            |
+| Interactive | No                                                                                                  |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

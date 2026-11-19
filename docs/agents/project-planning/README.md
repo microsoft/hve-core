@@ -3,7 +3,7 @@ title: Project Planning Agents
 description: Agents for requirements gathering, architecture decisions, and security planning
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-18
 ms.topic: concept
 keywords:
   - project planning
@@ -47,7 +47,7 @@ These agents bring structure and consistency to activities that teams often hand
 
 | Skill                                                                                                                               | Sub-Category              | Key Output                                                       |
 |-------------------------------------------------------------------------------------------------------------------------------------|---------------------------|------------------------------------------------------------------|
-| [requirements-author](https://github.com/microsoft/hve-core/blob/main/.github/skills/project-planning/requirements-author/SKILL.md) | Requirements              | Drives the BRD/PRD Builder Q&A workflows                         |
+| [requirements-author](https://github.com/microsoft/hve-core/blob/main/.github/plugins/project-planning/skills/project-planning/requirements-author/SKILL.md) | Requirements              | Drives the BRD/PRD Builder Q&A workflows                         |
 | [architecture-diagrams](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/architecture-diagrams/SKILL.md)     | Architecture              | ASCII/Mermaid diagrams from IaC analysis                         |
 | [performance-slo-planner](../../reference/skills/project-planning/performance-slo-planner.md)                                       | Performance & Reliability | SLIs, SLOs, load models, test matrices, and reliability backlogs |
 | [proposal-response](../../reference/skills/project-planning/proposal-response.md)                                                   | Proposal Responses        | Traceable internal-review question, claim, evidence, and drafts  |

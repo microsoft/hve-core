@@ -3,7 +3,7 @@ title: Security Reviewer
 description: Security skill assessment orchestrator for codebase profiling and vulnerability reporting
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                      |
-|-------------|------------------------------------------------------------|
-| Kind        | agent                                                      |
-| Source      | `.github/agents/security/security-reviewer.agent.md`       |
-| Invocation  | Selected from the chat agent picker as `Security Reviewer` |
-| Interactive | Yes                                                        |
+| Field       | Value                                                                      |
+|-------------|----------------------------------------------------------------------------|
+| Kind        | agent                                                                      |
+| Source      | `.github/plugins/sdlc-security/agents/security/security-reviewer.agent.md` |
+| Invocation  | Selected from the chat agent picker as `Security Reviewer`                 |
+| Interactive | Yes                                                                        |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

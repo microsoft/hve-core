@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2026-11-06
+ms.date: 2026-11-18
 ms.topic: reference
 ---
 
@@ -304,10 +304,8 @@ before making that claim.
 The prepared manifest and tracked staging allowlist control what gets packaged.
 The archive can include:
 
-* Declared `.github/agents/**` agent definitions
-* Declared `.github/prompts/**` prompt templates
-* Declared `.github/instructions/**` instruction files
-* Declared `.github/skills/**` skill packages
+* Agent definitions, instruction files, and entire skill directories declared by root `plugin.json`, at their tracked paths under `.github/` or `.github/plugins/<topic>/`
+* Declared prompt templates (the current manifest has none)
 * Explicit shared resources such as `docs/templates/**`
 * `package.json` - Extension manifest
 * `README.md` - Extension description

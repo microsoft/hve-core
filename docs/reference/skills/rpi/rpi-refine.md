@@ -3,7 +3,7 @@ title: rpi-refine
 description: "Review completed RPI work for what can be removed, simplified, consolidated, or redesigned across code, docs, domain language, tests, architecture, error boundaries, performance, language versions, and configuration, then route findings into planning or follow-up. Use when completed work needs subtractive refinement review."
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-11-12
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                        |
 |-------------|------------------------------------------------------------------------------|
 | Kind        | skill                                                                        |
-| Source      | `.github/skills/rpi/rpi-refine`                                              |
+| Source      | `.github/plugins/rpi-builder/skills/rpi/rpi-refine`                          |
 | Invocation  | Invoked directly as `/rpi-refine`, or loaded on demand by referencing agents |
 | Interactive | No                                                                           |
 <!-- END AUTO-GENERATED: metadata -->

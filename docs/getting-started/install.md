@@ -3,7 +3,7 @@ title: Installing HVE Core
 description: Install HVE Core for the Copilot agent harness as a plugin, a repository default, a repository copy, the VS Code extension, or a clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-10
+ms.date: 2026-11-18
 ms.topic: how-to
 keywords: [installation, setup, github copilot, copilot plugin, agent plugins, marketplace, repository copy]
 estimated_reading_time: 7
@@ -31,7 +31,7 @@ VS Code shows a session's harness at the start of its chat title. To switch, sta
 
 ## Install the Plugin
 
-The `hve-core` plugin carries every HVE Core agent, skill, and instruction, plus canvases such as the [RPI Workflow canvas](../rpi/rpi-workflow-canvas). Its registration follows the `main` branch.
+The `hve-core` plugin carries the complete set, including the [RPI Workflow canvas](../rpi/rpi-workflow-canvas). Choose [a focused topic](../plugins/hve-core#choose-a-plugin) instead if you need only part of All. The marketplace registration follows `main`.
 
 To install it in VS Code:
 
@@ -100,7 +100,7 @@ Copilot finds agents, skills, and instructions in a project's `.github/agents`, 
 
 The installer copies the full set because agents load skills and instructions by name, and a partial set can leave an agent without what it needs to start. An earlier install that recorded a smaller set keeps upgrading that set.
 
-Agents, instructions, and complete skill directories keep their repository-relative paths, and the installer records the result in `.hve-tracking.json` (schema version 2). Once your repository has its copies, uninstall the plugin or extension so Copilot does not load HVE Core twice.
+Agents, instructions, and complete skill directories go under their conventional `.github/agents`, `.github/instructions`, and `.github/skills` locations, and the installer records the result in `.hve-tracking.json` (schema version 2). Once your repository has its copies, uninstall the plugin or extension so Copilot does not load HVE Core twice.
 
 ## Use the VS Code Extension
 
@@ -112,17 +112,17 @@ A clone holds a pinned or editable copy of HVE Core, and Copilot can load it in 
 
 For any folder that VS Code can read, install the clone's root folder as a plugin from source. In the Agent Customizations editor, select **Plugins**, select the add (`+`) button next to **User** or **Workspace**, and enter the folder path. **Chat: Install Plugin from Source** in the Command Palette does the same. HVE Core keeps `plugin.json` at its repository root, so this route loads the full set.
 
-For a copy inside your project's checkout, such as a submodule or a git-ignored folder, you can instead list its folders in `.github/copilot/settings.json`:
+For a copy inside your project's checkout, such as a submodule or a git-ignored folder, you can instead list literal folders in `.github/copilot/settings.json`. This example selects the RPI and HVE Builder content; the traditional `.github/agents` and `.github/skills` trees no longer contain every workflow:
 
 ```json
 {
-  "agentDirectories": ["lib/hve-core/.github/agents"],
-  "skillDirectories": ["lib/hve-core/.github/skills"],
-  "instructionDirectories": ["lib/hve-core/.github/instructions"]
+  "agentDirectories": ["lib/hve-core/.github/plugins/rpi-builder/agents"],
+  "skillDirectories": ["lib/hve-core/.github/plugins/rpi-builder/skills"],
+  "instructionDirectories": ["lib/hve-core/.github/plugins/rpi-builder/instructions"]
 }
 ```
 
-Each path must be a literal folder inside the checkout. Copilot rejects absolute paths, `~`, environment variables, globs, and paths that leave the checkout, and it loads the folders only when the workspace folder is trusted. It finds agents and skills nested under each folder and inlines instructions that have no `applyTo`. Whether path-specific instructions load from these folders is not confirmed yet, so use the plugin route when you need them.
+Each path must be a literal folder inside a trusted checkout. Absolute paths, `~`, environment variables, globs, and paths that leave it are rejected. Listing or mounting a folder does not demonstrate automatic application of path-specific instructions. Use the root plugin to select the entire distributed inventory rather than listing every collection manually.
 
 | Where the copy lives                      | How Copilot loads it                                   | Guide                                      |
 |-------------------------------------------|--------------------------------------------------------|--------------------------------------------|
@@ -175,13 +175,11 @@ Contributors who change HVE Core itself work in a fork:
 
 3. Open the folder in VS Code. A devcontainer configuration is included for containerized development.
 
-Copilot discovers the repository's own agents, skills, and instructions when you open the clone, so you need no other route while you work in it. Work in Copilot harness sessions here too. If the plugin or extension is also installed, disable it while you develop so agents do not appear twice.
-
-The workspace settings also list the repository's package folders, so a Local session still finds its agents while you switch. [Copilot Discovery](../customization/environment#copilot-discovery) explains this, and the [Contributing Guide](../contributing/) covers pull request and development conventions.
+For VS Code, the checked-in workspace settings list the topic folders by component type. In Copilot CLI, load the repository or a topic with `--plugin-dir` as described in [Copilot Plugin](methods/cli-plugins#install-from-a-clone-or-branch). The desktop app's native discovery of these neutral roots has not been verified. Avoid a second installed copy while authoring.
 
 ## Distribution Identity and Channels
 
-HVE Core uses one identity: the `hve-core` plugin and the `ise-hve-essentials.hve-core` extension carry the same components, which root `plugin.json` lists. The plugin follows `main` and has no release channels. The extension has Stable and PreRelease channels on the Marketplace. [HVE Core Identity and Channels](packages) explains both, including the current state of the extension's release branches.
+The marketplace offers All and seven focused plugins. The single `ise-hve-essentials.hve-core` extension takes its supported components from All. [HVE Core Identity and Channels](packages) explains the plugin registration and the extension's Stable and PreRelease channels.
 
 ## Post-Installation: Update Your .gitignore
 

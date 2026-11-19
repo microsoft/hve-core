@@ -3,7 +3,7 @@ title: pr-reference
 description: "Generates PR reference XML with commit history and unified diffs between branches, with extension and path filtering. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries."
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                          |
 |-------------|--------------------------------------------------------------------------------|
 | Kind        | skill                                                                          |
-| Source      | `.github/skills/shared/pr-reference`                                           |
+| Source      | `.github/plugins/sdlc-git/skills/shared/pr-reference`                          |
 | Invocation  | Invoked directly as `/pr-reference`, or loaded on demand by referencing agents |
 | Interactive | No                                                                             |
 <!-- END AUTO-GENERATED: metadata -->

@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                              |
 |-------------|------------------------------------------------------------------------------------|
 | Kind        | skill                                                                              |
-| Source      | `.github/skills/azure-devops/ado-pull-request`                                     |
+| Source      | `.github/plugins/sdlc-azure-devops/skills/azure-devops/ado-pull-request`           |
 | Invocation  | Invoked directly as `/ado-pull-request`, or loaded on demand by referencing agents |
 | Interactive | No                                                                                 |
 <!-- END AUTO-GENERATED: metadata -->

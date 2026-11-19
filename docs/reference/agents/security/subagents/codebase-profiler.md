@@ -3,7 +3,7 @@ title: Codebase Profiler
 description: Scans the repository to build a technology profile and select applicable security skills
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                    |
-|-------------|--------------------------------------------------------------------------|
-| Kind        | agent                                                                    |
-| Source      | `.github/agents/security/subagents/codebase-profiler.agent.md`           |
-| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly) |
-| Interactive | No                                                                       |
+| Field       | Value                                                                                |
+|-------------|--------------------------------------------------------------------------------------|
+| Kind        | agent                                                                                |
+| Source      | `.github/plugins/sdlc-security/agents/security/subagents/codebase-profiler.agent.md` |
+| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)             |
+| Interactive | No                                                                                   |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

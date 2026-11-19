@@ -101,14 +101,14 @@ The Copilot agent harness does not load `#file:` directives, so artifacts reach 
 
 ### Documentation Templates
 
-Templates for agent and skill outputs are stored in `docs/templates/`:
+Common output formats live in `docs/templates/`; domain templates ship with their owning skills:
 
 * `docs/templates/full-review-output-format.md` - Code review full output format.
 * `docs/templates/standards-review-output-format.md` - Standards review output format.
 * `docs/templates/engineering-fundamentals.md` - Engineering fundamentals reference.
 * `docs/templates/user-journey-template.md` - User journey template.
-* `docs/templates/adr-template-solutions.md` - Architecture decision record template.
-* `docs/templates/rca-template.md` - Root cause analysis template.
+* `.github/plugins/project-planning/skills/project-planning/adr-author/templates/adr-template-solutions.md` - Architecture decision record template.
+* `.github/plugins/sdlc-security/skills/security/incident-response/assets/templates/rca-template.md` - Root cause analysis template.
 
 The `requirements-author` skill owns the canonical Business Requirements Document template at `templates/brd/brd-full.md`.
 

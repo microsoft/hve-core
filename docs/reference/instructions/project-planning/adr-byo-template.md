@@ -3,7 +3,7 @@ title: Project Planning/Adr Byo Template
 description: "BYO ADR template contract: 2-layer config resolution, .adr-config.yml schema, template frontmatter contract, and adopt-template lifecycle for the ADR Creator"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - instruction
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                                                            |
 |-------------|----------------------------------------------------------------------------------------------------------------------------------|
 | Kind        | instruction                                                                                                                      |
-| Source      | `.github/instructions/project-planning/adr-byo-template.instructions.md`                                                         |
+| Source      | `.github/plugins/project-planning/instructions/project-planning/adr-byo-template.instructions.md`                                |
 | Invocation  | Applied automatically to `**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**/.adr-config.yml, **/docs/planning/adrs/**` |
 | Interactive | No                                                                                                                               |
 <!-- END AUTO-GENERATED: metadata -->

@@ -3,7 +3,7 @@ title: BRD Builder
 description: "Business Requirements Document builder with guided Q&A and references"
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                  |
-|-------------|--------------------------------------------------------|
-| Kind        | agent                                                  |
-| Source      | `.github/agents/project-planning/brd-builder.agent.md` |
-| Invocation  | Selected from the chat agent picker as `BRD Builder`   |
-| Interactive | Yes                                                    |
+| Field       | Value                                                                           |
+|-------------|---------------------------------------------------------------------------------|
+| Kind        | agent                                                                           |
+| Source      | `.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md` |
+| Invocation  | Selected from the chat agent picker as `BRD Builder`                            |
+| Interactive | Yes                                                                             |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

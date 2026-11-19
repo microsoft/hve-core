@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                               |
 |-------------|-------------------------------------------------------------------------------------|
 | Kind        | skill                                                                               |
-| Source      | `.github/skills/project-planning/security-planning`                                 |
+| Source      | `.github/plugins/sdlc-security/skills/project-planning/security-planning`           |
 | Invocation  | Invoked directly as `/security-planning`, or loaded on demand by referencing agents |
 | Interactive | No                                                                                  |
 <!-- END AUTO-GENERATED: metadata -->

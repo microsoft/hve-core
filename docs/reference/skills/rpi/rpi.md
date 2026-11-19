@@ -3,7 +3,7 @@ title: rpi
 description: "Coordinate a resumable RPI session through Research, Plan, Implement, Review, and Follow-up with durable session state and RPI Workflow canvas integration. Use when a task needs multi-phase RPI lifecycle coordination."
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-11-12
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -14,7 +14,7 @@ keywords:
 | Field       | Value                                                                 |
 |-------------|-----------------------------------------------------------------------|
 | Kind        | skill                                                                 |
-| Source      | `.github/skills/rpi/rpi`                                              |
+| Source      | `.github/plugins/rpi-builder/skills/rpi/rpi`                          |
 | Invocation  | Invoked directly as `/rpi`, or loaded on demand by referencing agents |
 | Interactive | No                                                                    |
 <!-- END AUTO-GENERATED: metadata -->
