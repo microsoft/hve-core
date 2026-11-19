@@ -29,7 +29,10 @@
     ".github/aw/logs/**",
     ".github/agents/**",
     ".github/prompts/**",
-    ".github/skills/**"
+    ".github/skills/**",
+    ".github/plugins/*/agents/**",
+    ".github/plugins/*/instructions/**",
+    ".github/plugins/*/skills/**"
   ],
   "customRules": [
     "markdownlint-rule-search-replace"

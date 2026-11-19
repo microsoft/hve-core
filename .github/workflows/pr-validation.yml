@@ -205,12 +205,12 @@ jobs:
           # .github/extensions containing extension.mjs), or the workflow
           # validator that ships at least one *.test.* / *.spec.* (mjs/cjs/js).
           # The project root is the node --test working dir.
-          $candidates = @(Get-ChildItem -Path .github/skills -Recurse -Force -Filter SKILL.md -ErrorAction SilentlyContinue |
+          $candidates = @(Get-Item -Path .github/skills, .github/plugins/*/skills | Get-ChildItem -Recurse -Force -Filter SKILL.md -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -notmatch 'node_modules' } |
             ForEach-Object { $_.DirectoryName }) +
             @(Get-ChildItem -Path slides -Directory -Force -ErrorAction SilentlyContinue |
             ForEach-Object { $_.FullName }) +
-            @(Get-ChildItem -Path .github/extensions -Recurse -Force -Filter extension.mjs -ErrorAction SilentlyContinue |
+            @(Get-Item -Path .github/extensions, .github/plugins/*/extensions | Get-ChildItem -Recurse -Force -Filter extension.mjs -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -notmatch 'node_modules' } |
             ForEach-Object { $_.DirectoryName }) +
             @(Get-Item -Path scripts/linting/workflow-validator -Force -ErrorAction SilentlyContinue |

@@ -185,7 +185,7 @@ function Get-ArtifactKey {
             return ([System.IO.Path]::GetFileName($Path) -replace '\.prompt\.md$', '')
         }
         'instruction' {
-            return ($Path -replace '^\.github/instructions/', '' -replace '\.instructions\.md$', '')
+            return ($Path -replace '^\.github/(?:plugins/[^/]+/)?instructions/', '' -replace '\.instructions\.md$', '')
         }
         'skill' {
             return [System.IO.Path]::GetFileName($Path.TrimEnd('/'))
@@ -344,8 +344,8 @@ function Get-ArtifactFiles {
         }
     }
 
-    $skillsDir = Join-Path -Path $RepoRoot -ChildPath '.github/skills'
-    if (Test-Path -Path $skillsDir) {
+    $skillDirectories = @(Get-Item -Path (Join-Path $gitHubDir 'skills'), (Join-Path $gitHubDir 'plugins/*/skills') -ErrorAction SilentlyContinue)
+    foreach ($skillsDir in $skillDirectories) {
         foreach ($skillFile in Get-ChildItem -Path $skillsDir -Filter 'SKILL.md' -File -Recurse) {
             $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $skillFile.Directory.FullName) -replace '\\', '/'
             if (Test-BuildArtifactPath -Path $relativePath) {

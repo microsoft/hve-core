@@ -33,8 +33,7 @@ param(
 if (-not $PSBoundParameters.ContainsKey('TestPath')) {
     $scriptRoot = Split-Path $PSScriptRoot -Parent
     $repoRoot = Split-Path $scriptRoot -Parent
-    $skillsPath = Join-Path $repoRoot '.github' 'skills'
-    if (Test-Path $skillsPath) {
+    foreach ($skillsPath in (Get-Item -Path (Join-Path $repoRoot '.github/skills'), (Join-Path $repoRoot '.github/plugins/*/skills') -ErrorAction SilentlyContinue)) {
         $skillTestDirs = @()
         foreach ($depth in @('*', '*/*')) {
             $pattern = Join-Path $skillsPath $depth 'tests'
@@ -94,8 +93,7 @@ if ($CodeCoverage.IsPresent) {
     # Skills live at .github/skills/<skill>/ or .github/skills/<collection>/<skill>/
     # so probe two fixed depths, matching test directory discovery above.
     $repoRoot = Split-Path $scriptRoot -Parent
-    $skillsPath = Join-Path $repoRoot '.github/skills'
-    if (Test-Path $skillsPath) {
+    foreach ($skillsPath in (Get-Item -Path (Join-Path $repoRoot '.github/skills'), (Join-Path $repoRoot '.github/plugins/*/skills') -ErrorAction SilentlyContinue)) {
         $skillRoots = @()
         foreach ($depth in @('*', '*/*')) {
             $pattern = Join-Path $skillsPath $depth 'scripts'

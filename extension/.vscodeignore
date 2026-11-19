@@ -6,6 +6,10 @@
 !.github/instructions/**
 !.github/agents/**
 !.github/skills/**
+!.github/plugins/*/prompts/**
+!.github/plugins/*/instructions/**
+!.github/plugins/*/agents/**
+!.github/plugins/*/skills/**
 !docs/templates/**
 !scripts/lib/Modules/CIHelpers.psm1
 !icon.png

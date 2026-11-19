@@ -234,7 +234,7 @@ function Get-SchemaForFile {
             # Handle recursive glob patterns (e.g., docs/**/*.md)
             if ($rule.pattern -like "*/**/*") {
                 $regexPattern = $rule.pattern -replace '\.', '\.'
-                $regexPattern = $regexPattern -replace '\*\*/', '(.*/)?'
+                $regexPattern = $regexPattern -replace '\*\*/', '(?:.+/)?'
                 $regexPattern = $regexPattern -replace '\*', '[^/]*'
                 $regexPattern = '^' + $regexPattern + '$'
                 if ($relativePath -match $regexPattern) {
@@ -251,7 +251,7 @@ function Get-SchemaForFile {
             # Handle simple glob patterns with wildcard pre-filter
             elseif ($relativePath -like $rule.pattern -or $fileName -like $rule.pattern) {
                 $regexPattern = $rule.pattern -replace '\.', '\.'
-                $regexPattern = $regexPattern -replace '\*\*/', '(.*/)?'
+                $regexPattern = $regexPattern -replace '\*\*/', '(?:.+/)?'
                 $regexPattern = $regexPattern -replace '\*', '[^/]*'
                 $regexPattern = '^' + $regexPattern + '$'
                 if ($relativePath -match $regexPattern) {

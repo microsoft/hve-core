@@ -363,7 +363,7 @@ updates:
 - commit-message:
     include: scope
     prefix: chore
-  directory: /.github/skills/project-planning/adr-author
+  directory: /.github/plugins/project-planning/skills/project-planning/adr-author
   groups:
     security-updates:
       applies-to: security-updates
@@ -426,7 +426,7 @@ updates:
 - commit-message:
     include: scope
     prefix: chore
-  directory: /.github/skills/project-planning/security-planning
+  directory: /.github/plugins/sdlc-security/skills/project-planning/security-planning
   groups:
     security-updates:
       applies-to: security-updates
@@ -447,7 +447,7 @@ updates:
 - commit-message:
     include: scope
     prefix: chore
-  directory: /.github/skills/security/vex
+  directory: /.github/plugins/sdlc-security/skills/security/vex
   groups:
     security-updates:
       applies-to: security-updates

@@ -27,9 +27,9 @@ BeforeAll {
 
     $script:secIdentity = Join-Path $script:repoRoot '.github/instructions/security/identity.instructions.md'
     $script:ssscIdentity = Join-Path $script:repoRoot '.github/instructions/security/sssc-planner.instructions.md'
-    $script:secSchema = Join-Path $script:repoRoot 'scripts/linting/schemas/security-state.schema.json'
-    $script:raiSchema = Join-Path $script:repoRoot 'scripts/linting/schemas/rai-state.schema.json'
-    $script:ssscSchema = Join-Path $script:repoRoot 'scripts/linting/schemas/sssc-state.schema.json'
+    $script:secSchema = Join-Path $script:repoRoot '.github/plugins/sdlc-security/skills/project-planning/security-planning/assets/schemas/security-state.schema.json'
+    $script:raiSchema = Join-Path $script:repoRoot '.github/plugins/sdlc-responsible-ai/skills/project-planning/rai-planner/assets/schemas/rai-state.schema.json'
+    $script:ssscSchema = Join-Path $script:repoRoot '.github/plugins/sdlc-security/skills/security/supply-chain-security/assets/schemas/sssc-state.schema.json'
     $script:accessibilitySchema = Join-Path $script:repoRoot 'scripts/linting/schemas/accessibility-state.schema.json'
     $script:cadenceFixtures = @(
         (Join-Path $script:repoRoot 'evals/agent-behavior/fixtures/security-planner-disclaimer-null-state.json')

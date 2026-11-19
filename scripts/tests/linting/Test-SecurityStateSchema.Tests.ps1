@@ -15,8 +15,8 @@ $script:fixtureCases = Get-ChildItem -Path $script:fixturesDir -Filter '*.json' 
 
 BeforeAll {
     $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
-    $script:schemaPath = Join-Path $script:repoRoot 'scripts/linting/schemas/security-state.schema.json'
-    $script:raiSchemaPath = Join-Path $script:repoRoot 'scripts/linting/schemas/rai-state.schema.json'
+    $script:schemaPath = Join-Path $script:repoRoot '.github/plugins/sdlc-security/skills/project-planning/security-planning/assets/schemas/security-state.schema.json'
+    $script:raiSchemaPath = Join-Path $script:repoRoot '.github/plugins/sdlc-responsible-ai/skills/project-planning/rai-planner/assets/schemas/rai-state.schema.json'
 
     $script:schemaJson = Get-Content -Path $script:schemaPath -Raw
 }
