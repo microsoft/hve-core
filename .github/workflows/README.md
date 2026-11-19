@@ -1163,7 +1163,7 @@ Use `continue-on-error: true` to prevent workflow failure on SARIF upload issues
 | `scripts/linting/markdown-link-check.config.json`                 | Link checking configuration  | `markdown-link-check.yml`   |
 | `.cspell.json`                                                    | Spell checking configuration | `spell-check.yml`           |
 | `.github/instructions/hve-core/markdown.instructions.md`          | Markdown style guide         | All markdown workflows      |
-| `.github/skills/hve-core/git-commit/references/commit-message.md` | Commit message standards     | All workflows (informative) |
+| `.github/plugins/sdlc-git/skills/hve-core/git-commit/references/commit-message.md` | Commit message standards     | All workflows (informative) |
 
 ## Resources
 

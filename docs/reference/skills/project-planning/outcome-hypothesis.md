@@ -3,7 +3,7 @@ title: outcome-hypothesis
 description: "Create or assess an evidence-grounded, falsifiable outcome hypothesis: a testable prediction of what measurable business result will change, for whom, by when, and how leading and lagging indicators will prove or disprove it. Use when framing measurable outcomes, turning an MVP, POC, feature, or technical initiative into a beneficiary result, defining targets and indicators, or judging whether evidence is strong enough to invest. Also applies to business outcome hypotheses, value hypotheses, and outcome statements."
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-09-21
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                |
 |-------------|--------------------------------------------------------------------------------------|
 | Kind        | skill                                                                                |
-| Source      | `.github/skills/project-planning/outcome-hypothesis`                                 |
+| Source      | `.github/plugins/project-planning/skills/project-planning/outcome-hypothesis`        |
 | Invocation  | Invoked directly as `/outcome-hypothesis`, or loaded on demand by referencing agents |
 | Interactive | No                                                                                   |
 <!-- END AUTO-GENERATED: metadata -->

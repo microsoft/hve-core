@@ -3,7 +3,7 @@ title: VEX Capability
 description: HVE Core's VEX capability - triage dependency vulnerabilities and draft OpenVEX documents via the SSSC Reviewer, SSSC Planner, and the vex skill
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-11-07
+ms.date: 2026-11-18
 ms.topic: concept
 keywords:
   - VEX
@@ -22,7 +22,7 @@ estimated_reading_time: 7
 HVE Core delivers VEX (Vulnerability Exploitability eXchange) as a capability split across the
 **SSSC Reviewer** (assesses evidence and drafts OpenVEX statements), the **SSSC Planner** (plans
 standing up VEX in a target project as a backlog for the Task-* implementors), the
-[`vex` skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/security/vex/SKILL.md)
+[`vex` skill](https://github.com/microsoft/hve-core/blob/main/.github/plugins/sdlc-security/skills/security/vex/SKILL.md)
 (OpenVEX v0.2.0 specification reference plus implement and review playbooks), and the
 `vex-detect` / `vex-draft` workflows (automated detection and drafting). Together they turn scanner
 noise into accountable answers: scanning dependencies for known vulnerabilities, enriching each from
@@ -100,7 +100,7 @@ The agent classifies each finding into a confidence band, and each band constrai
 | High                           | Vulnerable symbol on a reachable path    | `affected` with a remediation note                          |
 | Medium / Low / Vendor-disputed | Reachability ambiguous or undeterminable | `under_investigation` only                                  |
 
-The authoritative routing rules and forbidden-transition list live in the agent and the `vex` skill; see the [VEX generation rules](https://github.com/microsoft/hve-core/blob/main/.github/skills/security/vex/references/vex-generation.md).
+The authoritative routing rules and forbidden-transition list live in the agent and the `vex` skill; see the [VEX generation rules](https://github.com/microsoft/hve-core/blob/main/.github/plugins/sdlc-security/skills/security/vex/references/vex-generation.md).
 
 ## Output
 

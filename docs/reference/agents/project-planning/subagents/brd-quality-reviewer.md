@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                     |
-|-------------|---------------------------------------------------------------------------|
-| Kind        | agent                                                                     |
-| Source      | `.github/agents/project-planning/subagents/brd-quality-reviewer.agent.md` |
-| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)  |
-| Interactive | No                                                                        |
+| Field       | Value                                                                                              |
+|-------------|----------------------------------------------------------------------------------------------------|
+| Kind        | agent                                                                                              |
+| Source      | `.github/plugins/project-planning/agents/project-planning/subagents/brd-quality-reviewer.agent.md` |
+| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)                           |
+| Interactive | No                                                                                                 |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

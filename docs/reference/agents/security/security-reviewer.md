@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                      |
-|-------------|------------------------------------------------------------|
-| Kind        | agent                                                      |
-| Source      | `.github/agents/security/security-reviewer.agent.md`       |
-| Invocation  | Selected from the chat agent picker as `Security Reviewer` |
-| Interactive | Yes                                                        |
+| Field       | Value                                                                      |
+|-------------|----------------------------------------------------------------------------|
+| Kind        | agent                                                                      |
+| Source      | `.github/plugins/sdlc-security/agents/security/security-reviewer.agent.md` |
+| Invocation  | Selected from the chat agent picker as `Security Reviewer`                 |
+| Interactive | Yes                                                                        |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

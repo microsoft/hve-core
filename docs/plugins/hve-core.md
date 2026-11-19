@@ -3,7 +3,7 @@ title: HVE Core
 description: Complete HVE Core plugin identity, distribution channels, membership policy, and capability inventory
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-11
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - package
@@ -11,12 +11,27 @@ keywords:
   - foundation
 ---
 
-HVE Core is the single plugin and extension identity for all distributable HVE Core content.
+Install `hve-core` for **All**, or install one or more focused plugins if you need only their workflows. All includes the focused topics and additional capabilities such as accessibility, design thinking, and data science.
 
 > [!CAUTION]
 > HVE Core evolves quickly. Evaluate these assets as adaptable engineering patterns, review changes before adoption, and use the VS Code extension or a pinned clone when reproducible, release-gated source is required. The plugin tracks `main` in both VS Code and Copilot CLI, and `main` has no release gate or release attestation.
 
-Root `plugin.json` owns complete membership. `.github/plugin/marketplace.json` contains one `hve-core` entry whose relative source is the repository root; it does not repeat component membership. The plugin details view resolves root `README.md` and `LICENSE`, while the VSIX retains its own generated README and license.
+Root `plugin.json` owns complete membership and is the only source of contributions for the VSIX. The marketplace catalog points to eight different roots. Each focused manifest lists only descendants of its own root under `.github/plugins/`; All references the same tracked files. A recommendation pairs useful workflows, not installation dependencies.
+
+## Choose a Plugin
+
+| What you need                                                           | Exact CLI install name             |
+|-------------------------------------------------------------------------|------------------------------------|
+| All HVE Core workflows                                                  | `hve-core@hve-core`                |
+| [RPI and HVE Builder](hve-rpi-builder)                                  | `hve-rpi-builder@hve-core`         |
+| [Project planning: ADR, BRD, and PRD](hve-project-planning)             | `hve-project-planning@hve-core`    |
+| [Git, GitHub pull requests, and code review](hve-sdlc-git)              | `hve-sdlc-git@hve-core`            |
+| [Azure Boards, Pipelines, and Repos](hve-sdlc-azure-devops)             | `hve-sdlc-azure-devops@hve-core`   |
+| [Security review and software supply chain security](hve-sdlc-security) | `hve-sdlc-security@hve-core`       |
+| [Responsible AI planning and review](hve-sdlc-responsible-ai)           | `hve-sdlc-responsible-ai@hve-core` |
+| [Privacy planning and review](hve-sdlc-privacy)                         | `hve-sdlc-privacy@hve-core`        |
+
+Use **All or focused plugins**, not both. Copilot CLI keeps independent installations. With All and a focused plugin installed together, the same skill can appear twice and a bare invocation can be ambiguous. A qualified name such as `hve-rpi-builder:rpi-research` selects the intended one.
 
 The VS Code extension's Stable and PreRelease channels contain the same complete agents, instructions,
 and skills. Channel selection changes source ownership, cadence, version,
@@ -38,18 +53,20 @@ copilot plugin install hve-core@hve-core
 
 VS Code also discovers plugins that Copilot CLI installs, and it shows the plugin's skills with the plugin name as a prefix, such as `/hve-core:rpi-research`.
 
-Install the extension as `ise-hve-essentials.hve-core`. VS Code forwards the extension's agents and skills to Copilot sessions, but its instructions may not reach them, so use the plugin when you rely on path-specific instructions. For a repository-owned copy, use `hve-core-installer` to copy every manifest component. The installer records `selection.profile` and `selection.components` in `.hve-tracking.json` and does not copy hooks.
+Install the extension as `ise-hve-essentials.hve-core` for the complete VSIX. A shipped rule file is not proof that the host applies it automatically. For a repository-owned copy, use `hve-core-installer` from All to copy its supported components. The installer records `selection.profile` and `selection.components` in `.hve-tracking.json` and does not copy hooks.
 
 The full repository-relative path inventory remains machine-readable in root `plugin.json`. Agent, instruction, and skill reference pages are available under `docs/reference/`.
 
 ## Component Inventory
 
-| Component kind    | Manifest field | Source convention                                        |
-|-------------------|----------------|----------------------------------------------------------|
-| Agents            | `agents`       | `.github/agents/<package>/**/*.agent.md`                 |
-| Instructions      | `rules`        | `.github/instructions/<package>/**/*.instructions.md`    |
-| Skills            | `skills`       | `.github/skills/<package>/<skill>/SKILL.md`              |
-| Canvas extensions | `extensions`   | `.github/extensions/<package>/<extension>/extension.mjs` |
+The source conventions below are relative to `.github/` for All-only components or `.github/plugins/<topic>/` for a focused topic.
+
+| Component kind    | Manifest field | Source convention                                   |
+|-------------------|----------------|-----------------------------------------------------|
+| Agents            | `agents`       | `agents/<collection>/**/*.agent.md`                 |
+| Instructions      | `rules`        | `instructions/<collection>/**/*.instructions.md`    |
+| Skills            | `skills`       | `skills/<collection>/<skill>/SKILL.md`              |
+| Canvas extensions | `extensions`   | `extensions/<collection>/<extension>/extension.mjs` |
 
 The `commands` field is empty. The Copilot harness does not load prompt files, so HVE Core ships none, and its slash commands are user-invocable skills. The `extensions` field lists package folders, such as `.github/extensions/hve-core`, and the host loads each extension folder inside them.
 
@@ -67,7 +84,7 @@ The [RPI Workflow Canvas](../rpi/rpi-workflow-canvas) guide shows how to use it,
 
 Canvases are an experimental Copilot feature. They render in the GitHub Copilot app, in the Copilot CLI with experimental extensions turned on, and in VS Code when `chat.canvases.enabled` is on for a Copilot harness session.
 Ask the agent to open a canvas by name, or open it from the host's canvas list.
-See the [Session Log README](https://github.com/microsoft/hve-core/blob/main/.github/extensions/hve-core/session-log/README.md) and the [RPI Workflow README](https://github.com/microsoft/hve-core/blob/main/.github/extensions/hve-core/rpi-workflow/README.md) for actions, data, and privacy details.
+See the [Session Log README](https://github.com/microsoft/hve-core/blob/main/.github/extensions/hve-core/session-log/README.md) and the [RPI Workflow README](https://github.com/microsoft/hve-core/blob/main/.github/plugins/rpi-builder/extensions/hve-core/rpi-workflow/README.md) for actions, data, and privacy details.
 
 ### Capability Areas
 

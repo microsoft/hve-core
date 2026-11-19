@@ -405,7 +405,7 @@ This project uses [release-please](https://github.com/googleapis/release-please)
 
 ### How Releases Work
 
-1. Commit to `main` with Conventional Commits (see the [commit message conventions](./.github/skills/hve-core/git-commit/references/commit-message.md)).
+1. Commit to `main` with Conventional Commits (see the [commit message conventions](./.github/plugins/sdlc-git/skills/hve-core/git-commit/references/commit-message.md)).
 2. Review and merge the `main` to `release/prerelease` promotion PR. This creates no tag.
 3. Review and merge release-please's managed PreRelease PR. Its merge creates `prerelease-v<version>`, packages and attests one VSIX, and publishes the prerelease.
 4. Review and merge the `release/prerelease` to `release/stable` promotion PR, then the managed Stable PR. The managed merge creates `v<version>`, packages and attests one VSIX, publishes Stable OpenVEX, and publishes the release.
@@ -434,7 +434,7 @@ git commit -m "feat!: redesign skill folder structure
 BREAKING CHANGE: skills now require a category frontmatter field"
 ```
 
-For complete commit message format requirements, see the [commit message conventions](./.github/skills/hve-core/git-commit/references/commit-message.md) in the `git-commit` skill.
+For complete commit message format requirements, see the [commit message conventions](./.github/plugins/sdlc-git/skills/hve-core/git-commit/references/commit-message.md) in the `git-commit` skill.
 
 For complete release process documentation including extension publishing, maturity lifecycle, and detailed version calculation workflows, see the [Release Process Guide](./docs/contributing/release-process.md).
 

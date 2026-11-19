@@ -3,7 +3,7 @@ title: Code Review
 description: "Prioritize functional code review through the consolidated code-review skill, with parallel general-purpose task orchestration, strictly opt-in non-functional vectors, and an optional Code Review canvas."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-17
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                  |
-|-------------|--------------------------------------------------------|
-| Kind        | agent                                                  |
-| Source      | `.github/agents/coding-standards/code-review.agent.md` |
-| Invocation  | Selected from the chat agent picker as `Code Review`   |
-| Interactive | Yes                                                    |
+| Field       | Value                                                                   |
+|-------------|-------------------------------------------------------------------------|
+| Kind        | agent                                                                   |
+| Source      | `.github/plugins/sdlc-git/agents/coding-standards/code-review.agent.md` |
+| Invocation  | Selected from the chat agent picker as `Code Review`                    |
+| Interactive | Yes                                                                     |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

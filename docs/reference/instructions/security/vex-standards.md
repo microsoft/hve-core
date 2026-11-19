@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                               |
 |-------------|-------------------------------------------------------------------------------------|
 | Kind        | instruction                                                                         |
-| Source      | `.github/instructions/security/vex-standards.instructions.md`                       |
+| Source      | `.github/plugins/sdlc-security/instructions/security/vex-standards.instructions.md` |
 | Invocation  | Applied automatically to `**/security/vex/**, **/.copilot-tracking/security/vex/**` |
 | Interactive | No                                                                                  |
 <!-- END AUTO-GENERATED: metadata -->

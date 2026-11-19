@@ -167,7 +167,7 @@ After Review, an automatic session offers ranked follow-up choices plus **Stop a
 
 **Workflow:** Context Discovery → Review Scoping → Well-Architected Evaluation → Trade-Off Analysis → ADR Documentation → Escalation Review
 
-**Critical:** Asks questions and reviews existing artifacts (ADRs, PRDs, plans) before making assumptions. Scopes reviews to 2-3 relevant framework areas based on gathered context. Delegates security-specific reviews to `security-planner` and detailed ADR coaching to `adr-creation`. Uses `docs/templates/adr-template-solutions.md` for ADR structure.
+**Critical:** Asks questions and reviews existing artifacts (ADRs, PRDs, plans) before making assumptions. Scopes reviews to 2-3 relevant framework areas based on gathered context. Delegates security-specific reviews to `security-planner` and detailed ADR coaching to `adr-creation`. Uses `.github/plugins/project-planning/skills/project-planning/adr-author/templates/adr-template-solutions.md` for ADR structure.
 
 ### documentation
 
@@ -275,7 +275,7 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 * `results/<snapshot-id>/<work-id>.json` (one result per perspective or context/investigation task)
 * `review.md` (human-editable report, with a PR comment draft for PR and MR targets)
 
-**Skills:** The agent preloads `code-review` and `disclaimer-language` and follows the same workflow as `/code-review`. All perspective and phase guidance lives under `.github/skills/coding-standards/code-review/references/`.
+**Skills:** The agent preloads `code-review` and `disclaimer-language` and follows the same workflow as `/code-review`. All perspective and phase guidance lives under `.github/plugins/sdlc-git/skills/coding-standards/code-review/references/`.
 
 **Workflow:** Resolve target → Capture snapshot → Map areas and reasons → Run functional review (inline or parallel general-purpose tasks) → Verify findings → Render report → Publish only with consent
 

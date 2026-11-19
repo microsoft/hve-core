@@ -3,7 +3,7 @@ title: git-merge
 description: "Integrate branches with merge or rebase, resolve conflicts, and execute an ordinary push when explicitly authorized. Use for guided integration with optional conflict-review pauses."
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-10-20
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                    |
 |-------------|------------------------------------------------------------------------------------------|
 | Kind        | skill                                                                                    |
-| Source      | `.github/skills/hve-core/git-merge`                                                      |
+| Source      | `.github/plugins/sdlc-git/skills/hve-core/git-merge`                                     |
 | Invocation  | Invoked directly as `/git-merge`; model invocation is disabled, so agents do not load it |
 | Interactive | No                                                                                       |
 <!-- END AUTO-GENERATED: metadata -->

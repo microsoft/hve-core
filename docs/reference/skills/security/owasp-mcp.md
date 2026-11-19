@@ -3,7 +3,7 @@ title: owasp-mcp
 description: "OWASP MCP Top 10 knowledge base for identifying, assessing, and remediating Model Context Protocol security risks."
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                  |
-|-------------|----------------------------------------|
-| Kind        | skill                                  |
-| Source      | `.github/skills/security/owasp-mcp`    |
-| Invocation  | Loaded on demand by referencing agents |
-| Interactive | No                                     |
+| Field       | Value                                                     |
+|-------------|-----------------------------------------------------------|
+| Kind        | skill                                                     |
+| Source      | `.github/plugins/sdlc-security/skills/security/owasp-mcp` |
+| Invocation  | Loaded on demand by referencing agents                    |
+| Interactive | No                                                        |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

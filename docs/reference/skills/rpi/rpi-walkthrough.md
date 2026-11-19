@@ -3,7 +3,7 @@ title: rpi-walkthrough
 description: "Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts with navigable evidence links, a deep review before explaining, and a reconciled decisions-and-changes ledger. Use when the user wants to understand how something works or why it was changed."
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-11-12
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                             |
 |-------------|-----------------------------------------------------------------------------------|
 | Kind        | skill                                                                             |
-| Source      | `.github/skills/rpi/rpi-walkthrough`                                              |
+| Source      | `.github/plugins/rpi-builder/skills/rpi/rpi-walkthrough`                          |
 | Invocation  | Invoked directly as `/rpi-walkthrough`, or loaded on demand by referencing agents |
 | Interactive | No                                                                                |
 <!-- END AUTO-GENERATED: metadata -->

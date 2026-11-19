@@ -1,9 +1,9 @@
 ---
 title: Copilot Plugin
-description: Install the complete hve-core plugin in VS Code's Copilot harness or in Copilot CLI
+description: Install all HVE Core workflows or select focused plugins from the same Copilot marketplace
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-07
+ms.date: 2026-11-18
 ms.topic: how-to
 keywords:
   - copilot plugin
@@ -14,7 +14,7 @@ keywords:
 estimated_reading_time: 6
 ---
 
-The `hve-core` plugin installs the complete HVE Core component set: agents, skills, and instructions, plus canvases in VS Code. VS Code's Copilot harness and Copilot CLI both install it from the same `microsoft/hve-core` marketplace.
+Use the [plugin selection table](../../plugins/hve-core#choose-a-plugin) to pick All (`hve-core`) or any of seven focused topics. Both VS Code and Copilot CLI use the `microsoft/hve-core` marketplace.
 
 ## When to Use This Method
 
@@ -75,6 +75,8 @@ copilot plugin install hve-core@hve-core
 
 VS Code also picks up plugins that Copilot CLI installs, so a CLI install covers both clients.
 
+For just Git, pull requests, and code review, use `copilot plugin install hve-sdlc-git@hve-core` **instead**. Installing a topic does not install its recommended companions. Installing All alongside a topic can make bare skill names ambiguous.
+
 ## Update an Installed Plugin
 
 In VS Code, select **Check for and Apply Updates** on the **Plugins** page of the Agent Customizations editor, or run **Chat: Update Plugins**.
@@ -111,16 +113,24 @@ To try a branch or your own changes, install a clone as a plugin from source. In
 
 [Peer Directory Clone](peer-clone) walks through this setup for a clone that sits next to your project.
 
+For a branch catalog, register `microsoft/hve-core#<branch-or-commit>` in a separate CLI profile and browse the `hve-core` marketplace. To check a local topic **without installing it**, start outside the checkout and run:
+
+```bash
+copilot --plugin-dir /absolute/path/to/hve-core/.github/plugins/sdlc-git skill list --json
+```
+
+Check `source: "plugin"` and its path. Point `--plugin-dir` at the repository root to test All. VS Code uses separate workspace location settings; these do not configure the standalone CLI. Automatic discovery of a neutral topic root in the desktop app has not been verified.
+
 ## Plugin Contents
 
-| Component    | Loaded by Copilot | Description                                                              |
-|--------------|-------------------|--------------------------------------------------------------------------|
-| Agents       | Yes               | Custom chat agents for specialized workflows                             |
-| Skills       | Yes               | Self-contained skill packages, including the RPI phase entry points      |
-| Instructions | Yes               | Guidelines that Copilot applies to files matching each `applyTo` pattern |
-| Canvases     | VS Code           | Interactive panels such as the RPI Workflow canvas and the Session Log   |
+| Component    | Loaded by Copilot | Description                                                                                     |
+|--------------|-------------------|-------------------------------------------------------------------------------------------------|
+| Agents       | Yes               | Custom chat agents for specialized workflows                                                    |
+| Skills       | Yes               | Self-contained skill packages, including the RPI phase entry points                             |
+| Instructions | Host-dependent    | Rule files with `applyTo` scopes; installation alone does not demonstrate automatic application |
+| Canvases     | VS Code           | Interactive panels such as the RPI Workflow canvas and the Session Log                          |
 
-The marketplace has one entry, which resolves to the repository root. Root `plugin.json` lists the plugin's agents, skills, rules (instruction files), and canvas extension as repository-relative `.github/...` paths. The client also reads the root README and LICENSE; no generated plugin tree or plugin ZIP is involved.
+Each marketplace choice resolves to a different directory with its own `plugin.json`. All points to the repository root. Its manifest draws from the same sources as the focused manifests; there are no copied topic payloads or plugin archives.
 
 ## Limitations
 

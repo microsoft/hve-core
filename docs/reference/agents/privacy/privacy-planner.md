@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                    |
-|-------------|----------------------------------------------------------|
-| Kind        | agent                                                    |
-| Source      | `.github/agents/privacy/privacy-planner.agent.md`        |
-| Invocation  | Selected from the chat agent picker as `Privacy Planner` |
-| Interactive | Yes                                                      |
+| Field       | Value                                                                  |
+|-------------|------------------------------------------------------------------------|
+| Kind        | agent                                                                  |
+| Source      | `.github/plugins/sdlc-privacy/agents/privacy/privacy-planner.agent.md` |
+| Invocation  | Selected from the chat agent picker as `Privacy Planner`               |
+| Interactive | Yes                                                                    |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

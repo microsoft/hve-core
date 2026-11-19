@@ -3,7 +3,7 @@ title: Project Planning/Adr Handoff
 description: "ADR Creator Govern-phase handoff protocol: compact summary template, peer-agent routing heuristics, and dual-format (ADO + GitHub) work item templates"
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                                  |
-|-------------|----------------------------------------------------------------------------------------|
-| Kind        | instruction                                                                            |
-| Source      | `.github/instructions/project-planning/adr-handoff.instructions.md`                    |
-| Invocation  | Applied automatically to `**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**` |
-| Interactive | No                                                                                     |
+| Field       | Value                                                                                        |
+|-------------|----------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                  |
+| Source      | `.github/plugins/project-planning/instructions/project-planning/adr-handoff.instructions.md` |
+| Invocation  | Applied automatically to `**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**`       |
+| Interactive | No                                                                                           |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

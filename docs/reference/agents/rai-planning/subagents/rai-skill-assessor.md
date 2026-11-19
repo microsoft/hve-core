@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                    |
-|-------------|--------------------------------------------------------------------------|
-| Kind        | agent                                                                    |
-| Source      | `.github/agents/rai-planning/subagents/rai-skill-assessor.agent.md`      |
-| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly) |
-| Interactive | No                                                                       |
+| Field       | Value                                                                                           |
+|-------------|-------------------------------------------------------------------------------------------------|
+| Kind        | agent                                                                                           |
+| Source      | `.github/plugins/sdlc-responsible-ai/agents/rai-planning/subagents/rai-skill-assessor.agent.md` |
+| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)                        |
+| Interactive | No                                                                                              |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                     |
-|-------------|---------------------------------------------------------------------------|
-| Kind        | agent                                                                     |
-| Source      | `.github/agents/project-planning/subagents/ado-backlog-executor.agent.md` |
-| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)  |
-| Interactive | No                                                                        |
+| Field       | Value                                                                                               |
+|-------------|-----------------------------------------------------------------------------------------------------|
+| Kind        | agent                                                                                               |
+| Source      | `.github/plugins/sdlc-azure-devops/agents/project-planning/subagents/ado-backlog-executor.agent.md` |
+| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)                            |
+| Interactive | No                                                                                                  |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

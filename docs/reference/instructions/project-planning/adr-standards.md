@@ -3,7 +3,7 @@ title: Project Planning/Adr Standards
 description: "Embedded ADR standards: MADR v4.0.0 template (CC0), Y-Statement formula, status taxonomy, naming rules, ASR trigger schema, and Microsoft-attributed paraphrases for ADR Creator sessions"
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                                  |
-|-------------|----------------------------------------------------------------------------------------|
-| Kind        | instruction                                                                            |
-| Source      | `.github/instructions/project-planning/adr-standards.instructions.md`                  |
-| Invocation  | Applied automatically to `**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**` |
-| Interactive | No                                                                                     |
+| Field       | Value                                                                                          |
+|-------------|------------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                    |
+| Source      | `.github/plugins/project-planning/instructions/project-planning/adr-standards.instructions.md` |
+| Invocation  | Applied automatically to `**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**`         |
+| Interactive | No                                                                                             |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

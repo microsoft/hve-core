@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                                     |
 |-------------|-----------------------------------------------------------------------------------------------------------|
 | Kind        | instruction                                                                                               |
-| Source      | `.github/instructions/privacy/privacy-telemetry.instructions.md`                                          |
+| Source      | `.github/plugins/sdlc-privacy/instructions/privacy/privacy-telemetry.instructions.md`                     |
 | Invocation  | Applied automatically to `**/.copilot-tracking/privacy-plans/**, **/.copilot-tracking/privacy-reviews/**` |
 | Interactive | No                                                                                                        |
 <!-- END AUTO-GENERATED: metadata -->

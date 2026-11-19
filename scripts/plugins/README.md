@@ -27,7 +27,7 @@ PowerShell tooling for synchronizing root `plugin.json` with the complete distri
 
 ## Manifest Output
 
-The script discovers these git-tracked paths beneath `.github` and emits repository-relative `.github/...` component paths:
+The script discovers these git-tracked paths under `.github/` and `.github/plugins/<topic>/` and emits their actual repository-relative paths:
 
 * `agents/<package>/**/*.agent.md`
 * `prompts/<package>/**/*.prompt.md`, mapped to `commands`, which stays empty because HVE Core no longer accepts prompt files

@@ -3,7 +3,7 @@ title: Code Review Standards Output Format
 description: How the Code Review standards perspective records findings and criteria provenance in the shared review contract
 sidebar_position: 9
 author: microsoft/hve-core
-ms.date: 2026-11-17
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - code review
@@ -13,7 +13,7 @@ keywords:
 ---
 
 The standards perspective has no report template of its own. It writes the shared Code Review worker result under the `functional` vector, and Code Review renders every active perspective into one `review.md`.
-The `code-review` [review contract](https://github.com/microsoft/hve-core/blob/main/.github/skills/coding-standards/code-review/references/review-contract.md) defines the result and finding fields, and [`code-review/references/standards.md`](https://github.com/microsoft/hve-core/blob/main/.github/skills/coding-standards/code-review/references/standards.md) defines how standards criteria are selected and cited.
+The `code-review` [review contract](https://github.com/microsoft/hve-core/blob/main/.github/plugins/sdlc-git/skills/coding-standards/code-review/references/review-contract.md) defines the result and finding fields, and [`code-review/references/standards.md`](https://github.com/microsoft/hve-core/blob/main/.github/plugins/sdlc-git/skills/coding-standards/code-review/references/standards.md) defines how standards criteria are selected and cited.
 
 ## How standards results use the contract
 

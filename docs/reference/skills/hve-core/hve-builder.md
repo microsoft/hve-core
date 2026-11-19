@@ -3,7 +3,7 @@ title: hve-builder
 description: "Create, improve, refactor, replace, review, or validate prompts, instructions, agents, subagents, and skills. Use for Copilot customization cleanup, extending HVE workflows with project-specific capabilities, and parent-owned correction of material review findings."
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                         |
 |-------------|-------------------------------------------------------------------------------|
 | Kind        | skill                                                                         |
-| Source      | `.github/skills/hve-core/hve-builder`                                         |
+| Source      | `.github/plugins/rpi-builder/skills/hve-core/hve-builder`                     |
 | Invocation  | Invoked directly as `/hve-builder`, or loaded on demand by referencing agents |
 | Interactive | No                                                                            |
 <!-- END AUTO-GENERATED: metadata -->

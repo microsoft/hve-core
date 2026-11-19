@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                         |
 |-------------|-------------------------------------------------------------------------------|
 | Kind        | skill                                                                         |
-| Source      | `.github/skills/azure-devops/ado-backlog`                                     |
+| Source      | `.github/plugins/sdlc-azure-devops/skills/azure-devops/ado-backlog`           |
 | Invocation  | Invoked directly as `/ado-backlog`, or loaded on demand by referencing agents |
 | Interactive | No                                                                            |
 <!-- END AUTO-GENERATED: metadata -->

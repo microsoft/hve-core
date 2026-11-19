@@ -7,7 +7,7 @@ description: Phase 7 component installation and the Phase 7 upgrade mode for the
 ## Phase 7: Component Installation
 
 > [!IMPORTANT]
-> Generated scripts in this phase require PowerShell 7+ (`pwsh`). Windows PowerShell 5.1 is not supported. The Bash scripts require `jq`.
+> Use PowerShell 7+ (`pwsh`) or Bash 5 with `jq`. Windows PowerShell 5.1 and the Bash 3.2 shipped with macOS do not support the component-copy scripts.
 
 Phase 7 carries out native repository adoption. After Phase 5 validates the source clone, copy every HVE-Core component into the project's `.github/agents`, `.github/skills`, and `.github/instructions` folders. Phase 7 copies the full set because agents load skills and instructions by name, and a partial set can leave an agent without what it needs to start. Copilot discovers the copies natively, and the repository owns them. The source clone stays unconnected to Copilot. When this phase finishes, proceed to Phase 6.
 

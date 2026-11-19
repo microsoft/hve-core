@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                            |
 |-------------|----------------------------------------------------------------------------------|
 | Kind        | skill                                                                            |
-| Source      | `.github/skills/rpi/rpi-challenger`                                              |
+| Source      | `.github/plugins/rpi-builder/skills/rpi/rpi-challenger`                          |
 | Invocation  | Invoked directly as `/rpi-challenger`, or loaded on demand by referencing agents |
 | Interactive | No                                                                               |
 <!-- END AUTO-GENERATED: metadata -->

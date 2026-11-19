@@ -3,7 +3,7 @@ title: System Architecture Reviewer
 description: "System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment"
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-09-25
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                   |
-|-------------|-------------------------------------------------------------------------|
-| Kind        | agent                                                                   |
-| Source      | `.github/agents/project-planning/system-architecture-reviewer.agent.md` |
-| Invocation  | Selected from the chat agent picker as `System Architecture Reviewer`   |
-| Interactive | Yes                                                                     |
+| Field       | Value                                                                                            |
+|-------------|--------------------------------------------------------------------------------------------------|
+| Kind        | agent                                                                                            |
+| Source      | `.github/plugins/project-planning/agents/project-planning/system-architecture-reviewer.agent.md` |
+| Invocation  | Selected from the chat agent picker as `System Architecture Reviewer`                            |
+| Interactive | Yes                                                                                              |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

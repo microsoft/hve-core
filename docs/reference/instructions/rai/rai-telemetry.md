@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                        |
-|-------------|--------------------------------------------------------------|
-| Kind        | instruction                                                  |
-| Source      | `.github/instructions/rai/rai-telemetry.instructions.md`     |
-| Invocation  | Applied automatically to `**/.copilot-tracking/rai-plans/**` |
-| Interactive | No                                                           |
+| Field       | Value                                                                                |
+|-------------|--------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                          |
+| Source      | `.github/plugins/sdlc-responsible-ai/instructions/rai/rai-telemetry.instructions.md` |
+| Invocation  | Applied automatically to `**/.copilot-tracking/rai-plans/**`                         |
+| Interactive | No                                                                                   |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does
