@@ -199,6 +199,7 @@ export function clientInfoFrom(body) {
  * session: their unsent feedback, their changes, and one Send for all of them.
  *
  * @param {{
+ *   canvasId?: string,
  *   store: ReturnType<import('./store.mjs').createStore>,
  *   getSessionId: () => string,
  *   getCanvas?: () => { handle: string, instanceId: string } | null,
@@ -226,7 +227,7 @@ export function clientInfoFrom(body) {
  *   `canDeliver` says whether this process's host can send chat messages; a hand-off needs it, because this process relays the items when the other session's canvas does not take them.
  */
 export function createCanvasServer(deps) {
-    const { store, getSessionId } = deps;
+    const { canvasId = CANVAS_ID, store, getSessionId } = deps;
     const claimWindowMs = Number.isFinite(deps.claimWindowMs) ? deps.claimWindowMs : CLAIM_WINDOW_MS;
     const getCanvas = deps.getCanvas ?? (() => null);
     // Every API call must carry this key, which only the page the host opens knows, so other
@@ -748,12 +749,12 @@ export function createCanvasServer(deps) {
         if (lastPanelAsk && at - lastPanelAsk.at < CONNECT_REQUEST_INTERVAL_MS) {
             return { outcome: 'wait', retryAfterMs: CONNECT_REQUEST_INTERVAL_MS - (at - lastPanelAsk.at), sameSession: lastPanelAsk.session === session };
         }
-        const instanceId = panelInstanceId(session);
+        const instanceId = panelInstanceId(session, canvasId);
         const canvas = getCanvas();
         const displayPrompt = panelRequestText(canvas?.handle, session);
         const provider = deps.getExtensionId?.() ?? null;
         const input = JSON.stringify({ session });
-        const prompt = `${displayPrompt}\n\nOpen it with the open_canvas tool: canvasId "${CANVAS_ID}", instanceId "${instanceId}", input ${input}${provider ? `, extensionId "${provider}"` : ''}. It opens in a new panel of this conversation, or focuses the panel already open. Then tell the user it is open, or why it could not be opened.`;
+        const prompt = `${displayPrompt}\n\nOpen it with the open_canvas tool: canvasId "${canvasId}", instanceId "${instanceId}", input ${input}${provider ? `, extensionId "${provider}"` : ''}. It opens in a new panel of this conversation, or focuses the panel already open. Then tell the user it is open, or why it could not be opened.`;
         lastPanelAsk = { at, session };
         try {
             await deliver({ prompt, displayPrompt, ids: [] });

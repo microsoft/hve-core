@@ -2,7 +2,7 @@
 title: RPI Workflow Canvas
 description: Canvas extension for following and steering RPI sessions through research, planning, implementation, review, and follow-up
 author: Microsoft
-ms.date: 2026-11-17
+ms.date: 2026-11-19
 ms.topic: reference
 keywords:
   - canvas
@@ -207,7 +207,9 @@ Canvases are an experimental Copilot feature. The canvas renders wherever canvas
 
 The canvas ships in the hve-core Copilot plugin. The hve-core VS Code extension does not carry canvases.
 
-Sessions started in the hve-core repository also load the canvas from the project entry `.github/extensions/rpi-workflow/extension.mjs`, which imports this packaged extension. When the hve-core plugin is also installed, the host can list two providers for `hve-core-rpi-workflow`. Both run the same module; pass the `extensionId` the host reports, such as `project:rpi-workflow`, when it asks which one to open.
+Sessions in the hve-core checkout load **RPI Workflow (workspace preview)** (`hve-core-rpi-workflow-preview`) from `.github/extensions/rpi-workflow/extension.mjs`. It runs the same implementation under a separate ID, so it can open alongside the installed plugin's `hve-core-rpi-workflow` without a provider conflict.
+
+The preview uses `rpi-preview-` instance IDs to avoid reusing older project panels. After updating a checkout with an older project panel open, close it and reopen the workspace preview. The session's files and canvas feedback stay in place.
 
 The RPI Agent retries an ambiguous capability lookup or open with a host-reported `extensionId`, keeps a still-available saved provider, and otherwise prefers the workspace/project provider when offered. It records the provider after a successful open and reuses it when reopening. A plugin-only workspace uses its offered provider, not an assumed project ID. If the provider-qualified attempt fails, the agent reports the reason and recovery action while continuing without the canvas.
 

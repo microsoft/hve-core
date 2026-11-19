@@ -33,7 +33,7 @@ The skill activates the matching phase skills ([rpi-research](rpi-research), [rp
 It persists mode, active phase, artifact pointers (`research`, `plan`, `critique`, `changes`, `review`, and `refinement`), decisions, blockers, and ranked follow-ups in one JSON state record per task so a later conversation can resume from the recorded phase.
 Every task a conversation works on keeps its state in one session folder, `.copilot-tracking/rpi-sessions/<date>/<session>/<task>-state.json`, named after the session. Research, plans, critiques, changes, acceptance reviews, and refinement reviews stay in their own dated folders.
 
-When the host offers the RPI Workflow canvas (`hve-core-rpi-workflow`), the skill opens it once per conversation to show the session, the canvas follows each loop in the same panel, and both `rpi-review` and `rpi-refine` appear together in the Review view. What you send from the canvas reaches the session as your direction. The [RPI Workflow Canvas](../../../rpi/rpi-workflow-canvas) guide shows how to use it.
+When the host offers [RPI Workflow](../../../rpi/rpi-workflow-canvas) or its workspace preview, the skill opens one panel to show the session. The panel follows each loop, and both `rpi-review` and `rpi-refine` appear together in Review. What you send from the canvas reaches the session as your direction.
 
 It offers two modes:
 
