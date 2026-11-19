@@ -1,0 +1,35 @@
+{
+  "name": "hve-sdlc-git",
+  "description": "Set up Git, commit, merge, prepare GitHub pull requests, and review code. Pair with hve-sdlc-security for a specialist security assessment.",
+  "version": "3.2.2",
+  "author": {
+    "name": "Microsoft",
+    "url": "https://www.microsoft.com"
+  },
+  "homepage": "https://github.com/microsoft/hve-core",
+  "repository": "https://github.com/microsoft/hve-core",
+  "license": "MIT",
+  "keywords": [
+    "hve",
+    "git",
+    "pull-requests",
+    "code-review"
+  ],
+  "agents": [
+    "agents/coding-standards/code-review.agent.md"
+  ],
+  "rules": [
+    "instructions/git/code-review-telemetry.instructions.md"
+  ],
+  "skills": [
+    "skills/coding-standards/code-review",
+    "skills/hve-core/git-commit",
+    "skills/hve-core/git-merge",
+    "skills/hve-core/git-setup",
+    "skills/hve-core/pull-request",
+    "skills/shared/pr-reference"
+  ],
+  "extensions": [
+    "extensions/hve-core"
+  ]
+}

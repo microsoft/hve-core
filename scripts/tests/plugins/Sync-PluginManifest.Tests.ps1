@@ -954,6 +954,24 @@ Describe 'Extension containers' -Tag 'Unit' {
 }
 
 Describe 'Committed repository manifest' -Tag 'Unit' {
+    It 'Ships the same components through each independent topic and All' -Tag 'Marketplace' {
+        $catalog = Get-PluginCatalog -RepoRoot $script:RepositoryRoot
+        $all = Get-PluginComponentSet -RepoRoot $script:RepositoryRoot
+        $topics = @($catalog.Entries | Where-Object { $_.Source -ne '.' })
+        $topics | Should -HaveCount 7
+        foreach ($topic in $topics) {
+            $local = Get-Content -LiteralPath (Join-Path $script:RepositoryRoot $topic.ManifestPath) -Raw | ConvertFrom-Json -AsHashtable
+            $local.skills.Count | Should -BeGreaterThan 0
+            $local.agents.Count | Should -BeGreaterThan 0
+            foreach ($kind in $all.Keys) {
+                $expected = @($all[$kind] | Where-Object { $_.StartsWith("$($topic.Source)/", [StringComparison]::Ordinal) } |
+                    ForEach-Object { $_.Substring($topic.Source.Length + 1) })
+                @($local[$kind] | Where-Object { $_ } | Sort-Object) -join "`n" |
+                    Should -BeExactly (@($expected | Sort-Object) -join "`n")
+            }
+        }
+    }
+
     It 'Passes check mode without drift, catalog violations, or retired hooks' {
         Test-Path -LiteralPath (Join-Path $script:RepositoryRoot '.github/hooks') | Should -BeFalse
 
