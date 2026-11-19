@@ -270,7 +270,8 @@ function Get-PluginComponentSet {
     $extensions = [System.Collections.Generic.SortedSet[string]]::new([System.StringComparer]::Ordinal)
 
     foreach ($path in $TrackedPath) {
-        switch -Regex ($path) {
+        # A topic preserves the collection layout; the declared path retains its real root.
+        switch -Regex ($path -creplace '^plugins/[^/]+/', '') {
             '^agents/[^/]+/.+\.agent\.md$' { [void]$agents.Add($path); continue }
             '^prompts/[^/]+/.+\.prompt\.md$' { [void]$commands.Add($path); continue }
             '^instructions/[^/]+/.+\.instructions\.md$' { [void]$rules.Add($path); continue }
@@ -281,8 +282,8 @@ function Get-PluginComponentSet {
                 }
                 continue
             }
-            '^(?<Container>extensions/[^/]+)/[^/]+/extension\.mjs$' {
-                [void]$extensions.Add("$script:ArtifactRoot/$($Matches['Container'])")
+            '^extensions/[^/]+/[^/]+/extension\.mjs$' {
+                [void]$extensions.Add("$script:ArtifactRoot/$($path -replace '/[^/]+/extension\.mjs$', '')")
                 continue
             }
         }

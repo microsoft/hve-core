@@ -1,0 +1,56 @@
+{
+  "name": "hve-sdlc-security",
+  "description": "Plan and review application and software supply chain security (SSSC). Pair with hve-sdlc-responsible-ai for AI systems or hve-sdlc-git for code review.",
+  "version": "3.2.2",
+  "author": {
+    "name": "Microsoft",
+    "url": "https://www.microsoft.com"
+  },
+  "homepage": "https://github.com/microsoft/hve-core",
+  "repository": "https://github.com/microsoft/hve-core",
+  "license": "MIT",
+  "keywords": [
+    "hve",
+    "security",
+    "security-review",
+    "sssc",
+    "supply-chain"
+  ],
+  "agents": [
+    "agents/security/security-planner.agent.md",
+    "agents/security/security-reviewer.agent.md",
+    "agents/security/sssc-planner.agent.md",
+    "agents/security/sssc-reviewer.agent.md",
+    "agents/security/subagents/codebase-profiler.agent.md",
+    "agents/security/subagents/cve-analyzer.agent.md",
+    "agents/security/subagents/finding-deep-verifier.agent.md",
+    "agents/security/subagents/report-generator.agent.md",
+    "agents/security/subagents/skill-assessor.agent.md",
+    "agents/security/subagents/supply-chain-skill-assessor.agent.md"
+  ],
+  "rules": [
+    "instructions/security/identity.instructions.md",
+    "instructions/security/security-telemetry.instructions.md",
+    "instructions/security/sssc-planner.instructions.md",
+    "instructions/security/standards-mapping.instructions.md",
+    "instructions/security/vex-standards.instructions.md"
+  ],
+  "skills": [
+    "skills/project-planning/security-disclaimers",
+    "skills/project-planning/security-planning",
+    "skills/security/gh-code-scanning",
+    "skills/security/incident-response",
+    "skills/security/mcsb",
+    "skills/security/owasp-agentic",
+    "skills/security/owasp-cicd",
+    "skills/security/owasp-infrastructure",
+    "skills/security/owasp-llm",
+    "skills/security/owasp-mcp",
+    "skills/security/owasp-top-10",
+    "skills/security/risk-register",
+    "skills/security/secure-by-design",
+    "skills/security/security-reviewer-formats",
+    "skills/security/supply-chain-security",
+    "skills/security/vex"
+  ]
+}
