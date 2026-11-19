@@ -843,7 +843,7 @@ function Test-SingleFileFrontmatter {
     # Skill template assets (under .github/skills/*/templates/) are verbatim content
     # meant to be rendered into other documents and must not carry wrapping frontmatter
     # or Copilot footers (which would leak into rendered output).
-    $normalizedForSkillCheck = $relativePath -replace '\\', '/'
+    $normalizedForSkillCheck = $relativePath -replace '\\', '/' -replace '^\.github/plugins/[^/]+/', '.github/'
     $isSkillTemplate = $normalizedForSkillCheck -like '*.github/skills/*/templates/*'
     $isSkillTestFixture = $normalizedForSkillCheck -like '*.github/skills/*/tests/*fixtures/*'
 
@@ -941,8 +941,8 @@ function Test-SingleFileFrontmatter {
     $isAgenticGhcpAsset = $isAiArtifact -or
         $isSkillTemplate -or
         ($normalizedRelativePath -like '.github/workflows/*.md') -or
-        ($normalizedRelativePath -like '.github/skills/*/references/*.md') -or
-        ($normalizedRelativePath -like '.github/skills/*/SKILL.md')
+        ($normalizedForSkillCheck -like '.github/skills/*/references/*.md') -or
+        ($normalizedForSkillCheck -like '.github/skills/*/SKILL.md')
 
     if ($isAgenticGhcpAsset -and -not $SkipFooterValidation) {
         $hasFooter = Test-MarkdownFooter -Content $content

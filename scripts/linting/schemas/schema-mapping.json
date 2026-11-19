@@ -11,7 +11,7 @@
     {
       "pattern": "docs/planning/adrs/[0-9][0-9][0-9][0-9]-*.md",
       "scope": "adr",
-      "schema": "adr-frontmatter.schema.json",
+      "schema": "../../../.github/plugins/project-planning/skills/project-planning/adr-author/assets/schemas/adr-frontmatter.schema.json",
       "description": "Architecture Decision Records under docs/planning/adrs/NNNN-{kebab-case}.md"
     },
     {
@@ -55,6 +55,12 @@
       "scope": "github-skills",
       "schema": "skill-frontmatter.schema.json",
       "description": "Skill definition files in .github/skills directory"
+    },
+    {
+      "pattern": ".github/plugins/*/skills/**/SKILL.md",
+      "scope": "github-skills",
+      "schema": "skill-frontmatter.schema.json",
+      "description": "Skill definition files in focused plugin roots"
     }
   ],
   "defaultSchema": "base-frontmatter.schema.json"

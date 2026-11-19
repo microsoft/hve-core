@@ -4,7 +4,7 @@
 .SYNOPSIS
     Copies selected HVE-Core components into a target repository.
 .DESCRIPTION
-    Maps plugin manifest component paths to their canonical .github locations,
+    Maps plugin manifest source paths to conventional .github destinations,
     copies files and complete skill directories under TargetRoot without
     flattening paths, and writes the schema version 2 .hve-tracking.json
     manifest. Membership, path-safety, and manifest-schema checks all run
@@ -161,10 +161,10 @@ $schemaVersion = 2
 # the extension skill-materialization exclusions.
 $excludedSkillPath = '(^|/)(tests|\.venv|\.hypothesis|node_modules|__pycache__|\.ruff_cache|\.pytest_cache|\.git)(/|$)|(^|/)\.env(\..+)?$|(^|/)(\.DS_Store|Thumbs\.db)$|\.pyc$'
 $fieldMap = [ordered]@{
-    agents   = @{ Kind = 'agent'; Root = '.github/agents'; ManifestRoot = 'agents'; PackageSuffix = '.md'; SourceSuffix = '.agent.md' }
-    commands = @{ Kind = 'prompt'; Root = '.github/prompts'; ManifestRoot = 'prompts'; PackageSuffix = '.md'; SourceSuffix = '.prompt.md' }
-    rules    = @{ Kind = 'instruction'; Root = '.github/instructions'; ManifestRoot = 'instructions'; PackageSuffix = '.instructions.md'; SourceSuffix = '.instructions.md' }
-    skills   = @{ Kind = 'skill'; Root = '.github/skills'; ManifestRoot = 'skills'; PackageSuffix = ''; SourceSuffix = '' }
+    agents   = @{ Kind = 'agent'; Root = '.github/agents'; PackageSuffix = '.md'; SourceSuffix = '.agent.md' }
+    commands = @{ Kind = 'prompt'; Root = '.github/prompts'; PackageSuffix = '.md'; SourceSuffix = '.prompt.md' }
+    rules    = @{ Kind = 'instruction'; Root = '.github/instructions'; PackageSuffix = '.instructions.md'; SourceSuffix = '.instructions.md' }
+    skills   = @{ Kind = 'skill'; Root = '.github/skills'; PackageSuffix = ''; SourceSuffix = '' }
 }
 
 function ConvertTo-PackageComponentPath {
@@ -173,16 +173,20 @@ function ConvertTo-PackageComponentPath {
         Converts a canonical plugin-manifest path to installer package form.
     .DESCRIPTION
         The plugin manifest stores canonical source identities while installer
-        input and tracking manifests use package form. Paths outside the four
-        installable fields, such as hooks, pass through unchanged.
+        input and tracking manifests use package form without the plugin topic.
+    .PARAMETER Field
+        Installable manifest field that declares this path.
     .PARAMETER ManifestPath
         Repository-root-relative path declared by the canonical manifest.
     .OUTPUTS
-        [string] Installer package path, or the original path when no mapping applies.
+        [string] Installer package path.
     #>
     [CmdletBinding()]
     [OutputType([string])]
     param(
+        [Parameter(Mandatory = $true)]
+        [string]$Field,
+
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string]$ManifestPath
@@ -191,20 +195,18 @@ function ConvertTo-PackageComponentPath {
     if (-not $ManifestPath.StartsWith('.github/', [System.StringComparison]::Ordinal)) {
         throw "Plugin manifest path '$ManifestPath' must start with '.github/'."
     }
-    $segments = $ManifestPath.Substring('.github/'.Length) -split '/', 2
-    if ($segments.Count -lt 2) { return $ManifestPath }
-    $manifestRoot = $segments[0]
-    $relative = $segments[1]
-    foreach ($field in $fieldMap.Keys) {
-        $descriptor = $fieldMap[$field]
-        if (-not [string]::Equals($descriptor.ManifestRoot, $manifestRoot, [System.StringComparison]::Ordinal)) { continue }
-        if ($descriptor.SourceSuffix) {
-            if (-not $relative.EndsWith($descriptor.SourceSuffix, [System.StringComparison]::Ordinal)) { return $ManifestPath }
-            $relative = "$($relative.Substring(0, $relative.Length - $descriptor.SourceSuffix.Length))$($descriptor.PackageSuffix)"
-        }
-        return "$field/$relative"
+    if ($ManifestPath -match '\\|\p{C}|/(?:\.{1,2})?(?:/|$)') {
+        throw "Unsafe plugin manifest path '$ManifestPath'."
     }
-    return $ManifestPath
+    $descriptor = $fieldMap[$Field]
+    $targetPath = $ManifestPath -creplace '^\.github/plugins/[a-z0-9][a-z0-9-]*/', '.github/'
+    $prefix = "$($descriptor.Root)/"
+    if (-not $targetPath.StartsWith($prefix, [System.StringComparison]::Ordinal) -or
+        -not $targetPath.EndsWith($descriptor.SourceSuffix, [System.StringComparison]::Ordinal)) {
+        throw "Invalid source path '$ManifestPath' for plugin manifest field '$Field'."
+    }
+    $relative = $targetPath.Substring($prefix.Length, $targetPath.Length - $prefix.Length - $descriptor.SourceSuffix.Length)
+    return "$Field/$relative$($descriptor.PackageSuffix)"
 }
 
 $sourceRoot = (Resolve-Path -LiteralPath $HveCoreBasePath).Path
@@ -217,14 +219,18 @@ if (-not (Test-Path -LiteralPath $pluginManifestPath -PathType Leaf)) {
     throw "Plugin manifest not found: $pluginManifestPath"
 }
 $pluginManifest = Get-Content -LiteralPath $pluginManifestPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
-$membership = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+$sources = [System.Collections.Generic.Dictionary[string,string]]::new([System.StringComparer]::Ordinal)
 foreach ($field in $fieldMap.Keys) {
     foreach ($declaredPath in @($pluginManifest[$field])) {
         if ([string]::IsNullOrWhiteSpace([string]$declaredPath)) { continue }
-        [void]$membership.Add((ConvertTo-PackageComponentPath -ManifestPath ([string]$declaredPath)))
+        $componentPath = ConvertTo-PackageComponentPath -Field $field -ManifestPath $declaredPath
+        if ($sources.ContainsKey($componentPath) -and $sources[$componentPath] -cne $declaredPath) {
+            throw "Component '$componentPath' has multiple source paths in the plugin manifest."
+        }
+        $sources[$componentPath] = $declaredPath
     }
 }
-if ($membership.Count -eq 0) {
+if ($sources.Count -eq 0) {
     throw "Plugin manifest '$pluginManifestPath' declares no installable components."
 }
 
@@ -281,7 +287,7 @@ foreach ($raw in $Component) {
     if (-not $fieldMap.Contains($field)) {
         throw "Component path '$normalized' must start with one of: $($fieldMap.Keys -join ', ')."
     }
-    if (-not $membership.Contains($normalized)) {
+    if (-not $sources.ContainsKey($normalized)) {
         throw "Component '$normalized' is not declared in the plugin manifest."
     }
     if (-not $seenComponents.Add($normalized)) { continue }
@@ -294,14 +300,15 @@ foreach ($raw in $Component) {
         }
         $relative = "$($relative.Substring(0, $relative.Length - $descriptor.PackageSuffix.Length))$($descriptor.SourceSuffix)"
     }
-    $sourceRelative = "$($descriptor.Root)/$relative"
+    $targetRelative = "$($descriptor.Root)/$relative"
+    $sourceRelative = $sources[$normalized]
     $sourceFull = Join-Path $sourceRoot $sourceRelative
     Assert-SourceWithoutLink -Base $sourceRoot -RelativePath $sourceRelative -Component $normalized
     # Preflight bounds the component; the resolved path is recomputed at the
     # write site, so only the assertion's failure behaviour is needed here.
-    Assert-WithinTargetRoot -Base $targetBase -RelativePath $sourceRelative -Component $normalized | Out-Null
-    if (-not $seenTargets.Add($sourceRelative)) {
-        throw "Component '$normalized' resolves to duplicate target '$sourceRelative'."
+    Assert-WithinTargetRoot -Base $targetBase -RelativePath $targetRelative -Component $normalized | Out-Null
+    if (-not $seenTargets.Add($targetRelative)) {
+        throw "Component '$normalized' resolves to duplicate target '$targetRelative'."
     }
 
     $componentFiles = [System.Collections.Generic.List[string]]::new()
@@ -313,7 +320,7 @@ foreach ($raw in $Component) {
             Where-Object { -not ($_.Attributes -band [System.IO.FileAttributes]::ReparsePoint) } |
             ForEach-Object {
                 $withinSkill = ($_.FullName.Substring($sourceFull.Length) -replace '\\', '/').TrimStart('/')
-                "$sourceRelative/$withinSkill"
+                "$targetRelative/$withinSkill"
             } | Where-Object { $_ -notmatch $excludedSkillPath })
         if ($skillFiles.Count -eq 0) {
             throw "Skill component '$normalized' has no files at '$sourceRelative'."
@@ -324,7 +331,7 @@ foreach ($raw in $Component) {
         if (-not (Test-Path -LiteralPath $sourceFull -PathType Leaf)) {
             throw "Component '$normalized' has no source file at '$sourceRelative'."
         }
-        $componentFiles.Add($sourceRelative)
+        $componentFiles.Add($targetRelative)
     }
 
     # The plugin manifest declares no per-component maturity, so tracking records
@@ -333,7 +340,8 @@ foreach ($raw in $Component) {
             Component = $normalized
             Kind      = $descriptor.Kind
             Maturity  = 'stable'
-            Target    = $sourceRelative
+            Source    = $sourceRelative
+            Target    = $targetRelative
             Files     = [string[]]$componentFiles.ToArray()
         })
 }
@@ -386,7 +394,7 @@ foreach ($componentPath in $componentOrder) {
             Write-Host "🔒 Skipped ejected: $file"
             continue
         }
-        $sourceFile = Join-Path $sourceRoot $file
+        $sourceFile = Join-Path $sourceRoot ($item.Source + $file.Substring($item.Target.Length))
         # Re-verified immediately before the write. Preflight ran earlier, so a
         # link planted in between would otherwise be honoured by Copy-Item. This
         # narrows that window; it does not make the check and the write atomic.
@@ -411,7 +419,7 @@ foreach ($componentPath in $componentOrder) {
 $installedComponents = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
 foreach ($fileEntry in $files.Values) {
     $ownedComponent = [string]$fileEntry['component']
-    if ($membership.Contains($ownedComponent)) {
+    if ($sources.ContainsKey($ownedComponent)) {
         [void]$installedComponents.Add($ownedComponent)
     }
 }

@@ -258,7 +258,7 @@ function Test-AssetDocOrphanChanged {
 
     $sourcePath = Get-AssetDocSourcePath -DocPath $DocPath
     foreach ($file in $ChangedFiles) {
-        $normalized = $file -replace '\\', '/'
+        $normalized = $file -replace '\\', '/' -replace '^\.github/plugins/[^/]+/', '.github/'
         if ([string]::Equals($normalized, $DocPath, [System.StringComparison]::Ordinal)) {
             return $true
         }

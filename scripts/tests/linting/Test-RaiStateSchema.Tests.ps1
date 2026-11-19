@@ -155,7 +155,7 @@ $script:invalidCases = @(
 
 BeforeAll {
     $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
-    $script:schemaPath = Join-Path $script:repoRoot 'scripts/linting/schemas/rai-state.schema.json'
+    $script:schemaPath = Join-Path $script:repoRoot '.github/plugins/sdlc-responsible-ai/skills/project-planning/rai-planner/assets/schemas/rai-state.schema.json'
     $script:schemaJson = Get-Content -Path $script:schemaPath -Raw
     $script:minimalFixturePath = Join-Path $script:repoRoot 'scripts/tests/fixtures/rai-state/phase-1-minimal.json'
 
