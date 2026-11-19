@@ -1,6 +1,6 @@
 ---
 title: MCSB Lookup Playbook
-description: Delegation guardrail for retrieving volatile per-Azure-service MCSB content at runtime.
+description: Evidence requirements for volatile per-Azure-service MCSB controls and mappings.
 ---
 
 # MCSB Lookup Playbook
@@ -16,20 +16,19 @@ Never embed the following — retrieve it when a specific Azure resource is in s
 * Defender for Cloud assessment specifics and compliance results.
 * Framework mappings when Microsoft revises the benchmark or the referenced standards.
 
-## How to delegate
+## Resolve a service baseline
 
-When a specific Azure resource needs its applicable control identifiers, delegate to the Researcher Subagent:
+Read the supplied Microsoft baseline for the specified service and version, or use an available research capability for a bounded question:
 
 ```text
-Agent: Researcher Subagent
 Topic: Identify MCSB controls applicable to {component} of type {resource type} in {Azure service}.
 Context: Component "{name}" in bucket "{bucket}" using {technology stack} on Azure.
-Output: .copilot-tracking/research/subagents/{{YYYY-MM-DD}}/{component-name}-mcsb.md
+Output: Applicable controls with official source, version and retrieval date.
 ```
 
 Response format: return findings as a markdown document with Applicable Controls, Findings, and Recommendations sections, each control identified by its MCSB control ID and mapped back to a domain in [00-control-index.md](00-control-index.md).
 
-Execution constraints: complete research within a single invocation and do not delegate to additional subagents. When no subagent tool is available, inform the user that one of these tools is required; do not synthesize per-service control mappings from training data.
+Keep a delegated lookup to one invocation without further delegation. If the baseline cannot be verified, record the missing evidence and leave those mappings open rather than inferring per-service controls.
 
 ## Reconciling results
 

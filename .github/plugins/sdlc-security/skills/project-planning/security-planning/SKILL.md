@@ -36,7 +36,7 @@ Use the drift capability when a Security Planner baseline and current-state secu
 Before full conversational or durable drift output, read the Security Planning CAUTION block from `security-disclaimers` and display it verbatim. Report the default exclusions below in the canonical body's Current repository evidence section. A bounded Code Review section may point to the notice and exclusions because its containing review already carries the Code-Review disclaimer.
 
 > **Default exclusions in effect.** Planning and agent-customization artifacts are excluded from drift findings:
-> - Paths: `.copilot-tracking/**`, `docs/planning/**`, `docs/adrs/**`, `.github/agents/**`, `.github/prompts/**`, `.github/instructions/**`, `.github/skills/**`
+> - Paths: `.copilot-tracking/**`, `docs/planning/**`, `docs/adrs/**`, `.github/agents/**`, `.github/prompts/**`, `.github/instructions/**`, `.github/skills/**`, and packaged `.github/plugins/*/{agents,instructions,skills}/**`
 > - File globs: `*.prompt.md`, `*.agent.md`, `*.instructions.md`, `SKILL.md`
 >
 > To override, pass `scope=` explicitly. Overlapping user scope wins and is reported as a warning.
