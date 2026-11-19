@@ -17,7 +17,7 @@ This `SKILL.md` is the entrypoint for the Microsoft Cloud Security Benchmark (MC
 
 The skill encodes the durable, structurally stable layer of MCSB — the control-domain taxonomy and a domain-grain crosswalk to NIST SP 800-53 and CIS Controls — so the Security Planner and Security Reviewer can map and assess Azure cloud resources against a consistent control vocabulary.
 
-The skill deliberately does not embed the volatile layer of MCSB (per-Azure-service security baselines, per-service control IDs, Azure Policy mappings, and Defender for Cloud assessment specifics). That content changes on Microsoft's release cadence and is retrieved at runtime through the Researcher Subagent per [references/lookup-playbook.md](references/lookup-playbook.md).
+The skill does not embed volatile per-service baselines, control IDs, Azure Policy mappings, or Defender for Cloud assessments. Use supplied authoritative evidence or a scoped lookup as described in the [MCSB lookup playbook](references/lookup-playbook.md).
 ## Version and stability
 
 This skill targets **MCSB v2**, which Microsoft marks as preview and which supersedes MCSB v1. Content is version-pinned and retrieval-dated (2026-07-21). MCSB v2 replaces v1's Governance and Strategy (`GS`) domain with an Artificial Intelligence Security (`AI`) domain, and maps to NIST SP 800-53 Rev. 5 and CIS Controls v8.1 (v1 mapped to Rev. 4 and CIS v8). Re-verify the taxonomy and mappings against the official source before relying on them for a compliance decision.

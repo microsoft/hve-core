@@ -1,7 +1,7 @@
 ---
 title: Security Plan Drift Comparison Model
 description: Evidence preconditions, exclusion rules, five drift categories, and recommendation-only handoff signals.
-ms.date: 2026-09-20
+ms.date: 2026-11-18
 ms.topic: reference
 ---
 
@@ -22,6 +22,7 @@ Excluded path prefixes:
 * `<repository-root>/.github/prompts/`
 * `<repository-root>/.github/instructions/`
 * `<repository-root>/.github/skills/`
+* The corresponding `agents/`, `instructions/` and `skills/` subtrees of each `<repository-root>/.github/plugins/<topic>/` package
 
 Excluded file globs:
 

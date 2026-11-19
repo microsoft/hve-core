@@ -6,7 +6,7 @@ user-invocable: false
 metadata:
   authors: "NIST (AI RMF, public domain); EU (AI Act, paraphrased with attribution); Microsoft (AI STRIDE overlay)"
   spec_version: "NIST AI 100-1 v1.0; EU AI Act 2024/1689"
-  last_updated: "2024"
+  last_updated: "2026-11-18"
   content_based_on: "https://doi.org/10.6028/NIST.AI.100-1; https://eur-lex.europa.eu/eli/reg/2024/1689"
 ---
 

@@ -15,7 +15,7 @@ Each entry names the upstream source, how this package uses it, and the posture 
 * [W3C PROV-O](https://www.w3.org/TR/prov-o/) supplies the crosswalk for derivation and generation. Concepts are paraphrased with official links and no PROV conformance claim is made.
 * [DCMI Metadata Terms](https://www.dublincore.org/specifications/dublin-core/dcmi-terms/) supplies crosswalk term identifiers for title, description, and coverage. Term identifiers are cited as facts and no DCMI conformance claim is made.
 * [Frictionless Table Schema v2](https://datapackage.org/standard/table-schema/) is evidence that paired arrays are an established representation of composite keys. Only the structural concept is used; no schema is vendored and no conformance claim is made.
-* [`privacy-standards`](../../../project-planning/privacy-standards/SKILL.md) supplies the binding citation-field names for privacy mappings. It is the repository authority, and this package does not reproduce its standards content.
+* The `privacy-standards` skill supplies the binding citation-field names for privacy mappings. It is the repository authority, and this package does not reproduce its standards content.
 * Microsoft Fabric ontology and [Datasheets for Datasets](https://arxiv.org/abs/1803.09010) inform product and interview framing only. Neither creates a schema field or a conformance obligation.
 
 Croissant is not used as a contract because it is ML-dataset scoped and its specification is CC BY-ND 4.0. OpenLineage is not used because it models runtime events. Open Data Contract Standard is not used because it represents producer-consumer commitments rather than uncertain discovery assertions.

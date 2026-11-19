@@ -29,7 +29,7 @@ Before export, remove secrets, credentials, internal URLs, PII and state JSON or
 
 ## Autonomy and Output Targets
 
-Confirm the destination and persist the user's tier. Manual emits local drafts only. Partial (default) requires approval of each batch of 5–10 items. Full requires explicit advance authorization for the scoped batch. No tier waives independent human review: never check the human-review box or send unchecked items to the backlog.
+Confirm the destination and persist the user's tier. Manual handoff (`guided` in state) emits local drafts only. Partial (default, `partial`) requires approval of each batch of 5–10 items. Full (`full`) requires explicit advance authorization for the scoped batch. No tier waives independent human review: never check the human-review box or send unchecked items to the backlog.
 
 ## Final Handoff Summary
 
