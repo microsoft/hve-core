@@ -3,7 +3,7 @@ title: Security Planning Skill Security Model
 description: STRIDE threat model for the TM7 generation and native feedback runtime that parses untrusted specs, template XML, local screenshots, UI Automation traces, and overlay evidence with human-review gates
 author: microsoft/hve-core
 ms.topic: reference
-ms.date: 2026-08-05
+ms.date: 2026-11-17
 estimated_reading_time: 8
 keywords:
   - security
@@ -16,6 +16,8 @@ keywords:
 
 This document records the STRIDE threat model for the TM7 generation and native feedback runtime in the security-planning skill. The runtime now includes the generator, the native Microsoft Threat Modeling Tool validator, local UI Automation interaction, screenshot capture, evidence persistence, and overlay replay. The model is organized by trust bucket around the executable surfaces that the runtime directly touches: TMT process automation and UI Automation (B1), local screenshot and evidence capture (B2), and overlay and evidence path handling (B3). Each bucket enumerates all six STRIDE categories with the mitigations that address them. Assets and adversaries are enumerated first, and enterprise readiness gaps appear at the end. The runtime writes redacted evidence bundles under a local evidence root with `manifest.json`, `status.json`, `action.log`, and per-run screenshots/UIA/summaries folders, writes iteration-scoped candidate models and `overlay.yaml` files under `iterations/00-baseline` and `iterations/01` through `iterations/03`, emits pending overlay outputs for human review, and never rewrites the canonical baseline or auto-promotes overlays to `approved`.
 
+Two surfaces sit beside that loop. A feedback-loop run also writes `feedback-manifest.json` and, when it stops in a reviewable state, an `agent-review-request.json` that points a reviewing agent at the captured screenshots. Separately, `scripts/Deserialize-Tm7.ps1` is a standalone fidelity probe that loads the Threat Modeling Tool's own assemblies in-process; the Python harness does not invoke it and its version pin does not apply to it.
+
 > **See also: repo-wide STRIDE model.** This skill participates in the repository-wide threat model at [docs/security/security-model.md](../../../../docs/security/security-model.md) and is registered in its [Skill Security Models](../../../../docs/security/security-model.md#skill-security-models) section.
 
 ## Executive Summary
@@ -26,7 +28,7 @@ The highest-risk behavior is running a local executable against a threat-model a
 
 | Dimension          | Value                                                                                                                                                                                                             |
 |--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Runtime surface    | Local Python generator, native TMT validation harness, Windows UI Automation, screenshot capture, and evidence/overlay handling                                                                                   |
+| Runtime surface    | Local Python generator, native TMT validation harness, standalone PowerShell fidelity probe, Windows UI Automation, screenshot capture, and evidence/overlay handling                                             |
 | Trust buckets      | B1 TMT process automation and UI Automation; B2 local screenshots and evidence capture; B3 overlay-manifest and output path handling                                                                              |
 | Credentials        | None handled or persisted by the runtime; no network egress is expected                                                                                                                                           |
 | Network egress     | None                                                                                                                                                                                                              |
@@ -51,8 +53,9 @@ The highest-risk behavior is running a local executable against a threat-model a
 1. `scripts/generate_tm7.py`: loads and validates the input spec, selects a template profile, emits deterministic `.tm7` content, and replays a validated overlay when requested.
 2. `scripts/validate_tm7_with_tmt.py`: discovers the local TMT executable, enforces the pinned version, launches the native UI, runs validation and feedback-loop modes, and writes redacted evidence bundles.
 3. `scripts/tm7_visual_feedback.py`: evaluates geometry metrics, derives overlay candidates, ranks them deterministically, and evaluates convergence and semantic regression.
-4. `assets/schemas/`: defines the overlay and evidence-manifest contracts that constrain replay and evidence output.
-5. Generated evidence and overlays: `manifest.json`, `status.json`, iteration bundles, screenshots, UIA snapshots, and pending overlay output written for human review.
+4. `scripts/Deserialize-Tm7.ps1`: the PowerShell fidelity probe, run standalone by an operator or the test suite rather than by the Python harness. It does its own assembly discovery with no version pin, re-launches itself under the 32-bit Windows PowerShell host, checks each assembly's Authenticode signature, loads it in-process with `Assembly.LoadFrom`, and calls the tool serializer's `ReadObject` on the target `.tm7`.
+5. `assets/schemas/`: publishes the overlay, feedback-manifest, and agent review request contracts. The runtime enforces the first two through `validate_layout_overlay` and `validate_feedback_manifest` in `tm7_visual_feedback.py`. `tm7-agent-review-request.schema.json` is checked against an emitted request only by the test suite, not at runtime.
+6. Generated evidence and overlays: `manifest.json`, `status.json`, iteration bundles, screenshots, UIA snapshots, and pending overlay output for human review. A feedback-loop run that reaches a final candidate also writes `feedback-manifest.json`. It writes `agent-review-request.json` only on an `automated-ready-pending-human`, `repeated-defect-no-improvement`, or `max-iterations` stop with surface metrics captured. That request's text is redacted, but the screenshots it points to are not.
 
 ### Data Flow
 
@@ -69,14 +72,18 @@ flowchart TD
         UIA["UI Automation capture"]
         EVIDENCE["Redacted evidence bundle"]
         OVERLAYOUT["Pending overlay output"]
+        REVIEW["Agent review request"]
     end
+    PROBE["Standalone PowerShell fidelity probe"]
     SPEC --> GEN
     OVERLAY --> GEN
     MODEL --> VALIDATE
     GEN --> VALIDATE
+    GEN -. "generated .tm7, run separately" .-> PROBE
     VALIDATE --> UIA
     UIA --> EVIDENCE
     EVIDENCE --> OVERLAYOUT
+    EVIDENCE --> REVIEW
 ```
 
 ## Trust Boundaries
@@ -139,6 +146,8 @@ flowchart TD
 ### Tampering
 
 * The runtime validates the executable path and pinned version before launch, and records the discovered executable metadata in the evidence manifest. It rejects mismatches rather than proceeding with an unverified binary.
+* The version check has two operator-controlled exceptions. `--pinned-version` replaces the version the policy compares against, although `discover_tmt_application` still prefers a candidate at `DEFAULT_PINNED_VERSION` when it selects among trusted executables. `--diagnostic-override` accepts whatever is observed, including an executable under `%LOCALAPPDATA%\Apps\2.0` or another discovery root whose version metadata cannot be read.
+* Neither exception relaxes the Authenticode publisher check, which filters candidates during discovery. `manifest.json` records both choices as `required_tmt_version` and `diagnostic_override`. `feedback-manifest.json` records `pinned_tmt_version` only, so an override is visible in the run manifest but not in the feedback manifest.
 
 ### Repudiation
 
