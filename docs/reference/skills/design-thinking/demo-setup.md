@@ -1,9 +1,9 @@
 ---
 title: demo-setup
 description: Repeatable HVE Core demo setup that simulates DT Coach sessions with a customer persona and scaffolds a hi-fi prototype - Brought to you by microsoft/hve-core
-sidebar_position: 1
+sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-04
+ms.date: 2026-10-18
 ms.topic: reference
 keywords:
   - skill

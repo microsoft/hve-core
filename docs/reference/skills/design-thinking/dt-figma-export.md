@@ -1,9 +1,9 @@
 ---
 title: dt-figma-export
 description: "Export Design Thinking artifacts to a FigJam board or Figma Design file through the Figma MCP server. Use when a team wants collaborative visual review of Method 1, 3, 4, 5, or 6 artifacts, or accepts a DT Coach board-export offer."
-sidebar_position: 4
+sidebar_position: 5
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-18
 ms.topic: reference
 keywords:
   - skill
