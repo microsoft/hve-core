@@ -1,9 +1,9 @@
 ---
 title: code-review
-description: "Review code changes from multiple perspectives with context bootstrap, depth-tier rigor, and structured findings output."
+description: "Prioritize functional code review for a PR, branch comparison, commit, local changes, or selected code using one immutable snapshot, parallel general-purpose tasks, vector-tagged findings, strictly opt-in non-functional vectors, and an optional Code Review canvas."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-11-17
 ms.topic: reference
 keywords:
   - skill
@@ -23,35 +23,22 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Review code changes from multiple perspectives with context bootstrap, depth-tier rigor, and structured findings output.
+Prioritize functional code review for a PR, branch comparison, commit, local changes, or selected code using one immutable snapshot, parallel general-purpose tasks, vector-tagged findings, strictly opt-in non-functional vectors, and an optional Code Review canvas.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-Use this skill to review a PR, an explicit branch comparison, or local changes
-across functional, standards, accessibility, security, and readiness perspectives.
-It establishes the complete change surface and an orientation before findings.
-Use implementation workflows to fix accepted findings; requesting a review alone
-does not authorize source edits or publishing comments.
+Use this skill to review a PR or MR, a named branch comparison, a commit, staged or unstaged local changes, or selected code. Run it as `/code-review` or through the Code Review agent.
+A clear request runs as a sweep: Code Review shows a compact scope summary and continues. Add `mode=guided` to choose areas, vectors, or depth at each decision point.
 
-Target, profile, and depth are separate choices. The standard profile recommends
-core perspectives plus security/accessibility when signaled; comprehensive depth
-increases verification rigor without automatically changing the selected lanes.
+Code Review runs functional review by default, covering codebase requirements, code quality and standards, unintended behaviors and side effects, refactored code paths, missed APIs/SDKs, missed abstractions, and unneeded edge-case branches. Non-functional vectors (`security`, `rai`, `sssc`, `performance`, `privacy`, `accessibility`) and BRD/PRD/ADR alignment remain strictly unloaded unless you request them for specific areas or the whole review.
+
+Each review captures one immutable snapshot. Small diffs run inline, and larger multi-area or multi-vector reviews orchestrate parallel `general-purpose` tasks (or report recommended session breakdowns to a Project coordinator). When the Code Review canvas is available, Code Review opens it to display vector-tagged findings and comments and to collect area-scoped reviewer requests and feedback.
+Review keeps source and Git state read-only. Fix accepted findings in an implementation workflow, and expect Code Review to ask for your explicit consent before it stages or posts anything to a PR.
 
 ## Example usage
 
-Ask: `/code-review Review this checked-out feature branch against origin/main,
-with the standard profile. Start with orientation and recommend a depth; keep
-source unchanged and do not publish review comments.` Provide the intended change
-and available test evidence.
+Run `/code-review feature/search compared with main` and describe what the change should do. Code Review resolves both revisions, captures the snapshot, runs the functional review at `standard` depth, and leaves non-functional vectors unloaded unless asked.
+Expect a `review.md` under `.copilot-tracking/reviews/code-reviews/<date>/<review-id>/` that leads with vector-tagged findings and their consequences, reports execution and outcome separately, and lists incomplete coverage and limitations.
 
-Expect target/head binding, a change brief based on the full diff, a walkthrough,
-and independent confirmation of perspectives and depth before the findings sweep.
-A useful result ties normalized findings to files and locations, separates
-observations from conclusions, and identifies validation gaps and follow-up work.
-
-For local changes, name staged or unstaged scope explicitly rather than implying
-a PR exists. A PR review additionally needs the provider-resolved reviewed head
-SHA; changed target identity blocks emission until refreshed. Success is a
-traceable review with honest coverage limits, not human approval or a claim that
-tests passed without being run.
+For local changes, say whether to review staged, unstaged, or combined changes. A successful review is a traceable report with explicit coverage limits. It still needs your review before you act on it, and it doesn't claim tests passed unless their results were captured.

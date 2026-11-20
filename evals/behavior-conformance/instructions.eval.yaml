@@ -1089,54 +1089,6 @@ stimuli:
         config:
           pattern: "(?i)(will not|cannot|do not|won't|decline|not include|without)"
 
-  - name: instruction-diff-computation-conformance
-    prompt: |
-      Read the staged `.github/skills/coding-standards/code-review/references/diff-computation.md`.
-      A feature-branch review changes 35 files with 2,400 combined changed lines.
-      Which analysis strategy and which additional large-diff rule apply? Answer
-      from the staged reference.
-    agent_environment:
-      files:
-        - src: ../../.github/skills/coding-standards/code-review/references/diff-computation.md
-          dest: .github/skills/coding-standards/code-review/references/diff-computation.md
-    tags:
-      category: behavior-conformance
-      skill: code-review
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: diff-computation-conformance-directory-grouping
-        config:
-          pattern: '(?is)(?=[\s\S]*\bgroup(?:s|ed|ing)?\b)(?=[\s\S]*\bdirector(?:y|ies)\b)'
-      - type: output-matches
-        name: diff-computation-conformance-commit-review
-        config:
-          pattern: '(?is)(?=[\s\S]*\bcommits?\b)(?=[\s\S]*\b(?:individually|one at a time|separately|one by one)\b)'
-
-  - name: instruction-review-artifacts-conformance
-    prompt: |
-      Read the staged `.github/skills/coding-standards/code-review/references/review-artifacts.md`.
-      A code review of branch `feature/login-fix` ends with the verdict 💬 Approve
-      with comments. Report the metadata file path and the normalized verdict
-      value it records.
-    agent_environment:
-      files:
-        - src: ../../.github/skills/coding-standards/code-review/references/review-artifacts.md
-          dest: .github/skills/coding-standards/code-review/references/review-artifacts.md
-    tags:
-      category: behavior-conformance
-      skill: code-review
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: review-artifacts-conformance-verdict-value
-        config:
-          pattern: '\bapprove_with_comments\b'
-      - type: output-matches
-        name: review-artifacts-conformance-metadata-path
-        config:
-          pattern: '(?i)\.copilot-tracking/reviews/code-reviews/feature-login-fix/metadata\.json'
-
   - name: instruction-adr-byo-template-conformance
     prompt: |
       You are creating a new ADR draft and need the repository's BYO template guidance.
