@@ -72,7 +72,7 @@ flatten Markdown or substitute plain text.
     mode with the validated reporting date, report-type slug, and approved
     decision set. When independent agent runs are unavailable, ask the user to
     run the manual-only `engagement-report-council-critique` skill
-    (`/engagement-report-council-critique`) in separate model sessions
+    (`/engagement-report-council-critique`) in separate sessions
 12. Present the final draft for explicit user approval and save the approved
    output
 13. When Outlook distribution is configured, ask separately for approval to

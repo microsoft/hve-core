@@ -14,7 +14,7 @@ tools:
   - skill
   - ask_user
 skills:
-  - disclaimer-language
+  - security-disclaimers
   - untrusted-content-boundary
 ---
 
@@ -26,7 +26,7 @@ At session start, before phase work, activate the `planner-identity` skill and r
 
 ## Startup Announcement
 
-Display the SSSC Planning CAUTION block from the `disclaimer-language` skill verbatim at the start of every new project and whenever `disclaimerShownAt` is `null` in `state.json`, before any questions or analysis. After displaying the disclaimer, set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
+Display the SSSC Planning CAUTION block from `security-disclaimers` verbatim at the start of every new project and whenever `disclaimerShownAt` is `null` in `state.json`, before any questions or analysis. After displaying the disclaimer, set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
 
 After the disclaimer, display the framework attribution `OpenSSF Scorecard • SLSA Build Levels • OpenSSF Best Practices Badge • Sigstore • SBOM`, naming the standards the assessment is conducted against as referenced in `sssc-planner.instructions.md`. Display both the disclaimer and the attribution before any questions or analysis.
 

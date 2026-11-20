@@ -134,11 +134,11 @@ Tags apply to work items in both ADO and GitHub for filtering, dashboards, and c
 
 ## Target System Selection
 
-Target system selection (ADO, GitHub, both) follows the canonical convention in the `backlog-templates` skill under the Overview's Output Targets table. Accessibility emits the neutral intermediate to `.copilot-tracking/accessibility/{slug}/backlog-handoff.md`; platform-specific files derive per the skill's Per-Platform Field Mappings.
+Use the selected target (ADO, GitHub, or both). Write the neutral intermediate to `.copilot-tracking/accessibility/{slug}/backlog-handoff.md`; render the requested outputs using the Per-Platform Field Mappings in `backlog-templates`.
 
 ## Dual-Format Backlog Templates
 
-Both ADO and GitHub formats follow the canonical templates, field blocks, augmentation keys, title prefix, and temporary-ID conventions defined in the `backlog-templates` skill. Read the accessibility entries under "ADO Work Item Template", "GitHub Issue Template", and "Work Item ID Naming Convention" at emission time. Accessibility tag and label vocabulary lives in `## Accessibility Tags` above.
+Use `backlog-templates` for the ADO and GitHub skeletons, the `[A11Y][{framework}]` title prefix, and temporary IDs. Add `framework`, `criterion`, `surface`, `wcag_level`, `severity`, `category`, `risk_tier`, and any applicable `tradeoff_ref` to the ADO description or GitHub YAML header. Identify the affected personas and evidence in the summary. Include the applicable `standards` in the GitHub header. For `critical` or `major` severity, include an assistive-technology validation note in the ADO description. Apply the [accessibility tags](#accessibility-tags) above.
 
 ## Severity-to-Field Mapping
 

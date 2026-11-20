@@ -22,7 +22,7 @@ Use this lens by default, and whenever the team has no specific framework prefer
 
 * Prefer the smallest hierarchy that faithfully represents the PRD; flatten a level when it adds no planning value.
 * Keep each leaf item independently valuable and testable, with acceptance criteria traceable to a PRD requirement.
-* Defer the concrete type names and parent rules to the platform reference ([ado.md](../ado.md), [github.md](../github.md), or [jira.md](../jira.md)); this lens only shapes how the PRD is split.
+* Use the selected [platform bindings](../../SKILL.md#platform-bindings) for concrete types and parent rules; this lens only shapes how the PRD is split.
 
 ## Attribution
 

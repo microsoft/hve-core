@@ -11,7 +11,7 @@ tools:
   - skill
   - ask_user
 skills:
-  - disclaimer-language
+  - project-planning-disclaimers
   - untrusted-content-boundary
 ---
 
@@ -100,4 +100,4 @@ On the first turn of every conversation, attempt to read `state.json` from `.cop
 
 ## Disclaimer Acknowledgment
 
-Display the ADR Planning CAUTION block from the `disclaimer-language` skill verbatim once per session, before any phase work, whenever `state.json.disclaimerShownAt` is `null`. After display, set `disclaimerShownAt` to the current ISO 8601 timestamp and persist `state.json`.
+Display the ADR Planning CAUTION block from `project-planning-disclaimers` verbatim once per session, before any phase work, whenever `state.json.disclaimerShownAt` is `null`. After display, set `disclaimerShownAt` to the current ISO 8601 timestamp and persist `state.json`.

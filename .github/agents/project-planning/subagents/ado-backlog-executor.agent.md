@@ -50,7 +50,7 @@ Every dispatch supplies all of the following. A missing field is a stop conditio
 
 ## Required Steps
 
-Pre-requisite setup: activate the `backlog-execute` skill by name. It owns the shared mutating protocol, including the operation contract, dry-run behavior, resumable execution, and the upstream human-review gate. When it does not resolve, report that the execution protocol is unavailable and stop before any Azure DevOps call.
+Apply `backlog-execute` to the dispatched set with `ado-backlog` as the provider. The shared execution contract governs approval, dry runs, checkpoints, and upstream human review.
 
 1. Verify the contract: confirm the destination is present and every operation names a supported Azure DevOps action verb. Stop and report if either fails.
 2. Bind the operation set to the confirmed project before any mutation, per the Destination Binding section of the `backlog-management` execution reference:
@@ -58,21 +58,9 @@ Pre-requisite setup: activate the `backlog-execute` skill by name. It owns the s
    * Hydrate every existing work item the set names, including every parent reference and every link endpoint, requesting `System.TeamProject` explicitly in the read call's field list. Use the batch read for more than one identifier.
    * Reject the whole operation set and stop when any hydrated `System.TeamProject` does not match the confirmed project, when the field is absent from a response, or when a target cannot be read at all. Do not skip the mismatched entry and continue.
    * Record the verified binding before the first mutation, naming the confirmed project and the item identifiers it covers. A live run records it in `handoff-logs.md`; a dry run records it in `handoff-dryrun.md`.
-3. Validate hierarchy before creating: fetch any supplied parent and verify the relationship is legal per the Relationship Semantics section of the Azure DevOps reference in the `backlog-management` skill. Report an invalid pairing; never create the child unparented instead.
-4. Run the `backlog-execute` Required Flow against the dispatched operation set, supplying the Azure DevOps deltas below.
+3. Validate hierarchy before creating: fetch any supplied parent and verify the relationship against `ado-backlog`. Report an invalid pairing; never create the child unparented instead.
+4. Run the `backlog-execute` Required Flow with the supported verbs, state-change gates, and interaction templates in `ado-backlog`.
 5. Return the result in the shape given under Response Format.
-
-## Azure DevOps Deltas
-
-These are the only behaviors this agent adds to the shared protocol:
-
-| Delta               | Azure DevOps value                                                                                 |
-|---------------------|----------------------------------------------------------------------------------------------------|
-| Destination shape   | Organization and project, plus area and iteration path where the operation sets them               |
-| Action verbs        | Create, Update, Link, Comment, No Change                                                           |
-| Item key            | `System.Id`                                                                                        |
-| State changes       | Carried by an Update to `System.State`, gated as a transition rather than an ordinary field update |
-| Authoring templates | The interaction templates in the Azure DevOps reference of the `backlog-management` skill          |
 
 ## Constraints
 

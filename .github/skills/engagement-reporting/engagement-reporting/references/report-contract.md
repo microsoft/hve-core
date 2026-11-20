@@ -91,11 +91,12 @@ cross-report discrepancies, or unclear directionality.
    reporting date, report-type slug, distinct critic-run slugs, isolated inputs,
    and confirmed effective-ignore protection. Each critic derives and
    canonically confines its own synthesis path.
-3. Use distinct model selections when supported and record model provenance;
-   otherwise label the runs as same-model independent critiques
+3. Keep each critique independent by withholding the other critics' findings.
+   Leave model selection to the host unless the user explicitly requests an
+   override. Record model provenance only when exposed; otherwise mark it unknown.
 4. If independent agent runs are unavailable, ask the user to run the
    manual-only `engagement-report-council-critique` skill
-   (`/engagement-report-council-critique`) in separate model sessions, because
+   (`/engagement-report-council-critique`) in separate sessions, because
    agents cannot invoke it. Give the user the reporting date, report-type slug,
    a distinct critic-run slug per session, and the confirmed effective-ignore
    protection to supply, so the skill derives each confined

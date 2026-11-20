@@ -5,13 +5,11 @@ description: 'Azure DevOps platform bindings for backlog workflows: work item ty
 <!-- markdownlint-disable-file -->
 # Azure DevOps Platform Reference
 
-Azure DevOps delta for the [backlog-management](../SKILL.md) skill. Read this with the core conventions and [workflows.md](workflows.md). This reference names Azure DevOps's command surface, field vocabulary, planning-file bindings, reference-ID prefix, action verbs, PRD hierarchy and relationship rules, discovery and triage deltas, content-format handling, and tracking paths. Everything structural — planning-file lifecycle, similarity, autonomy, sanitization, state persistence — comes from the core.
-
-Two Azure DevOps workflows extend this reference rather than restating it: [ado-pull-request.md](ado-pull-request.md) for pull request creation with work item discovery and reviewer identification, and [ado-build-info.md](ado-build-info.md) for build and pipeline information. Load either only when its workflow is active.
+Use these bindings with the workflow protocols in `backlog-management`. They map those protocols to Azure Boards; the shared skill owns the planning lifecycle and mutation controls.
 
 ## Command Surface
 
-Azure DevOps backlog operations run through the MCP ADO tools. Most read and write tools require an explicit `project`; resolve identities with `mcp_ado_core_get_identity_ids` before assigning work.
+Preflight: verify the ADO MCP tools are reachable and resolve an explicit `project`. Establish the user context and resolve assignment identities with `mcp_ado_core_get_identity_ids` before assigning work.
 
 | Category      | Tool                                         | Purpose                                                                                                                                                      |
 |---------------|----------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -50,7 +48,7 @@ Prefer the batch read and update tools when operating on several items, and pass
 | Plan file               | `work-items.md`                                                                                                                                                  |
 | Planning-type additions | Beyond the core enum, ADO uses `pr` (PR work-item linking), `sprint`, and `backlog`                                                                              |
 
-Azure DevOps has no Close or Transition verb in this workflow: a state change is an Update to `System.State`. Order operations as Create, Update, Link, Comment, No Change per the Operation Contract in [workflows.md](workflows.md).
+Azure DevOps has no Close or Transition verb in this workflow: a state change is an Update to `System.State`. Follow the Operation Contract in `backlog-management` for execution order.
 
 Map the core three-tier autonomy model onto ADO operations. A change to `System.State` is a transition for autonomy purposes even though the MCP verb is Update, because operation risk and user-visible state change define the tier, not the transport verb. Under Partial and Manual autonomy, request confirmation before any `System.State` change, including resolution and closure. Creates, child additions, links, comments, and ambiguous duplicate handling gate the same way. Other validated field updates remain low risk and auto-execute under Full and Partial.
 
@@ -80,18 +78,7 @@ Field rules:
 
 ## PRD-to-Work-Item Planning
 
-PRD-driven planning produces planning-only artifacts under `.copilot-tracking/workitems/prds/<artifact-normalized-name>/` (`artifact-analysis.md`, `work-items.md`, `planning-log.md`, `handoff.md`) for a separate execution pass. During planning, do not call `mcp_ado_wit_create_work_item`, `mcp_ado_wit_add_child_work_items`, `mcp_ado_wit_update_work_item`, `mcp_ado_wit_work_items_link`, or `mcp_ado_wit_add_work_item_comment`.
-
-Hierarchy rules — plan conservatively and only with process-supported types:
-
-* Use the process's supported work-item types as the source of truth.
-* Prefer the standard hierarchy Epic → Feature → User Story, with Task or Bug beneath a User Story.
-* A Feature requires an Epic parent; a User Story requires a Feature parent. Do not create placeholder links solely to satisfy the hierarchy.
-* Bug links are optional; add relationships when they provide helpful traceability.
-* When hierarchy support is unclear, flatten the plan and mark the relationship decision as `Needs Review`.
-* Record relationships in planning files using the ADO link types (`Child`, `Parent`, `Predecessor`, `Successor`, `Related`).
-
-The PRD plan extends the shared plan-file template with `System.WorkItemType` drawn from the Epic/Feature/User Story/Bug set, a `System.Parent` reference (`none`, a `{{TEMP-N}}` reference, or an existing `System.Id`), a `needs_review` flag, and an acceptance-criteria block and relationships block per item.
+Use the [Azure Boards hierarchy](hierarchy.md) for PRD paths, process-supported parent and child types, and fields in the read-only plan.
 
 ## Relationship Semantics
 
@@ -112,7 +99,7 @@ Rules:
 
 ## Discovery Search Protocol
 
-The five shared steps live in the Search Protocol section of [workflows.md](workflows.md). Azure DevOps adds the following query and filtering rules for `mcp_ado_search_workitem` (page size 50).
+Apply the Search Protocol in `backlog-management` with the following query and filtering rules for `mcp_ado_search_workitem` (page size 50).
 
 * Maintain an ordered list of keyword groups; each group holds 1-4 specific terms (multi-word phrases allowed) joined by `OR`.
 * Compose `searchText`: a single group as `(term1 OR "multi word")`; multiple groups as `(group1) AND (group2)`.
@@ -133,7 +120,7 @@ Conversion rules when the target renders HTML:
 
 ## Interaction Templates
 
-Templates for work-item field values and comments. The Discovery, Triage, and Execution workflows use these whenever they author Azure DevOps content. Quality conventions — what belongs in a description, how acceptance criteria are written, which level an item belongs at — come from [story-quality.md](story-quality.md); this section supplies only the Azure DevOps rendering.
+The Discovery, Triage, and Execution workflows use these templates for Azure DevOps field values and comments. For quality criteria, use the `backlog-management` skill's `references/story-quality.md`; this section supplies the Azure DevOps rendering.
 
 Emit the format matching the detected content format above. All templates use `{{placeholder}}` syntax for substitution at execution time.
 
@@ -148,7 +135,7 @@ Azure DevOps work items are internal team artifacts, so this voice is deliberate
 
 ### Description templates by level
 
-Field: `System.Description`, except where noted. The level names map onto the hierarchy in [story-quality.md](story-quality.md).
+Field: `System.Description`, except where noted. The level names map onto the shared story-quality hierarchy.
 
 #### Epic
 
@@ -336,7 +323,7 @@ Each template's lead line and its detail line are separated by a blank line.
 
 ## Sprint Planning Delta
 
-The platform-agnostic protocol lives in [sprint-planning.md](sprint-planning.md). Azure DevOps resolves its bindings as follows.
+Use the sprint-planning protocol in `backlog-management` with the following Azure DevOps bindings.
 
 | Binding                 | Azure DevOps resolution                                                                                                   |
 |-------------------------|---------------------------------------------------------------------------------------------------------------------------|

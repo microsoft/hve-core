@@ -54,7 +54,7 @@ Every finding and discussion comment carries a vector pill (`functional`, `secur
 
 ## Phases and workflow
 
-Activate `disclaimer-language` unless already preloaded and show the canonical Code-Review notice according to its cadence. Resolve this skill's installation directory before running `node scripts/review.mjs`.
+Read the [Code-Review CAUTION](references/code-review-disclaimer.md) before starting; use its verbatim block when presenting findings and in the rendered report. Resolve this skill's installation directory before running `node scripts/review.mjs`.
 
 1. Resolve target and capture snapshot:
    * Identify the explicit target before capturing: PR/MR identity and base/head revisions, named branch comparison, staged/unstaged/combined local mode, commit, or selected code. Reuse an existing review only when repository and target match. Ask when ambiguous; never guess a base branch, fetch, check out branches, or mix dirty local edits into a PR snapshot.
@@ -101,19 +101,9 @@ Subagents receive no parent custom instructions. Give every task a self-containe
 3. Describe the areas of focus: concrete questions, changed entry points, suspected side effects, candidate codebase APIs/SDKs or abstractions to check, applicable acceptance criteria, or the bounded investigation question.
 4. State the write and authority boundary: keep reviewed source and Git state strictly read-only, write only the validated result via `node scripts/review.mjs result` (or return structured findings/observations if running in memory), never touch `review-state.json` or `review.md`, never publish, and never spawn nested subagents.
 
-### Selecting reasoning effort and long context
+### Dispatch preferences
 
-When the runtime supports subagent configuration and user or persistent instructions permit or request task-appropriate overrides, match reasoning effort and context tier to the task's workload (otherwise omit overrides so harness defaults apply):
-
-| Workload                                                                                                            | Recommended `reasoning_effort` | `context_tier`             |
-|---------------------------------------------------------------------------------------------------------------------|--------------------------------|----------------------------|
-| PR metadata/template checks (`readiness` on small diffs) or mechanical symbol/call-site enumeration                 | `low`                          | `default`                  |
-| Area overview, `reasons`/`changeMap` drafting (`context`), or straightforward single-area convention checks         | `medium`                       | `default`                  |
-| Standard `functional` review (bugs, side effects, API/SDK & abstraction fit, unneeded edge cases) or opt-in vectors | `high`                         | `default`                  |
-| Subtle concurrency/state invariants, cross-module regressions, backward logic tracing, or `comprehensive` depth     | `xhigh` or `max`               | `default` / `long_context` |
-| Large multi-file areas, wide caller/callee graphs, or large captured diffs where standard context risks truncation  | Match complexity above         | `long_context`             |
-
-If a task dispatch fails because the active model does not support the requested `reasoning_effort` or `long_context`, retry once with `reasoning_effort: "medium"` (or default context tier) and record the fallback.
+Review depth determines what to check. Omit `model`, `reasoning_effort`, and `context_tier` unless the current request or applicable persistent user instructions explicitly require that value for the subagent. If an explicit setting is unsupported, report the limitation rather than substituting another value.
 
 ### Project coordinator integration
 

@@ -16,7 +16,7 @@ Writing voice adapts to context while maintaining professionalism:
 * Adapt tone and structure to match purpose and audience
 * Preserve clarity regardless of complexity
 
-For community-facing communication patterns, follow the guidelines in the `backlog-management` skill's `references/community-interaction.md`.
+For GitHub community-facing communication, use the `github-backlog` skill's `references/community-interaction.md`.
 
 ### Formal Contexts
 

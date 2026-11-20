@@ -11,7 +11,7 @@ tools:
   - skill
   - ask_user
 skills:
-  - disclaimer-language
+  - security-disclaimers
   - untrusted-content-boundary
 ---
 
@@ -23,11 +23,11 @@ At session start, before phase work, activate the `planner-identity` skill and r
 
 ## Startup Announcement
 
-Before startup behavior, take the canonical disclaimer text from the `Security Planning` section of the preloaded `disclaimer-language` skill. If the skill cannot be found or loaded, halt before questions, analysis, state initialization, or phase work instead of improvising or omitting the disclaimer.
+Before startup behavior, take the canonical disclaimer text from the `Security Planning` section of the preloaded `security-disclaimers` skill. If the skill cannot be found or loaded, halt before questions, analysis, state initialization, or phase work instead of improvising or omitting the disclaimer.
 
 Display the Security Planning CAUTION block verbatim when creating a project state record or when recovered state has `disclaimerShownAt: null`. Set `disclaimerShownAt` to the display timestamp and append the matching `noticeLog` entry before continuing. When the field is non-null, suppress automatic redisplay during normal continuation. If the user requests redisplay, show the full disclaimer, update `disclaimerShownAt`, and append a notice with `details.reason: "user-requested-redisplay"`.
 
-Report the startup result before phase work. For a new or null state, name the ISO 8601 `disclaimerShownAt` value and the appended `session-start-disclaimer` notice. For normal continuation, state that the disclaimer was already shown, the timestamp is preserved, and no duplicate `session-start-disclaimer` notice was added. For user-requested redisplay, state that `disclaimerShownAt` was updated and record `details.reason: "user-requested-redisplay"`. If the canonical source is unavailable, name the `disclaimer-language` skill, report the session as blocked, and stop.
+Report the startup result before phase work. For a new or null state, name the ISO 8601 `disclaimerShownAt` value and the appended `session-start-disclaimer` notice. For normal continuation, state that the disclaimer was already shown, the timestamp is preserved, and no duplicate `session-start-disclaimer` notice was added. For user-requested redisplay, state that `disclaimerShownAt` was updated and record `details.reason: "user-requested-redisplay"`. If the canonical source is unavailable, name `security-disclaimers`, report the session as blocked, and stop.
 
 After the disclaimer, display the framework attribution `OWASP ASVS • OWASP Top 10 • NIST SSDF`. Display both the disclaimer and the attribution before any questions or analysis.
 
@@ -173,7 +173,7 @@ Gate: summary-and-advance — surface a brief phase summary and proceed unless t
 
 Present a summary of all findings, validate completeness, generate the final security plan artifact, and hand off to the ADO or GitHub backlog. When `raiEnabled` is `true` and `raiRecommendationShown` is `false`, include an RAI assessment recommendation in the handoff summary. Name the `RAI Planner` agent, suggest `from-security-plan` entry mode, and point `securityPlanRef` at the Security Planner `state.json` path (the value stored in `securityPlanFile` is the markdown plan, not the state file the RAI Planner reads). Set `raiRecommendationShown` to `true` after presenting the recommendation. Set `raiPlannerDispatched` to `true` only once the user actually starts the RAI Planner handoff, so a later resume does not skip the RAI handoff for an AI-enabled system whose recommendation was shown but never acted on.
 
-Before the final summary, attempt current-state evidence resolution once. Prefer an audit or diff VULN_REPORT_V1 path the user supplied in the conversation. Otherwise, search `.copilot-tracking/security/` for the most recent candidate and ask the user to confirm it before use; never select a discovered report silently. When evidence resolves, load the `security-planning` skill entrypoint together with its drift references, pass this session's `state.json` and the plan named by `securityPlanFile` as the baseline, and pass the confirmed report as Form A current-state evidence. Preserve `N/A` fields without inference. Populate control drift, residual planned risks, and newly introduced threats when their preconditions pass; render validated controls and obsolete plan items as `Insufficient evidence: VULN_REPORT_V1 PASS rows do not include a covered location.` Display the entrypoint's Security Planning CAUTION block verbatim immediately before the conversational canonical drift body of proposed plan updates. Keep the drift result read-only: do not change plan markdown, state fields, phase gates, handoff flags, or human-review checkboxes from the result.
+Before the final summary, attempt current-state evidence resolution once. Prefer an audit or diff VULN_REPORT_V1 path the user supplied in the conversation. Otherwise, search `.copilot-tracking/security/` for the most recent candidate and ask the user to confirm it before use; never select a discovered report silently. When evidence resolves, load the `security-planning` skill entrypoint together with its drift references, pass this session's `state.json` and the plan named by `securityPlanFile` as the baseline, and pass the confirmed report as Form A current-state evidence. Preserve `N/A` fields without inference. Populate control drift, residual planned risks, and newly introduced threats when their preconditions pass; render validated controls and obsolete plan items as `Insufficient evidence: VULN_REPORT_V1 PASS rows do not include a covered location.` Display the Security Planning CAUTION block from `security-disclaimers` verbatim immediately before the conversational canonical drift body of proposed plan updates. Keep the drift result read-only: do not change plan markdown, state fields, phase gates, handoff flags, or human-review checkboxes from the result.
 
 Frame every drift result as proposed plan updates, never applied changes. After the drift body, state that Phase 6 remains a hard human-review gate and requires explicit confirmation before external backlog submission.
 

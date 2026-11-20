@@ -5,7 +5,7 @@ description: 'Azure DevOps pull request creation: work item discovery, reviewer 
 <!-- markdownlint-disable-file -->
 # Azure DevOps Pull Request Creation
 
-Azure DevOps pull request delta for the [backlog-management](../SKILL.md) skill. Read this with the core conventions, [workflows.md](workflows.md), and the [Azure DevOps platform reference](ado.md), which own the planning-file lifecycle, similarity assessment, autonomy tiers, content sanitization, and state persistence this workflow relies on.
+Use `backlog-management` for shared planning and mutation controls, and `ado-backlog` for Azure Boards work-item bindings.
 
 ## Scope
 
@@ -17,8 +17,8 @@ Output planning files to `.copilot-tracking/pr/new/<normalized-branch-name>/` us
 
 Take these inputs from the request or the calling agent.
 
-* `adoProject` (required): Azure DevOps project name or ID.
-* `repository` (required): Repository name or ID.
+* `adoProject` (required for `create`): Azure DevOps project name or ID.
+* `repository` (required for `create`): Repository name or ID.
 * `sourceBranch` (optional): Source branch name. Defaults to current git branch.
 * `baseBranch` (optional, default `origin/main`): Base branch for comparison.
 * `similarityThreshold` (optional, default `50`): Minimum similarity score (0-100) for work item matching.
@@ -27,12 +27,18 @@ Take these inputs from the request or the calling agent.
 * `iterationPath` (optional): Iteration Path filter for work item searches.
 * `workItemIds` (optional): Explicit work item IDs to link, bypassing discovery.
 * `isDraft` (optional, default `false`): Create PR as draft.
-* `noGates` (optional, default `false`): Skip user confirmation gates.
+* `noGates` (optional, default `false`): Skip the staged Phase 5 presentation, not required mutation approvals.
 * `includeMarkdown` (optional, default `true`): Include markdown file diffs in PR reference.
+
+Accept `base` and `draft` as aliases for `baseBranch` and `isDraft`; explicit platform-specific
+inputs take precedence. For a `prepare` request, use only local Git evidence through phases 1 and 2,
+apply content sanitization and untrusted-content guards, and return the description without calling
+Azure DevOps. For `create`, apply Mandatory Preflight and all phase gates before creating or linking.
+Updating an existing PR is outside this protocol; a local description can still be prepared.
 
 ## Deliverables
 
-* `pr-reference.xml` - Git diff and commit history
+* `pr-reference.xml` or the equivalent local Git evidence in `pr-analysis.md` - Git diff and commit history
 * `pr.md` - Pull request description
 * `pr-analysis.md` - Change analysis and work item findings
 * `reviewer-analysis.md` - Reviewer analysis with rationale
@@ -42,8 +48,7 @@ Take these inputs from the request or the calling agent.
 
 ## Tooling
 
-Generate a PR reference XML containing commit history and diffs using the `pr-reference` skill, comparing against `baseBranch` and saving to the tracking directory. After generation, use the pr-reference skill to query the XML: extract changed file paths with change type filters and output format options, and read diff content in chunks by number, line range, or specific file path.
-When the skill is unavailable, parse the XML directly or use `git diff --name-status` and `git diff` commands for equivalent extraction.
+Use `pr-reference` for XML evidence, or compare the local source and base refs with `git log`, `git diff --name-status`, and `git diff`. With native Git, record the compared commits, changed paths, and diff findings in `pr-analysis.md`. References to PR evidence in the phases below accept either source; no fetch is needed for `prepare`.
 
 Git operations in the terminal:
 
@@ -55,7 +60,6 @@ Git operations in the terminal:
 
 * `mcp_ado_repo_get_repo_by_name_or_id` - Resolve repository IDs from name. Parameters: `project`, `repositoryNameOrId`.
 * `mcp_ado_repo_create_pull_request` - Create pull request. Required: `repositoryId`, `sourceRefName`, `targetRefName`, `title`. Optional: `description`, `isDraft`, `labels` (array), `workItems` (space-separated IDs), `forkSourceRepositoryId`.
-* `mcp_ado_repo_update_pull_request` - Update PR settings. Required: `repositoryId`, `pullRequestId`. Optional: `title`, `description`, `status` (Active|Abandoned), `isDraft`, `autoComplete`, `mergeStrategy` (NoFastForward|Squash|Rebase|RebaseMerge), `deleteSourceBranch`, `transitionWorkItems`, `bypassReason`, `labels`.
 * `mcp_ado_repo_update_pull_request_reviewers` - Add or remove reviewers. Required: `repositoryId`, `pullRequestId`, `reviewerIds` (array of GUIDs), `action` (add|remove).
 * `mcp_ado_wit_link_work_item_to_pull_request` - Link work item to PR. Required: `projectId` (GUID), `repositoryId`, `pullRequestId`, `workItemId`. Optional: `pullRequestProjectId` (for cross-project linking).
 * `mcp_ado_search_workitem` - Search work items. Parameters: `searchText`, `project`, `workItemType`, `state`, `assignedTo`, `top`, `skip`.
@@ -65,7 +69,7 @@ Git operations in the terminal:
 
 Workspace utilities: list, read, and search files with the host's file tools.
 
-Persist all tool output into planning files per the backlog-management skill conventions.
+Record the evidence and operation results needed for the plan, without persisting secrets or raw untrusted payloads.
 
 ## Tracking Directory Structure
 
@@ -104,7 +108,7 @@ All PR creation tracking artifacts reside in `.copilot-tracking/pr/new/{{normali
 
 ## Change Summary
 
-[1-5 sentence summary of what changed based on pr-reference.xml analysis]
+[1-5 sentence summary of what changed based on the PR evidence]
 
 ## Changed Files
 
@@ -314,7 +318,7 @@ All PR creation tracking artifacts reside in `.copilot-tracking/pr/new/{{normali
 
 ## Artifacts
 
-* **pr-reference.xml**: [Generated/Existing/Pending]
+* **PR evidence**: [XML path or local Git comparison in pr-analysis.md]
 * **pr.md**: [Generated/Pending]
 * **pr-analysis.md**: [Generated/Pending]
 * **reviewer-analysis.md**: [Generated/Pending]
@@ -351,23 +355,13 @@ Present each confirmation gate separately and wait for user response before proc
 
 ### No-Gates Mode
 
-When `noGates` is true:
-
-* Skip Phase 5 (all confirmation gates) entirely
-* After completing Phase 4, proceed directly to Phase 6
-* Use all discovered work items (no user selection)
-* If Phase 3a created a work item, use that created work item automatically
-* Add minimum of 2 optional reviewers (top 2 by contribution score)
-* Create PR immediately with all discovered linkages
-* Deliver final recap in Phase 7 as usual
-
-`noGates` skips only the staged presentation in Phase 5, and only after the Mandatory Preflight confirmed the destination. It never bypasses destination confirmation, the Content Sanitization Guards, the core Human Review Triggers, or the Partial and Manual mutation gates. When the destination is unconfirmed, `noGates` does not apply and the workflow stops for confirmation.
+`noGates` skips the staged Phase 5 presentation after Mandatory Preflight. Propose the matched or newly created work items and the top two optional reviewers by contribution score. Proceed to Phase 6 only after the destination is confirmed, the Content Sanitization Guards have run, Human Review Triggers are clear, and the active tier's mutation approvals cover the proposed work. The option never grants approval itself.
 
 ## Mandatory Preflight
 
-Run this before Phase 1. It is the operative invocation of the core conventions; the introductory pointer above is provenance, not enforcement.
+Run this before Phase 1 for `create`. A local `prepare` does not resolve an online destination or run a platform preflight.
 
-1. Activate the `backlog-management` skill. When it does not resolve, stop before any PR operation and report that the guards are unavailable.
+1. Apply `backlog-management`. Stop before any write if its controls cannot be applied.
 2. Run Platform Resolution for Azure DevOps and record its readiness verdict.
 3. Resolve and confirm the destination `project` and `repository` with the user. An inferred platform or destination is confirmed explicitly before the first mutating call.
 4. Establish the active autonomy tier and apply the Three-Tier Autonomy Model to every PR create, update, reviewer change, work-item link, and comment.
@@ -385,17 +379,15 @@ Execute without presenting details to user:
 1. Determine normalized branch name from `sourceBranch` or current git branch.
 2. Create planning directory: `.copilot-tracking/pr/new/<normalized-branch-name>/`
 3. Initialize `planning-log.md` with Phase-1 status.
-4. Check if `pr-reference.xml` exists:
-   * If exists: Use existing file silently.
-   * If not exists: Generate using the `pr-reference` skill with optional `--no-md-diff` flag if `includeMarkdown` is false.
-5. Read complete `pr-reference.xml`. For files exceeding 2000 lines, read in 1000-2000 line chunks, capturing complete commit boundaries before advancing to the next chunk.
+4. Collect PR evidence for the source and base refs per Tooling. Reuse an existing comparison only when it matches both commits and the requested Markdown filtering.
+5. Read the commit history and diff in bounded chunks, preserving complete commit boundaries.
 6. Log artifact in `planning-log.md` with status `Complete`.
 
 ### Phase 2: Generate PR Description
 
 Execute without presenting to user yet:
 
-1. Analyze `pr-reference.xml` completely before writing any content. Include only changes visible in the reference file; do not invent or assume changes.
+1. Analyze the PR evidence before writing any content. Include only changes visible in the comparison.
 2. Generate `pr.md` in the planning directory (not in root) following the PR File Format below.
 3. Extract commit types, scopes, and key changes for PR title and description.
 4. Use past tense for all descriptions.
@@ -443,7 +435,7 @@ Execute without presenting to user yet:
 
 **Type and Scope**:
 
-* Determine from commits in `pr-reference.xml`
+* Determine from commits in the PR evidence
 * Use branch name as primary source for type/scope
 * Common types: feat, fix, docs, chore, refactor, test, ci
 * Scope should reference component or area affected
@@ -494,12 +486,12 @@ Execute without presenting to user yet:
 
 Execute this phase when Phase 3 discovers zero viable work items.
 
-Follow the Discovery and Execution workflows in the backlog-management skill ([workflows.md](workflows.md), with [ado.md](ado.md) for field mapping) to create a work item:
+Use `ado-backlog` for field mapping and the shared discovery and execution protocols to create a work item:
 
 1. Create planning directory `.copilot-tracking/workitems/discovery/<folder-name>/` using the branch name without prefix.
-2. Reuse `pr-reference.xml`, PR title, description, and keyword groups from previous phases.
-3. Follow the Discovery workflow ([workflows.md](workflows.md)) to plan creation of ONE User Story or Bug based on PR content. Derive type from branch name or commit type (feat → User Story, fix → Bug).
-4. Execute work item creation following the Execution workflow ([workflows.md](workflows.md)). Capture created work item ID in `handoff-logs.md`.
+2. Reuse the PR evidence, title, description, and keyword groups from previous phases.
+3. Use `backlog-plan` discovery to plan one User Story or Bug based on PR content. Derive the candidate type from the branch name or commit type (feat → User Story, fix → Bug).
+4. Use `backlog-execute` only after its review, scope, and mutation gates are satisfied. Capture the created work item ID in `handoff-logs.md`.
 5. Store created work item ID for Phase 6 linking. Update `pr-analysis.md` with created work item details.
 
 ### Phase 4: Identify Potential Reviewers
@@ -507,7 +499,7 @@ Follow the Discovery and Execution workflows in the backlog-management skill ([w
 Execute without presenting to user yet:
 
 1. Get current user email: `git config user.email`
-2. For each changed file in `pr-reference.xml`:
+2. For each changed file in the PR evidence:
    * Extract file path
    * Get recent contributors: `git log --all --pretty=format:'%H %an <%ae>' -- <file-path> | head -20`
    * Parse output to count commits per author
@@ -529,13 +521,13 @@ Execute without presenting to user yet:
 
 ### Phase 5: User Review and Confirmation
 
-Skip this phase when `noGates` is true; proceed directly to Phase 6 using all discovered work items, created work items from Phase 3a, and top 2 reviewers by contribution score.
+For `noGates`, apply [No-Gates Mode](#no-gates-mode) instead of the staged presentation below.
 
 Present each gate separately and wait for user approval before proceeding to the next gate.
 
 #### Gate 1: Changed Files Review
 
-1. Extract all changed files from `pr-reference.xml`.
+1. Extract all changed files from the PR evidence.
 2. For each file, provide brief description of changes from diff analysis.
 3. Perform quality review and identify:
    * Accidental or unintended changes (e.g., debug code, commented code)
@@ -579,7 +571,7 @@ For changesets over 50 files, provide summary statistics and link to `pr-analysi
    * This cleaned title will be used for Azure DevOps PR creation
 2. Present complete PR description from `pr.md` body (after first line):
    * Preserve all markdown formatting including headings with `#` markers
-3. Perform security/compliance analysis on `pr-reference.xml`:
+3. Perform security/compliance analysis on the PR evidence:
    * Customer information leaks (PII, customer data)
    * Secrets or credentials (API keys, passwords, tokens)
    * Non-compliant language (FIXME, WIP, etc in committed code)
@@ -678,7 +670,7 @@ When user requests modifications at any gate, update the relevant planning file,
 
 ### Phase 6: Create Pull Request and Link Work Items
 
-Proceed after user gives explicit approval.
+Proceed after Phase 5 signoff or the approvals required by [No-Gates Mode](#no-gates-mode). Verify selected work-item IDs, including supplied IDs that skipped discovery, against the confirmed project before sending `workItems` or linking. Do not infer cross-project authority from an ID.
 
 1. Resolve repository and project IDs:
    * Use `repository` directly if GUID format; otherwise call `mcp_ado_repo_get_repo_by_name_or_id` with project and repository name.
@@ -720,16 +712,6 @@ mcp_ado_repo_create_pull_request({
   isDraft: false,
   labels: ["label-name"],           // Optional: add labels at creation
   workItems: "1234 5678"             // Optional: space-separated work item IDs
-})
-
-// Update PR (set autocomplete, merge strategy, labels)
-mcp_ado_repo_update_pull_request({
-  repositoryId: "<guid>",
-  pullRequestId: 1234,
-  autoComplete: true,                 // Enable autocomplete when policies pass
-  mergeStrategy: "Squash",            // NoFastForward|Squash|Rebase|RebaseMerge
-  deleteSourceBranch: true,           // Delete source after merge
-  transitionWorkItems: true           // Transition linked work items
 })
 
 // Link work item (for cross-project, add pullRequestProjectId)

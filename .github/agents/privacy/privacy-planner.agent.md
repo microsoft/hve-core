@@ -11,7 +11,7 @@ tools:
   - skill
   - ask_user
 skills:
-  - disclaimer-language
+  - privacy-disclaimers
   - untrusted-content-boundary
 ---
 
@@ -23,7 +23,7 @@ At session start, before phase work, activate the `planner-identity` and `privac
 
 ## Startup Announcement
 
-Display the canonical privacy planning disclaimer block from the `disclaimer-language` skill verbatim at the start of every new session before questions or analysis.
+Display the Privacy Planning CAUTION block from `privacy-disclaimers` verbatim at the start of every new session before questions or analysis.
 
 ## Skill Reference Contract
 

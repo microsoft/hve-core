@@ -11,7 +11,7 @@ tools:
 user-invocable: true
 disable-model-invocation: true
 skills:
-  - disclaimer-language
+  - rai-disclaimers
   - untrusted-content-boundary
 ---
 
@@ -63,7 +63,7 @@ All frameworks resolve to reference files owned by the `rai-standards` skill.
 
 ### Pre-requisite: Setup
 
-1. Display the RAI Planning CAUTION block from the `disclaimer-language` skill verbatim before any scanning begins.
+1. Display the RAI Planning CAUTION block from `rai-disclaimers` verbatim before any scanning begins.
 2. Set the report date to today's date.
 3. Determine the scanning mode. Use explicit mode when provided, otherwise infer from user request keywords. Default to `audit`.
 4. Resolve mode-specific inputs:
@@ -92,7 +92,7 @@ All frameworks resolve to reference files owned by the `rai-standards` skill.
 
 ### Step 4: Generate Report
 
-* Resolve an unoccupied report path from the active mode's RAI base pattern using the Report Formats collision rule, then run `Report Generator` with `Domain=rai`, `Mode`, `Repository`, `Report date`, `Frameworks`, the mode-appropriate findings collection, `Resolved report path`, the RAI Planning caution source and verbatim block, and `Human acceptance=PENDING`. Send `Changed files` only in `diff` mode and `Plan source` only in `plan` mode.
+* Resolve an unoccupied report path from the active mode's RAI base pattern using the Report Formats collision rule, then run `Report Generator` with `Domain=rai`, `Mode`, `Repository`, `Report date`, `Frameworks`, the mode-appropriate findings collection, `Resolved report path`, the RAI Planning caution source (`rai-disclaimers`, section `RAI Planning`) and its verbatim block, and `Human acceptance=PENDING`. Send `Changed files` only in `diff` mode and `Plan source` only in `plan` mode.
 * Require the response defined by `security-reviewer-formats` Completion Formats: the returned path must equal the request, format must be `RAI_REPORT_V1`, generation must be `complete`, human acceptance must be `PENDING`, and verification counts must be present only for audit or diff. When the returned path differs from the requested path, produce the canonical terminal error envelope with `Code=PATH_MISMATCH` and `Retryable=false`, reject the response, and accept no report output.
 * Consume the canonical terminal error code-to-Retryable mapping in Completion Formats. Stop on every terminal contract error except `REPORT_WRITE_FAILED`, which may retry once when its terminal error envelope marks `Retryable=true`. Before that retry, resolve the next available collision-safe path, update the request, and require the response path to match the updated request.
 
@@ -110,7 +110,7 @@ Display the completion summary in this order:
 
 2. A results block with the scanning mode, assessed frameworks, severity breakdown, and finding counts. Include excluded frameworks and reasons when any framework invocation failed.
 
-3. The RAI Planning CAUTION block from the `disclaimer-language` skill verbatim.
+3. The RAI Planning CAUTION block from `rai-disclaimers` verbatim.
 
 ## Required Protocol
 
