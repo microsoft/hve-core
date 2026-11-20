@@ -1,18 +1,21 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-/** The provider-local ID of the RPI Workflow canvas. */
+/** The stable ID published by the plugin. */
 export const CANVAS_ID = 'hve-core-rpi-workflow';
+export const PREVIEW_CANVAS_ID = 'hve-core-rpi-workflow-preview';
 
 /**
- * The instance ID of a session's canvas in a new panel: `rpi-` and the first eight characters of the
- * session ID, lowercase. The same session always names the same panel.
+ * The instance ID of a session's canvas in a new panel. The preview uses its own prefix so it
+ * does not reuse an instance reserved for the published canvas or an older project canvas.
  *
  * @param {string} sessionId
+ * @param {string} [canvasId]
  * @returns {string}
  */
-export function panelInstanceId(sessionId) {
-    return `rpi-${String(sessionId).slice(0, 8).toLowerCase()}`;
+export function panelInstanceId(sessionId, canvasId = CANVAS_ID) {
+    const prefix = canvasId === PREVIEW_CANVAS_ID ? 'rpi-preview-' : 'rpi-';
+    return `${prefix}${String(sessionId).slice(0, 8).toLowerCase()}`;
 }
 
 /**
@@ -58,7 +61,7 @@ export function createPanelOpener(deps) {
         if (typeof canvas?.open !== 'function') throw new Error('This host cannot open canvas panels.');
         const extensionId = deps.extensionId();
         if (!extensionId) throw new Error('This canvas does not know its provider, so it cannot open a panel.');
-        const instanceId = panelInstanceId(session);
+        const instanceId = panelInstanceId(session, deps.canvasId);
         const focus = await isOpen(canvas, instanceId);
         await canvas.open({ extensionId, canvasId: deps.canvasId, instanceId, input: { session } });
         return { outcome: focus ? 'focused' : 'opened', instanceId };

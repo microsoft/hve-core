@@ -13,16 +13,17 @@ import { NOT_CONNECTED_WHY, openPlan, splitOpenInput, validateOpenInput } from '
  * @param {{ kind: string, reason?: string, boundSession?: string | null }} source
  * @param {any} session
  * @param {string} note
+ * @param {string} title
  */
-function openResult(instance, source, session, note) {
+function openResult(instance, source, session, note, title) {
     if (source.kind === 'none') {
         const why = NOT_CONNECTED_WHY[source.reason] ?? '';
-        return { url: instance.server.url, title: 'RPI Workflow', status: `Not connected to an RPI session${why}. The user can pick a session in its session picker, or connect it with show_task, giving this conversation's RPI state file, task "current", or another session's ID · canvas ${instance.handle}` };
+        return { url: instance.server.url, title, status: `Not connected to an RPI session${why}. The user can pick a session in its session picker, or connect it with show_task, giving this conversation's RPI state file, task "current", or another session's ID · canvas ${instance.handle}` };
     }
     const phase = PHASE_LABELS[session.session.activePhase] ?? session.session.activePhase;
     const bound = source.boundSession ? ` · Copilot session ${source.boundSession}` : '';
     const status = source.kind === 'rpi' ? `RPI session: ${session.task.title} · ${phase}${bound}${note}` : `Sample session: ${phase}${note}`;
-    return { url: instance.server.url, title: 'RPI Workflow', status: `${status} · canvas ${instance.handle}` };
+    return { url: instance.server.url, title, status: `${status} · canvas ${instance.handle}` };
 }
 
 /**
@@ -38,10 +39,11 @@ function openResult(instance, source, session, note) {
  *   sources: { restore: (request: any, context?: any) => Promise<any>, prepare: (request: any, context?: any) => Promise<any>, attach: (record: any, prepared: any) => void },
  *   makeError: (code: string, message: string) => Error,
  *   asCanvasError: (error: unknown) => Error,
+ *   title?: string,
  * }} deps
  */
 export async function openCanvas(ctx, deps) {
-    const { registry, store, sources, makeError, asCanvasError } = deps;
+    const { registry, store, sources, makeError, asCanvasError, title = 'RPI Workflow' } = deps;
     const { target, sessions } = splitOpenInput(validateOpenInput(ctx.input, makeError));
     const current = registry.get(ctx.instanceId);
     if (current && sessions !== undefined) current.sessions = sessions;
@@ -52,9 +54,9 @@ export async function openCanvas(ctx, deps) {
         remembered: open ? null : await store.loadInstance(ctx.instanceId, hostSessionId).catch(() => null),
     });
     if (plan.keep && current) {
-        if (current.source?.kind === 'none') return openResult(current, current.source, null, '');
+        if (current.source?.kind === 'none') return openResult(current, current.source, null, '', title);
         const session = await store.load(current.sessionId).catch(() => null);
-        if (session) return openResult(current, current.source, session, '');
+        if (session) return openResult(current, current.source, session, '', title);
     }
     const candidates = [ctx.session?.workingDirectory, process.cwd()];
     /** @type {{ sessionId: string, source: any, session: any, note: string } | undefined} */
@@ -88,5 +90,5 @@ export async function openCanvas(ctx, deps) {
     instance.candidates = candidates;
     if (sessions !== undefined) instance.sessions = sessions;
     sources.attach(instance, ready);
-    return openResult(instance, ready.source, ready.session, ready.note);
+    return openResult(instance, ready.source, ready.session, ready.note, title);
 }
