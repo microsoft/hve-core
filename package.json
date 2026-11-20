@@ -131,7 +131,7 @@
   },
   "devDependencies": {
     "@cspell/cspell-json-reporter": "10.4.1",
-    "@microsoft/vally-cli": "0.20.0",
+    "@microsoft/vally-cli": "0.21.0",
     "@modelcontextprotocol/server": "2.4.0",
     "@types/node": "26.6.6",
     "@vscode/vsce": "4.1.0",
