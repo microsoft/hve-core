@@ -1,6 +1,6 @@
 ---
 description: 'When a skill needs a per-skill STRIDE security model (SECURITY.md) and when a change makes one stale, plus its canonical structure and conformance rules: required sections, data-flow and trust-boundary diagrams, all-six-STRIDE buckets, risk-rating tables, G-prefixed gap IDs, and no internal-path leakage; also which security references to read before changing a skill''s scripts'
-applyTo: '**/.github/skills/**/SECURITY.md, **/.github/skills/**/*.ps1, **/.github/skills/**/*.psm1, **/.github/skills/**/*.sh, **/.github/skills/**/*.py, **/.github/skills/**/*.js, **/.github/skills/**/*.mjs, **/.github/skills/**/*.cjs, **/.github/skills/**/*.ts, **/scripts/linting/skill-security-classification.json'
+applyTo: '**/skills/**/SECURITY.md, **/skills/**/*.ps1, **/skills/**/*.psm1, **/skills/**/*.sh, **/skills/**/*.py, **/skills/**/*.js, **/skills/**/*.mjs, **/skills/**/*.cjs, **/skills/**/*.ts, **/scripts/linting/skill-security-classification.json'
 ---
 
 # Skill Security Model Conventions

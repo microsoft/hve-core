@@ -2,7 +2,7 @@
 title: Environment Customization
 description: Configure DevContainers, VS Code settings, MCP servers, and coding agent environments for your team
 author: Microsoft
-ms.date: 2026-11-06
+ms.date: 2026-11-18
 ms.topic: how-to
 keywords:
   - devcontainer
@@ -143,33 +143,28 @@ The workspace sets these editor behaviors:
 
 ### Copilot Discovery
 
-Copilot finds agents under `.github/agents/`, skills under `.github/skills/`, and
-instructions under `.github/instructions/` at any folder depth. A new package
-folder needs no settings for Copilot sessions:
+Conventional checkout roots contain repository rules and All-only content.
+Focused content lives in `.github/plugins/<topic>/` beside its manifest:
 
 ```text
 .github/
-  agents/{package-id}/{name}.agent.md
-  instructions/{package-id}/{name}.instructions.md
-  skills/{package-id}/{skill-name}/SKILL.md
+  plugins/{topic}/plugin.json
+  plugins/{topic}/agents/{collection}/{name}.agent.md
+  plugins/{topic}/instructions/{collection}/{name}.instructions.md
+  plugins/{topic}/skills/{collection}/{skill-name}/SKILL.md
 ```
 
 VS Code keeps its list of path-specific instructions for the life of the window.
 After you add or edit instruction files, run **Developer: Reload Window** so new
 chat sessions pick up the change.
 
-This workspace also lists its own `.github` package folders in the
-`chat.agentFilesLocations`, `chat.instructionsFilesLocations`, and
-`chat.agentSkillsLocations` settings for contributors who still use VS Code's
-Local harness, which may not find nested agents and skills without them. HVE
-Core supports only the Copilot harness, as
-[Use the Copilot Harness](../getting-started/install#use-the-copilot-harness)
-explains, so these settings serve as a bridge while contributors switch. They
-are editor-only: VS Code forwards files from those folders to Copilot sessions,
-which already find the folders on their own, and Copilot CLI and the GitHub
-Copilot app do not read them. When you add or rename a package folder, add it to
-the matching setting so Local sessions keep finding it, and list an agent
-package's `subagents` folder as its own entry.
+VS Code's `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, and
+`chat.agentSkillsLocations` serve different component types. Add each new
+collection to its matching setting, including agent `subagents` folders.
+These settings do not configure the standalone CLI. To test a topic outside
+the checkout, use [the CLI `--plugin-dir` example](../getting-started/methods/cli-plugins#install-from-a-clone-or-branch).
+Native desktop discovery of neutral roots without installation is unverified;
+shipping or mounting a rule does not establish automatic policy application.
 
 In a project that uses HVE Core, settings entries that point at an HVE Core
 clone, such as `../hve-core` or `lib/hve-core`, load HVE Core a second time next
@@ -208,7 +203,7 @@ VS Code's commit message generation follows the same conventions file that the
 {
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {
-      "file": ".github/skills/hve-core/git-commit/references/commit-message.md"
+      "file": ".github/plugins/sdlc-git/skills/hve-core/git-commit/references/commit-message.md"
     }
   ]
 }

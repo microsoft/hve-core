@@ -3,7 +3,7 @@ title: "Stage 9: Operations"
 description: Monitor production systems, respond to incidents, and maintain documentation post-delivery
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-11-18
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -96,7 +96,7 @@ and the setup guides may reference outdated flags or file paths.
 
 ```text
 Use hve-builder with mode=review and
-targets=.github/skills/security/incident-response/SKILL.md. Evaluate its
+targets=.github/plugins/sdlc-security/skills/security/incident-response/SKILL.md. Evaluate its
 activation, operational safeguards, output contract, and host compatibility.
 ```
 

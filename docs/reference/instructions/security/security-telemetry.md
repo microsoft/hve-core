@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                                                                       |
 |-------------|---------------------------------------------------------------------------------------------------------------------------------------------|
 | Kind        | instruction                                                                                                                                 |
-| Source      | `.github/instructions/security/security-telemetry.instructions.md`                                                                          |
+| Source      | `.github/plugins/sdlc-security/instructions/security/security-telemetry.instructions.md`                                                    |
 | Invocation  | Applied automatically to `**/.copilot-tracking/security-plans/**, **/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/sssc-reviews/**` |
 | Interactive | No                                                                                                                                          |
 <!-- END AUTO-GENERATED: metadata -->

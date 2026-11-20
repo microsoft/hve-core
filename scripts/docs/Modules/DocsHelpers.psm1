@@ -291,7 +291,7 @@ function Get-AssetDocsPath {
 
     $normalized = $Path -replace '\\', '/'
 
-    if ($normalized -notmatch '^\.github/(agents|prompts|instructions|skills)/(.+)$') {
+    if ($normalized -notmatch '^\.github/(?:plugins/[^/]+/)?(agents|prompts|instructions|skills)/(.+)$') {
         throw "Path is not a documentable .github asset: $Path"
     }
 

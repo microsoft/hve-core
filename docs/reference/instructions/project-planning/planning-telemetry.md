@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                                                        |
 |-------------|------------------------------------------------------------------------------------------------------------------------------|
 | Kind        | instruction                                                                                                                  |
-| Source      | `.github/instructions/project-planning/planning-telemetry.instructions.md`                                                   |
+| Source      | `.github/plugins/project-planning/instructions/project-planning/planning-telemetry.instructions.md`                          |
 | Invocation  | Applied automatically to `**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**, **/.copilot-tracking/prd-sessions/**` |
 | Interactive | No                                                                                                                           |
 <!-- END AUTO-GENERATED: metadata -->

@@ -3,7 +3,7 @@ title: Code Review Output Format
 description: Where Code Review defines its review records and report, and how to read and edit a generated review
 sidebar_position: 10
 author: microsoft/hve-core
-ms.date: 2026-11-17
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - code review
@@ -14,11 +14,11 @@ keywords:
 
 Code Review defines its review records and report layout once, in the consolidated `code-review` skill. Use these sources when you read a review closely or build tooling around one:
 
-| Need                                                                               | Canonical source                                                                                                                                                         |
-|------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Review folder, snapshot, review state, worker results, findings, and outcome rules | [`code-review/references/review-contract.md`](https://github.com/microsoft/hve-core/blob/main/.github/skills/coding-standards/code-review/references/review-contract.md) |
-| Layout of the rendered `review.md`                                                 | [`code-review/templates/review.md`](https://github.com/microsoft/hve-core/blob/main/.github/skills/coding-standards/code-review/templates/review.md)                     |
-| Human review and publication rules                                                 | [`code-review/references/delivery.md`](https://github.com/microsoft/hve-core/blob/main/.github/skills/coding-standards/code-review/references/delivery.md)               |
+| Need                                                                               | Canonical source                                                                                                                                                                          |
+|------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Review folder, snapshot, review state, worker results, findings, and outcome rules | [`code-review/references/review-contract.md`](https://github.com/microsoft/hve-core/blob/main/.github/plugins/sdlc-git/skills/coding-standards/code-review/references/review-contract.md) |
+| Layout of the rendered `review.md`                                                 | [`code-review/templates/review.md`](https://github.com/microsoft/hve-core/blob/main/.github/plugins/sdlc-git/skills/coding-standards/code-review/templates/review.md)                     |
+| Human review and publication rules                                                 | [`code-review/references/delivery.md`](https://github.com/microsoft/hve-core/blob/main/.github/plugins/sdlc-git/skills/coding-standards/code-review/references/delivery.md)               |
 
 ## Where a review is stored
 

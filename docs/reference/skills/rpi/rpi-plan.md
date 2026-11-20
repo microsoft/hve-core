@@ -3,7 +3,7 @@ title: rpi-plan
 description: Create or resume an evidence-based RPI implementation plan with an optional independent critique. Use when a task needs an implementation plan or an existing plan needs revision.
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-14
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                      |
 |-------------|----------------------------------------------------------------------------|
 | Kind        | skill                                                                      |
-| Source      | `.github/skills/rpi/rpi-plan`                                              |
+| Source      | `.github/plugins/rpi-builder/skills/rpi/rpi-plan`                          |
 | Invocation  | Invoked directly as `/rpi-plan`, or loaded on demand by referencing agents |
 | Interactive | No                                                                         |
 <!-- END AUTO-GENERATED: metadata -->

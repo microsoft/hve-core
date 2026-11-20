@@ -3,7 +3,7 @@ title: incident-response
 description: "Run a structured Azure incident response workflow for triage, diagnosis, mitigation, and root cause analysis. Use when operations or security teams need guided incident handling for Azure service symptoms."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                            |
 |-------------|--------------------------------------------------------------------------------------------------|
 | Kind        | skill                                                                                            |
-| Source      | `.github/skills/security/incident-response`                                                      |
+| Source      | `.github/plugins/sdlc-security/skills/security/incident-response`                                |
 | Invocation  | Invoked directly as `/incident-response`; model invocation is disabled, so agents do not load it |
 | Interactive | No                                                                                               |
 <!-- END AUTO-GENERATED: metadata -->

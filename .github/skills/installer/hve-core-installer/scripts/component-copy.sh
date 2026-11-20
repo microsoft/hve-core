@@ -4,12 +4,12 @@
 #
 # component-copy.sh
 # Copies selected HVE-Core components into a target repository, preserving
-# canonical .github paths and writing the schema version 2 .hve-tracking.json
+# conventional .github destinations and writing the schema version 2 .hve-tracking.json
 # manifest. Membership, path-safety, and manifest-schema checks all run before
 # the first write.
 #
 # Usage: component-copy.sh <hve_core_base_path> <target_root> <selection_name> <component...>
-#   component: plugin manifest path such as agents/hve-core/rpi-agent.md or skills/rpi/rpi-plan
+#   component: installer selection such as agents/hve-core/rpi-agent.md or skills/rpi/rpi-plan
 # Environment:
 #   REPORT_ONLY=true      run preflight and report maturity and collisions without writing
 #   KEEP_EXISTING=true    leave components listed in COLLISIONS_FILE untouched
@@ -134,7 +134,7 @@ assert_manifest_not_link() {
   fi
 }
 
-# Maps a plugin manifest field to "<kind>|<source root>|<package suffix>|<source suffix>".
+# Maps a plugin manifest field to "<kind>|<target root>|<package suffix>|<source suffix>".
 field_descriptor() {
   case "$1" in
     agents) echo "agent|.github/agents|.md|.agent.md" ;;
@@ -145,49 +145,25 @@ field_descriptor() {
   esac
 }
 
-# Maps a canonical manifest root to "<field>|<source suffix>|<package suffix>".
-manifest_root_descriptor() {
-  case "$1" in
-    agents) echo "agents|.agent.md|.md" ;;
-    prompts) echo "commands|.prompt.md|.md" ;;
-    instructions) echo "rules|.instructions.md|.instructions.md" ;;
-    skills) echo "skills||" ;;
-    *) echo "" ;;
-  esac
-}
-
-# The plugin manifest stores repository-root-relative source identities while installer input and
-# manifests use package form. A path whose root is outside the four installable
-# fields, such as hooks/, carries through unprojected so manifest load never fails.
+# Topic directories belong to the source layout, not to client selections.
 to_package_component_path() {
-  local manifest_path="$1"
+  local field="$1" manifest_path="$2"
   [[ "$manifest_path" == .github/* ]] || {
     fail "Plugin manifest path '$manifest_path' must start with '.github/'."
   }
-  manifest_path="${manifest_path#.github/}"
-  [[ "$manifest_path" == */* ]] || {
-    echo "$manifest_path"
-    return 0
-  }
+  case "/$manifest_path/" in
+    *\\*|*//*|*/./*|*/../*) fail "Unsafe plugin manifest path '$manifest_path'." ;;
+  esac
 
-  local manifest_root="${manifest_path%%/*}"
-  local relative="${manifest_path#*/}"
-  local descriptor field source_suffix package_suffix
-  descriptor=$(manifest_root_descriptor "$manifest_root")
-  [[ -n "$descriptor" ]] || {
-    echo "$manifest_path"
-    return 0
-  }
-
-  IFS='|' read -r field source_suffix package_suffix <<<"$descriptor"
-  if [[ -n "$source_suffix" ]]; then
-    [[ "$relative" == *"$source_suffix" ]] || {
-      echo "$manifest_path"
-      return 0
-    }
-    relative="${relative%"$source_suffix"}$package_suffix"
+  local target_path="$manifest_path" root source_suffix package_suffix relative
+  if [[ "$manifest_path" =~ ^\.github/plugins/[a-z0-9][a-z0-9-]*/(.+)$ ]]; then
+    target_path=".github/${BASH_REMATCH[1]}"
   fi
-  echo "$field/$relative"
+  IFS='|' read -r _ root package_suffix source_suffix <<<"$(field_descriptor "$field")"
+  [[ "$target_path" == "$root/"?* && "$target_path" == *"$source_suffix" ]] ||
+    fail "Invalid source path '$manifest_path' for plugin manifest field '$field'."
+  relative="${target_path#"$root"/}"
+  printf '%s\n' "$field/${relative%"$source_suffix"}$package_suffix"
 }
 
 # Trims and validates a component path, echoing the normalized value.
@@ -243,16 +219,27 @@ main() {
   local plugin_manifest_path="$source_root/plugin.json"
   [[ -f "$plugin_manifest_path" ]] || fail "Plugin manifest not found: $plugin_manifest_path"
 
-  local -A membership=()
-  local package_path
-  while IFS= read -r package_path; do
-    [[ -n "$package_path" ]] && membership["$(to_package_component_path "$package_path")"]=1
-  done < <(jq -r '[(.agents // [])[], (.commands // [])[], (.rules // [])[], (.skills // [])[]] | .[]' "$plugin_manifest_path")
-  [[ ${#membership[@]} -gt 0 ]] || fail "Plugin manifest '$plugin_manifest_path' declares no installable components."
+  local -A sources=()
+  local declarations field source_rel component_path
+  # Reject control characters before passing paths through a line-delimited stream.
+  declarations=$(jq -r '
+    ["agents", "commands", "rules", "skills"][] as $field | (.[$field] // [])[]
+    | select(. != null and . != "")
+    | if type != "string" or test("\\p{C}") then error("Unsafe plugin manifest path.")
+      else "\($field)\t\(.)" end' "$plugin_manifest_path")
+  while IFS=$'\t' read -r field source_rel; do
+    [[ -n "$field" ]] || continue
+    component_path=$(to_package_component_path "$field" "$source_rel")
+    if [[ -n "${sources[$component_path]+x}" && "${sources[$component_path]}" != "$source_rel" ]]; then
+      fail "Component '$component_path' has multiple source paths in the plugin manifest."
+    fi
+    sources["$component_path"]="$source_rel"
+  done <<<"$declarations"
+  [[ ${#sources[@]} -gt 0 ]] || fail "Plugin manifest '$plugin_manifest_path' declares no installable components."
 
   # One projected membership set backs both component validation and the manifest filter.
   local membership_json
-  membership_json=$(printf '%s\n' "${!membership[@]}" | LC_ALL=C sort | jq -R -s -c 'split("\n") | map(select(length > 0))')
+  membership_json=$(printf '%s\n' "${!sources[@]}" | LC_ALL=C sort | jq -R -s -c 'split("\n") | map(select(length > 0))')
 
   # An unsupported manifest must fail before the target is touched. Version 1 has
   # no upgrade path because it records flattened agent paths and package identity.
@@ -287,7 +274,7 @@ main() {
   local -a plan_components=()
   local -A plan_kinds=() plan_maturities=() plan_targets=() plan_files=()
   local -A seen_targets=()
-  local raw candidate field descriptor kind root package_suffix source_suffix relative source_rel files file
+  local raw candidate descriptor kind root package_suffix source_suffix relative target_rel files file
   local plan_index=0
   for raw in "$@"; do
     candidate=$(normalize_component_path "$raw")
@@ -295,7 +282,7 @@ main() {
     field="${candidate%%/*}"
     descriptor=$(field_descriptor "$field")
     [[ -n "$descriptor" ]] || fail "Component path '$candidate' must start with one of: agents, commands, rules, skills."
-    [[ -n "${membership[$candidate]+x}" ]] || fail "Component '$candidate' is not declared in the plugin manifest."
+    [[ -n "${sources[$candidate]+x}" ]] || fail "Component '$candidate' is not declared in the plugin manifest."
     [[ -z "${plan_targets[$candidate]+x}" ]] || continue
 
     IFS='|' read -r kind root package_suffix source_suffix <<<"$descriptor"
@@ -304,10 +291,11 @@ main() {
       [[ "$relative" == *"$package_suffix" ]] || fail "Component path '$candidate' must end with '$package_suffix'."
       relative="${relative%"$package_suffix"}$source_suffix"
     fi
-    source_rel="$root/$relative"
+    target_rel="$root/$relative"
+    source_rel="${sources[$candidate]}"
     assert_source_without_link "$source_root" "$source_rel" "$candidate"
-    [[ -z "${seen_targets[$source_rel]+x}" ]] || fail "Component '$candidate' resolves to duplicate target '$source_rel'."
-    seen_targets["$source_rel"]=1
+    [[ -z "${seen_targets[$target_rel]+x}" ]] || fail "Component '$candidate' resolves to duplicate target '$target_rel'."
+    seen_targets["$target_rel"]=1
 
     files="$plan_files_dir/$plan_index"
     ((plan_index += 1))
@@ -315,6 +303,7 @@ main() {
     if [[ "$kind" == "skill" ]]; then
       [[ -d "$source_root/$source_rel" ]] || fail "Skill component '$candidate' has no source directory at '$source_rel'."
       while IFS= read -r -d '' file; do
+        file="$target_rel${file#"$source_rel"}"
         if ! is_excluded_skill_path "$file"; then
           printf '%s\0' "$file" >>"$files"
         fi
@@ -322,7 +311,7 @@ main() {
       [[ -s "$files" ]] || fail "Skill component '$candidate' has no files at '$source_rel'."
     else
       [[ -f "$source_root/$source_rel" ]] || fail "Component '$candidate' has no source file at '$source_rel'."
-      printf '%s\0' "$source_rel" >"$files"
+      printf '%s\0' "$target_rel" >"$files"
     fi
 
     plan_components+=("$candidate")
@@ -330,9 +319,9 @@ main() {
     # The plugin manifest declares no per-component maturity, so tracking records
     # the schema default that file-status-check and eject read back.
     plan_maturities["$candidate"]="stable"
-    plan_targets["$candidate"]="$source_rel"
+    plan_targets["$candidate"]="$target_rel"
     plan_files["$candidate"]="$files"
-    assert_within_target_root "$target_base" "$source_rel" "$candidate" >/dev/null
+    assert_within_target_root "$target_base" "$target_rel" "$candidate" >/dev/null
   done
 
   local version installed
@@ -405,7 +394,7 @@ main() {
       # narrows that window; it does not make the check and the write atomic.
       target_file=$(assert_within_target_root "$target_base" "$file" "$component")
       mkdir -p "$(dirname "$target_file")"
-      cp "$source_root/$file" "$target_file"
+      cp "$source_root/${sources[$component]}${file#"$target"}" "$target_file"
       hash=$(sha256_of "$target_base/$file")
       jq -nc --arg path "$file" --arg component "$component" --arg kind "${plan_kinds[$component]}" \
         --arg maturity "${plan_maturities[$component]}" --arg ver "$version" --arg sha "$hash" \

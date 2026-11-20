@@ -19,23 +19,26 @@ Detect whether the current environment is local, devcontainer, or Codespaces.
 
 ### Full Component Set
 
-Phase 7 copies every component that the source's root `plugin.json` declares. Convert the declared paths to installer form first.
+Phase 7 copies the components declared in the source clone's root `plugin.json`. Omit the source prefix (`.github/` or `.github/plugins/<topic>/`) from selection names, not from the source checkout.
 
 ```powershell
 $plugin = Get-Content ./lib/hve-core/plugin.json -Raw | ConvertFrom-Json
+$prefix = '^\.github/(?:plugins/[a-z0-9][a-z0-9-]*/)?'
 $components = @(
-    $plugin.agents | ForEach-Object { $_ -replace '^\.github/agents/', 'agents/' -replace '\.agent\.md$', '.md' }
-    $plugin.commands | ForEach-Object { $_ -replace '^\.github/prompts/', 'commands/' -replace '\.prompt\.md$', '.md' }
-    $plugin.rules | ForEach-Object { $_ -replace '^\.github/instructions/', 'rules/' }
-    $plugin.skills | ForEach-Object { $_ -replace '^\.github/', '' }
+    $plugin.agents | ForEach-Object { $_ -creplace $prefix, '' -creplace '\.agent\.md$', '.md' }
+    $plugin.commands | ForEach-Object { $_ -creplace "${prefix}prompts/", 'commands/' -creplace '\.prompt\.md$', '.md' }
+    $plugin.rules | ForEach-Object { $_ -creplace "${prefix}instructions/", 'rules/' }
+    $plugin.skills | ForEach-Object { $_ -creplace $prefix, '' }
 )
 ```
 
 ```bash
-jq -r '(.agents[] | sub("^\\.github/agents/"; "agents/") | sub("\\.agent\\.md$"; ".md")),
-  (.commands[] | sub("^\\.github/prompts/"; "commands/") | sub("\\.prompt\\.md$"; ".md")),
-  (.rules[] | sub("^\\.github/instructions/"; "rules/")),
-  (.skills[] | sub("^\\.github/"; ""))' ./lib/hve-core/plugin.json > /tmp/hve-components.txt
+mapfile -t components < <(jq -r '
+  def localpath: sub("^\\.github/(plugins/[a-z0-9][a-z0-9-]*/)?"; "");
+  (.agents[] | localpath | sub("\\.agent\\.md$"; ".md")),
+  (.commands[] | localpath | sub("^prompts/"; "commands/") | sub("\\.prompt\\.md$"; ".md")),
+  (.rules[] | localpath | sub("^instructions/"; "rules/")),
+  (.skills[] | localpath)' ./lib/hve-core/plugin.json)
 ```
 
 ### Collision Detection
@@ -47,7 +50,7 @@ Report component types and target collisions before copying.
 ```
 
 ```bash
-xargs ./scripts/collision-detection.sh ./lib/hve-core . < /tmp/hve-components.txt
+bash ./scripts/collision-detection.sh ./lib/hve-core . "${components[@]}"
 ```
 
 ### Component Copy
@@ -59,7 +62,7 @@ Copy the full set from the HVE-Core source into the target project.
 ```
 
 ```bash
-xargs ./scripts/component-copy.sh ./lib/hve-core . all < /tmp/hve-components.txt
+bash ./scripts/component-copy.sh ./lib/hve-core . all "${components[@]}"
 ```
 
 Preserve components the user chose to keep during collision resolution.
@@ -69,9 +72,9 @@ Preserve components the user chose to keep during collision resolution.
 ```
 
 ```bash
-printf 'skills/rpi/rpi-plan\n' > /tmp/collisions.txt
-KEEP_EXISTING=true COLLISIONS_FILE=/tmp/collisions.txt \
-  xargs ./scripts/component-copy.sh ./lib/hve-core . all < /tmp/hve-components.txt
+# collisions.txt contains one selection to keep per line, such as skills/rpi/rpi-plan.
+KEEP_EXISTING=true COLLISIONS_FILE=./collisions.txt \
+  bash ./scripts/component-copy.sh ./lib/hve-core . all "${components[@]}"
 ```
 
 ### Upgrade Detection

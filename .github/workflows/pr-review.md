@@ -37,8 +37,10 @@ checkout:
     .github/copilot-instructions.md
     .github/PULL_REQUEST_TEMPLATE.md
     .github/instructions/
-    .github/skills/coding-standards/code-review/
-    .github/skills/coding-standards/hve-artifact-authoring/
+    .github/plugins/rpi-builder/instructions/
+    .github/plugins/sdlc-git/instructions/
+    .github/plugins/sdlc-git/skills/coding-standards/code-review/
+    .github/plugins/rpi-builder/skills/coding-standards/hve-artifact-authoring/
     .github/skills/coding-standards/python-foundational/
     .github/skills/shared/telemetry-foundations/
     .github/skills/accessibility/accessibility/SKILL.md
@@ -107,18 +109,17 @@ This workflow is the host-managed automation contract for the `code-review`
 skill. Read these before reviewing and follow them as the review policy for
 this run:
 
-1. `.github/skills/coding-standards/code-review/SKILL.md`, including its
+1. `.github/plugins/sdlc-git/skills/coding-standards/code-review/SKILL.md`, including its
    Host-managed automation section
-2. `.github/skills/coding-standards/code-review/references/review-contract.md`
+2. `.github/plugins/sdlc-git/skills/coding-standards/code-review/references/review-contract.md`
 3. The perspective references under
-   `.github/skills/coding-standards/code-review/references/`: `functional.md`,
+   `.github/plugins/sdlc-git/skills/coding-standards/code-review/references/`: `functional.md`,
    `standards.md`, `accessibility.md`, `security.md`, and `readiness.md`
 4. For accessibility, `.github/skills/accessibility/accessibility/SKILL.md`
    and only the files under its `references/frameworks/` that the changed
    surface needs
-5. For standards, the applicable `.github/instructions/` files and the
-   matching domain skills: `python-foundational` and `hve-artifact-authoring`
-   under `.github/skills/coding-standards/`, and
+5. For standards, the applicable instructions in the checked-out roots and
+   the matching `python-foundational` and `hve-artifact-authoring` skills, and
    `.github/skills/shared/telemetry-foundations/`
 
 Run the skill with these fixed settings:

@@ -220,9 +220,9 @@ function Test-ArtifactPathReferenceAllowed {
     )
 
     $exactAllowedReferences = @{
-        '.github/agents/rai-planning/rai-planner.agent.md' = @('.github/skills/rai/rai-standards/SKILL.md')
-        '.github/skills/project-planning/rai-planner/references/rai-identity.md' = @('.github/skills/rai/rai-standards/SKILL.md')
-        '.github/instructions/hve-core/hve-builder.instructions.md' = @('.github/')
+        '.github/plugins/sdlc-responsible-ai/agents/rai-planning/rai-planner.agent.md' = @('.github/plugins/sdlc-responsible-ai/skills/rai/rai-standards/SKILL.md')
+        '.github/plugins/sdlc-responsible-ai/skills/project-planning/rai-planner/references/rai-identity.md' = @('.github/plugins/sdlc-responsible-ai/skills/rai/rai-standards/SKILL.md')
+        '.github/plugins/rpi-builder/instructions/hve-core/hve-builder.instructions.md' = @('.github/')
     }
     $trimmedReference = $Reference.Trim('(', ')', '[', ']')
     if ($exactAllowedReferences.ContainsKey($RelativePath) -and $trimmedReference -in $exactAllowedReferences[$RelativePath]) {

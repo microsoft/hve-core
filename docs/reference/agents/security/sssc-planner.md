@@ -3,7 +3,7 @@ title: SSSC Planner
 description: "Six-phase repository supply chain security assessment against OpenSSF Scorecard, SLSA, Sigstore, and SBOM standards, producing a prioritized backlog of reusable workflows."
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                 |
-|-------------|-------------------------------------------------------|
-| Kind        | agent                                                 |
-| Source      | `.github/agents/security/sssc-planner.agent.md`       |
-| Invocation  | Selected from the chat agent picker as `SSSC Planner` |
-| Interactive | Yes                                                   |
+| Field       | Value                                                                 |
+|-------------|-----------------------------------------------------------------------|
+| Kind        | agent                                                                 |
+| Source      | `.github/plugins/sdlc-security/agents/security/sssc-planner.agent.md` |
+| Invocation  | Selected from the chat agent picker as `SSSC Planner`                 |
+| Interactive | Yes                                                                   |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

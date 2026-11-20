@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Templates"
 pagination_label: Templates
 author: Microsoft
-ms.date: 2026-11-06
+ms.date: 2026-11-18
 ms.topic: overview
 keywords:
   - templates
@@ -22,18 +22,18 @@ Standardized templates for common documentation tasks. Each template provides a 
 
 ## Available Templates
 
-| Template                                                                 | Purpose                                                          |
-|--------------------------------------------------------------------------|------------------------------------------------------------------|
-| [ADR Template](adr-template-solutions.md)                                | Record architecture decisions with context, options, and outcome |
-| [Code Review Output Format](full-review-output-format.md)                | Where the canonical Code Review report contract lives            |
-| [Code Review Standards Output Format](standards-review-output-format.md) | How standards findings fit the shared Code Review contract       |
-| [Engineering Fundamentals](engineering-fundamentals.md)                  | Language-agnostic design principles applied to code reviews      |
-| [RAI Assessment](rai-plan-template.md)                                   | RAI assessment output structure                                  |
-| [Root Cause Analysis](rca-template.md)                                   | Investigate incidents with timeline, analysis, and action items  |
-| [Security Plan](security-plan-template.md)                               | Define security controls, threat models, and compliance measures |
-| [Skill Security Model](skill-security-model-template.md)                 | Canonical structure for per-skill STRIDE security models         |
-| [SSSC Assessment](sssc-plan-template.md)                                 | Supply chain security assessment output structure                |
-| [User Journey Map](user-journey-template.md)                             | Map user interactions across touchpoints with pain points        |
+| Template                                                                                                                                                                            | Purpose                                                          |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------|
+| [ADR Template](https://github.com/microsoft/hve-core/blob/main/.github/plugins/project-planning/skills/project-planning/adr-author/templates/adr-template-solutions.md)             | Record architecture decisions with context, options, and outcome |
+| [Code Review Output Format](full-review-output-format.md)                                                                                                                           | Where the canonical Code Review report contract lives            |
+| [Code Review Standards Output Format](standards-review-output-format.md)                                                                                                            | How standards findings fit the shared Code Review contract       |
+| [Engineering Fundamentals](engineering-fundamentals.md)                                                                                                                             | Language-agnostic design principles applied to code reviews      |
+| [RAI Assessment](https://github.com/microsoft/hve-core/blob/main/.github/plugins/sdlc-responsible-ai/skills/project-planning/rai-planner/assets/templates/rai-plan-template.md)     | RAI assessment output structure                                  |
+| [Root Cause Analysis](https://github.com/microsoft/hve-core/blob/main/.github/plugins/sdlc-security/skills/security/incident-response/assets/templates/rca-template.md)             | Investigate incidents with timeline, analysis, and action items  |
+| [Security Plan](https://github.com/microsoft/hve-core/blob/main/.github/plugins/sdlc-security/skills/project-planning/security-planning/assets/templates/security-plan-template.md) | Define security controls, threat models, and compliance measures |
+| [Skill Security Model](skill-security-model-template.md)                                                                                                                            | Canonical structure for per-skill STRIDE security models         |
+| [SSSC Assessment](https://github.com/microsoft/hve-core/blob/main/.github/plugins/sdlc-security/skills/security/supply-chain-security/assets/templates/sssc-plan-template.md)       | Supply chain security assessment output structure                |
+| [User Journey Map](user-journey-template.md)                                                                                                                                        | Map user interactions across touchpoints with pain points        |
 
 ## Usage
 

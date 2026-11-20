@@ -3,7 +3,7 @@ title: Hve Core/Copilot Tracking Location
 description: "Where .copilot-tracking/ lives (codebase root, not a host session folder) and how to find its gitignored files. Use when creating, finding, listing, or reading tracking files or storing intermediate files."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                     |
-|-------------|---------------------------------------------------------------------------|
-| Kind        | instruction                                                               |
-| Source      | `.github/instructions/hve-core/copilot-tracking-location.instructions.md` |
-| Invocation  | Applied automatically to `**/.copilot-tracking/**`                        |
-| Interactive | No                                                                        |
+| Field       | Value                                                                                         |
+|-------------|-----------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                   |
+| Source      | `.github/plugins/rpi-builder/instructions/hve-core/copilot-tracking-location.instructions.md` |
+| Invocation  | Applied automatically to `**/.copilot-tracking/**`                                            |
+| Interactive | No                                                                                            |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

@@ -3,7 +3,7 @@ title: privacy-by-design
 description: "Privacy by Design (PbD) knowledge base for assessing proactive privacy practices against the 7 Foundation Principles, with data retention and disposal lifecycle checks and cross-jurisdictional mappings (GDPR, CCPA, APP)."
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-10-27
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                               |
-|-------------|-----------------------------------------------------|
-| Kind        | skill                                               |
-| Source      | `.github/skills/project-planning/privacy-by-design` |
-| Invocation  | Loaded on demand by referencing agents              |
-| Interactive | No                                                  |
+| Field       | Value                                                                    |
+|-------------|--------------------------------------------------------------------------|
+| Kind        | skill                                                                    |
+| Source      | `.github/plugins/sdlc-privacy/skills/project-planning/privacy-by-design` |
+| Invocation  | Loaded on demand by referencing agents                                   |
+| Interactive | No                                                                       |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

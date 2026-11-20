@@ -3,7 +3,7 @@ title: 'Contributing Slash Commands to HVE Core'
 description: 'Why HVE Core no longer accepts prompt files and how to contribute a reusable slash command as a skill'
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-18
 ms.topic: how-to
 keywords:
   - contributing
@@ -112,7 +112,7 @@ Runs write author, review, and validation evidence under
 root. Read-only modes change nothing else.
 
 Authoring standards for all artifact kinds live in
-`.github/instructions/hve-core/hve-builder.instructions.md`.
+`.github/plugins/rpi-builder/instructions/hve-core/hve-builder.instructions.md`.
 
 ## Automated Validation
 

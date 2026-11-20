@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                  |
-|-------------|----------------------------------------|
-| Kind        | skill                                  |
-| Source      | `.github/skills/rai/rai-standards`     |
-| Invocation  | Loaded on demand by referencing agents |
-| Interactive | No                                     |
+| Field       | Value                                                          |
+|-------------|----------------------------------------------------------------|
+| Kind        | skill                                                          |
+| Source      | `.github/plugins/sdlc-responsible-ai/skills/rai/rai-standards` |
+| Invocation  | Loaded on demand by referencing agents                         |
+| Interactive | No                                                             |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

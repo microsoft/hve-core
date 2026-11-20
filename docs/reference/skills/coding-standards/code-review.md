@@ -3,7 +3,7 @@ title: code-review
 description: "Prioritize functional code review for a PR, branch comparison, commit, local changes, or selected code using one immutable snapshot, parallel general-purpose tasks, vector-tagged findings, strictly opt-in non-functional vectors, and an optional Code Review canvas."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-17
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                         |
 |-------------|-------------------------------------------------------------------------------|
 | Kind        | skill                                                                         |
-| Source      | `.github/skills/coding-standards/code-review`                                 |
+| Source      | `.github/plugins/sdlc-git/skills/coding-standards/code-review`                |
 | Invocation  | Invoked directly as `/code-review`, or loaded on demand by referencing agents |
 | Interactive | No                                                                            |
 <!-- END AUTO-GENERATED: metadata -->

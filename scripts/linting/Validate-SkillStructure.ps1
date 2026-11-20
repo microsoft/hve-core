@@ -306,7 +306,7 @@ function Get-SkillScriptFile {
     [System.IO.FileInfo[]] Shipped non-test script files.
 
     .EXAMPLE
-    $scripts = Get-SkillScriptFile -Directory (Get-Item '.github/skills/rpi/rpi-plan')
+    $scripts = Get-SkillScriptFile -Directory (Get-Item '.github/plugins/rpi-builder/skills/rpi/rpi-plan')
     #>
     [CmdletBinding()]
     [OutputType([System.IO.FileInfo[]])]
@@ -446,7 +446,7 @@ function Test-SkillSecurityClassification {
     [string[]] Classification errors (empty when the skill conforms).
 
     .EXAMPLE
-    $errs = Test-SkillSecurityClassification -Directory $dir -SkillKey 'rpi/rpi-plan' -Classification $entries -RelativePath '.github/skills/rpi/rpi-plan'
+    $errs = Test-SkillSecurityClassification -Directory $dir -SkillKey 'rpi/rpi-plan' -Classification $entries -RelativePath '.github/plugins/rpi-builder/skills/rpi/rpi-plan'
     #>
     [CmdletBinding()]
     [OutputType([string[]])]
@@ -1049,7 +1049,11 @@ function Invoke-SkillStructureValidation {
             $repoRoot = (Get-Location).Path
         }
 
-        $fullSkillsPath = Join-Path -Path $repoRoot -ChildPath $SkillsPath
+        $skillRoots = @(Join-Path $repoRoot $SkillsPath)
+        if ($SkillsPath -eq '.github/skills') {
+            $skillRoots += @(Get-Item -Path (Join-Path $repoRoot '.github/plugins/*/skills') -ErrorAction SilentlyContinue |
+                Select-Object -ExpandProperty FullName)
+        }
 
         # Load the security classification first so file-level errors surface even when no skill changed
         $classificationEntries = $null
@@ -1066,7 +1070,7 @@ function Invoke-SkillStructureValidation {
             $classification = Get-SkillSecurityClassification -Path $classificationFullPath
             foreach ($err in $classification.Errors) { $classificationErrors.Add($err) }
             foreach ($key in $classification.Skills.Keys) {
-                if (-not (Test-Path -LiteralPath (Join-Path (Join-Path $fullSkillsPath $key) 'SKILL.md') -PathType Leaf)) {
+                if (-not ($skillRoots | Where-Object { Test-Path -LiteralPath (Join-Path $_ $key 'SKILL.md') -PathType Leaf })) {
                     $classificationErrors.Add("Skill security classification lists '$key', which is not a skill directory under '$SkillsPath'")
                 }
             }
@@ -1074,87 +1078,35 @@ function Invoke-SkillStructureValidation {
                 $classificationEntries = $classification.Skills
             }
         }
-        $resolvedSkillsRoot = [System.IO.Path]::GetFullPath($fullSkillsPath)
-
-        if ($ChangedFilesOnly) {
-            Write-Host "🔍 Detecting changed skill directories..." -ForegroundColor Cyan
-            $changedSkills = @(Get-ChangedSkillDirectories -BaseBranch $BaseBranch -SkillsPath $SkillsPath)
-
-            if ($changedSkills.Count -gt 0) {
-                Write-Host "Found $($changedSkills.Count) changed skill path(s) to validate" -ForegroundColor Cyan
+        $results = @()
+        foreach ($skillRoot in $skillRoots) {
+            if (-not (Test-Path -LiteralPath $skillRoot -PathType Container)) { continue }
+            $candidates = @($skillRoot)
+            if ($ChangedFilesOnly) {
+                $relativeRoot = [IO.Path]::GetRelativePath($repoRoot, $skillRoot).Replace('\', '/')
+                $candidates = @(Get-ChangedSkillDirectories -BaseBranch $BaseBranch -SkillsPath $relativeRoot |
+                    ForEach-Object { Join-Path $skillRoot $_ } |
+                    Where-Object { Test-Path -LiteralPath $_ -PathType Container })
             }
-
-            $results = @()
-            $validatedDirs = @{}
-            foreach ($skillRelPath in $changedSkills) {
-                $candidatePath = Join-Path -Path $fullSkillsPath -ChildPath $skillRelPath
-                if (-not (Test-Path $candidatePath -PathType Container)) {
-                    Write-Host "  ⏭️  Skill '$skillRelPath' was deleted - skipping validation" -ForegroundColor DarkGray
-                    continue
-                }
-                # Find SKILL.md files at or below the changed path (excluding
-                # installed dependency and virtual-environment trees)
-                $skillMdFiles = Get-ChildItem -Path $candidatePath -Filter 'SKILL.md' -File -Recurse -ErrorAction SilentlyContinue |
-                    Where-Object { $_.FullName -notmatch '[\\/](node_modules|\.venv)[\\/]' }
-                if ($null -eq $skillMdFiles -or @($skillMdFiles).Count -eq 0) {
-                    # Check if the changed path is inside a skill directory (ancestor has SKILL.md)
-                    $searchDir = Get-Item $candidatePath
-                    while ($null -ne $searchDir -and $searchDir.FullName -ne $fullSkillsPath) {
-                        $ancestorSkillMd = Join-Path -Path $searchDir.FullName -ChildPath 'SKILL.md'
-                        if (Test-Path $ancestorSkillMd -PathType Leaf) {
-                            $skillMdFiles = @(Get-Item $ancestorSkillMd)
-                            break
-                        }
-                        $searchDir = $searchDir.Parent
-                    }
-                }
-                foreach ($skillMdFile in $skillMdFiles) {
-                    $dirKey = $skillMdFile.Directory.FullName
-                    if (-not $validatedDirs.ContainsKey($dirKey)) {
-                        $validatedDirs[$dirKey] = $true
-                        $results += Test-SkillDirectory -Directory $skillMdFile.Directory -RepoRoot $repoRoot `
-                            -SecurityClassification $classificationEntries -SkillsRoot $resolvedSkillsRoot
-                    }
+            $validatedDirs = @()
+            foreach ($candidate in $candidates) {
+                foreach ($file in (Get-ChildItem -LiteralPath $candidate -Filter 'SKILL.md' -File -Recurse |
+                            Where-Object { $_.FullName -notmatch '[\\/](node_modules|\.venv)[\\/]' })) {
+                    $validatedDirs += $file.Directory.FullName
+                    $results += Test-SkillDirectory -Directory $file.Directory -RepoRoot $repoRoot `
+                        -SecurityClassification $classificationEntries -SkillsRoot $skillRoot
                 }
             }
-
-            # Changed collections may not include every classified skill, so check coverage for the rest
-            if ($null -ne $classificationEntries) {
-                $coverageErrors = Get-SkillClassificationCoverageError -SkillsRoot $resolvedSkillsRoot `
-                    -Classification $classificationEntries -RepoRoot $repoRoot -ExcludeDirectory @($validatedDirs.Keys)
-                foreach ($err in $coverageErrors) { $classificationErrors.Add($err) }
-            }
-
-            if ($results.Count -eq 0 -and $classificationErrors.Count -eq 0) {
-                if ($changedSkills.Count -eq 0) {
-                    Write-Host "✅ No changed skill directories found - validation complete" -ForegroundColor Green
+            if ($ChangedFilesOnly -and $null -ne $classificationEntries) {
+                foreach ($err in (Get-SkillClassificationCoverageError -SkillsRoot $skillRoot -Classification $classificationEntries `
+                            -RepoRoot $repoRoot -ExcludeDirectory $validatedDirs)) {
+                    $classificationErrors.Add($err)
                 }
-                else {
-                    Write-Host "✅ No skill directories to validate after filtering - success" -ForegroundColor Green
-                }
-                return 0
             }
         }
-        else {
-            if (-not (Test-Path $fullSkillsPath -PathType Container)) {
-                Write-Host "Skills directory not found at '$SkillsPath' - nothing to validate" -ForegroundColor Yellow
-                return 0
-            }
-
-            $skillFiles = Get-ChildItem -Path $fullSkillsPath -Filter 'SKILL.md' -File -Recurse -ErrorAction SilentlyContinue |
-                Where-Object { $_.FullName -notmatch '[\\/](node_modules|\.venv)[\\/]' }
-            if ($null -eq $skillFiles -or @($skillFiles).Count -eq 0) {
-                Write-Host "No skill directories found under '$SkillsPath' - nothing to validate" -ForegroundColor Yellow
-                return 0
-            }
-
-            Write-Host "🔍 Validating $(@($skillFiles).Count) skill directory(ies)..." -ForegroundColor Cyan
-
-            $results = @()
-            foreach ($skillFile in $skillFiles) {
-                $results += Test-SkillDirectory -Directory $skillFile.Directory -RepoRoot $repoRoot `
-                    -SecurityClassification $classificationEntries -SkillsRoot $resolvedSkillsRoot
-            }
+        if ($results.Count -eq 0 -and $classificationErrors.Count -eq 0) {
+            Write-Host 'No skill directories to validate.' -ForegroundColor Green
+            return 0
         }
 
         if ($classificationErrors.Count -gt 0) {

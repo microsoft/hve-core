@@ -238,9 +238,9 @@ function Get-PreparedSourceRoots {
 
     $roots = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
     $propertyShape = [ordered]@{
-        chatAgents       = '^\.github/agents/[^/]+/.+\.agent\.md$'
-        chatPromptFiles  = '^\.github/prompts/[^/]+/.+\.prompt\.md$'
-        chatInstructions = '^\.github/instructions/[^/]+/.+\.instructions\.md$'
+        chatAgents       = '^\.github/(?:plugins/[^/]+/)?agents/[^/]+/.+\.agent\.md$'
+        chatPromptFiles  = '^\.github/(?:plugins/[^/]+/)?prompts/[^/]+/.+\.prompt\.md$'
+        chatInstructions = '^\.github/(?:plugins/[^/]+/)?instructions/[^/]+/.+\.instructions\.md$'
     }
     foreach ($property in $propertyShape.Keys) {
         foreach ($item in @($PackageJson.contributes.$property)) {
@@ -255,7 +255,7 @@ function Get-PreparedSourceRoots {
     foreach ($skill in @($PackageJson.contributes.chatSkills)) {
         if ($skill.path) {
             $path = ([string]$skill.path -replace '^\./', '')
-            if (-not (Test-PreparedContributionPath -Path $path -Shape '^\.github/skills/[^/]+/[^/]+/SKILL\.md$')) {
+            if (-not (Test-PreparedContributionPath -Path $path -Shape '^\.github/(?:plugins/[^/]+/)?skills/[^/]+/[^/]+/SKILL\.md$')) {
                 throw "Prepared chatSkills contribution '$path' is not a contained artifact path."
             }
             [void]$roots.Add(((Split-Path -Parent $path) -replace '\\', '/'))

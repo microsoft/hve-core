@@ -3,7 +3,7 @@ title: git-setup
 description: "Audit Git configuration with one read-only baseline command, then propose confirmed, non-destructive fixes for identity, editor, and diff and merge tooling, with signing and safe.directory help only on request. Use when setting up or checking Git on a workstation."
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                    |
 |-------------|------------------------------------------------------------------------------------------|
 | Kind        | skill                                                                                    |
-| Source      | `.github/skills/hve-core/git-setup`                                                      |
+| Source      | `.github/plugins/sdlc-git/skills/hve-core/git-setup`                                     |
 | Invocation  | Invoked directly as `/git-setup`; model invocation is disabled, so agents do not load it |
 | Interactive | No                                                                                       |
 <!-- END AUTO-GENERATED: metadata -->

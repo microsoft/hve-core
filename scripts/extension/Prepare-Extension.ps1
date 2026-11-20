@@ -97,10 +97,10 @@ function Get-PluginComponent {
     )
 
     $fieldKinds = [ordered]@{
-        agents   = @{ Kind = 'agent'; Shape = '^\.github/agents/[^/]+/.+\.agent\.md$' }
-        commands = @{ Kind = 'prompt'; Shape = '^\.github/prompts/[^/]+/.+\.prompt\.md$' }
-        rules    = @{ Kind = 'instruction'; Shape = '^\.github/instructions/[^/]+/.+\.instructions\.md$' }
-        skills   = @{ Kind = 'skill'; Shape = '^\.github/skills/[^/]+/[^/]+$' }
+        agents   = @{ Kind = 'agent'; Shape = '^\.github/(?:plugins/[^/]+/)?agents/[^/]+/.+\.agent\.md$' }
+        commands = @{ Kind = 'prompt'; Shape = '^\.github/(?:plugins/[^/]+/)?prompts/[^/]+/.+\.prompt\.md$' }
+        rules    = @{ Kind = 'instruction'; Shape = '^\.github/(?:plugins/[^/]+/)?instructions/[^/]+/.+\.instructions\.md$' }
+        skills   = @{ Kind = 'skill'; Shape = '^\.github/(?:plugins/[^/]+/)?skills/[^/]+/[^/]+$' }
     }
     $items = @()
     foreach ($field in $fieldKinds.Keys) {

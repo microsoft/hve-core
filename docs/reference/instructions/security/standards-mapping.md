@@ -1,6 +1,6 @@
 ---
 title: Security/Standards Mapping
-description: "OWASP and NIST security standards references with rpi-research activation for CIS, WAF, CAF, and other runtime lookups"
+description: "OWASP and NIST security standards references and evidence requirements for CIS, WAF, CAF, and other current mappings"
 sidebar_position: 4
 author: Microsoft
 ms.date: 2026-11-18
@@ -12,18 +12,18 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                             |
-|-------------|-------------------------------------------------------------------|
-| Kind        | instruction                                                       |
-| Source      | `.github/instructions/security/standards-mapping.instructions.md` |
-| Invocation  | Applied automatically to `**/.copilot-tracking/security-plans/**` |
-| Interactive | No                                                                |
+| Field       | Value                                                                                   |
+|-------------|-----------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                             |
+| Source      | `.github/plugins/sdlc-security/instructions/security/standards-mapping.instructions.md` |
+| Invocation  | Applied automatically to `**/.copilot-tracking/security-plans/**`                       |
+| Interactive | No                                                                                      |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-OWASP and NIST security standards references with rpi-research activation for CIS, WAF, CAF, and other runtime lookups
+OWASP and NIST security standards references and evidence requirements for CIS, WAF, CAF, and other current mappings
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

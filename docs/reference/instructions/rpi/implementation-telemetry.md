@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                               |
-|-------------|---------------------------------------------------------------------|
-| Kind        | instruction                                                         |
-| Source      | `.github/instructions/rpi/implementation-telemetry.instructions.md` |
-| Invocation  | Applied automatically to `**/.copilot-tracking/changes/**`          |
-| Interactive | No                                                                  |
+| Field       | Value                                                                                   |
+|-------------|-----------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                             |
+| Source      | `.github/plugins/rpi-builder/instructions/rpi/implementation-telemetry.instructions.md` |
+| Invocation  | Applied automatically to `**/.copilot-tracking/changes/**`                              |
+| Interactive | No                                                                                      |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

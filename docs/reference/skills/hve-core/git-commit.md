@@ -3,7 +3,7 @@ title: git-commit
 description: "Stage user-selected paths, confirm the exact staged set, and create one local Conventional Commit, or generate a commit message for staged changes without committing. Use when you want a guarded commit or a ready-to-paste message."
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                     |
 |-------------|-------------------------------------------------------------------------------------------|
 | Kind        | skill                                                                                     |
-| Source      | `.github/skills/hve-core/git-commit`                                                      |
+| Source      | `.github/plugins/sdlc-git/skills/hve-core/git-commit`                                     |
 | Invocation  | Invoked directly as `/git-commit`; model invocation is disabled, so agents do not load it |
 | Interactive | No                                                                                        |
 <!-- END AUTO-GENERATED: metadata -->

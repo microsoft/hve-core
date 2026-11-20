@@ -3,7 +3,7 @@ title: Security/Identity
 description: "Security Planner identity, six-phase orchestration, state management, and session recovery protocols"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                             |
-|-------------|-------------------------------------------------------------------|
-| Kind        | instruction                                                       |
-| Source      | `.github/instructions/security/identity.instructions.md`          |
-| Invocation  | Applied automatically to `**/.copilot-tracking/security-plans/**` |
-| Interactive | No                                                                |
+| Field       | Value                                                                          |
+|-------------|--------------------------------------------------------------------------------|
+| Kind        | instruction                                                                    |
+| Source      | `.github/plugins/sdlc-security/instructions/security/identity.instructions.md` |
+| Invocation  | Applied automatically to `**/.copilot-tracking/security-plans/**`              |
+| Interactive | No                                                                             |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

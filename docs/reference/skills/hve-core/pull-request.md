@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                          |
 |-------------|--------------------------------------------------------------------------------|
 | Kind        | skill                                                                          |
-| Source      | `.github/skills/hve-core/pull-request`                                         |
+| Source      | `.github/plugins/sdlc-git/skills/hve-core/pull-request`                        |
 | Invocation  | Invoked directly as `/pull-request`, or loaded on demand by referencing agents |
 | Interactive | No                                                                             |
 <!-- END AUTO-GENERATED: metadata -->

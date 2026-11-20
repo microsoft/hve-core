@@ -1,0 +1,42 @@
+{
+  "name": "hve-project-planning",
+  "description": "Author and review architecture decisions, business requirements, and product requirements. Pair with hve-rpi-builder for deeper research.",
+  "version": "3.2.2",
+  "author": {
+    "name": "Microsoft",
+    "url": "https://www.microsoft.com"
+  },
+  "homepage": "https://github.com/microsoft/hve-core",
+  "repository": "https://github.com/microsoft/hve-core",
+  "license": "MIT",
+  "keywords": [
+    "hve",
+    "project-planning",
+    "adr",
+    "brd",
+    "prd"
+  ],
+  "agents": [
+    "agents/project-planning/adr-creation.agent.md",
+    "agents/project-planning/brd-builder.agent.md",
+    "agents/project-planning/meeting-analyst.agent.md",
+    "agents/project-planning/prd-builder.agent.md",
+    "agents/project-planning/subagents/brd-quality-reviewer.agent.md",
+    "agents/project-planning/subagents/prd-quality-reviewer.agent.md",
+    "agents/project-planning/system-architecture-reviewer.agent.md"
+  ],
+  "rules": [
+    "instructions/project-planning/adr-byo-template.instructions.md",
+    "instructions/project-planning/adr-handoff.instructions.md",
+    "instructions/project-planning/adr-standards.instructions.md",
+    "instructions/project-planning/planning-telemetry.instructions.md"
+  ],
+  "skills": [
+    "skills/project-planning/adr-author",
+    "skills/project-planning/architecture-review",
+    "skills/project-planning/outcome-hypothesis",
+    "skills/project-planning/project-planning-disclaimers",
+    "skills/project-planning/proposal-response",
+    "skills/project-planning/requirements-author"
+  ]
+}

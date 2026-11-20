@@ -3,7 +3,7 @@ title: Finding Deep Verifier
 description: Deep adversarial verification of FAIL and PARTIAL findings for a single security skill
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                    |
-|-------------|--------------------------------------------------------------------------|
-| Kind        | agent                                                                    |
-| Source      | `.github/agents/security/subagents/finding-deep-verifier.agent.md`       |
-| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly) |
-| Interactive | No                                                                       |
+| Field       | Value                                                                                    |
+|-------------|------------------------------------------------------------------------------------------|
+| Kind        | agent                                                                                    |
+| Source      | `.github/plugins/sdlc-security/agents/security/subagents/finding-deep-verifier.agent.md` |
+| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)                 |
+| Interactive | No                                                                                       |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

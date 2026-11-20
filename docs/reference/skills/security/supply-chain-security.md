@@ -3,7 +3,7 @@ title: supply-chain-security
 description: "Software supply chain security reference for OpenSSF Scorecard, SLSA, Sigstore, SBOM, and posture/backlog taxonomies."
 sidebar_position: 14
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                   |
 |-------------|-----------------------------------------------------------------------------------------|
 | Kind        | skill                                                                                   |
-| Source      | `.github/skills/security/supply-chain-security`                                         |
+| Source      | `.github/plugins/sdlc-security/skills/security/supply-chain-security`                   |
 | Invocation  | Invoked directly as `/supply-chain-security`, or loaded on demand by referencing agents |
 | Interactive | No                                                                                      |
 <!-- END AUTO-GENERATED: metadata -->
