@@ -138,7 +138,7 @@ jobs:
             MANIFEST='.release-please-prerelease-manifest.json'
             CONFIG='release-please-prerelease-config.json'
           fi
-          for entry in "package.json:.version" "package-lock.json:.version" "$MANIFEST:.\".\"" "extension/templates/package.template.json:.version" "plugin.json:.version" ".github/plugin/marketplace.json:.metadata.version" ".github/plugin/marketplace.json:.plugins[0].version"; do
+          for entry in "package.json:.version" "package-lock.json:.version" "$MANIFEST:.\".\"" "extension/templates/package.template.json:.version" "plugin.json:.version" ".github/plugin/marketplace.json:.metadata.version"; do
             file=${entry%%:*}
             path=${entry#*:}
             actual=$(jq -r "$path" "$file")
@@ -147,6 +147,18 @@ jobs:
               exit 1
             fi
           done
+          # Read each manifest from the verified tag tree, not through working-tree links.
+          jq -ej --arg version "$RELEASE_VERSION" '
+            .plugins | if type == "array" and length > 0 and all(.[]; .version == $version and (.source | type == "string" and length > 0))
+            then .[] | .source, "\u0000" else error("Invalid marketplace locator or release version") end
+          ' .github/plugin/marketplace.json |
+            while IFS= read -r -d '' source; do
+              if ! git cat-file blob "HEAD:./$source/plugin.json" |
+                jq -e --arg version "$RELEASE_VERSION" '.version == $version' >/dev/null; then
+                echo "::error::A marketplace manifest at the tag does not declare $RELEASE_VERSION"
+                exit 1
+              fi
+            done
           if ! grep -Eq "^## \[${RELEASE_VERSION}\]" CHANGELOG.md; then
             echo "::error::CHANGELOG.md has no release entry for $RELEASE_VERSION"
             exit 1

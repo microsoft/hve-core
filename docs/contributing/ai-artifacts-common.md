@@ -3,7 +3,7 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - contributing
@@ -169,11 +169,11 @@ When you add or change an artifact:
 5. Run `npm run docs:generate:check` and the focused tests for the changed artifact kind.
 6. Run the applicable extension preparation command when extension output is in scope.
 
-Commit canonical sources, the synchronized plugin manifest, the sole plugin documentation page, and the single extension manifest and README when they change. Do not create a copied plugin tree or plugin ZIP.
+Commit canonical sources, affected plugin manifests and documentation, and the single extension manifest and README when they change. Do not create a copied plugin tree or plugin ZIP.
 
 ### Validation Contract
 
-`npm run plugin:validate` runs manifest check mode and hook validation. It rejects membership drift, invalid one-entry locator metadata, name or version mismatch, source escape, missing declared components, recipe fields on the locator, and invalid hooks.
+`npm run plugin:validate` runs manifest check mode and hook validation. It rejects membership drift, duplicate names or sources, locator metadata that differs from its manifest, escaping paths, missing or ineligible components, recipe fields on locators, and invalid hooks.
 
 See the [Plugin Scripts README](https://github.com/microsoft/hve-core/blob/main/scripts/plugins/README.md) for synchronization and validation details.
 

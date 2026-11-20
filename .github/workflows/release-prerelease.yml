@@ -400,6 +400,7 @@ jobs:
           ref: ${{ github.sha }}
           sparse-checkout: |
             scripts/release/Set-RepositoryVersion.ps1
+            scripts/plugins/PluginCatalog.psm1
             scripts/plugins/Sync-PluginManifest.ps1
           sparse-checkout-cone-mode: false
           persist-credentials: false
@@ -467,10 +468,10 @@ jobs:
           # and every version field is normalized to the managed release
           # version. Neither step transforms a source ref or records a
           # release candidate.
-          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/plugins/Sync-PluginManifest.ps1" \
-              -RepoRoot "$RELEASE_REPO"
           pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/release/Set-RepositoryVersion.ps1" \
               -Version "$VERSION" \
+              -RepoRoot "$RELEASE_REPO"
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/plugins/Sync-PluginManifest.ps1" \
               -RepoRoot "$RELEASE_REPO"
 
           cd "$RELEASE_REPO"

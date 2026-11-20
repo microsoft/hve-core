@@ -80,31 +80,29 @@ function readObject(pathname: string, context: string): Record<string, unknown> 
 }
 
 function resolvePluginManifestPath(
-  pluginLocatorPath: string,
+  repositoryRoot: string,
   source: string,
 ): string {
   if (
     path.isAbsolute(source)
+    || /^[A-Za-z]:/.test(source)
     || source.includes('\\')
     || source.split('/').includes('..')
   ) {
     throw new Error(`${errorPrefix} source escapes the repository: ${source}`);
   }
 
-  const repositoryRoot = path.resolve(path.dirname(pluginLocatorPath), '../..');
-  const pluginRoot = path.resolve(repositoryRoot, ...source.split('/'));
-  const relative = path.relative(repositoryRoot, pluginRoot);
-  if (
-    relative === '..'
-    || relative.startsWith(`..${path.sep}`)
-    || path.isAbsolute(relative)
-  ) {
-    throw new Error(`${errorPrefix} source escapes the repository: ${source}`);
+  const manifestPath = path.resolve(repositoryRoot, source, 'plugin.json');
+  if (!fs.existsSync(manifestPath)) {
+    throw new Error(`${errorPrefix} plugin manifest not found: ${source}/plugin.json`);
   }
-
-  return path.join(pluginRoot, 'plugin.json');
+  if (fs.realpathSync(manifestPath) !== manifestPath) {
+    throw new Error(`${errorPrefix} manifest path contains a symbolic link: ${source}`);
+  }
+  return manifestPath;
 }
 
+/** Reads one card per local manifest, preserving catalog order. Invalid or repeated locators fail the build. */
 export function loadPackageCards(pluginLocatorPath: string): PackageCardData[] {
   const catalog = readObject(pluginLocatorPath, 'catalog');
   const plugins = catalog.plugins;
@@ -112,46 +110,52 @@ export function loadPackageCards(pluginLocatorPath: string): PackageCardData[] {
   if (!Array.isArray(plugins)) {
     throw new Error(`${errorPrefix} ${pluginLocatorPath}: plugins must be an array`);
   }
-  if (plugins.length !== 1) {
-    throw new Error(
-      `${errorPrefix} marketplace must contain exactly one plugin locator`,
-    );
+  if (plugins.length === 0) {
+    throw new Error(`${errorPrefix} marketplace must contain at least one plugin locator`);
   }
 
-  const entry = requireObject(plugins[0], 'plugins[0]: entry');
-  const name = requireText(entry.name, 'name', 'plugins[0]');
-  const source = requireText(entry.source, 'source', name);
-  const entryVersion = requireText(entry.version, 'version', name);
+  const repositoryRoot = fs.realpathSync(path.resolve(path.dirname(pluginLocatorPath), '../..'));
+  const rootManifest = path.join(repositoryRoot, 'plugin.json');
   const metadata = requireObject(catalog.metadata, 'metadata');
-  const catalogVersion = requireText(metadata.version, 'metadata.version', name);
-  const manifestPath = resolvePluginManifestPath(pluginLocatorPath, source);
-  if (!fs.existsSync(manifestPath)) {
-    throw new Error(
-      `${errorPrefix} ${name}: plugin manifest not found: ${source}/plugin.json`,
-    );
-  }
+  const catalogVersion = requireText(metadata.version, 'metadata.version', 'catalog');
+  const names = new Set<string>();
+  const manifests = new Set<string>();
+  const cards = plugins.map((value, index) => {
+    const context = `plugins[${index}]`;
+    const entry = requireObject(value, `${context}: entry`);
+    const name = requireText(entry.name, 'name', context);
+    const source = requireText(entry.source, 'source', name);
+    const manifestPath = resolvePluginManifestPath(repositoryRoot, source);
+    if (names.has(name.toLowerCase()) || manifests.has(manifestPath)) {
+      throw new Error(`${errorPrefix} duplicate plugin name or source: ${name} (${source})`);
+    }
+    names.add(name.toLowerCase());
+    manifests.add(manifestPath);
 
-  const manifest = readObject(manifestPath, `${name}: plugin manifest`);
-  const manifestName = requireText(manifest.name, 'manifest.name', name);
-  const manifestVersion = requireText(manifest.version, 'manifest.version', name);
-  if (manifestName !== name) {
-    throw new Error(
-      `${errorPrefix} locator name ${name} does not match manifest name ${manifestName}`,
-    );
-  }
-  if (entryVersion !== manifestVersion || catalogVersion !== manifestVersion) {
-    throw new Error(
-      `${errorPrefix} ${name}: catalog and manifest versions must match`,
-    );
-  }
+    const manifest = readObject(manifestPath, `${name}: plugin manifest`);
+    const manifestName = requireText(manifest.name, 'manifest.name', name);
+    const manifestVersion = requireText(manifest.version, 'manifest.version', name);
+    if (manifestName !== name) {
+      throw new Error(
+        `${errorPrefix} locator name ${name} does not match manifest name ${manifestName}`,
+      );
+    }
+    if (requireText(entry.version, 'version', name) !== manifestVersion || catalogVersion !== manifestVersion) {
+      throw new Error(`${errorPrefix} ${name}: catalog and manifest versions must match`);
+    }
 
-  return [{
-    name,
-    title: labelRegistry.hveCore,
-    description: requireText(manifest.description, 'manifest.description', name),
-    artifacts: countPluginComponents(manifest),
-    contents: summarizePluginComponents(manifest),
-    maturity: labelRegistry.stable,
-    href: `/docs/plugins/${name}`,
-  }];
+    return {
+      name,
+      title: manifestPath === rootManifest ? labelRegistry.hveCore : name,
+      description: requireText(manifest.description, 'manifest.description', name),
+      artifacts: countPluginComponents(manifest),
+      contents: summarizePluginComponents(manifest),
+      maturity: labelRegistry.stable,
+      href: `/docs/plugins/${name}`,
+    };
+  });
+  if (!manifests.has(rootManifest)) {
+    throw new Error(`${errorPrefix} marketplace is missing the root plugin locator`);
+  }
+  return cards;
 }
