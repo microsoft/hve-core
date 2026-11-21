@@ -50,7 +50,7 @@ Reject and report any command that does not match, including:
 * `gh api` without `--method GET`, or with `-f`, `-F`, `--raw-field`, `--field`, `--input`, or the `graphql` endpoint.
 * `gh pr edit --base`, a reviewer, project, attach, editor, web, or template flag, or `--add-assignee @copilot` outside an Assign Copilot operation.
 * Any other `gh` subcommand, including `merge`, `delete`, `reopen`, `transfer`, `lock`, `pin`, and every `gh auth` subcommand other than `status`.
-* A pipe, redirection, command substitution, backgrounding, or a chaining operator such as `;`, `&&`, or `||`.
+* A pipe, redirection, command substitution, running in the background, or a chaining operator such as `;`, `&&`, or `||`.
 * Another interpreter or wrapper, including an explicit shell, `env`, `sudo`, or a package runner, or an inline credential variable.
 
 ## Inputs
