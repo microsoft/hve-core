@@ -3,7 +3,7 @@ title: RAI Reviewer
 description: "Responsible AI standards assessment orchestrator for codebase profiling and RAI findings reporting against NIST AI RMF, the AI STRIDE overlay, and the EU AI Act"
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-21
 ms.topic: reference
 keywords:
   - agent

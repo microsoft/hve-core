@@ -3,7 +3,7 @@ title: Accessibility Surface Inventory
 description: "Discovers runtime surfaces and interaction states from a codebase profile, then emits an accessibility runtime config for the harness"
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-21
 ms.topic: reference
 keywords:
   - agent

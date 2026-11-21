@@ -3,7 +3,7 @@ title: DT Coach
 description: Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-21
 ms.topic: reference
 keywords:
   - agent
