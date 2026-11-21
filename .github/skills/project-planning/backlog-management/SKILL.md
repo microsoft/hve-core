@@ -36,7 +36,7 @@ Read the platform-agnostic conventions below, then load the reference that match
 * [references/ado.md](references/ado.md) — Azure DevOps platform delta: MCP ADO command surface, namespaced field vocabulary, the `WI` reference prefix, action verbs, PRD hierarchy (Epic → Feature → User Story), relationship semantics, and work-item tracking paths.
 * [references/ado-pull-request.md](references/ado-pull-request.md) — Azure DevOps pull request creation: work item discovery and linking, reviewer identification from git history, the seven-phase creation protocol, and its planning-file formats.
 * [references/ado-build-info.md](references/ado-build-info.md) — Azure DevOps build and pipeline information: pipeline tool surface, build location by PR, build ID, or branch, log extraction, and summarization rules.
-* [references/github.md](references/github.md) — GitHub platform delta: MCP GitHub command surface, supported operations, field vocabulary and field matrix, search syntax, issue body and type strategy, label taxonomy, milestone protocol, the `IS` reference prefix, action verbs, community-communication guardrails, PRD sub-issue hierarchy, and issue tracking paths.
+* [references/github.md](references/github.md) — GitHub platform delta: MCP GitHub command surface and its bounded `gh` CLI fallback, supported operations, field vocabulary and field matrix, search syntax, issue body and type strategy, label taxonomy, milestone protocol, the `IS` reference prefix, action verbs, community-communication guardrails, PRD sub-issue hierarchy, and issue tracking paths.
 * [references/jira.md](references/jira.md) — Jira platform delta: command surface (delegated to the `jira` skill), field vocabulary, the `JI` reference prefix, action verbs, PRD hierarchy and field-mapping rules, triage and update decisions, and Jira tracking paths.
 
 ## Platform Resolution
@@ -59,21 +59,21 @@ When more than one platform remains plausible, summarize the two most likely opt
 
 A readiness probe is a non-interactive capability check that runs across all three platforms before signal 4 is used. It never prompts, never launches a setup workflow, and never mutates:
 
-| Platform     | Non-interactive readiness probe                                                                        |
-|--------------|--------------------------------------------------------------------------------------------------------|
-| Azure DevOps | MCP `ado/*` tools are available                                                                        |
-| GitHub       | MCP `github/*` tools are available                                                                     |
-| Jira         | `JIRA_BASE_URL` and either `JIRA_API_TOKEN` or `JIRA_PAT` are already set, and a terminal is available |
+| Platform     | Non-interactive readiness probe                                                                                      |
+|--------------|----------------------------------------------------------------------------------------------------------------------|
+| Azure DevOps | MCP `ado/*` tools are available                                                                                      |
+| GitHub       | MCP `github/*` tools are available, or a terminal is available and `gh auth status` reports an authenticated account |
+| Jira         | `JIRA_BASE_URL` and either `JIRA_API_TOKEN` or `JIRA_PAT` are already set, and a terminal is available               |
 
 ### Step 2: Run the full preflight for the resolved platform
 
 The full preflight runs once, after the platform is resolved. It may resolve identity and may run interactive credential setup, which is why it never runs as a probe.
 
-| Platform     | Preflight check                                                                                                                                                                                                                                                                                                                  |
-|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Azure DevOps | MCP `ado/*` tools available and an explicit `project` resolvable; call `ado/core_get_identity_ids` to establish authenticated user context before assignment.                                                                                                                                                                    |
-| GitHub       | MCP `github/*` tools available and identity resolvable via `github/get_me`; the target `owner/repo` is known.                                                                                                                                                                                                                    |
-| Jira         | A terminal is available for the `jira` skill CLI. The CLI loads supported missing values from `~/.jira.env` in-process without shell evaluation. When its value-free validation reports missing variables, stop and route the user to the separate `jira` credential-setup workflow; do not source the file or run setup inline. |
+| Platform     | Preflight check                                                                                                                                                                                                                                                                                                                     |
+|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Azure DevOps | MCP `ado/*` tools available and an explicit `project` resolvable; call `ado/core_get_identity_ids` to establish authenticated user context before assignment.                                                                                                                                                                       |
+| GitHub       | GitHub issue reads are reachable through MCP `github/*` tools or the `gh` CLI fallback in the GitHub reference, and the target `owner/repo` is known. Resolve identity through `github/get_me` or its `gh` fallback. When neither is available, record identity as unresolved and stop only a workflow that needs the current user. |
+| Jira         | A terminal is available for the `jira` skill CLI. The CLI loads supported missing values from `~/.jira.env` in-process without shell evaluation. When its value-free validation reports missing variables, stop and route the user to the separate `jira` credential-setup workflow; do not source the file or run setup inline.    |
 
 ### Inferred-Platform Confirmation
 
@@ -87,7 +87,7 @@ This confirmation is independent of the autonomy mode. Full autonomy removes per
 
 When a platform's prerequisites are unmet, do not route work to it. Name the missing prerequisite and continue with the platforms that are available. A missing prerequisite is reported, never worked around: do not substitute a different platform for the one the user named, and do not proceed with a partial credential set.
 
-Record the resolved platform and its verdict in `planning-log.md` so a resumed workflow does not re-resolve from a changed environment.
+Record the resolved platform and its verdict in `planning-log.md` so a resumed workflow does not re-resolve from a changed environment. For GitHub, also record the access surface (`mcp`, `gh`, or both) and the resolved identity or `unresolved`.
 
 ## Planning File Lifecycle and Directory Conventions
 

@@ -114,8 +114,8 @@ stimuli:
       advisory: "true"
     rubric:
       - Grounds the tool-fit assessment in the artifact's declared tools and description without inventing tools.
-      - Identifies GitHub issue read and write tools, no other tracker family, and no terminal, and relates that grant to the single-repository execution role.
-      - Attributes repository-level confinement to the artifact's contract rather than claiming the tool grant enforces it.
+      - Identifies GitHub issue read and write tools, no other tracker family, and a general terminal granted for the bounded gh fallback, and relates that grant to the single-repository execution role.
+      - Attributes repository-level confinement and the gh invocation shape to the artifact's contract rather than claiming the tool grant or host enforces them.
     graders:
       - type: prompt
         name: github-backlog-executor-tool-restriction-fit-tool-r-3056e84e
@@ -124,14 +124,21 @@ stimuli:
             The response assesses whether a subagent's declared tool set fits its
             stated purpose. Score high when it reasons from the artifact's own
             declared tools and description, observes that the grant covers GitHub
-            issue reads and writes and no other tracker family and no terminal,
+            issue reads and writes, no other tracker family, and a general
+            terminal that the artifact narrows in prose to a bounded gh fallback,
             and connects that to the single-repository execution role. Score low
             when it invents tools, ignores the declared description, or asserts
-            that the grant enforces a repository-level boundary that only the
-            artifact's own contract provides.
+            that the grant or host enforces a repository-level boundary or the
+            gh-only invocation shape that only the artifact's own contract
+            provides.
           threshold: 0.6
       - type: output-matches
         name: github-backlog-executor-tool-restriction-fit-does-n-928e7efe
         config:
           pattern: '(?i)(this (test|check|eval) (proves|demonstrates|verifies))'
+          negate: true
+      - type: output-matches
+        name: does-not-claim-host-enforces-gh-only
+        config:
+          pattern: '(?i)(?<!(?:\b(?:not|never|nor|neither)|n[\x27\u2019]t)\s+(?:\w+\s+){0,3})\bthe (?:tool (?:list|grant)|host|frontmatter) (?:enforces|prevents|blocks|guarantees).{0,60}(?:only (?:the )?gh\b|gh[- ]only)'
           negate: true
