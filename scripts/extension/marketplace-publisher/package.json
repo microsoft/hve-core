@@ -8,7 +8,7 @@
     "@vscode/vsce": "4.1.0"
   },
   "overrides": {
-    "@vscode/vsce@4.0.0": {
+    "@vscode/vsce": {
       "minimatch": "11.0.3"
     },
     "@azure/identity": {
