@@ -1,0 +1,21 @@
+# Workstream handoff: receipt record
+
+## Local record
+
+* Handoff ID: handoff-2
+* Revision: 1
+* Supersedes: none
+* Status: current
+* As of: 2026-10-09
+* Producer task / role: release / release owner
+* Receiver workstream / role: auditor / audit owner
+* Contract: receipt record
+* Revision delta: initial
+
+## Evidence and consequence
+
+At main 1111111111111111111111111111111111111111 the producer provides a bundle only. Auditor plan 2026-10-09, P03-T01 "Audit receipt", needs a writer for validation. Unsent by this workflow.
+
+## Copy-ready message
+
+Build the audit record from the bundle before validating it.

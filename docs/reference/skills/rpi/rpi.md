@@ -44,6 +44,8 @@ It offers two modes:
 
 Both modes stop for blockers, required human review, and destructive, hard-to-reverse, or externally visible actions.
 
+When your change affects another workstream, Follow-up uses [workstream-handoff](workstream-handoff) to prepare context for the issue that tracks the colleague's affected task. You see the issue and exact comment before deciding whether to post. No new issue is opened and the receiving plan stays unchanged.
+
 On the session's initial pass, Planning runs `rpi-plan-critique` and Review runs both [rpi-review](rpi-review) (acceptance verification) and [rpi-refine](rpi-refine) (subtractive refinement); you or a coordinating Project can also select a single review skill (`review=rpi-review` or `review=rpi-refine`) or skip a step.
 When another session (such as a Project coordinator) coordinates the session and the completed changes are significant enough to benefit from coordinator-managed review across dedicated sessions, `rpi` sends a `handoff` report with the state, plan, and changes paths so the coordinator can run or delegate the reviews and provide the resulting records back.
 

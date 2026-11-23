@@ -1,0 +1,5 @@
+Snapshot: release evidence 2026-10-12. Synthetic evidence.
+Producer release / release owner. Contract: receipt record. Before main 1111111111111111111111111111111111111111 offered only the bundle. Integrated/current main 2222222222222222222222222222222222222222 adds handoff_ref from workflows/release.yml job prepare, step write_record.
+Receiver notices / notification owner, branch message-label at 4444444444444444444444444444444444444444. Its only hunk changes a display label in the same workflows/release.yml. P01-T02 checks notification labels, not receipt data, timing or outputs.
+Receiver publisher / integration owner formerly consumed the receipt record. The current publisher plan and ref are unavailable in this scope. No owner confirmation is available.
+Internal evidence pointer for local readers only: private-notes/work-item-map.

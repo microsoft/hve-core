@@ -1,0 +1,20 @@
+{
+  "task_id": "release",
+  "task_slug": "release",
+  "session_name": "Release coordination",
+  "parent_task": null,
+  "child_tasks": [],
+  "mode": "automatic",
+  "active_phase": "Follow-up",
+  "status": "completed",
+  "session_status": "running",
+  "artifact_paths": {"research": null, "plan": null, "critique": null, "changes": null, "review": null, "refinement": null},
+  "documents": {"research": [], "plan": [], "critique": [], "changes": [], "review": [], "refinement": []},
+  "confirmed_decisions": [
+    {"decision": "Automatic session scope", "status": "current", "evidence": "Producer release task only; changes and receiving criteria supplied as permitted local snapshots."},
+    {"decision": "Review step", "status": "skip", "evidence": "Synthetic producer closeout."}
+  ],
+  "blockers": [],
+  "next_action": {"phase": "Follow-up", "action": "Assess producer follow-up."},
+  "prioritized_follow_ups": []
+}

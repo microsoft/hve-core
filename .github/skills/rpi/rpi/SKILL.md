@@ -218,6 +218,10 @@ Research, a plan, or review records are provided when the user or another sessio
 
 ### Follow-up assessment
 
+Before ranking work or closing the producer task, check its current evidence for a changed interface, schedule or assumption and a plausible consumer or supplied receiver scope. When both are present, activate `workstream-handoff` once with the producer task/state, the change, permitted local evidence, any receiving task issue anchor and prior draft. Use plan and changes evidence when Review did not run. Without a trigger, continue ordinary Follow-up unchanged.
+
+Show the skill's result: any coverage gap, the local draft and receiving-issue preview, or a verified comment receipt. Only `workstream-handoff` routes an explicitly approved comment; the parent must not post a second copy or treat automatic progression as consent. If the skill is unavailable, report "impact not assessed" and continue. This is not an accepted follow-up or a Project handoff: do not dispatch it, insert it in `prioritized_follow_ups`, change receiver state, or wait for delivery or acknowledgment before producer completion.
+
 1. Reconcile the current `rpi-review` (`RV-xxx`) and `rpi-refine` (`RF-xxx`) records, or the changes record, validation, and plan follow-up items when Review did not run, with open work, blockers, and acceptance criteria against `Automatic session scope`. Prune resolved or invalidated entries, merge duplicates across both review records, and retain open items across loops.
 2. Classify each follow-up's rationale as required in-scope, optional improvement, or out-of-scope, with evidence. Rank eligible required work by dependencies and acceptance impact, then ease of implementation. Do not deepen discovery merely to populate the list.
 3. Check progress against earlier findings and evidence using Stop rules before starting another loop.

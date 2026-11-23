@@ -1,0 +1,21 @@
+# Workstream handoff: runtime availability
+
+## Local record
+
+* Handoff ID: handoff-1
+* Revision: 1
+* Supersedes: none
+* Status: current
+* As of: 2026-10-10
+* Producer task / role: release / runtime owner
+* Receiver workstream / role: deploy / acceptance owner
+* Contract: runtime availability
+* Revision delta: initial
+
+## Evidence and consequence
+
+Decision 2026-10-10 moves host availability from window 1 (decision 2026-10-09) to an estimated window 2. The deployment plan dated 2026-10-10 uses a fake host for P01-T01 and requires the real host for P02-T01. Deployed checks have not run. Unsent by this workflow.
+
+## Copy-ready message
+
+Continue local adapter tests against the fake host. Keep deployed acceptance pending until the runtime owner provides readiness evidence and the approved binding reference. Window 2 is not proof of readiness.

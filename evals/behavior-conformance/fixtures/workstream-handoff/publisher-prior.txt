@@ -1,0 +1,21 @@
+# Workstream handoff: receipt record
+
+## Local record
+
+* Handoff ID: handoff-1
+* Revision: 1
+* Supersedes: none
+* Status: current
+* As of: 2026-10-09
+* Producer task / role: release / release owner
+* Receiver workstream / role: publisher / integration owner
+* Contract: receipt record
+* Revision delta: initial
+
+## Evidence and consequence
+
+At main 1111111111111111111111111111111111111111 the producer provides a bundle only. Publisher plan 2026-10-09, P02-T01 "Build receipt", needs a writer in its own job. Its integration check has not run. Unsent by this workflow.
+
+## Copy-ready message
+
+Use the release bundle to generate the receipt in the publisher job.

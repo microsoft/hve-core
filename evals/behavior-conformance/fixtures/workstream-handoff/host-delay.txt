@@ -1,0 +1,4 @@
+Snapshot: runtime readiness decision 2026-10-10 and deployment plan 2026-10-10. Synthetic evidence.
+Producer release / runtime owner. Contract: runtime availability. Decision on 2026-10-09 expected the host in window 1; the decision on 2026-10-10 moves it to window 2, an estimate only.
+Receiver deploy / acceptance owner. P01-T01 "test local adapter" uses a fake host. P02-T01 "deployed acceptance" needs the runtime owner's readiness attestation and approved binding reference. The attestation is outstanding. No deployed check has run. No changes to the inputs or gates since 2026-10-10.
+Internal evidence pointer for local readers only: private-notes/work-item-map.

@@ -2,7 +2,7 @@
 title: Behavior Conformance Suite
 description: 'Tier 3 conformance evaluations for instructions and skill behavior'
 author: HVE Core Team
-ms.date: 2026-11-12
+ms.date: 2026-11-22
 ---
 
 This directory hosts the behavior conformance suite. It is the only suite under `evals/` that ships in advisory mode by default: failures are reported in the pull request summary but do not block the build until each spec graduates per the graduation policy below.
@@ -14,14 +14,14 @@ Behavior conformance answers a focused question per stimulus: *does the asset un
 * Instruction conformance: exercises whether instructions in `.github/instructions/**/*.instructions.md` are interpreted by the model in line with their `applyTo` and content rules.
 * Skill behavior: exercises whether skill invocation produces the canonical artifacts and section headers each `SKILL.md` advertises across three stimulus shapes (knowledge, tool-trigger, bleed-detection).
 
-Each tier shares the same advisory contract and manifest-driven gating model as the other Tier 1/2 suites. Most stimuli use deterministic `output-matches` graders. Selected skill stimuli also use deterministic file and diff graders in isolated synthetic workspaces. `skill-behavior.eval.yaml` uses seven `prompt` model-judge graders for semantic contracts that deterministic checks cannot credibly assess.
+Each tier shares the same advisory contract and manifest-driven gating model as the other Tier 1/2 suites. Most stimuli use deterministic `output-matches` graders. Selected skill stimuli also use deterministic file and diff graders in isolated synthetic workspaces. `skill-behavior.eval.yaml` uses `prompt` model-judge graders for semantic contracts that deterministic checks cannot credibly assess.
 
 ## Spec inventory
 
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
 | `instructions.eval.yaml`   | 3i   | Advisory | 73      | `behavior-conformance` | Active (Phase 11) |
-| `skill-behavior.eval.yaml` | 3s   | Advisory | 390     | `behavior-conformance` | Active (Phase 13) |
+| `skill-behavior.eval.yaml` | 3s   | Advisory | 402     | `behavior-conformance` | Active (Phase 13) |
 
 Prompt conformance coverage moved to `skill-behavior.eval.yaml` and the agent-behavior partials when the repository's prompts became skills or agent entry modes. The `vally-tests` skill still routes `prompt`-kind stimuli to `prompts.eval.yaml`, which it creates on first use.
 
@@ -35,7 +35,8 @@ Stimuli that only checked how a moved instruction attached by `applyTo` were rem
 * Additional: `docusaurus-edits`, `dt-coach-telemetry`, `experiment-designer`, and `skill-security-model`.
 * Language guidance: Rust test placement, naming, local HTTP mocks, and unit-test network isolation; Bicep sensitive-parameter and required-default conventions.
 
-The maintained `skill-behavior.eval.yaml` inventory contains 390 stimuli across 90 skill subjects.
+The maintained `skill-behavior.eval.yaml` inventory contains 402 stimuli across 93 skill subjects.
+Four handoff scenarios stage local producer and receiver evidence to check new, revised, reused, obsolete and stale drafts. A fifth checks which issue should receive the context, when a comment needs approval, and when to reconcile an uncertain delivery. None posts a live comment.
 It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge,
 unavailable-bridge, read-only-review, and review-pass ownership decisions plus direct
 `rpi-challenger`, `rpi-plan-critique`, pull-request preflight, and RCA evidence-routing,
@@ -219,7 +220,7 @@ validation alone cannot establish that the model follows the policy.
 
 The `backlog-plan` and `backlog-execute` workflow commands carry knowledge coverage plus a read-only boundary assertion and a mutation-safety assertion respectively. Other installed skill domains remain in advisory mode.
 
-The current branch-specific calibration status is not yet established for gating. Pass-rate and false-positive measurements are collected from advisory CI runs before graduation. Most stimuli use `output-matches` to check contract vocabulary and routing signals, while seven skill graders use `prompt` model judgment for semantic contracts such as the changes-record contract.
+The current branch-specific calibration status is not yet established for gating. Pass-rate and false-positive measurements are collected from advisory CI runs before graduation. Most stimuli use `output-matches` to check contract vocabulary and routing signals, while semantic contracts such as the changes-record and handoff contracts use `prompt` model judgment.
 
 ### Rust HTTP unit-test evidence boundary
 

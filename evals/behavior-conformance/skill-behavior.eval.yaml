@@ -10596,3 +10596,242 @@ stimuli:
         name: skill-code-review-bleed-detection-functional-default
         config:
           pattern: '(?i)((?<!non[-\s])\bfunctional\b|opt[-\s]in|explicitly\s+request(?:ed|s)?|unloaded)'
+
+  - name: skill-rpi-handoff-before-closeout
+    prompt: |
+      In this synthetic workspace, use the staged rpi skill's Follow-up assessment
+      for the existing release task. Producer acceptance is satisfied and Review
+      was skipped. Assess only the local evidence.txt snapshot and the existing
+      producer session under .copilot-tracking/rpi-sessions/2026-10-10/release.
+      This is the local assessment portion of closeout, not a phase transition.
+      Return the result to the producer. Leave session state and input evidence
+      unchanged. No remote or messaging service is available.
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/rpi
+        - ../../.github/skills/rpi/workstream-handoff
+      files:
+        - &handoff-producer-state
+          src: fixtures/workstream-handoff/release-state.json
+          dest: .copilot-tracking/rpi-sessions/2026-10-10/release/release-state.json
+        - src: fixtures/workstream-handoff/partial-release.txt
+          dest: evidence.txt
+    simulation: &handoff-local-only
+      tool_overrides:
+        bash: &handoff-unavailable
+          output: Only native local file and skill tools are available in this fixture.
+          is_error: true
+        powershell: *handoff-unavailable
+        shell: *handoff-unavailable
+        send_session_message: *handoff-unavailable
+        send_message: *handoff-unavailable
+        task: *handoff-unavailable
+        github-mcp-server-issue_read: *handoff-unavailable
+        github-mcp-server-add_issue_comment: *handoff-unavailable
+    tags:
+      category: behavior-conformance
+      skill: rpi
+      shape: tool-trigger
+      advisory: "true"
+      prompt_sha256: 47b042b3b9ed7aef079caa3fbfefcfff70d82ed8ed85c69b0c82a6aaf36ef5dd
+    rubric:
+      - >
+        Require a separate unsent copy-ready message distinguishing the landed
+        prepare output for the in-run private operation from receipt-input
+        for the originating successful run's post-completion publisher.
+        The receiver can test both adapters locally but must leave both gates
+        disabled for their respective owners. No private-notes pointer, local
+        tracking path or record ID inside the message; no notification,
+        acceptance or receiver assignment claimed.
+    graders:
+      - type: skill-invocation
+        name: follow-up-invokes-local-handoff
+        config:
+          required: [workstream-handoff]
+      - type: run-command
+        name: handoff-new-draft-and-input-integrity
+        config:
+          command: node
+          args:
+            - -e
+            - &handoff-check-files |
+              const fs = require('node:fs'), crypto = require('node:crypto'), assert = require('node:assert/strict');
+              const [inputHash, ...expected] = process.argv.slice(1);
+              const read = p => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
+              const digest = s => crypto.createHash('sha256').update(s).digest('hex');
+              const root = '.copilot-tracking/rpi-sessions/2026-10-10/release';
+              assert.equal(digest(read('evidence.txt')), inputHash, 'producer/receiver snapshot changed');
+              assert.equal(digest(read(root+'/release-state.json')), 'e0cf135b904f165e6c98e92e4d6808515bb539d3c6a43a286feabef905a1e4eb', 'producer state changed');
+              const dir = root+'/handoffs';
+              assert.deepEqual(fs.readdirSync(dir).sort(), expected.map((_,i) => `handoff-${i+1}.md`));
+              for (const [i, row] of expected.entries()) {
+                const [status, revision, priorHash] = row.split(':');
+                const id = `handoff-${i+1}`, text = read(`${dir}/${id}.md`);
+                const field = (k,v) => assert.match(text,new RegExp(`^\\* ${k}: ${v}[ \\t]*$`,'mi'));
+                field('Handoff ID',id); field('Revision',revision); field('Status',status);
+                if (revision !== '1') assert.match(text,/^\* Supersedes: (?:revision )?1[ \t]*$/mi);
+                if (priorHash) assert.equal(digest(text),priorHash,'unchanged evidence rewrote draft');
+                const message = text.match(/^## Copy-ready message[ \t]*\n([\s\S]*)$/mi);
+                if (status === 'current') {
+                  assert.ok(message && message[1].trim(), 'missing copy-ready message');
+                  assert.doesNotMatch(message[1],/private-notes|\.copilot-tracking|handoff-\d+\b/i);
+                } else assert.equal(message,null,'invalidated advice remains copyable');
+              }
+            - 8cc0cbafbfa0753af818e36fcac381847982d5853213eb2781f85ef21722b56e
+            - current:1
+          expected_exit_code: 0
+      - type: prompt
+        name: handoff-release-action-and-gates
+        config: &handoff-semantic
+          scoring: binary
+          threshold: 0.85
+
+  - name: skill-workstream-handoff-merged-record
+    prompt: |
+      Run workstream-handoff for producer release, using only evidence.txt and
+      its existing session under .copilot-tracking/rpi-sessions/2026-10-10/release.
+      Recheck the producer's earlier advice for both receivers against the new
+      snapshot. Return what each receiver can act on, without changing the
+      input snapshot or session state. This workspace has no external channel.
+    agent_environment:
+      skills: &handoff-skill
+        - ../../.github/skills/rpi/workstream-handoff
+      files:
+        - *handoff-producer-state
+        - src: fixtures/workstream-handoff/merged-record.txt
+          dest: evidence.txt
+        - &handoff-publisher-prior
+          src: fixtures/workstream-handoff/publisher-prior.txt
+          dest: .copilot-tracking/rpi-sessions/2026-10-10/release/handoffs/handoff-1.md
+        - src: fixtures/workstream-handoff/auditor-prior.txt
+          dest: .copilot-tracking/rpi-sessions/2026-10-10/release/handoffs/handoff-2.md
+    simulation: *handoff-local-only
+    tags:
+      category: behavior-conformance
+      skill: workstream-handoff
+      shape: tool-trigger
+      advisory: "true"
+      prompt_sha256: dcec0584af06248e98b6de11030f9ddad1dd05d164eb262f62f1e7fef22f40fd
+    rubric:
+      - >
+        Give the publisher a separate unsent message to consume and validate
+        the producer's handoff_ref and source_sha, not to generate another
+        record; distinguish local fixtures from outstanding integration
+        verification. Identify the adapted auditor as needing no new message.
+        The message has no private-notes pointer, local tracking path or
+        record ID. Do not claim either receiver's plan was changed or accepted.
+    graders:
+      - type: run-command
+        name: handoff-existing-identities-revised-in-place
+        config:
+          command: node
+          args: [-e, *handoff-check-files, 44052589f79aa2be350e051f35e85b9661c3f7ca283cd63ca5ffa4edc937716a, 'current:2', 'obsolete:2']
+          expected_exit_code: 0
+      - type: prompt
+        name: handoff-replaces-duplicate-writer
+        config: *handoff-semantic
+
+  - name: skill-workstream-handoff-schedule-replay
+    prompt: |
+      Use workstream-handoff for release and the deployment dependency described
+      in evidence.txt. Check the prior record in the existing producer session
+      under .copilot-tracking/rpi-sessions/2026-10-10/release. Show the producer
+      what can proceed and what cannot. The local evidence and producer state
+      are read-only. There is no external channel.
+    agent_environment:
+      skills: *handoff-skill
+      files:
+        - *handoff-producer-state
+        - src: fixtures/workstream-handoff/host-delay.txt
+          dest: evidence.txt
+        - src: fixtures/workstream-handoff/deploy-prior.txt
+          dest: .copilot-tracking/rpi-sessions/2026-10-10/release/handoffs/handoff-1.md
+    simulation: *handoff-local-only
+    tags:
+      category: behavior-conformance
+      skill: workstream-handoff
+      shape: tool-trigger
+      advisory: "true"
+      prompt_sha256: c70b5722deb387c14791bed451a82db7997e9537abd138d61b0621272c8f7fda
+    rubric:
+      - >
+        Reuse the current draft with no new revision. Its copy-ready advice
+        permits the fake-host local adapter tests, holds only deployed
+        acceptance, and names the runtime owner's readiness attestation and
+        binding reference, not simply window 2. No local-only identifiers in
+        the copy-ready text and no actual deployment or delivery claimed.
+    graders:
+      - type: run-command
+        name: handoff-replay-keeps-identical-record
+        config:
+          command: node
+          args: [-e, *handoff-check-files, 9c8075811cfad719326996dccece5272704ae6f632a6cacc728af0561daf4639, 'current:1:923225df355fc31ddcaa75ba0cd06619fb97b3ff6d56b7022d1c3fdf8fe1d1e0']
+          expected_exit_code: 0
+      - type: prompt
+        name: handoff-scopes-deployment-gate
+        config: *handoff-semantic
+
+  - name: skill-workstream-handoff-overlap-and-lost-access
+    prompt: |
+      Assess the release change with workstream-handoff using evidence.txt
+      as the entire allowed snapshot. The existing release
+      session is under .copilot-tracking/rpi-sessions/2026-10-10/release.
+      Recheck previous advice and report coverage for the listed workstreams.
+      Do not modify the input snapshot or session state or contact other systems.
+    agent_environment:
+      skills: *handoff-skill
+      files:
+        - *handoff-producer-state
+        - src: fixtures/workstream-handoff/overlap.txt
+          dest: evidence.txt
+        - *handoff-publisher-prior
+    simulation: *handoff-local-only
+    tags:
+      category: behavior-conformance
+      skill: workstream-handoff
+      shape: bleed-detection
+      advisory: "true"
+      prompt_sha256: d48e221fd47e1c3df8505a90167f551720016459321a60dc8c35872b37ff1740
+    rubric:
+      - >
+        Distinguish the verified label-only change (no action) from the
+        inaccessible current publisher plan (incomplete coverage, not
+        proof of no impact). Name the missing receiver check; withdraw the
+        prior advice without a copy-ready message for either receiver.
+        No claim of remote lookup, receiver acceptance or delivery.
+    graders:
+      - type: run-command
+        name: handoff-overlap-no-new-draft-and-stale-copy-withdrawn
+        config:
+          command: node
+          args: [-e, *handoff-check-files, dd97bd5e02a9927c81c1cd938a823e0facbbfc2af3fd21cb13e99322f46da6c7, 'stale:2']
+          expected_exit_code: 0
+      - type: prompt
+        name: handoff-overlap-and-missing-evidence-separated
+        config: *handoff-semantic
+
+  - name: skill-workstream-handoff-receiving-issue
+    prompt: |
+      Use the staged workstream-handoff skill for this synthetic decision exercise. Do not contact a tracker or perform any write. For each independent case, state what the live workflow should do next.
+      The producer's release issue and original discussion are on build issue 12. The publisher task that consumes the changed output is tracked on delivery issue 34. An unrelated task owned by the same colleague is on delivery issue 56. All three references resolve to existing issues in the authorized target workspace. Unless a case states otherwise, current evidence confirms the publisher impact, the writer is available and required backlog review gates have passed.
+      A: No comment preview has been approved. B: The producer approved the exact final body and revision for the verified publisher issue, with no previous attempt. C: After that approval, the body changed. D: The approved operation was attempted but the response was lost and delivery cannot yet be established. E: The same revision and body already have a verified comment receipt. F: No issue anchor is present on the receiving task; two issues plausibly track it. G: The receiver issue is known but the target workspace is read-only.
+      Return seven lines in order, each as letter: action destination. Actions: preview, post, reconcile, receipt, clarify, draft. Destinations: build/12, delivery/34, delivery/56, none. For ambiguous routing or unavailable delivery use none.
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/workstream-handoff
+        - ../../.github/skills/project-planning/backlog-management
+        - ../../.github/skills/project-planning/backlog-execute
+    simulation: *handoff-local-only
+    tags:
+      category: behavior-conformance
+      skill: workstream-handoff
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 5a9ac0cc0520d1337009ac851059ac28ae15e3544fd8918ce572b5f31dcce02d
+    graders:
+      - type: output-matches
+        name: handoff-receiver-issue-approval-and-replay
+        config:
+          pattern: '(?i)^[ \t]*A:[ \t]+preview[ \t]+delivery/34[ \t]*\r?\nB:[ \t]+post[ \t]+delivery/34[ \t]*\r?\nC:[ \t]+preview[ \t]+delivery/34[ \t]*\r?\nD:[ \t]+reconcile[ \t]+delivery/34[ \t]*\r?\nE:[ \t]+receipt[ \t]+delivery/34[ \t]*\r?\nF:[ \t]+clarify[ \t]+none[ \t]*\r?\nG:[ \t]+draft[ \t]+none[ \t]*(?:\r?\n)?(?![\s\S])'
+      - type: diff-empty
+        name: handoff-receiver-decision-no-workspace-writes

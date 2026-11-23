@@ -1,0 +1,6 @@
+Snapshot: release-merge, 2026-10-10. Synthetic evidence for the authorized release workspace.
+Producer release / release owner. Contract: release inputs. Main before 1111111111111111111111111111111111111111; integrated and current main 2222222222222222222222222222222222222222.
+Before: no release inputs. On main: workflows/release.yml, job prepare, step pack produces bundle_ref and uploads receipt-input for that run. Neither private execution nor receipt publication is wired.
+Receiver publisher / integration owner, branch publisher-wiring at 3333333333333333333333333333333333333333 based on current main. P02-T01 needs the bundle inside the release run; proposed job private_operation, step invoke_private uses needs.prepare.outputs.bundle_ref. The environment owner has not approved the runtime binding.
+P02-T02 needs to publish a receipt after release completes. The branch has publishReceipt but no listener. The proposed workflows/receipt.yml job publish_receipt, step emit_receipt takes receipt-input from the originating successful run using its run ID and head SHA. The release owner has not approved the destination or success gate.
+Local fixtures are available for both adapters. No deployed test has run. Internal evidence pointer for local readers only: private-notes/work-item-map.
