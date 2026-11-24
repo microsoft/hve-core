@@ -12,6 +12,11 @@ metadata:
 
 # Backlog Management
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 Shared, platform-agnostic conventions for backlog managers across Azure DevOps, GitHub, and Jira. This skill owns the structural core that every platform reuses: how planning files are named and laid out, how planned items are identified, how candidate work is compared to existing work, how autonomy gates mutations, how outbound text is sanitized, and how an interrupted workflow resumes. Each platform contributes only its small delta (the command surface, field vocabulary, reference-ID prefix, and action verbs) through a per-platform reference.
 
 ## When to Use

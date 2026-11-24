@@ -8,6 +8,11 @@ user-invocable: true
 
 # Security Planning
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 This skill packages durable security-planning and plan-drift analysis used by Security Planner, Security Reviewer, and Code Review: operational bucket guidance, STRIDE analysis patterns, standards cross-references, NIST control-family references, security-specific backlog formats, and correlation of a Security Planner baseline with current security findings.
 
 ## When to use

@@ -10,7 +10,7 @@
     Validates exactly one current-run evidence envelope for each fixed calibration
     model, reconstructs the existing combined schema-2 summary, and writes an eval
     summary fragment for the PR report. Missing, duplicate, stale, incompatible, or
-    non-passing evidence fails closed.
+    invalid evidence fails closed; valid non-passing measurements retain their causes.
 .PARAMETER EnvelopePath
     Paths to the per-model evidence envelopes. Exactly two are required unless
     NotRequired is set.
@@ -38,7 +38,8 @@
     Destination for a bounded merge status used to distinguish evidence failures
     from infrastructure and contract failures.
 .PARAMETER NotRequired
-    Writes explicit empty not-required summaries without reading model envelopes.
+    Validates that PlanPath does not require baseline execution, then writes
+    explicit empty summaries without reading model envelopes.
 .EXAMPLE
     ./Merge-BaselineEquivalence.ps1 -EnvelopePath logs/model-*.json `
         -ExpectedWorkflowRunId 123 -ExpectedWorkflowRunAttempt 1 `
@@ -127,18 +128,18 @@ function Read-ModelEnvelope {
     )
 
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
-        throw "Model envelope not found: $Path"
+        throw 'Model evidence envelope was not found.'
     }
     try {
         $envelope = Get-Content -LiteralPath $Path -Raw -Encoding utf8 | ConvertFrom-Json -Depth 100 -ErrorAction Stop
     }
     catch {
-        throw "Model envelope is unreadable: $Path"
+        throw 'Model evidence envelope is unreadable.'
     }
 
-    $context = "Model envelope '$Path'"
+    $context = 'Model evidence envelope'
     $envelopeVersion = [string](Assert-Property -InputObject $envelope -Name 'envelopeSchemaVersion' -Context $context)
-    if (($envelopeVersion -split '\.')[0] -ne '1') { throw "$context has unsupported envelope schema '$envelopeVersion'." }
+    if ($envelopeVersion -cne '1.0.0') { throw 'Unsupported model envelope schema.' }
 
     $expectedIdentity = [ordered]@{
         workflowRunId      = $WorkflowRunId
@@ -150,17 +151,22 @@ function Read-ModelEnvelope {
     foreach ($name in $expectedIdentity.Keys) {
         $observed = Assert-Property -InputObject $envelope -Name $name -Context $context
         if ([string]$observed -cne [string]$expectedIdentity[$name]) {
-            throw "$context has $name '$observed'; expected '$($expectedIdentity[$name])'."
+            throw "$context has mismatched $name."
         }
     }
 
     $selectedModel = [string](Assert-Property -InputObject $envelope -Name 'selectedModel' -Context $context)
     if ($selectedModel -notin @('gpt-6-luna', 'claude-sonnet-5')) {
-        throw "$context has unexpected selectedModel '$selectedModel'."
+        throw 'Unexpected model evidence identity.'
     }
     $driverRunId = [string](Assert-Property -InputObject $envelope -Name 'driverRunId' -Context $context)
-    if ([string]::IsNullOrWhiteSpace($driverRunId)) { throw "$context has an empty driverRunId." }
-    $producerExitCode = [int](Assert-Property -InputObject $envelope -Name 'producerExitCode' -Context $context)
+    if ($driverRunId -cnotmatch '^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$') { throw 'Invalid driver run identity.' }
+    $producerExitCode = Assert-Property -InputObject $envelope -Name 'producerExitCode' -Context $context
+    if ($producerExitCode -isnot [ValueType] -or $producerExitCode -is [bool] -or
+        -not [double]::IsFinite([double]$producerExitCode) -or [double]$producerExitCode -lt [int]::MinValue -or
+        [double]$producerExitCode -gt [int]::MaxValue -or [math]::Truncate([double]$producerExitCode) -ne [double]$producerExitCode) {
+        throw 'Invalid producer exit evidence.'
+    }
     if (-not [string]::IsNullOrWhiteSpace($ExpectedPlanDigest)) {
         $planDigest = [string](Assert-Property -InputObject $envelope -Name 'planDigest' -Context $context)
         if ($planDigest -cne $ExpectedPlanDigest) { throw "$context has a mismatched planDigest." }
@@ -168,7 +174,7 @@ function Read-ModelEnvelope {
 
     $summary = Assert-Property -InputObject $envelope -Name 'summary' -Context $context
     $summaryVersion = [string](Assert-Property -InputObject $summary -Name 'schemaVersion' -Context "$context summary")
-    if (($summaryVersion -split '\.')[0] -ne '2') { throw "$context summary has unsupported schema '$summaryVersion'." }
+    if ($summaryVersion -cne '2.2.0') { throw 'Unsupported baseline summary schema.' }
 
     foreach ($name in @(
             'runId', 'agent', 'tier', 'model', 'runs', 'ties', 'baselineWins', 'treatmentWins',
@@ -186,11 +192,9 @@ function Read-ModelEnvelope {
         throw "$context summary identity does not match its envelope."
     }
     if ([string]$summary.runId -cne $driverRunId) { throw "$context summary runId does not match its envelope." }
-    $summaryPassed = [string]$summary.verdict -eq 'pass' -and [string]$summary.equivalenceGate -eq 'pass'
-    if ($producerExitCode -ne 0 -and -not $summaryPassed) {
-        throw "EVIDENCE_FAILURE: $context records a non-passing authoritative result."
-    }
-    if ($producerExitCode -ne 0 -or -not $summaryPassed) {
+    $null = Assert-BaselineInvariantEvidence -Summary $summary -Models @($selectedModel)
+    $summaryPassed = [string]$summary.verdict -eq 'pass'
+    if (($producerExitCode -eq 0) -ne $summaryPassed) {
         throw "$context has inconsistent producer exit and summary verdict evidence."
     }
 
@@ -240,16 +244,20 @@ function New-EvalSummaryFragment {
         }
     }
 
-    $authoritativeFailures = [int]$Summary.invariantFailures + [int]$Summary.runHealthFailures + [int]$Summary.dataQualityViolations
+    $rows = @(Assert-BaselineInvariantEvidence -Summary $Summary -Models @('gpt-6-luna', 'claude-sonnet-5'))
+    $evaluated = [long]0
+    foreach ($row in $rows) { $evaluated += $row.invariantDiagnostics.evaluated }
+    $authoritativeFailures = [long]$Summary.invariantFailures
     $entry = [ordered]@{
+        schemaVersion = '2.2.0'
         agent = $Summary.agent
         tier = $Summary.tier
         verdict = $Summary.verdict
         equivalenceGate = $Summary.equivalenceGate
         documentedDivergenceGate = $Summary.documentedDivergenceGate
-        exitCode = 0
+        exitCode = if ($Summary.verdict -eq 'pass') { 0 } else { 1 }
         trials = $Summary.runs
-        assertionsPassed = [math]::Max(0, [int]$Summary.runs - $authoritativeFailures)
+        assertionsPassed = $evaluated - $authoritativeFailures
         assertionsFailed = $authoritativeFailures
         advisoryAssertionsFailed = [int]$Summary.divergenceGuardFailures
         invariantFailures = [int]$Summary.invariantFailures
@@ -257,6 +265,8 @@ function New-EvalSummaryFragment {
         divergenceGuardFailures = [int]$Summary.divergenceGuardFailures
         dataQualityViolations = [int]$Summary.dataQualityViolations
         invocationFailures = [int]$Summary.invocationFailures
+        equivalentTrials = [int]$Summary.equivalentTrials
+        perModelEvidence = $rows
         resultsPath = 'logs/baseline-equivalence-rpi-agent.json'
     }
     return [ordered]@{
@@ -267,8 +277,8 @@ function New-EvalSummaryFragment {
         totals = [ordered]@{
             artifacts = 0
             specs = 0
-            assertionsPassed = 0
-            assertionsFailed = 0
+            assertionsPassed = $entry.assertionsPassed
+            assertionsFailed = $entry.assertionsFailed
             durationMs = 0
             failedSpecs = if ($entry.verdict -eq 'pass') { 0 } else { 1 }
         }
@@ -279,44 +289,6 @@ function New-EvalSummaryFragment {
     }
 }
 
-function New-FailedEvalSummaryFragment {
-    <#
-    .SYNOPSIS
-        Creates a bounded report fragment for a soft-failed evidence verdict.
-    #>
-    [CmdletBinding()]
-    [OutputType([ordered])]
-    param()
-
-    return [ordered]@{
-        manifestPath = $null
-        evalRoot = $null
-        model = 'gpt-6-luna'
-        kindFilter = @('equivalence')
-        totals = [ordered]@{ artifacts = 0; specs = 0; assertionsPassed = 0; assertionsFailed = 1; durationMs = 0; failedSpecs = 1 }
-        perArtifact = @()
-        perSpec = @()
-        equivalence = @([ordered]@{
-                agent = 'rpi-agent'
-                tier = 'calibration'
-                verdict = 'fail'
-                equivalenceGate = 'fail'
-                documentedDivergenceGate = 'report-only'
-                exitCode = 1
-                trials = 0
-                assertionsPassed = 0
-                assertionsFailed = 1
-                advisoryAssertionsFailed = 0
-                invariantFailures = 0
-                runHealthFailures = 0
-                divergenceGuardFailures = 0
-                dataQualityViolations = 1
-                invocationFailures = 0
-                resultsPath = 'logs/baseline-equivalence-rpi-agent.json'
-            })
-        equivalenceStatus = 'failed-evidence'
-    }
-}
 #endregion Functions
 
 #region Main Execution
@@ -328,8 +300,16 @@ if ($MyInvocation.InvocationName -ne '.') {
         if ([string]::IsNullOrWhiteSpace($StatusPath)) {
             $StatusPath = Join-Path (Split-Path -Parent $EvalSummaryPath) 'merge-status.json'
         }
+        foreach ($target in @($OutputPath, $EvalSummaryPath)) {
+            if (Test-Path -LiteralPath $target -PathType Leaf) { Remove-Item -LiteralPath $target -Force }
+        }
         if ($NotRequired) {
-            Write-JsonDocument -Value ([ordered]@{ schemaVersion = '2.1.0'; agent = $ExpectedAgent; tier = $ExpectedTier; status = 'not-required'; runs = 0; verdict = 'not-required' }) -Path $OutputPath
+            if ([string]::IsNullOrWhiteSpace($PlanPath)) { throw 'A canonical plan is required for not-required evidence.' }
+            $plan = Get-Content -LiteralPath $PlanPath -Raw -Encoding utf8 | ConvertFrom-Json -Depth 50 -ErrorAction Stop
+            if (-not (Test-AgentEvalPlanDigest -Plan $plan) -or $plan.baseline.required -isnot [bool] -or $plan.baseline.required) {
+                throw 'The canonical plan does not authorize not-required evidence.'
+            }
+            Write-JsonDocument -Value ([ordered]@{ schemaVersion = '2.2.0'; agent = $ExpectedAgent; tier = $ExpectedTier; status = 'not-required'; runs = 0; verdict = 'not-required' }) -Path $OutputPath
             Write-JsonDocument -Value (New-EvalSummaryFragment -NotRequired) -Path $EvalSummaryPath
             Write-JsonDocument -Value ([ordered]@{ schemaVersion = '1.0.0'; status = 'not-required'; category = 'none' }) -Path $StatusPath
             Write-Host "Baseline equivalence is not required; empty reporting fragment written."
@@ -376,20 +356,21 @@ if ($MyInvocation.InvocationName -ne '.') {
         }
 
         $combined = Merge-ModelSummaries -Envelope $envelopes
-        if ($combined.verdict -ne 'pass') { throw "Combined equivalence verdict is '$($combined.verdict)'." }
         Write-JsonDocument -Value $combined -Path $OutputPath
         Write-JsonDocument -Value (New-EvalSummaryFragment -Summary $combined) -Path $EvalSummaryPath
-        Write-JsonDocument -Value ([ordered]@{ schemaVersion = '1.0.0'; status = 'pass'; category = 'none' }) -Path $StatusPath
+        $passed = $combined.verdict -eq 'pass'
+        Write-JsonDocument -Value ([ordered]@{
+                schemaVersion = '1.0.0'; status = if ($passed) { 'pass' } else { 'fail' }
+                category = if ($passed) { 'none' } else { 'evidence' }
+            }) -Path $StatusPath
         Write-Host "Merged baseline equivalence: models=$($models -join ',') runs=$($combined.runs) verdict=$($combined.verdict)"
-        exit 0
+        if ($passed) { exit 0 }
+        exit 1
     }
     catch {
-        $category = if ($_.Exception.Message -like 'EVIDENCE_FAILURE:*') { 'evidence' } else { 'contract' }
+        $category = 'contract'
         if (-not [string]::IsNullOrWhiteSpace($StatusPath)) {
             Write-JsonDocument -Value ([ordered]@{ schemaVersion = '1.0.0'; status = 'fail'; category = $category }) -Path $StatusPath
-        }
-        if ($category -eq 'evidence' -and -not [string]::IsNullOrWhiteSpace($EvalSummaryPath)) {
-            Write-JsonDocument -Value (New-FailedEvalSummaryFragment) -Path $EvalSummaryPath
         }
         Write-Error -ErrorAction Continue "Merge-BaselineEquivalence failed: $($_.Exception.Message)"
         exit 1

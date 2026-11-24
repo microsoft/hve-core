@@ -8,6 +8,11 @@ user-invocable: true
 
 # Code Review
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Ensure changed code meets the contribution bar of the codebase through a rigorous functional review first, backed by one immutable snapshot, verified vector-tagged findings, and a human-editable `review.md`.

@@ -5,11 +5,15 @@
 BeforeAll {
     . (Join-Path $PSScriptRoot '../../evals/Merge-EvalExecution.ps1')
     function New-FanInPlan {
+        param([bool]$Baseline = $false)
         $plan = [pscustomobject][ordered]@{
             schemaVersion = '1.1.0'
             manifestDigests = [pscustomobject][ordered]@{ changedArtifacts = 'sha256:a'; changedSpecs = 'sha256:b' }
             planDigest = ''
-            baseline = [pscustomobject][ordered]@{ required = $false; reason = 'agent-not-affected:rpi-agent'; models = @() }
+            baseline = [pscustomobject][ordered]@{
+                required = $Baseline; reason = if ($Baseline) { 'affected-agent:rpi-agent' } else { 'agent-not-affected:rpi-agent' }
+                models = @(if ($Baseline) { 'gpt-6-luna'; 'claude-sonnet-5' })
+            }
             ordinaryShards = @(
                 [pscustomobject][ordered]@{ id = 'ordinary-01'; kind = 'agent'; expectedTrialWeight = 2; artifacts = @('agent:alpha'); runKeys = @('alpha.yaml') }
                 [pscustomobject][ordered]@{ id = 'instruction-01'; kind = 'instruction'; expectedTrialWeight = 1; artifacts = @('instruction:beta'); runKeys = @('instructions.yaml|instruction=beta') }
@@ -17,7 +21,8 @@ BeforeAll {
             )
             expectedProducers = @('ordinary-01', 'instruction-01', 'skill-01', 'prompt')
         }
-        $payload = [ordered]@{ schemaVersion = $plan.schemaVersion; manifestDigests = [ordered]@{ changedArtifacts = $plan.manifestDigests.changedArtifacts; changedSpecs = $plan.manifestDigests.changedSpecs }; baseline = [ordered]@{ required = $false; reason = $plan.baseline.reason; models = @() }; ordinaryShards = @($plan.ordinaryShards); expectedProducers = @($plan.expectedProducers) }
+        if ($Baseline) { $plan.expectedProducers += @('baseline:gpt-6-luna', 'baseline:claude-sonnet-5') }
+        $payload = [ordered]@{ schemaVersion = $plan.schemaVersion; manifestDigests = [ordered]@{ changedArtifacts = $plan.manifestDigests.changedArtifacts; changedSpecs = $plan.manifestDigests.changedSpecs }; baseline = [ordered]@{ required = $Baseline; reason = $plan.baseline.reason; models = @($plan.baseline.models) }; ordinaryShards = @($plan.ordinaryShards); expectedProducers = @($plan.expectedProducers) }
         $plan.planDigest = Get-AgentEvalValueDigest -Value $payload
         return $plan
     }
@@ -45,6 +50,40 @@ BeforeAll {
         $instruction.perSpec = @([pscustomobject]@{ specPath = 'instructions.yaml'; tag = 'instruction=beta'; diagnostics = (New-FanInDiagnostics 'instructions.yaml|instruction=beta' 1) })
         return @($agent, $instruction, (New-FanInSummary 'skill-01' 'skill' $Plan.planDigest), (New-FanInSummary prompt))
     }
+    function New-BaselineFanInSummary {
+        $summary = New-FanInSummary 'equivalence' 'equivalence'
+        $summary.totals.assertionsPassed = 167
+        $summary.totals.assertionsFailed = 1
+        $summary.totals.failedSpecs = 1
+        $rows = @(
+            foreach ($model in @('claude-sonnet-5', 'gpt-6-luna')) {
+                $failed = [int]($model -eq 'gpt-6-luna')
+                [pscustomobject]@{
+                    model = $model; verdict = if ($failed) { 'fail' } else { 'pass' }
+                    runs = 105; runHealthFailures = 0; dataQualityViolations = 0; invocationFailures = 0
+                    invariantDiagnostics = [pscustomobject]@{
+                        evaluated = 84; failed = $failed; omittedFailureCount = 0
+                        failures = @(
+                            if ($failed) {
+                                [pscustomobject]@{ variant = 'baseline'; stimulus = 'code-reverse-string-rust'; grader = 'rust-fn-syntax'; count = 1 }
+                            }
+                        )
+                    }
+                }
+            }
+        )
+        $summary | Add-Member equivalenceStatus 'complete'
+        $summary.equivalence = @([pscustomobject]@{
+            schemaVersion = '2.2.0'; agent = 'rpi-agent'; tier = 'calibration'; verdict = 'fail'
+            equivalenceGate = 'fail'; documentedDivergenceGate = 'report-only'; exitCode = 1
+            trials = 210; equivalentTrials = 210; invariantFailures = 1; runHealthFailures = 0
+            dataQualityViolations = 0; invocationFailures = 0; divergenceGuardFailures = 0
+            assertionsPassed = 167; assertionsFailed = 1; advisoryAssertionsFailed = 0
+            perModelEvidence = $rows; resultsPath = 'logs/baseline-equivalence-rpi-agent.json'
+        })
+        return $summary
+    }
+
     function New-FanInDiagnostics([string]$RunKey, [int]$Runs) {
         $inventory = [ordered]@{ synthetic = [ordered]@{ runs = $Runs; graders = @([ordered]@{ name = 'check'; type = 'program' }) } }
         $trials = @(foreach ($trialIndex in 0..($Runs - 1)) {
@@ -64,6 +103,49 @@ BeforeAll {
 }
 
 Describe 'Merge-EvalExecution.ps1' -Tag 'Unit' {
+    It 'Retains original baseline causes independently of an ordinary failing spec' {
+        $plan = New-FanInPlan -Baseline $true
+        $summaries = @(New-ValidFanInSummary $plan)
+        $summaries[0].totals.failedSpecs = 1
+        $summaries[0].perSpec[0] | Add-Member status 'fail'
+        $result = Merge-EvalSummaryValue -Plan $plan -Summary @($summaries + (New-BaselineFanInSummary))
+        $result.schemaVersion | Should -Be '1.1.0'
+        $result.totals.failedSpecs | Should -Be 2
+        $result.equivalence[0].invariantFailures | Should -Be 1
+        $result.equivalence[0].trials | Should -Be 210
+        $result.equivalence[0].perModelEvidence | Should -HaveCount 2
+    }
+
+    It 'Rejects invalid baseline <Mutation> before authoritative publication' -ForEach @(
+        @{ Mutation = 'identity' }, @{ Mutation = 'unknown row field' },
+        @{ Mutation = 'wrong total' }, @{ Mutation = 'missing model' },
+        @{ Mutation = 'unknown entry field' }, @{ Mutation = 'boolean counter' },
+        @{ Mutation = 'boolean aggregate' },
+        @{ Mutation = 'unexpected artifacts' }
+    ) {
+        $plan = New-FanInPlan -Baseline $true
+        $summary = New-BaselineFanInSummary
+        switch ($Mutation) {
+            'identity' { $summary.equivalence[0].perModelEvidence[1].invariantDiagnostics.failures[0].stimulus = 'do-not-publish-this-fixture' }
+            'unknown row field' { $summary.equivalence[0].perModelEvidence[0] | Add-Member answer 'do-not-publish-this-fixture' }
+            'wrong total' { $summary.equivalence[0].invariantFailures = 2 }
+            'missing model' { $summary.equivalence[0].perModelEvidence = @($summary.equivalence[0].perModelEvidence[0]) }
+            'unknown entry field' { $summary.equivalence[0] | Add-Member answer 'do-not-publish-this-fixture' }
+            'boolean counter' { $summary.equivalence[0].assertionsFailed = $true }
+            'boolean aggregate' { $summary.totals.failedSpecs = $true }
+            'unexpected artifacts' { $summary.perArtifact = @([pscustomobject]@{ artifactId = 'do-not-publish-this-fixture' }) }
+        }
+        { Merge-EvalSummaryValue -Plan $plan -Summary @((New-ValidFanInSummary $plan) + $summary) } | Should -Throw
+    }
+
+    It 'Does not forward arbitrary baseline timing objects' {
+        $plan = New-FanInPlan -Baseline $true
+        $summary = New-BaselineFanInSummary
+        $summary.phaseTimings = @([pscustomobject]@{ output = 'do-not-publish-this-fixture' })
+        $result = Merge-EvalSummaryValue -Plan $plan -Summary @((New-ValidFanInSummary $plan) + $summary)
+        ($result | ConvertTo-Json -Depth 50) | Should -Not -Match 'do-not-publish-this-fixture'
+    }
+
     It 'merges the exact planned producer set in canonical order' {
         $plan = New-FanInPlan
         $result = Merge-EvalSummaryValue -Plan $plan -Summary (New-ValidFanInSummary -Plan $plan)

@@ -840,6 +840,183 @@ function Compare-DeclaredInstanceCoverage {
     }
 }
 
+function Get-CanonicalInvariantManifest {
+    <#
+    .SYNOPSIS
+        Loads the trusted stimulus/invariant vocabulary from the checkout.
+    .PARAMETER Path
+        Repository-owned canonical library; callers never take this path from evidence.
+    .OUTPUTS
+        System.Collections.Hashtable
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [string]$Path = (Join-Path $PSScriptRoot '../../../evals/baseline-equivalence/stimuli.yml')
+    )
+
+    Import-Module powershell-yaml -ErrorAction Stop
+    $library = ConvertFrom-Yaml (Get-Content -LiteralPath $Path -Raw -ErrorAction Stop)
+    $manifest = @{}
+    $seen = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    foreach ($stimulus in @($library.stimuli)) {
+        $name = $stimulus.name
+        if ($name -isnot [string] -or $name -cnotmatch '^[a-z0-9][a-z0-9-]{0,127}$' -or -not $seen.Add($name)) {
+            throw 'Invalid canonical invariant stimulus identity.'
+        }
+        if (-not $stimulus.ContainsKey('invariants')) { continue }
+        $names = @($stimulus.invariants)
+        if ($names.Count -eq 0 -or @($names | Sort-Object -Unique).Count -ne $names.Count) {
+            throw 'Invalid canonical invariant membership.'
+        }
+        foreach ($invariant in $names) {
+            if ($invariant -isnot [string] -or $invariant -cnotmatch '^[a-z0-9][a-z0-9-]{0,127}$') {
+                throw 'Invalid canonical invariant grader identity.'
+            }
+        }
+        $manifest[$name] = $names
+    }
+    return $manifest
+}
+
+function Assert-BaselineInvariantEvidence {
+    <#
+    .SYNOPSIS
+        Validates and projects bounded per-model invariant evidence without raw text.
+    .PARAMETER Summary
+        A producer, combined summary, or reporting entry.
+    .PARAMETER Models
+        Exact model identities authorized by the caller.
+    .PARAMETER Manifest
+        Trusted configured stimulus/invariant pairs.
+    .PARAMETER TrialProperty
+        Counter name used by the summary or reporting entry.
+    .OUTPUTS
+        System.Collections.Specialized.OrderedDictionary
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Collections.Specialized.OrderedDictionary])]
+    param(
+        [Parameter(Mandatory)]$Summary,
+        [Parameter(Mandatory)][string[]]$Models,
+        [hashtable]$Manifest = (Get-CanonicalInvariantManifest),
+        [ValidateSet('runs', 'trials')][string]$TrialProperty = 'runs'
+    )
+
+    $data = $Summary | ConvertTo-Json -Depth 100 | ConvertFrom-Json -AsHashtable
+    $integer = {
+        param($Value)
+        if ($Value -isnot [ValueType] -or $Value -is [bool] -or
+            -not [double]::IsFinite([double]$Value) -or [double]$Value -lt 0 -or
+            [double]$Value -gt [int]::MaxValue -or [math]::Truncate([double]$Value) -ne [double]$Value) {
+            throw 'Invalid baseline evidence counter.'
+        }
+        return [long]$Value
+    }
+    $keys = {
+        param($Value, [string[]]$Names)
+        if ($Value -isnot [System.Collections.IDictionary] -or $Value.Count -ne $Names.Count) {
+            throw 'Invalid baseline evidence fields.'
+        }
+        foreach ($key in $Value.Keys) {
+            if ([string]$key -cnotin $Names) { throw 'Invalid baseline evidence fields.' }
+        }
+    }
+    if ($data.schemaVersion -cne '2.2.0' -or $data.agent -cne 'rpi-agent' -or
+        $data.tier -cnotin @('devloop', 'calibration', 'ci')) {
+        throw 'Invalid baseline evidence contract.'
+    }
+    if ($Models.Count -lt 1 -or $Models.Count -gt 2 -or @($Models | Sort-Object -Unique).Count -ne $Models.Count -or
+        @($Models | Where-Object { $_ -cnotin @('gpt-6-luna', 'claude-sonnet-5') }).Count -gt 0) {
+        throw 'Invalid baseline evidence model set.'
+    }
+    $fields = @('invariantFailures', 'runHealthFailures', 'dataQualityViolations', 'invocationFailures')
+    foreach ($name in @($TrialProperty, 'equivalentTrials') + $fields) { $null = & $integer $data[$name] }
+    if ($data.equivalentTrials -gt $data[$TrialProperty]) { throw 'Invalid baseline comparison population.' }
+    $rows = @(if ($Models.Count -eq 1) {
+        if ($data.model -cne $Models[0] -or -not $data.Contains('invariantDiagnostics')) {
+            throw 'Invalid isolated baseline evidence.'
+        }
+        @([ordered]@{
+            model = $data.model; verdict = $data.verdict; runs = $data[$TrialProperty]
+            runHealthFailures = $data.runHealthFailures; dataQualityViolations = $data.dataQualityViolations
+            invocationFailures = $data.invocationFailures; invariantDiagnostics = $data.invariantDiagnostics
+        })
+    }
+    else {
+        if (-not $data.Contains('perModelEvidence') -or $data.perModelEvidence -isnot [array]) {
+            throw 'Missing per-model baseline evidence.'
+        }
+        @($data.perModelEvidence)
+    })
+    if ($rows.Count -ne $Models.Count -or
+        (@($rows.model | Sort-Object) -join ',') -cne (@($Models | Sort-Object) -join ',') -or
+        @($rows.model | Sort-Object -Unique).Count -ne $Models.Count) {
+        throw 'Baseline evidence model set does not match.'
+    }
+    $totals = @{ runs = [long]0; invariantFailures = [long]0; runHealthFailures = [long]0
+        dataQualityViolations = [long]0; invocationFailures = [long]0 }
+    $projected = foreach ($row in @($rows | Sort-Object model)) {
+        & $keys $row @('model', 'verdict', 'runs', 'runHealthFailures', 'dataQualityViolations', 'invocationFailures', 'invariantDiagnostics')
+        foreach ($name in @('runs', 'runHealthFailures', 'dataQualityViolations', 'invocationFailures')) {
+            $totals[$name] += & $integer $row[$name]
+        }
+        if ($row.verdict -cnotin @('pass', 'fail', 'warn') -or ($data.tier -ne 'devloop' -and $row.verdict -eq 'warn')) {
+            throw 'Invalid baseline model verdict.'
+        }
+        $diagnostic = $row.invariantDiagnostics
+        & $keys $diagnostic @('evaluated', 'failed', 'omittedFailureCount', 'failures')
+        foreach ($name in @('evaluated', 'failed', 'omittedFailureCount')) { $null = & $integer $diagnostic[$name] }
+        if ($diagnostic.failed -gt $diagnostic.evaluated -or $diagnostic.failures -isnot [array] -or
+            $diagnostic.failures.Count -gt 20) { throw 'Invalid baseline invariant diagnostics.' }
+        $count = [long]$diagnostic.omittedFailureCount
+        $previous = ''
+        $failures = @(
+            foreach ($failure in $diagnostic.failures) {
+                & $keys $failure @('variant', 'stimulus', 'grader', 'count')
+                if ($failure.variant -cne 'baseline' -or $failure.stimulus -isnot [string] -or
+                    $failure.grader -isnot [string] -or $failure.stimulus -cnotin @($Manifest.Keys) -or
+                    $failure.grader -cnotin @($Manifest[$failure.stimulus])) {
+                    throw 'Unconfigured baseline invariant identity.'
+                }
+                $key = "$($failure.stimulus)||$($failure.grader)"
+                if ([string]::CompareOrdinal($key, $previous) -le 0) { throw 'Unsorted or duplicate invariant failures.' }
+                $previous = $key
+                $value = & $integer $failure.count
+                if ($value -le 0) { throw 'Invalid baseline invariant failure count.' }
+                $count += $value
+                [ordered]@{ variant = 'baseline'; stimulus = $failure.stimulus; grader = $failure.grader; count = $value }
+            }
+        )
+        if ($count -ne $diagnostic.failed) { throw 'Baseline invariant counts do not reconcile.' }
+        $totals.invariantFailures += $diagnostic.failed
+        if ($row.verdict -eq 'pass' -and ($diagnostic.failed -gt 0 -or $row.runs -le 0 -or
+                $row.runHealthFailures -gt 0 -or $row.dataQualityViolations -gt 0 -or $row.invocationFailures -gt 0)) {
+            throw 'Baseline model verdict contradicts its counters.'
+        }
+        [ordered]@{
+            model = $row.model; verdict = $row.verdict; runs = [long]$row.runs
+            runHealthFailures = [long]$row.runHealthFailures; dataQualityViolations = [long]$row.dataQualityViolations
+            invocationFailures = [long]$row.invocationFailures
+            invariantDiagnostics = [ordered]@{
+                evaluated = [long]$diagnostic.evaluated; failed = [long]$diagnostic.failed
+                omittedFailureCount = [long]$diagnostic.omittedFailureCount; failures = $failures
+            }
+        }
+    }
+    if ($totals.runs -ne $data[$TrialProperty]) { throw 'Baseline trial totals do not reconcile.' }
+    foreach ($name in $fields) {
+        if ($totals[$name] -ne $data[$name]) { throw 'Baseline model counters do not reconcile.' }
+    }
+    $gates = Get-EquivalenceGateResults -Runs $data[$TrialProperty] -EquivalentTotal $data.equivalentTrials `
+        -InvariantFailures $data.invariantFailures -RunHealthFailures $data.runHealthFailures `
+        -DataQualityViolations $data.dataQualityViolations -Tier $data.tier `
+        -RequiredModelFailure ($Models.Count -gt 1 -and @($rows | Where-Object verdict -CEQ 'fail').Count -gt 0)
+    if ($data.verdict -cne $gates.Verdict -or $data.equivalenceGate -cne $gates.EquivalenceGate -or
+        $data.documentedDivergenceGate -cne 'report-only') { throw 'Baseline gate evidence is inconsistent.' }
+    return $projected
+}
+
 function Measure-DeclaredInvariantFailures {
     <#
     .SYNOPSIS
@@ -889,7 +1066,8 @@ function Measure-DeclaredInvariantFailures {
     )
 
     $diagnostics = [System.Collections.Generic.List[string]]::new()
-    $empty = @{ HasSignal = $false; Failed = 0; Evaluated = 0; MalformedRecords = 0; Missing = 0; Duplicate = 0; Unexpected = 0 }
+    $empty = @{ HasSignal = $false; Failed = 0; Evaluated = 0; MalformedRecords = 0; Missing = 0; Duplicate = 0; Unexpected = 0
+        InvariantDiagnostics = [ordered]@{ evaluated = 0; failed = 0; omittedFailureCount = 0; failures = @() } }
 
     if ([string]::IsNullOrWhiteSpace($RunDir) -or -not (Test-Path -LiteralPath $RunDir)) {
         $diagnostics.Add('Invariant run directory is missing.')
@@ -915,6 +1093,7 @@ function Measure-DeclaredInvariantFailures {
     $evaluated = 0
     $malformed = 0
     $observed = @{}
+    $failureCounts = @{}
 
     foreach ($file in $files) {
         foreach ($line in (Get-Content -LiteralPath $file.FullName -Encoding utf8)) {
@@ -951,6 +1130,9 @@ function Measure-DeclaredInvariantFailures {
                 if (-not $passed) {
                     $failed++
                     $diagnostics.Add("Invariant '$name' failed on stimulus '$stimulus'.")
+                    if ($ExpectedManifest -and $stimulus -cin @($ExpectedManifest.Keys) -and $name -cin @($ExpectedManifest[$stimulus])) {
+                        $failureCounts[$key] = 1 + $(if ($failureCounts.ContainsKey($key)) { $failureCounts[$key] } else { 0 })
+                    }
                 }
             }
         }
@@ -972,9 +1154,20 @@ function Measure-DeclaredInvariantFailures {
             Duplicate        = [int]$coverage.Duplicate
             Unexpected       = [int]$coverage.Unexpected
             Diagnostics      = @($diagnostics)
+            InvariantDiagnostics = $empty.InvariantDiagnostics
         }
     }
 
+    $failureKeys = [string[]]@($failureCounts.Keys)
+    [array]::Sort($failureKeys, [StringComparer]::Ordinal)
+    $failureRows = @(
+        foreach ($key in @($failureKeys | Select-Object -First 20)) {
+            $parts = $key -split '\|\|', 2
+            [ordered]@{ variant = 'baseline'; stimulus = $parts[0]; grader = $parts[1]; count = $failureCounts[$key] }
+        }
+    )
+    $reported = [long]0
+    foreach ($row in $failureRows) { $reported += $row.count }
     return @{
         HasSignal        = $true
         Failed           = $failed
@@ -984,6 +1177,10 @@ function Measure-DeclaredInvariantFailures {
         Duplicate        = [int]$coverage.Duplicate
         Unexpected       = [int]$coverage.Unexpected
         Diagnostics      = @($diagnostics)
+        InvariantDiagnostics = [ordered]@{
+            evaluated = $evaluated; failed = $failed
+            omittedFailureCount = $failed - $reported; failures = $failureRows
+        }
     }
 }
 
@@ -1185,10 +1382,15 @@ function Get-EquivalenceGateResults {
         health failures to warning; `calibration` and `ci` keep authoritative evidence
         blocking. Structural data-quality failures fail closed at every tier.
 
+        A failed required model remains failed even when another model supplies a
+        positive aggregate comparison population.
+
         The judge-error budget is deliberately not enforced. Its threshold is unresolved
         pending calibration, so judge errors are counted and reported without gating.
     .OUTPUTS
         [hashtable] With keys EquivalenceGate, DocumentedDivergenceGate, and Verdict.
+    .PARAMETER RequiredModelFailure
+        Preserves a validated failing model verdict during fixed-pair aggregation.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -1202,7 +1404,8 @@ function Get-EquivalenceGateResults {
         [Parameter(Mandatory = $false)][int]$DataQualityViolations = 0,
         [Parameter(Mandatory = $false)][int]$DivergenceGuardFailures = 0,
         [Parameter(Mandatory = $false)][bool]$DivergenceHasSignal = $false,
-        [Parameter(Mandatory = $false)][int]$RunHealthFailures = 0
+        [Parameter(Mandatory = $false)][int]$RunHealthFailures = 0,
+        [Parameter(Mandatory = $false)][bool]$RequiredModelFailure = $false
     )
 
     $advisory = ($Tier -eq 'devloop')
@@ -1221,13 +1424,13 @@ function Get-EquivalenceGateResults {
     elseif ($emptyEquivalentPopulation) {
         $equivalence = 'fail'
     }
-    elseif ($InvariantFailures -gt 0 -or $DataQualityViolations -gt 0 -or $RunHealthFailures -gt 0) {
+    elseif ($InvariantFailures -gt 0 -or $DataQualityViolations -gt 0 -or $RunHealthFailures -gt 0 -or $RequiredModelFailure) {
         $equivalence = 'fail'
     }
 
     # A structurally broken run fails closed at both tiers. Only a statistical or
     # guard-conformance result is advisory in devloop.
-    $structural = ($Runs -le 0) -or ($DataQualityViolations -gt 0) -or $emptyEquivalentPopulation
+    $structural = ($Runs -le 0) -or ($DataQualityViolations -gt 0) -or $emptyEquivalentPopulation -or $RequiredModelFailure
     $equivalenceGate = if ($structural) { $equivalence } else { & $downgrade $equivalence }
 
     $divergenceGate = 'report-only'
@@ -1249,11 +1452,46 @@ function Merge-BaselineModelSummary {
     [OutputType([ordered])]
     param(
         [Parameter(Mandatory = $true)][psobject[]]$Summary,
-        [string[]]$DriverRunId = @()
+        [string[]]$DriverRunId = @(),
+        [hashtable]$Manifest = (Get-CanonicalInvariantManifest)
     )
 
     if ($Summary.Count -eq 0) { throw 'At least one baseline model summary is required.' }
     $summaries = @($Summary)
+    $modelRows = @(
+        foreach ($item in $summaries) {
+            $models = if ($item.PSObject.Properties['perModelEvidence']) {
+                @('gpt-6-luna', 'claude-sonnet-5')
+            } else { @([string]$item.model) }
+            Assert-BaselineInvariantEvidence -Summary $item -Models $models -Manifest $Manifest
+            foreach ($name in @('ties', 'baselineWins', 'treatmentWins', 'divergenceGuardFailures',
+                    'divergenceGuardsEvaluated', 'judgeErrors', 'equivalentTies', 'divergenceTrials')) {
+                $value = $item.$name
+                if ($value -isnot [ValueType] -or $value -is [bool] -or
+                    -not [double]::IsFinite([double]$value) -or [double]$value -lt 0 -or
+                    [double]$value -gt [int]::MaxValue -or [math]::Truncate([double]$value) -ne [double]$value) {
+                    throw 'Invalid baseline aggregate counter.'
+                }
+            }
+            foreach ($name in @('meanScore', 'ciLow', 'ciHigh', 'winRate')) {
+                $value = $item.$name
+                if ($value -isnot [ValueType] -or $value -is [bool] -or
+                    -not [double]::IsFinite([double]$value) -or [math]::Abs([double]$value) -gt 1) {
+                    throw 'Invalid baseline aggregate statistic.'
+                }
+            }
+            if (($item.ties + $item.baselineWins + $item.treatmentWins) -ne $item.runs -or
+                $item.equivalentTies -gt $item.equivalentTrials -or $item.winRate -lt 0) {
+                throw 'Baseline comparison counters do not reconcile.'
+            }
+        }
+    )
+    if ($modelRows.Count -ne 2 -or @($modelRows.model | Sort-Object -Unique).Count -ne 2) {
+        throw 'Combined baseline evidence requires the exact model pair.'
+    }
+    foreach ($id in $DriverRunId) {
+        if ($id -cnotmatch '^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$') { throw 'Invalid baseline driver run identity.' }
+    }
     $sum = { param([string]$Name) [double](($summaries | Measure-Object -Property $Name -Sum).Sum) }
     $runs = [int](& $sum 'runs')
     $weighted = {
@@ -1278,31 +1516,27 @@ function Merge-BaselineModelSummary {
         -DataQualityViolations $dataQualityViolations `
         -DivergenceGuardFailures $divergenceGuardFailures `
         -DivergenceHasSignal ($divergenceGuardsEvaluated -gt 0) `
-        -RunHealthFailures $runHealthFailures
+        -RunHealthFailures $runHealthFailures `
+        -RequiredModelFailure (@($modelRows | Where-Object verdict -CEQ 'fail').Count -gt 0)
 
     return [ordered]@{
-        schemaVersion = '2.1.0'; agent = [string]$summaries[0].agent; tier = [string]$summaries[0].tier
-        model = 'gpt-6-luna'; models = @($summaries.model); driverRunIds = @($DriverRunId)
+        schemaVersion = '2.2.0'; agent = [string]$summaries[0].agent; tier = [string]$summaries[0].tier
+        model = 'gpt-6-luna'; models = @('gpt-6-luna', 'claude-sonnet-5'); driverRunIds = @($DriverRunId)
         runs = $runs; ties = [int](& $sum 'ties'); baselineWins = [int](& $sum 'baselineWins')
         treatmentWins = [int](& $sum 'treatmentWins'); meanScore = [math]::Round((& $weighted 'meanScore'), 4)
         ciLow = [math]::Round([double](($summaries | Measure-Object -Property ciLow -Maximum).Maximum), 4)
         ciHigh = [math]::Round([double](($summaries | Measure-Object -Property ciHigh -Minimum).Minimum), 4)
         winRate = [math]::Round((& $weighted 'winRate'), 4); invariantFailures = $invariantFailures
-        runHealthFailures = $runHealthFailures; executionDiagnostics = @($summaries.executionDiagnostics)
-        invocationEvidence = @($summaries.invocationEvidence); invocationFailures = [int](& $sum 'invocationFailures')
+        runHealthFailures = $runHealthFailures; invocationFailures = [int](& $sum 'invocationFailures')
         divergenceGuardFailures = $divergenceGuardFailures; divergenceGuardsEvaluated = $divergenceGuardsEvaluated
-        failedDivergenceGuards = @($summaries.failedDivergenceGuards); dataQualityViolations = $dataQualityViolations
+        dataQualityViolations = $dataQualityViolations
         judgeErrors = $judgeErrors; judgeErrorRate = if (($runs + $judgeErrors) -gt 0) { [math]::Round($judgeErrors / ($runs + $judgeErrors), 6) } else { 0.0 }
         equivalentTrials = $equivalentTrials; equivalentTies = $equivalentTies
         divergenceTrials = [int](& $sum 'divergenceTrials')
         tieRatio = if ($equivalentTrials -gt 0) { [math]::Round($equivalentTies / $equivalentTrials, 4) } else { 0.0 }
-        comparisonCalibration = @($summaries.comparisonCalibration); comparisonStatus = 'report-only'
-        dataQualityDiagnostics = @($summaries.dataQualityDiagnostics); equivalenceGate = $gates.EquivalenceGate
+        comparisonStatus = 'report-only'; equivalenceGate = $gates.EquivalenceGate
         documentedDivergenceGate = $gates.DocumentedDivergenceGate; verdict = $gates.Verdict
-        variants = $summaries[0].variants; compareLogs = @($summaries.compareLogs)
-        phaseTimings = @($summaries | ForEach-Object {
-                if ($_.PSObject.Properties['phaseTimings']) { @($_.phaseTimings) }
-            })
+        perModelEvidence = @($modelRows | Sort-Object model)
     }
 }
 
@@ -1981,6 +2215,8 @@ Export-ModuleMember -Function `
     Measure-AgentInvocationEvidence, `
     Measure-InvariantFailures, `
     Measure-DeclaredInvariantFailures, `
+    Get-CanonicalInvariantManifest, `
+    Assert-BaselineInvariantEvidence, `
     Get-EquivalenceGateResults, `
     Merge-BaselineModelSummary, `
     Measure-DivergenceGuardResults, `

@@ -12,6 +12,11 @@ metadata:
 
 # Data and ML Feasibility Workflow
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Produce one durable Markdown feasibility study that remains useful to people and can be consumed later by a Functional Planner. One constrained YAML block owns machine facts; narrative sections preserve evidence, interpretation, and context.

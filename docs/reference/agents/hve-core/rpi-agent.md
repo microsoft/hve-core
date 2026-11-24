@@ -1,9 +1,9 @@
 ---
 title: RPI Agent
-description: "User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination."
+description: "Coordinate one task through Research, Plan, Implement, Review, and Follow-up. Answer ordinary questions directly without starting a workflow."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-04
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination.
+Coordinate one task through Research, Plan, Implement, Review, and Follow-up. Answer ordinary questions directly without starting a workflow.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
@@ -36,6 +36,11 @@ It persists mode, active phase, artifact pointers (`research`, `plan`, `critique
 Every task a conversation works on keeps its state in one session folder, `.copilot-tracking/rpi-sessions/<date>/<session>/<task>-state.json`, named after the session. Research, plans, critiques, changes, acceptance reviews, and refinement reviews stay in their own dated folders.
 
 When the host offers the RPI Workflow canvas, the agent opens it once per conversation to show the session, the canvas follows each loop in the same panel, and both `rpi-review` and `rpi-refine` appear together in the Review view. What you send from the canvas reaches the agent as your direction. The [RPI Workflow Canvas](../../../rpi/rpi-workflow-canvas) guide shows how to use it.
+
+Ordinary questions receive direct answers without workflow introductions, intake
+or session-state writes. Reading or launching the agent alone does not create a
+task. During an active task, a side question does not change the recorded task,
+mode or progression boundary; the agent continues only already-authorized work.
 
 It offers two modes:
 

@@ -492,6 +492,24 @@ Describe 'Baseline-equivalence comparison contract' -Tag 'Unit' {
     }
 
     Context 'Population synchronization' {
+        It 'Gives the confirmation case self-contained hypothetical context without a fabricated prior turn' {
+            $case = $script:CanonicalByName['multi-turn-confirm-action']
+            $case.prompt | Should -Match '(?i)hypothetical code review'
+            $case.prompt | Should -Match 'loadConfig'
+            $case.prompt | Should -Match 'do not claim a prior conversation or an actual code change'
+            $case.prompt | Should -Not -Match '(?i)You proposed|your earlier'
+        }
+
+        It 'Keeps the confirmation invariant and equivalent policy unchanged' {
+            $case = $script:CanonicalByName['multi-turn-confirm-action']
+            @($case.invariants) | Should -Be @('mentions-loadconfig')
+            $case.tags.policy | Should -Be 'equivalent'
+            $grader = @($case.graders | Where-Object name -EQ 'mentions-loadconfig')
+            $grader | Should -HaveCount 1
+            $grader[0].type | Should -Be 'output-matches'
+            $grader[0].config.pattern | Should -Be '(?i)loadConfig'
+        }
+
         It 'Covers every canonical stimulus exactly once' {
             $missing = @($script:CanonicalNames | Where-Object { $_ -notin $script:CompareNames })
             $unknown = @($script:CompareNames | Where-Object { $_ -notin $script:CanonicalNames })

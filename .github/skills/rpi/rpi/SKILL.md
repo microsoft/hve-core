@@ -8,6 +8,19 @@ user-invocable: true
 
 # RPI
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
+## Applicability
+
+Apply the lifecycle protocol when the user requests workflow work or continues a confirmed task. Reading, launching, explaining, or discussing this skill or `RPI Agent` does not by itself supply a task or authorize phase execution.
+
+For ordinary questions unrelated to workflow work, answer directly without RPI self-introductions, phase headings, mode questions, unsolicited task redirection, or a workflow Next Steps section. Do not recover, create, or update task or session tracking state for ordinary chat. Preserve platform-required identity disclosures when identity is actually requested.
+
+During an active task, answer a side question briefly, then continue only already-authorized work within the recorded mode and progression boundary. Do not replace the task, infer phase advancement, or stop authorized work unless the user asks. Quoted examples and read-only policy questions are not instructions to execute a workflow.
+
 ## Goal
 
 Coordinate a resumable RPI session through Research, Plan, Implement, Review, and Follow-up, whether invoked directly as `/rpi`, discovered by the model for multi-phase RPI coordination, or preloaded by `RPI Agent`. Own task identity, mode, durable session state, phase transitions, and follow-up continuation. Activate the matching phase skill for its work rather than reproducing its procedure.
@@ -267,6 +280,6 @@ When the host lists the `hve-core-rpi-workflow` canvas, show the session in it. 
 
 ## Response contract
 
-Follow the active phase skill's response contract, including its linked artifact table and final `## Next Steps`; use `rpi-review` and `rpi-refine` during Follow-up. Give the result of what the user asked for, or the phase outcome, in plain language before any session state. Include blockers and Review execution and outcome (`rpi-review` and `rpi-refine`) when available, and explain current post-Review rankings with their evidence. When a repeated loop changed files after the session's Review without running another review, say that those follow-up changes were validated without a repeat review and that the user can ask for another review. Report mode, automatic-session status, current phase, task status (kept separate from outcome), and the state pointer only when they change the user's next action, or as one compact line after the result.
+For workflow work, follow the active phase skill's response contract, including its linked artifact table and final `## Next Steps`; use `rpi-review` and `rpi-refine` during Follow-up. Give the result of what the user asked for, or the phase outcome, in plain language before any session state. Include blockers and Review execution and outcome (`rpi-review` and `rpi-refine`) when available, and explain current post-Review rankings with their evidence. When a repeated loop changed files after the session's Review without running another review, say that those follow-up changes were validated without a repeat review and that the user can ask for another review. Report mode, automatic-session status, current phase, task status (kept separate from outcome), and the state pointer only when they change the user's next action, or as one compact line after the result.
 
 In Next Steps, manual mode names the exact eligible `/rpi-*` command. Automatic mode names the selected continuation action, retained choice, exceptional confirmation, blocker-clearing action, or completed outcome with no action required. For an exceptional confirmation, identify the exact action still awaiting consent and make clear that its transition has not occurred.

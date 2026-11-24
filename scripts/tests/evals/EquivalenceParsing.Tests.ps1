@@ -8,6 +8,128 @@ BeforeAll {
     $script:FixturesRoot = Join-Path $PSScriptRoot 'fixtures/equivalence'
 }
 
+Describe 'Bounded baseline invariant evidence' -Tag 'Unit' {
+    BeforeAll {
+        function New-BoundedSummary {
+            param([string]$Model = 'gpt-6-luna', [int]$Failures = 1)
+            [pscustomobject][ordered]@{
+                schemaVersion = '2.2.0'; runId = 'test-run'; agent = 'rpi-agent'; tier = 'calibration'; model = $Model
+                runs = 105; ties = 100; baselineWins = 3; treatmentWins = 2
+                meanScore = 0.0; ciLow = -0.1; ciHigh = 0.1; winRate = 0.0
+                invariantFailures = $Failures; runHealthFailures = 0; dataQualityViolations = 0; invocationFailures = 0
+                divergenceGuardFailures = 0; divergenceGuardsEvaluated = 15; judgeErrors = 0
+                equivalentTrials = 105; equivalentTies = 100; divergenceTrials = 0
+                equivalenceGate = $(if ($Failures) { 'fail' } else { 'pass' })
+                documentedDivergenceGate = 'report-only'; verdict = $(if ($Failures) { 'fail' } else { 'pass' })
+                compareLogs = @('do-not-publish-this-fixture')
+                invariantDiagnostics = [ordered]@{
+                    evaluated = 84; failed = $Failures; omittedFailureCount = 0
+                    failures = @(
+                        if ($Failures) {
+                            [ordered]@{ variant = 'baseline'; stimulus = 'code-reverse-string-rust'; grader = 'rust-fn-syntax'; count = $Failures }
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    It 'Loads only configured unique canonical invariant pairs' {
+        $manifest = Get-CanonicalInvariantManifest
+        $manifest['code-reverse-string-rust'] | Should -Contain 'rust-fn-syntax'
+        $path = Join-Path $TestDrive 'invalid-canonical.yml'
+        "stimuli:`n  - name: sample`n    invariants: [repeated, repeated]" | Set-Content $path
+        { Get-CanonicalInvariantManifest -Path $path } | Should -Throw '*canonical*'
+        "stimuli:`n  - name: repeated`n  - name: repeated" | Set-Content $path
+        { Get-CanonicalInvariantManifest -Path $path } | Should -Throw '*canonical*'
+    }
+
+    It 'Groups and bounds failure rows without changing measured or structural totals' {
+        $manifest = @{}
+        $lines = @(
+            foreach ($index in 0..24) {
+                $name = 'sample-{0:d2}' -f $index
+                $manifest[$name] = @('configured')
+                @{ gradeResult = @{ stimulusName = $name; details = @(@{ name = 'configured'; kind = 'code'; passed = $false }) } } |
+                    ConvertTo-Json -Depth 8 -Compress
+            }
+        )
+        Set-Content (Join-Path $TestDrive 'results.jsonl') -Value $lines
+        $tally = Measure-DeclaredInvariantFailures -RunDir $TestDrive -InvariantNames @('configured') -ExpectedManifest $manifest
+        $tally.Failed | Should -Be 25
+        $tally.InvariantDiagnostics.evaluated | Should -Be 25
+        $tally.InvariantDiagnostics.failures | Should -HaveCount 20
+        $tally.InvariantDiagnostics.omittedFailureCount | Should -Be 5
+        $tally.Missing | Should -Be 0
+        $tally.Duplicate | Should -Be 0
+    }
+
+    It 'Rejects unsafe or inconsistent <Case> evidence' -ForEach @(
+        @{ Case = 'version' }, @{ Case = 'model' }, @{ Case = 'unknown field' },
+        @{ Case = 'unknown stimulus' }, @{ Case = 'identity case' }, @{ Case = 'unknown grader' }, @{ Case = 'variant' },
+        @{ Case = 'negative' }, @{ Case = 'fraction' }, @{ Case = 'string counter' },
+        @{ Case = 'boolean' }, @{ Case = 'omission mismatch' }, @{ Case = 'duplicate' },
+        @{ Case = 'false pass' }, @{ Case = 'root total' }
+    ) {
+        $summary = New-BoundedSummary
+        switch ($Case) {
+            'version' { $summary.schemaVersion = '2.1.0' }
+            'model' { $summary.model = 'unexpected-model' }
+            'unknown field' { $summary.invariantDiagnostics.failures[0].answer = 'do-not-publish-this-fixture' }
+            'unknown stimulus' { $summary.invariantDiagnostics.failures[0].stimulus = 'do-not-publish-this-fixture' }
+            'identity case' { $summary.invariantDiagnostics.failures[0].stimulus = 'CODE-REVERSE-STRING-RUST' }
+            'unknown grader' { $summary.invariantDiagnostics.failures[0].grader = 'unknown' }
+            'variant' { $summary.invariantDiagnostics.failures[0].variant = 'customized' }
+            'negative' { $summary.invariantDiagnostics.failed = -1 }
+            'fraction' { $summary.invariantDiagnostics.evaluated = 1.5 }
+            'string counter' { $summary.invariantDiagnostics.failed = '1' }
+            'boolean' { $summary.invariantDiagnostics.failed = $true }
+            'omission mismatch' { $summary.invariantDiagnostics.omittedFailureCount = 1 }
+            'duplicate' { $summary.invariantDiagnostics.failures += $summary.invariantDiagnostics.failures[0] }
+            'false pass' { $summary.verdict = 'pass'; $summary.equivalenceGate = 'pass' }
+            'root total' { $summary.invariantFailures = 2 }
+        }
+        { Assert-BaselineInvariantEvidence -Summary $summary -Models @('gpt-6-luna') } | Should -Throw
+    }
+
+    It 'Preserves a real failed model in a closed combined projection independent of input order' {
+        $gpt = New-BoundedSummary
+        $claude = New-BoundedSummary -Model 'claude-sonnet-5' -Failures 0
+        foreach ($pair in @(@($gpt, $claude), @($claude, $gpt))) {
+            $combined = Merge-BaselineModelSummary -Summary $pair -DriverRunId @('gpt-run', 'claude-run')
+            $combined.schemaVersion | Should -Be '2.2.0'
+            $combined.runs | Should -Be 210
+            $combined.invariantFailures | Should -Be 1
+            $combined.verdict | Should -Be 'fail'
+            $combined.perModelEvidence | Should -HaveCount 2
+            @($combined.perModelEvidence | Where-Object model -EQ 'gpt-6-luna')[0].invariantDiagnostics.failed | Should -Be 1
+            ($combined | ConvertTo-Json -Depth 20) | Should -Not -Match 'do-not-publish|compareLogs|executionDiagnostics'
+            @(Assert-BaselineInvariantEvidence -Summary ([pscustomobject]$combined) -Models @('gpt-6-luna', 'claude-sonnet-5')) | Should -HaveCount 2
+        }
+        $empty = New-BoundedSummary -Model 'claude-sonnet-5' -Failures 0
+        foreach ($name in @('runs', 'ties', 'baselineWins', 'treatmentWins', 'equivalentTrials', 'equivalentTies')) { $empty.$name = 0 }
+        $empty.verdict = 'fail'
+        $empty.equivalenceGate = 'fail'
+        $combined = Merge-BaselineModelSummary -Summary @((New-BoundedSummary -Failures 0), $empty)
+        $combined.runs | Should -Be 105
+        $combined.invariantFailures | Should -Be 0
+        $combined.dataQualityViolations | Should -Be 0
+        $combined.verdict | Should -Be 'fail'
+        @(Assert-BaselineInvariantEvidence -Summary ([pscustomobject]$combined) -Models @('gpt-6-luna', 'claude-sonnet-5')) | Should -HaveCount 2
+    }
+
+    It 'Keeps a no-signal structural failure separate from named invariant failures' {
+        $summary = New-BoundedSummary -Failures 0
+        $summary.invariantDiagnostics.evaluated = 0
+        $summary.dataQualityViolations = 1
+        $summary.verdict = 'fail'
+        $summary.equivalenceGate = 'fail'
+        $rows = @(Assert-BaselineInvariantEvidence -Summary $summary -Models @('gpt-6-luna'))
+        $rows[0].invariantDiagnostics.failed | Should -Be 0
+        $rows[0].dataQualityViolations | Should -Be 1
+    }
+}
+
 Describe 'Measure-CompareTrials' -Tag 'Unit' {
     BeforeAll {
         $script:Lines = Get-Content -LiteralPath (Join-Path $script:FixturesRoot 'vally-compare.jsonl')

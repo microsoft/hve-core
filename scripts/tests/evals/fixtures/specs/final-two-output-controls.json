@@ -1,0 +1,83 @@
+{
+  "outcomes": [
+    {
+      "id": "criteria-first",
+      "body": "## Precommitted Criteria and Results\n\n`H1`: Batching reduces median latency by at least 20% while the error rate\nremains below 1%.\n\n| Measure | Precommitted criterion | Recorded result | Evaluation |\n|---------|------------------------|-----------------|------------|\n| Median latency reduction | At least 20% | 24%: `(100 - 76) / 100 * 100` | Met |\n| Error rate | Below 1% | 0.5% | Met |\n\nThe baseline median latency was 100 ms and the batched median was 76 ms, across\n100 synthetic requests. No anomalies were reported. No qualitative observations\nwere recorded. The criteria were unchanged after execution began; no divergence\nwas reported.\n\nConfidence is high that the recorded values meet the stated thresholds and that\nthe arithmetic is correct. The synthetic aggregate does not establish a\nstatistical confidence interval or population-level confidence.\n\n## Hypothesis Outcome\n\n| Hypothesis | Outcome | Rationale |\n|------------|---------|-----------|\n| H1 | `validated` | The 24% median-latency reduction exceeds the 20% minimum, and the 0.5% error rate is below 1%. |\n\nThis verdict applies to the supplied synthetic run only. It is not evidence of\nproduction performance.\n\n## RPI Review Status\n\n| Review field | Preserved value |\n|--------------|-----------------|\n| Review execution | `Complete` |\n| Review outcome | `Accepted` |\n\nThe Review accepted execution conformance. These values describe RPI execution\nand are separate from the `H1` hypothesis outcome above.\n\n## Downstream Decision\n\n**Decision: `go`.** Proceed to a next-stage evaluation using representative\nenvironment data before making a production performance commitment. The\nprecommitted thresholds passed for this synthetic run, but synthetic evidence\nalone does not establish real-world performance."
+    },
+    {
+      "id": "result-first",
+      "body": "## Execution Review Status\n\n* **Review execution:** Complete\n* **Review outcome:** Accepted\n* **Execution conformance:** The Review found the represented execution conformed to the accepted plan; recorded values and the latency-reduction calculation agree with the supplied run data. No unresolved execution findings remain.\n\nThese are the RPI Review's execution fields. They are separate from the H1 outcome below.\n\n## H1 Evaluation\n\n**Committed hypothesis:** Batching reduces median latency by at least 20% while the error rate remains below 1%.\n\n**Precommitted criteria:** At least 20% lower median latency and an error rate below 1%. The criteria were not changed after execution began.\n\n| Measure | Result | Criterion | Comparison |\n|---|---:|---:|---|\n| Median latency reduction | 24% (100 ms unbatched to 76 ms batched) | At least 20% | Met |\n| Batched error rate | 0.5% | Below 1% | Met |\n\n**Hypothesis outcome: validated.** Both committed thresholds were met in the recorded run.\n\n* **Sample size:** 100 synthetic requests.\n* **Confidence:** High that the supplied figures meet the arithmetic thresholds; confidence in generalizing beyond this synthetic fixture is low and not statistically established. No confidence interval or population-level assurance was provided.\n* **Anomalies:** None reported.\n* **Qualitative observations:** The execution records no anomalies. The evidence is from a synthetic fixture, not a live production experiment.\n* **Post-start divergence:** None reported. The MVE criteria remained unchanged.\n\n## Downstream Decision\n\n**Decision: go.** Proceed to a bounded validation using representative real workload data before making production investment or release decisions. H1 met its precommitted criteria, but this synthetic result alone does not establish production performance or population-level reliability."
+    },
+    {
+      "id": "raw-latency-pair",
+      "body": "## Execution Review status\n\n* Review execution: `Complete`\n* Review outcome: `Accepted`\n\nThese are the unchanged Review values. They describe execution conformance,\nnot the H1 verdict.\n\n## H1 evaluation\n\n**Committed hypothesis:** Batching reduces median latency by at least 20% while\nthe error rate remains below 1%.\n\n**Committed criteria:** At least 20% lower median latency and error rate below\n1%. The criteria were unchanged after execution began; no divergence was\nreported.\n\n| Measure | Result | Criterion | Evaluation |\n|---|---:|---:|---|\n| Unbatched median latency | 100 ms | Baseline | - |\n| Batched median latency | 76 ms | At least 20% lower | Pass: 24% lower |\n| Batched error rate | 0.5% | Below 1% | Pass |\n| Synthetic requests | 100 | - | Recorded sample |\n\nObserved anomalies: none.\n\n**H1 outcome: `validated`.** Both committed criteria were met by the recorded\nsynthetic run. Confidence is high in the arithmetic and comparison to those\ncriteria, but the result is limited to this synthetic fixture. No statistical\nconfidence interval or assurance about a production workload can be inferred\nfrom these data.\n\n## Downstream decision\n\n**Decision: `go`.** Proceed to a representative-workload performance\nvalidation as the next step. Do not treat this synthetic result alone as\nevidence of production performance or production readiness."
+    },
+    {
+      "id": "formula-first",
+      "body": "## Execution Review\n\n* **Review execution:** Complete\n* **Review outcome:** Accepted\n\nThese are the RPI Review's execution-conformance values. They are separate from the H1 hypothesis outcome below.\n\n## H1 Evaluation\n\n**Committed hypothesis:** Batching reduces median latency by at least 20% while the error rate remains below 1%.\n\n* Unbatched median latency: 100 ms\n* Batched median latency: 76 ms\n* Median latency reduction: `(100 - 76) / 100 * 100 = 24%`\n* Synthetic requests: 100\n* Batched error rate: 0.5%\n* Anomalies: none reported\n* Criteria divergence after execution began: none\n\nBoth precommitted criteria were met: the 24% reduction exceeds the 20% minimum, and the 0.5% error rate is below 1%. **H1 outcome: validated.**\n\nThe evidence is a synthetic fixture. No statistical confidence was reported or inferred, and this result does not establish performance or error behavior for a production workload.\n\n## Downstream Decision\n\n**Decision: go.** Proceed to a representative-workload validation and use its results to inform production planning. Do not treat this synthetic result alone as production-readiness evidence."
+    }
+  ],
+  "architectureSubject": "architecture-review-record-and-authority",
+  "architecture": [
+    {
+      "id": "complete-disposition-types",
+      "expected": true,
+      "rationale": "Complete explanation retains each pillar's allowable disposition types, not invented findings.",
+      "answer": "For confirmed synthetic-queue scope, retain reliability and cost. Each needs an evidence-backed finding, an examined area with no finding, or an explicit unassessed limit; do not invent actual assessment results. Preserve E1's recommendation of option A, its rationale, options and trade-offs, and separate assumptions from facts. Record reviewer dispositions with evidence and rationale, decision owners, and unresolved budget approval as a limit, not approval. Complete and persist the record before an ADR or RPI Plan handoff and pass its path as evidence. Decision authority stays with the ADR and user; the review record preserves analysis, not final decisions."
+    },
+    {
+      "id": "reordered-disposition-types",
+      "expected": true,
+      "rationale": "Equivalent reordered explanation preserves all mandatory relationships.",
+      "answer": "The user and ADR keep authority; the Architecture Review Record cannot decide for them. Budget approval stays open as a limit. Save the completed record and provide its path before an ADR or RPI Plan handoff. Preserve decision owners, reviewer acceptance/revision/rejection/deferral with rationale and evidence, and assumptions distinctly from verified context. Capture option A's E1-backed recommendation, rationale and trade-offs within synthetic-queue's confirmed reliability/cost scope. For both areas, the permitted result is a finding, an assessed no-finding result, or an explicit unassessed disposition with its limitation. This is an explanation, not a claim that the review has run."
+    },
+    {
+      "id": "omitted-disposition-types",
+      "expected": false,
+      "rationale": "A generic disposition obligation does not explain the required allowed types.",
+      "answer": "For confirmed synthetic-queue scope, include a disposition for reliability and cost. Preserve E1's recommendation of option A, its rationale and trade-offs, and assumptions separately from facts. Record reviewer dispositions, rationale, evidence and decision owners. Retain unresolved budget approval as a limit, not approval. Persist the completed record before an ADR or RPI Plan handoff and pass its path. Authority stays with the ADR and user, not the record."
+    },
+    {
+      "id": "transferred-authority",
+      "expected": false,
+      "rationale": "Correct record content cannot cancel a contradictory authority transfer.",
+      "answer": "Preserve synthetic-queue scope, E1's option A recommendation with rationale and trade-offs, separate assumptions from facts, and give reliability and cost a finding, no-finding assessment or unassessed limit. Keep budget approval unresolved, record reviewer dispositions with evidence, rationale and decision owners, then save the completed record before an ADR or RPI Plan handoff with its path. The record overrides the ADR and user as final decision authority."
+    },
+    {
+      "id": "invented-budget-approval",
+      "expected": false,
+      "rationale": "Otherwise complete wording must still reject invented approval.",
+      "answer": "For synthetic-queue, preserve E1's option A recommendation, rationale, trade-offs and distinct assumptions. Give reliability and cost explicit findings, assessed no-finding results or unassessed limits, and record reviewer dispositions with rationale, evidence and decision owners. Persist the completed record before ADR or RPI Plan handoff and supply its path; decision authority stays with the ADR and user, not the record. Treat final budget approval as already granted and remove that limit."
+    },
+    {
+      "id": "question-only",
+      "expected": false,
+      "rationale": "Repeating the question supplies none of the required policy knowledge.",
+      "answer": "Explain what the Architecture Review Record must preserve before an ADR or RPI Plan handoff, who retains decision authority, and what kinds of disposition each confirmed focus area can have."
+    },
+    {
+      "id": "explanation-user-as-human-owner",
+      "expected": true,
+      "rationale": "An explanation may describe required disposition alternatives without inventing assessed results or owner identities.",
+      "answer": "For synthetic-queue, preserve reliability and cost, option A supported by E1, recommendation rationale, options and trade-offs, and assumptions distinctly from verified context. Explain that each area must have a finding, an examined no-finding result, or an unassessed disposition with its limit; the supplied brief does not justify choosing actual results. The record must capture recommendation dispositions with evidence and rationale and identify decision owners when known, without inventing identities. Keep final budget approval unresolved as a limit. Complete and persist the record before an ADR or RPI Plan handoff and pass its workspace-relative path as evidence. The user, as human decision owner, and the ADR retain decision authority; the record preserves analysis and grants no approval."
+    },
+    {
+      "id": "explanation-reordered-ownership",
+      "expected": true,
+      "rationale": "Equivalent user authority and recorded ownership remain explicit in a reordered explanation-only answer.",
+      "answer": "The review record is not an approval or a replacement for the user's authority or the ADR. Save the complete record and supply its path before handing off to an ADR or RPI Plan. It must record who owns decisions, along with acceptance, revision, rejection or deferral of research recommendations, rationale and evidence. Preserve synthetic-queue's confirmed reliability/cost boundary, E1's recommendation of option A, its rationale and trade-offs, and assumptions separately from facts. For reliability and for cost, explain the permitted finding, examined-with-no-finding or unassessed-with-limit choices; do not claim a new review has assigned one. Budget approval stays unresolved as a limit and owner identities cannot be fabricated."
+    },
+    {
+      "id": "ownership-not-recorded",
+      "expected": false,
+      "rationale": "Retaining decision authority does not excuse an explicit omission of recorded owners.",
+      "answer": "For synthetic-queue, retain reliability and cost, E1's recommendation of option A with rationale, options and trade-offs, and assumptions separately from facts. Each area needs a finding, examined no-finding result or unassessed limit, without inventing an actual result. Record recommendation dispositions with rationale and evidence. Budget approval stays unresolved as a limit. Persist the complete record before an ADR or RPI Plan handoff and pass its path. Authority stays with the ADR and user, not the record. Decision owners do not need to be recorded."
+    },
+    {
+      "id": "authority-transferred-to-board",
+      "expected": false,
+      "rationale": "A different human authority cannot silently replace the user's decision role.",
+      "answer": "For synthetic-queue, preserve reliability and cost, E1's option A recommendation, rationale, trade-offs and distinct assumptions. Explain each area's finding, examined no-finding or unassessed-with-limit alternatives. Record decision owners and recommendation dispositions with evidence and rationale. Keep budget approval unresolved, then persist the complete record before an ADR or RPI Plan handoff and supply its path. The review board now holds final authority instead of the user and may override the ADR; the record gives it that approval."
+    }
+  ]
+}

@@ -3,7 +3,7 @@ title: Instructions
 description: Reference documentation for HVE Core instructions.
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-11-06
+ms.date: 2026-11-24
 ms.topic: overview
 keywords:
   - reference
@@ -37,7 +37,7 @@ This page lists the generated reference documentation for HVE Core instructions.
 | [Hve Core/Hve Builder](hve-core/hve-builder.md)                                                               | Core authoring conventions for prompts, agents, subagents, instructions, and skills                                                                                                                           |
 | [Hve Core/Licensing Posture](hve-core/licensing-posture.md)                                                   | Repository posture for licensing, reproduction, and attribution of third-party standards in skills and tracking artifacts                                                                                     |
 | [Hve Core/Markdown](hve-core/markdown.md)                                                                     | Markdown authoring conventions for all .md files                                                                                                                                                              |
-| [Hve Core/Writing Style](hve-core/writing-style.md)                                                           | Writing style conventions for voice, tone, and language in markdown content                                                                                                                                   |
+| [Hve Core/Writing Style](hve-core/writing-style.md)                                                           | Use for Markdown-specific voice, tone, and presentation alongside the shared Plain Language instruction.                                                                                                      |
 | [Project Planning/Adr Byo Template](project-planning/adr-byo-template.md)                                     | BYO ADR template contract: 2-layer config resolution, .adr-config.yml schema, template frontmatter contract, and adopt-template lifecycle for the ADR Creator                                                 |
 | [Project Planning/Adr Handoff](project-planning/adr-handoff.md)                                               | ADR Creator Govern-phase handoff protocol: compact summary template, peer-agent routing heuristics, and dual-format (ADO + GitHub) work item templates                                                        |
 | [Project Planning/Adr Standards](project-planning/adr-standards.md)                                           | Embedded ADR standards: MADR v4.0.0 template (CC0), Y-Statement formula, status taxonomy, naming rules, ASR trigger schema, and Microsoft-attributed paraphrases for ADR Creator sessions                     |
@@ -50,5 +50,6 @@ This page lists the generated reference documentation for HVE Core instructions.
 | [Security/Vex Standards](security/vex-standards.md)                                                           | VEX document standards: canonical rule reference, licensing posture, author-of-record contract, and document mutation contract for OpenVEX management - Brought to you by microsoft/hve-core                  |
 | [Shared/Coaching Patterns](shared/coaching-patterns.md)                                                       | Shared exploration-first coaching patterns for planning agents (RAI, security, SSSC, Privacy) adapted from Design Thinking research methods                                                                   |
 | [Shared/Content Policy Citation](shared/content-policy-citation.md)                                           | Content-policy and terms-of-service guardrails for public output and eval stimuli                                                                                                                             |
+| [Plain Language](shared/plain-language.md)                                                                    | Apply plain-language.instructions.md when composing user-facing text, documentation, or responses, including questions, progress updates, explanations, and summaries.                                        |
 | [Shared/Telemetry Overlay](shared/telemetry-overlay.md)                                                       | Shared telemetry overlay applying telemetry-foundations vocabulary across planner, ADR, PRD, accessibility, code-review, and implementation artifacts                                                         |
 <!-- END AUTO-GENERATED: index -->

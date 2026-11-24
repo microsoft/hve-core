@@ -11,6 +11,11 @@ metadata:
 
 # HVE-Core Installer Skill
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 Decision-driven installer for HVE-Core in VS Code's Copilot agent harness. It recommends the HVE-Core plugin first, then a team default in `.github/copilot/settings.json`, then native repository adoption, which copies every HVE-Core component into the project's own `.github` folders.
 
 The VS Code extension remains an editor option. A clone is a storage choice that Copilot uses as a plugin from source or, for a copy inside the project's checkout, through folders declared in `.github/copilot/settings.json`. The skill also validates the result and configures MCP servers.

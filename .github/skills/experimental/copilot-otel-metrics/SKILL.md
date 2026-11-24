@@ -14,6 +14,11 @@ metadata:
 
 # Copilot OpenTelemetry Metrics
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Take the user from "I want Copilot telemetry" to telemetry they can query. Do the work for them where doing it is safe and reversible, and walk them through it where it is not.

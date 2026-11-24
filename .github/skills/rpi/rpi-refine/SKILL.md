@@ -8,6 +8,11 @@ user-invocable: true
 
 # RPI Refine
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Produce one complete, human-readable subtractive refinement record after implementation finishes. Focus on what can be removed, simplified, or redesigned across everything the session worked on: code, tests, documents, domain language, dependencies, error boundaries, runtime performance, language versions, and configuration. Reject additive wrappers and speculative guards that do not cut complexity or prevent a concrete failure mode.

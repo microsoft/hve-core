@@ -2,7 +2,7 @@
 title: Behavior Conformance Suite
 description: 'Tier 3 conformance evaluations for instructions and skill behavior'
 author: HVE Core Team
-ms.date: 2026-11-12
+ms.date: 2026-11-24
 ---
 
 This directory hosts the behavior conformance suite. It is the only suite under `evals/` that ships in advisory mode by default: failures are reported in the pull request summary but do not block the build until each spec graduates per the graduation policy below.
@@ -14,28 +14,41 @@ Behavior conformance answers a focused question per stimulus: *does the asset un
 * Instruction conformance: exercises whether instructions in `.github/instructions/**/*.instructions.md` are interpreted by the model in line with their `applyTo` and content rules.
 * Skill behavior: exercises whether skill invocation produces the canonical artifacts and section headers each `SKILL.md` advertises across three stimulus shapes (knowledge, tool-trigger, bleed-detection).
 
-Each tier shares the same advisory contract and manifest-driven gating model as the other Tier 1/2 suites. Most stimuli use deterministic `output-matches` graders. Selected skill stimuli also use deterministic file and diff graders in isolated synthetic workspaces. `skill-behavior.eval.yaml` uses seven `prompt` model-judge graders for semantic contracts that deterministic checks cannot credibly assess.
+Each tier shares the same advisory contract and manifest-driven gating model as the other Tier 1/2 suites. Most stimuli use deterministic `output-matches` graders. Selected stimuli also use deterministic file and diff graders in isolated synthetic workspaces. The instruction suite uses five `prompt` model-judge graders for plain-language behavior; the skill suite uses 21 for semantic contracts that deterministic checks cannot credibly assess.
 
 ## Spec inventory
 
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
-| `instructions.eval.yaml`   | 3i   | Advisory | 73      | `behavior-conformance` | Active (Phase 11) |
-| `skill-behavior.eval.yaml` | 3s   | Advisory | 390     | `behavior-conformance` | Active (Phase 13) |
+| `instructions.eval.yaml`   | 3i   | Advisory | 79      | `behavior-conformance` | Active (Phase 11) |
+| `skill-behavior.eval.yaml` | 3s   | Advisory | 403     | `behavior-conformance` | Active (Phase 13) |
 
 Prompt conformance coverage moved to `skill-behavior.eval.yaml` and the agent-behavior partials when the repository's prompts became skills or agent entry modes. The `vally-tests` skill still routes `prompt`-kind stimuli to `prompts.eval.yaml`, which it creates on first use.
 
-The maintained `instructions.eval.yaml` inventory contains 73 stimuli: 54 instruction-tagged stimuli across 36 instruction subjects, plus 19 skill-tagged stimuli.
+The maintained `instructions.eval.yaml` inventory contains 79 stimuli: 60 instruction-tagged stimuli across 37 instruction subjects, plus 19 skill-tagged stimuli.
 Six `mural` and two `backlog-management` stimuli were always skill-tagged. The other 11 cover rules that moved from instructions into skills (`adr-author`, `vex`, `git-commit`, `git-merge`, `security-planning`, and `engagement-report-conventions`) and keep testing those rules.
 Stimuli that only checked how a moved instruction attached by `applyTo` were removed. Coverage spans:
 
 * Delivery workflows: the Azure DevOps pull request and build-info protocols in `backlog-management`, `git-merge`, and `pull-request`.
 * HVE-Core authoring: `copilot-tracking`, `hve-builder`, `markdown`, `pull-request`, and `writing-style`, plus the `git-commit` skill's commit message conventions.
+* Shared communication: `plain-language` generation checks for explanations, decision questions, progress/final messages, returned document prose, machine-only output, and direct research-skill use.
 * RAI, Accessibility, and Security planning: `accessibility-identity`, `backlog-handoff`, `sssc-assessment`, and `standards-mapping`.
 * Additional: `docusaurus-edits`, `dt-coach-telemetry`, `experiment-designer`, and `skill-security-model`.
 * Language guidance: Rust test placement, naming, local HTTP mocks, and unit-test network isolation; Bicep sensitive-parameter and required-default conventions.
 
-The maintained `skill-behavior.eval.yaml` inventory contains 390 stimuli across 90 skill subjects.
+The plain-language direct-research case runs a complete staged research workflow,
+not only a short prose response. Its scenario-only `constraints.max_duration: 300s`
+supplies a candidate executor ceiling; the instruction suite default stays
+at `120s`. The pinned planner resolves these to `300000` and `120000` milliseconds,
+respectively, in the [focused regression tests](../../scripts/tests/evals/Test-EvalSpec.Tests.ps1).
+The candidate matches the existing agent-behavior full-workflow budget, but has
+not yet demonstrated successful timing. Acceptance still needs all three
+original research trials to finish with gradeable results under that cap.
+Prompts, run counts, advisory status, the exact 45-day assertion, retry selection
+and diagnostic-integrity gates are unchanged. Static configuration checks do not
+establish model behavior or eliminate timeouts.
+
+The maintained `skill-behavior.eval.yaml` inventory contains 403 stimuli across 94 skill subjects.
 It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge,
 unavailable-bridge, read-only-review, and review-pass ownership decisions plus direct
 `rpi-challenger`, `rpi-plan-critique`, pull-request preflight, and RCA evidence-routing,
@@ -219,7 +232,38 @@ validation alone cannot establish that the model follows the policy.
 
 The `backlog-plan` and `backlog-execute` workflow commands carry knowledge coverage plus a read-only boundary assertion and a mutation-safety assertion respectively. Other installed skill domains remain in advisory mode.
 
-The current branch-specific calibration status is not yet established for gating. Pass-rate and false-positive measurements are collected from advisory CI runs before graduation. Most stimuli use `output-matches` to check contract vocabulary and routing signals, while seven skill graders use `prompt` model judgment for semantic contracts such as the changes-record contract.
+The `performance-slo-planner` and `telemetry-foundations` subjects each have
+knowledge, tool-trigger, and bleed-detection coverage. Their cases stage the
+actual skills, check planning or vocabulary output, and preserve the boundary
+between giving guidance and executing load tests or installing telemetry
+exporters. Semantic judges assess returned prose; file checks separately
+protect required sections or attribute names.
+
+Valid YAML and reachable tags do not prove that every changed artifact has
+coverage. Before publishing changes to multiple skill entry points, run the
+changed-artifact presence check and canonical eval planning commands in the
+[eval CI guide](../../docs/contributing/evals-ci.md#adding-a-new-eval-spec).
+The planner intentionally fails rather than silently skipping uncovered skills.
+
+The current branch-specific calibration status is not yet established for gating. Pass-rate and false-positive measurements are collected from advisory CI runs before graduation. Most stimuli use `output-matches` to check contract vocabulary and routing signals; semantic graders assess plain-language replies and skill contracts that need judgment about meaning.
+
+### Plain-language evidence boundary
+
+The six `plain-language` cases assess explanations, decision questions,
+progress/final messages, returned document prose, exact JSON output, and direct
+research-skill use. The original `writing-style` recall case remains a routing
+check, not evidence that generated writing is clear.
+
+The entry-body explanation stages the actual HVE Builder skill and shared
+instruction without injecting the full policy as root instructions. Other
+controlled cases stage the policy as root instructions to test behavior when
+it is supplied. Neither setup proves native plugin discovery.
+
+Semantic judges score the final answer or returned prose named by each rubric.
+The document case separately checks file facts and names; its returned-prose
+judgment is not a full semantic inspection of the file. The research case also
+requires its artifact. Offline regex and safety checks do not calibrate model
+judges or establish measured improvement across model versions.
 
 ### Rust HTTP unit-test evidence boundary
 

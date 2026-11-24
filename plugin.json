@@ -107,6 +107,7 @@
     ".github/instructions/security/vex-standards.instructions.md",
     ".github/instructions/shared/coaching-patterns.instructions.md",
     ".github/instructions/shared/content-policy-citation.instructions.md",
+    ".github/instructions/shared/plain-language.instructions.md",
     ".github/instructions/shared/telemetry-overlay.instructions.md"
   ],
   "skills": [

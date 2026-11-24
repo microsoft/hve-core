@@ -17,6 +17,11 @@ skills:
 
 # ADR Creator
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 Phase-gated creator that produces standards-aligned Architecture Decision Records under `.copilot-tracking/adr-plans/{slug}/`. Identity, lifecycle definitions, autonomy tier semantics, `state.json` schema, and the six-step per-turn protocol are defined in the `adr-author` skill's `references/adr-identity.md`, which this agent reads at session start after activating the skill, and are not duplicated here. This agent body is a thin orchestrator: every phase delegates to that identity file, plus on-demand reads of `adr-standards.instructions.md`, `adr-byo-template.instructions.md`, and `adr-handoff.instructions.md`, and the `adr-author` skill per the Lifecycle Dispatch tables below. Each on-demand artifact is read only when its phase or mode is entered.
 
 ## Entry Modes

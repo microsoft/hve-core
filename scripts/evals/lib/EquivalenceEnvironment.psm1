@@ -376,7 +376,9 @@ function Get-AgentDeclaredDependency {
 
         Resolution reads the agent body directly, so it cannot silently degrade: a
         declared reference that does not exist on disk is an error rather than an
-        omission.
+        omission. Explicit filename declarations in unfenced prose must identify
+        exactly one link-free instruction beneath .github/instructions; missing or
+        ambiguous declarations fail rather than materializing an incomplete surface.
 
         A skill the agent preloads through its frontmatter `skills` list loads with the
         agent, so the instructions and subagents its body names are declared too, with
@@ -470,7 +472,47 @@ function Get-AgentDeclaredDependency {
             [void]$Subagents.Add($Path)
         }
 
+        $DeclarationOffsets = [System.Collections.Generic.HashSet[int]]::new()
+        $DeclaredNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        $DeclarationBody = [regex]::Replace($Text, '(?s)<!--.*?(?:-->|\z)', { param($Match) ' ' * $Match.Length })
+        $Fence = $null
+        foreach ($Line in [regex]::Matches($DeclarationBody, '(?m)^.*$')) {
+            $FenceMatch = [regex]::Match($Line.Value, '^ {0,3}(`{3,}|~{3,})(.*)$')
+            if ($FenceMatch.Success) {
+                $Marker = $FenceMatch.Groups[1].Value
+                if (-not $Fence) { $Fence = $Marker }
+                elseif ($Marker[0] -eq $Fence[0] -and $Marker.Length -ge $Fence.Length -and [string]::IsNullOrWhiteSpace($FenceMatch.Groups[2].Value)) {
+                    $Fence = $null
+                }
+                continue
+            }
+            if ($Fence) { continue }
+            $Declaration = [regex]::Match($Line.Value, '^Follow all instructions from ([A-Za-z0-9][A-Za-z0-9_-]*\.instructions\.md) for all user-facing text, documentation, or responses\.(?=\s|$)')
+            if ($Declaration.Success) {
+                [void]$DeclaredNames.Add($Declaration.Groups[1].Value)
+                [void]$DeclarationOffsets.Add($Line.Index + $Declaration.Groups[1].Index)
+            }
+        }
+
+        foreach ($Name in $DeclaredNames) {
+            $InstructionsRoot = Join-Path $RepoRoot '.github/instructions'
+            if (-not (Test-Path -LiteralPath $InstructionsRoot -PathType Container)) {
+                throw 'Explicit instruction declaration has no instructions root. Refusing to materialize an incomplete customization surface.'
+            }
+            $null = Assert-ContainedRepositoryPath -Path $InstructionsRoot -ApprovedRoot $RepoRoot -Because 'instructions root'
+            $Candidates = @(Get-ChildItem -LiteralPath $InstructionsRoot -Recurse -File -Filter $Name -Force -ErrorAction Stop)
+            foreach ($File in $Candidates) {
+                $null = Assert-ContainedRepositoryPath -Path $File.FullName -ApprovedRoot $RepoRoot -Because 'declared instruction'
+                $null = Assert-ContainedRepositoryPath -Path $File.FullName -ApprovedRoot $InstructionsRoot -Because 'declared instruction'
+            }
+            if ($Candidates.Count -ne 1) {
+                throw "Explicit instruction declaration requires exactly one match beneath .github/instructions; found $($Candidates.Count). Refusing to materialize an incomplete customization surface."
+            }
+            [void]$Instructions.Add([System.IO.Path]::GetRelativePath($RepoRoot, $Candidates[0].FullName).Replace('\', '/'))
+        }
+
         foreach ($InstructionMatch in [regex]::Matches($Text, '[A-Za-z0-9_./-]*\.instructions\.md')) {
+            if ($DeclarationOffsets.Contains($InstructionMatch.Index)) { continue }
             $Resolved = & $Normalize $InstructionMatch.Value $BaseDir
             if ($Resolved) { [void]$Instructions.Add($Resolved) }
         }

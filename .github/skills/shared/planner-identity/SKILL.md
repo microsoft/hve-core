@@ -11,6 +11,11 @@ metadata:
 
 # Planner Identity
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 This skill is the shared scaffold for phase-based conversational planning agents that maintain persistent state under `.copilot-tracking/<planner>/` and orchestrate work across six sequential phases. Per-planner identity protocols (`sssc-planner.instructions.md`, security `identity.instructions.md`, `accessibility-identity.instructions.md`, and the `references/rai-identity.md` and `references/privacy-identity.md` files in the `rai-planner` and `privacy-standards` skills) extend this base and contribute the planner-specific content listed under [Scope of Inheritance](#scope-of-inheritance).
 
 Exploration-first questioning style, laddering, projective techniques, scope assessment, and raw-capture rules are defined in `shared/coaching-patterns.instructions.md` and apply on top of this base.

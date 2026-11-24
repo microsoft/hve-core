@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ---
 
 ## Purpose
@@ -95,7 +95,134 @@ A per-stimulus `agent_environment.skills` list is concatenated with the suite-le
 
 Some stimuli intentionally stage fewer skills than their agent preloads. A stimulus that declares a response-only or isolated behavior-contract scenario, tests a missing source such as `security-planner-disclaimer-source-missing`, or stages a synthetic policy fixture instead of the agent omits the agent's preloads, because staging them would change or defeat the behavior under test.
 
-Vally has no agent-routing option, and staging an `.agent.md` at its normal `.github/agents/` path does not place it in model context. Workspace instructions are the supported channel, which is why isolated functional stimuli remap the agent file rather than copying it to its original location.
+Vally has no agent-routing option, and staging an `.agent.md` at its normal `.github/agents/` path does not place it in model context. Most isolated functional stimuli use workspace instructions by remapping the agent file. A contained policy-reading case can instead explicitly ask the model to read a staged source-relative agent path; this tests the supplied contract, not native agent selection.
+
+### Demo Planning and Meaning-Based Contracts
+
+The [demo planning case](stimuli/hve-demo-material.yml) explicitly asks the model
+to read the staged demo agent and skill curriculum. The agent and the shared
+instruction it requests by filename are staged independently. This is a
+planning-only case: no deck, audio, browser, service, installation or publishing
+is requested.
+
+One binary prompt judge assesses the returned plan's sourcing-to-MP4 sequence,
+L100 duration of 4 to 6 minutes, Azure AI Speech through `tts-voiceover`, and
+honest planning scope. A separate `file-exists` grader requires the fixed
+synthetic plan file named in the prompt. A path mentioned in the reply is not
+proof of a write; file presence does not prove file-content equality with the
+returned prose. The retained no-source-edit response matcher is supplemental,
+not filesystem immutability enforcement.
+
+The [PRD blocked-research case](stimuli/prd-builder.yml) and the architecture
+record case in [skill-quality](../skill-quality/eval.yaml) each use one binary
+prompt judge for all mandatory contract criteria. These replace wording and
+clause-order regexes, accepting paraphrases and correctly quoted warnings while
+rejecting wrong gate or decision authority, omitted durable evidence, and
+other required facts. Consolidation intentionally changes scoring granularity;
+it does not change suite thresholds, run counts, retries or judge defaults.
+Each prompt judge retains threshold `0.85`, and the suites retain `0.7`.
+
+The [focused regression tests](../../scripts/tests/evals/Test-EvalSpec.Tests.ps1)
+check configuration, effective runtime caps and real absent/present file grading.
+The [18 synthetic controls](../../scripts/tests/evals/fixtures/specs/plain-language-repair-controls.json)
+define expected semantic verdicts, not precomputed model results. Static tests
+or mocked judge wiring do not establish semantic calibration. Later genuine
+judging must compare each control's verdict with its label, including expected
+rejections, rather than requiring every answer to pass. Accept the demo repair
+only after checking file presence for every executed trial separately; the
+existing suite mean can hide an individual missing file.
+
+The [native `strict-prompt` grader module](../../scripts/evals/graders/strict-prompt.mjs),
+registered in [the project config](../../.vally.yaml), reuses Vally's public
+prompt grader and client. It requires four stable criterion IDs: `target`,
+`perspectives`, `confirmation`, and `honest-scope`. Its verdict tool requires an
+object with exactly those four keys, binary scores and an overall pass only when
+all four pass. It validates the submitted overall score rather than replacing an
+inconsistent verdict. No current stimulus uses this grader; the Code Review
+consolidation retired the branch-diff standard-profile case it was built for.
+
+The module is inert during registration and lint. Each grade owns its native
+client and awaits cleanup, including cancellation and late startup. Client
+startup consumes the existing grading timeout; it does not add another budget.
+Native format-validation reminders remain bounded by the framework default of
+two before a judgment is accepted. They do not authorize caller retries of an
+accepted negative verdict or a calibration mismatch.
+
+A stimulus that uses it opts into `scorecard: complete`; after validated native projection,
+the runner independently verifies the same contract. Missing, duplicate, unknown
+or contradictory scores fail evidence integrity even when the native overall
+verdict passes. Incomplete scorecards are not retried until green.
+
+Opted-in trial diagnostics use version `2.1.0`, carrying configured criterion
+IDs and bounded `criterionScores` containing only `id` and `score`. Raw criterion
+labels and reasoning are not published. Other stimuli retain their existing
+`2.0.0` diagnostic contract and behavior.
+
+The [contract controls](../../scripts/tests/evals/fixtures/specs/pr3241-contract-controls.json)
+contain 16 labeled prose answers for the retired branch-diff case and 20 Rust
+declaration-floor answers. Native mocked prompt-grader tests verify wiring only.
+Live judging and hosted acceptance are separate from local tests.
+
+The experiment outcome case keeps deterministic measurement and evidence-binding
+checks. Percentage units may appear in the value or in a label/table header,
+such as `Latency reduction (%): 24`; sample-size labels may specify requests or
+count. Labeled observations must have supported units and numeric values.
+Consistent repeated values are accepted; missing units, unsupported units,
+conflicting values and contradictory anomaly reports fail. `Anomalies: not
+observed` is equivalent to `Anomalies: none`. The original Review, hypothesis,
+decision, committed-criteria and hash-binding checks remain in force.
+
+The inline content program separates bounded evidence reads and source
+expectations, Markdown/hypothesis normalization, table/prose extraction, and
+independent domain assertions. Each observation family is extracted once.
+Ordered measurement observations retain the first error within a field without
+preventing other fields from reporting their own errors. File presence and
+four-artifact hash binding remain separate graders. This is a behavior-preserving
+organization change, not a new output format, broader grammar, or semantic judge.
+Native regression cases cover combined malformed fields, oversized inputs and
+read failures as well as the existing accepted and rejected layouts.
+
+Measurement tables use an identifiable result/value column, including
+`Recorded result`, rather than the first numeric-looking cell. Criterion and
+evaluation columns cannot substitute for missing results. Reordered columns
+are supported; missing or duplicate result columns and conflicting observations
+fail. Full labels such as `Median latency reduction` and `Batched error rate`
+are supported. Reduction cells can include the source-backed arithmetic or
+baseline-to-treatment annotation. Counts can use `100 synthetic requests` as a
+labeled value or appear in an observed statement such as `across 100 synthetic
+requests`. Hypothetical or criterion statements do not supply a sample count.
+The context before each count is checked within its semicolon-delimited clause.
+A separate unchanged-criteria clause cannot hide a measured count or its conflict
+with another observation.
+This is bounded format support, not arbitrary prose parsing.
+
+Observed baseline/unbatched and treatment/batched median latency pairs can
+establish the reduction without a separate reduction row. Both raw values need
+millisecond units and must agree with the source results. A calculation-first
+value such as `(100 - 76) / 100 * 100 = 24%` is also supported; its operands and
+reported result are checked rather than evaluated as arbitrary code. Raw and
+derived observations must agree, so a correct reduction label cannot hide an
+incorrect treatment value.
+
+The four numeric bodies in
+[final-two-output-controls.json](../../scripts/tests/evals/fixtures/specs/final-two-output-controls.json)
+retain actual generated table, arithmetic and count layouts. The installed-grader tests
+add fixture bindings dynamically and exercise incorrect values, missing units,
+ambiguous columns and contradictions as independent negative controls.
+The same file includes labeled architecture explanations for later genuine
+calibration, including equivalent explanation-only answers and wrong ownership
+or approval claims. Configuration checks do not establish model verdicts or
+stability; genuine repeated grading uses the configured judge without replacing it.
+
+The existing generator tests and eval-spec tests must both pass when these
+contracts change. Updating only a new configuration test does not cover an
+older consumer that still expects deleted graders. These grading repairs do not
+change worker timeouts, retry policy, scheduling or result reporting.
+
+The resumed-review sample metadata has LF checkout endings pinned in
+[.gitattributes](../../.gitattributes). Its protected-file grader compares exact
+bytes, so Windows checkout conversion must not alter the sample. The equality
+check still rejects changes to protected files.
 
 ### Consolidated Code Review coverage
 
