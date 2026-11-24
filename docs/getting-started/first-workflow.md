@@ -283,7 +283,7 @@ switches between phases.
 |-----------------------|--------------------------------------------------------------------------------------------|
 | PowerShell not found  | Ensure `pwsh` is installed and in PATH                                                     |
 | npm script not found  | Check `package.json` was saved                                                             |
-| Wrong folders checked | Verify script targets `docs/*` pattern                                                     |
+| Wrong pages checked   | Verify the script targets the four `docs/getting-started/` journey pages                   |
 | A phase lacks context | Name the preceding durable artifact; see [Context Engineering](../rpi/context-engineering) |
 
 ## Next Step
