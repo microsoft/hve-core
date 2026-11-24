@@ -68,7 +68,7 @@ runs-on: ubuntu-24.04
 runs-on-slim: ubuntu-24.04
 runtimes:
   node:
-    version: "24.21.0"
+    version: "26.13.1"
 timeout-minutes: 20
 
 # Deterministic gate: skip the agent entirely when Gate B finds nothing to draft.
