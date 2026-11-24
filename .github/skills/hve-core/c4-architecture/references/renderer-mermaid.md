@@ -2,7 +2,7 @@
 title: Mermaid C4 Renderer
 description: Default C4 renderer emitting Mermaid flowchart syntax with C4 conventions
 author: Microsoft
-ms.date: 2026-08-18
+ms.date: 2026-11-23
 ms.topic: reference
 ---
 
