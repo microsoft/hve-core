@@ -188,9 +188,17 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   │   └── rust-tests.instructions.md
 │   ├── terraform/
 │   │   └── terraform.instructions.md
+│   ├── typescript/
+│   │   └── typescript-doc-comments.instructions.md
 │   ├── python-script.instructions.md
 │   ├── python-tests.instructions.md
 │   └── uv-projects.instructions.md
+├── design-thinking/
+│   └── dt-coach-telemetry.instructions.md
+├── engagement-reporting/
+│   ├── data-handling.instructions.md
+│   ├── style-guide.instructions.md
+│   └── terminology.instructions.md
 ├── experimental/                     # Experimental workflows
 │   └── experiment-designer.instructions.md
 ├── hve-core/                         # HVE Core workflow
@@ -203,18 +211,30 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 ├── project-planning/                 # Project planning and ADRs
 │   ├── adr-byo-template.instructions.md
 │   ├── adr-handoff.instructions.md
-│   └── adr-standards.instructions.md
+│   ├── adr-identity.instructions.md
+│   ├── adr-standards.instructions.md
+│   ├── backlog-guardrails.instructions.md
+│   ├── community-interaction.instructions.md
+│   └── github-backlog-grooming.instructions.md
 ├── rai-planning/                     # Responsible AI planning
+│   ├── rai-identity.instructions.md
 │   └── rai-license-posture.instructions.md
 ├── security/                         # Security planning
 │   ├── identity.instructions.md
 │   ├── sssc-planner.instructions.md
 │   ├── standards-mapping.instructions.md
+│   ├── tm7-generation-workflow.instructions.md
+│   ├── vex-generation.instructions.md
 │   └── vex-standards.instructions.md
 ├── shared/                           # Shared across packages
 │   ├── coaching-patterns.instructions.md
 │   ├── content-policy-citation.instructions.md
-│   └── telemetry-overlay.instructions.md
+│   ├── disclaimer-language.instructions.md
+│   ├── planner-identity-base.instructions.md
+│   ├── telemetry-overlay.instructions.md
+│   └── untrusted-content-boundary.instructions.md
+├── ci-owned-validation.instructions.md
+├── dependency-feeds.instructions.md
 ├── docusaurus-edits.instructions.md
 ├── pull-request.instructions.md
 ├── skill-security-model.instructions.md
