@@ -11,7 +11,7 @@
   },
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "24.21.0",
+      "version": "26.13.1",
       "pnpmVersion": "none"
     },
     "ghcr.io/devcontainers/features/python:1": {

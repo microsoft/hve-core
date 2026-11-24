@@ -20,7 +20,7 @@ runs-on: ubuntu-24.04
 runs-on-slim: ubuntu-24.04
 runtimes:
   node:
-    version: "24.21.0"
+    version: "26.13.1"
 # runtimes.node opts the agent into every Node ecosystem domain. The dependency
 # reviewer reads package metadata from registry.npmjs.org, so only that domain
 # stays reachable; the rest of the Node ecosystem is blocked. Blocked domains
