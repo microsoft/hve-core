@@ -43,8 +43,6 @@ function New-FixtureMarkdown {
     Frontmatter name value, omitted when empty.
     .PARAMETER Description
     Frontmatter description value.
-    .PARAMETER Handoff
-    Optional handoff targets.
     .PARAMETER Body
     Body text after the frontmatter.
     .OUTPUTS
@@ -60,20 +58,12 @@ function New-FixtureMarkdown {
         [string]$Description,
 
         [Parameter(Mandatory = $false)]
-        [AllowEmptyCollection()]
-        [string[]]$Handoff = @(),
-
-        [Parameter(Mandatory = $false)]
         [string]$Body = 'Fixture body.'
     )
 
     $lines = @('---')
     if ($Name) { $lines += "name: $Name" }
     $lines += "description: $Description"
-    if ($Handoff.Count -gt 0) {
-        $lines += 'handoffs:'
-        foreach ($target in $Handoff) { $lines += "  - $target" }
-    }
     $lines += @('---', '', $Body, '')
     return ($lines -join "`n")
 }
@@ -83,8 +73,8 @@ function Get-ExtensionCatalogFixture {
     .SYNOPSIS
     Returns the deterministic marketplace catalog used by extension tests.
     .DESCRIPTION
-    Five packages exercise legacy catalog structure and a non-empty agent
-    handoff closure for extension tests that still consume the fixture.
+    Five packages exercise legacy catalog structure for extension tests that
+    still consume the fixture.
     .OUTPUTS
     [System.Collections.Specialized.OrderedDictionary] Catalog object.
     #>
@@ -186,7 +176,7 @@ function New-ExtensionFixtureRepo {
     Set-FixtureFile -Path (Join-Path $repoRoot '.github/agents/core/alpha.agent.md') `
         -Value (New-FixtureMarkdown -Name 'Alpha Agent' -Description 'Alpha fixture agent')
     Set-FixtureFile -Path (Join-Path $repoRoot '.github/agents/core/beta.agent.md') `
-        -Value (New-FixtureMarkdown -Name 'Beta Agent' -Description 'Beta fixture agent' -Handoff @('Alpha Agent'))
+        -Value (New-FixtureMarkdown -Name 'Beta Agent' -Description 'Beta fixture agent')
     Set-FixtureFile -Path (Join-Path $repoRoot '.github/agents/labs/gamma.agent.md') `
         -Value (New-FixtureMarkdown -Name 'Gamma Agent' -Description 'Gamma fixture agent')
     Set-FixtureFile -Path (Join-Path $repoRoot '.github/prompts/core/build.prompt.md') `

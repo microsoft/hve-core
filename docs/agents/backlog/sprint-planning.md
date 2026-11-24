@@ -2,7 +2,7 @@
 title: Sprint Planning Workflow
 description: Organize work into iterations, milestones, or sprints with coverage, capacity, and gap analysis
 author: Microsoft
-ms.date: 2026-08-07
+ms.date: 2026-11-06
 ms.topic: tutorial
 keywords:
   - backlog management

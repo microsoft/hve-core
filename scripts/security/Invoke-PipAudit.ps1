@@ -33,7 +33,7 @@
     Scan and fail if any vulnerabilities are found.
 
 .EXAMPLE
-    ./Invoke-PipAudit.ps1 -Path ".github/skills/experimental/powerpoint"
+    ./Invoke-PipAudit.ps1 -Path ".github/skills/experimental/tts-voiceover"
     Scan a specific Python project directory.
 #>
 
@@ -71,7 +71,7 @@ function Find-PythonProjects {
     )
 
     @(Get-ChildItem -Path $SearchPath -Recurse -Force -Filter pyproject.toml |
-        Where-Object { $_.FullName -notmatch 'node_modules' } |
+        Where-Object { $_.FullName -notmatch '[\\/](node_modules|\.venv|\.copilot-tracking)[\\/]' } |
         ForEach-Object { $_.DirectoryName } |
         Where-Object {
             $dir = $_
@@ -104,21 +104,30 @@ function Invoke-PipAuditForProject {
 
     Write-Host "Auditing: $ProjectPath"
 
-    # Export locked dependencies
-    Push-Location $ProjectPath
-    try {
-        uv export --format requirements-txt --no-hashes > $requirementsFile
-    } finally {
-        Pop-Location
-    }
-
-    # Run pip-audit from its locked project so every transitive dependency is
-    # hash-verified; finally block ensures temp file cleanup on terminating errors
     $pipAuditProject = Join-Path (Split-Path -Parent $PSScriptRoot) 'tools/pip-audit'
     try {
+        Push-Location $ProjectPath
+        try {
+            # uv includes the default dev group, including optional capture tests.
+            uv export --locked --format requirements-txt --no-hashes > $requirementsFile
+            if ($LASTEXITCODE -ne 0) {
+                throw "Locked dependency export failed for $ProjectPath (exit $LASTEXITCODE)."
+            }
+        } finally {
+            Pop-Location
+        }
+
+        $dependencies = @(Get-Content -LiteralPath $requirementsFile |
+            Where-Object { $_.Trim() -and -not $_.Trim().StartsWith('#') })
+        if ($dependencies.Count -eq 0) {
+            throw "Locked dependency export was empty for $ProjectPath."
+        }
+
         uv run --locked --project $pipAuditProject pip-audit `
             -r $requirementsFile `
             --no-deps `
+            --disable-pip `
+            --vulnerability-service osv `
             --format json `
             -o $resultsFile `
             --desc on `

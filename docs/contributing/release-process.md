@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-10-07
+ms.date: 2026-10-31
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -318,7 +318,7 @@ entries. Commit type does not select the release version.
 
 ```bash
 # Feature changelog entry
-git commit -m "feat: add new prompt for code review"
+git commit -m "feat: add new skill for code review"
 
 # Fix changelog entry
 git commit -m "fix: resolve parsing error in instruction files"
@@ -330,7 +330,7 @@ git commit -m "docs: update installation guide"
 git commit -m "feat!: redesign configuration schema"
 ```
 
-For more details, see the [commit message instructions](https://github.com/microsoft/hve-core/blob/main/.github/instructions/hve-core/commit-message.instructions.md).
+For more details, see the [commit message conventions in the `git-commit` skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/git-commit/references/commit-message.md).
 
 ## For Maintainers
 
@@ -498,7 +498,7 @@ matching channel workflow dispatch fallback:
 
 Publish the extension after merging a Release PR that includes extension-relevant changes:
 
-* New prompts, instructions, or custom agents
+* New skills, instructions, or custom agents
 * Bug fixes affecting extension behavior
 * Updated extension metadata or documentation
 

@@ -2,10 +2,11 @@
 name: Engagement Report Outlook Drafter
 description: Creates one approved HTML Outlook draft through a constrained distribution-only workflow.
 user-invocable: false
-agents: []
 tools:
   - read
   - WorkIQ-Mail-MCP-Server/CreateDraftMessage
+skills:
+  - engagement-report-conventions
 ---
 
 # Engagement Report Outlook Drafter

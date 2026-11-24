@@ -19,8 +19,8 @@ agent_environment:
   files:
     - src: ../../.github/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+      dest: .github/skills/shared/disclaimer-language/SKILL.md
   skills:
     - ../../.github/skills/project-planning/security-planning
 ```

@@ -238,6 +238,14 @@ jobs:
           # uncertainty, not a copyleft obligation.
           # pkg:npm/hve-core-marketplace-publisher is the private nested
           # root package (never published to npm) and is locally MIT.
+          # pkg:npm/docusaurus@0.0.0 is the private docs/docusaurus site
+          # manifest (never published to npm) and is locally MIT; when
+          # comparing against a stacked branch without a prior snapshot, the
+          # dependency graph matches the public npm placeholder docusaurus@0.0.0
+          # (BSD-3-Clause AND LicenseRef-github-NOASSERTION).
+          # pkg:npm/hve-core-workflow-validator and pkg:npm/hve-updates-deck
+          # are private nested root packages (never published to npm) and are
+          # locally MIT.
           # pkg:npm/rpi-with-hve is the private root package of the
           # slides/rpi-with-hve deck (never published to npm) and is locally
           # MIT; the dependency graph cannot resolve a license for it.
@@ -267,18 +275,12 @@ jobs:
           # does not relicense separately authored repository code. This
           # package-scoped exception requires organizational approval before
           # merge and does not allow EPL-2.0 repository-wide.
-          # pkg:pypi/cairosvg is LGPL-3.0-or-later. The PowerPoint skill
-          # installs the unmodified wheel into its uv environment at use time;
-          # plugin and extension artifacts do not redistribute it. This
-          # package-scoped exception requires organizational approval before
-          # merge and does not allow LGPL-3.0-or-later repository-wide.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
             pkg:pypi/certifi,
             pkg:pypi/charset-normalizer,
             pkg:pypi/shapely,
-            pkg:pypi/cairosvg,
             pkg:pypi/backports-tarfile,
             pkg:pypi/cryptography,
             pkg:pypi/jaraco-classes,
@@ -327,7 +329,10 @@ jobs:
             pkg:npm/%40axe-core/playwright,
             pkg:npm/through2,
             pkg:npm/hve-core,
+            pkg:npm/docusaurus@0.0.0,
             pkg:npm/hve-core-marketplace-publisher,
+            pkg:npm/hve-core-workflow-validator,
+            pkg:npm/hve-updates-deck,
             pkg:npm/rpi-with-hve,
             pkg:npm/rai-planner,
             pkg:npm/%40vscode/vsce-sign,

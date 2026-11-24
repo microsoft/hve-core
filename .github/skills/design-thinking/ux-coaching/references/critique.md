@@ -59,4 +59,4 @@ Stop when the artifact is not ready to review. Getting it reviewable is the next
 
 ## Downstream handoff
 
-Additional precondition: critique content exists and the practitioner has separately authored presentation material from it. That downstream capability consumes presentation material, not raw coaching output, so naming it earlier would point the practitioner at something that cannot yet accept their input. When the eligibility rule in [coaching-state.md](coaching-state.md) is satisfied, name `powerpoint` once as a downstream capability. This skill does not produce slides, YAML, or decks.
+No downstream presentation capability ships with this skill's package for critique output. Do not name or invoke one. This skill does not produce slides, YAML, or decks.

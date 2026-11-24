@@ -10,7 +10,7 @@ test.describe('Table accessibility regression locks', () => {
     },
     {
       route: '/hve-core/docs/agents/code-review/',
-      caption: 'Review perspectives and the subagents that own each lane',
+      caption: 'Review phases, perspectives, vector pills, and on-demand references',
     },
     {
       route: '/hve-core/docs/agents/accessibility/accessibility-reviewer/',

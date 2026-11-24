@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-10-22
+ms.date: 2026-11-06
 ms.topic: how-to
 keywords:
   - validation
@@ -66,6 +66,40 @@ the reproducible bootstrap path.
 Installing dependencies for one root does not provision the other roots. The
 root commands that delegate to Docusaurus still need the Docusaurus package
 dependencies available.
+
+## Dependency audit coverage
+
+`npm run audit:npm` audits the root, documentation, workflow validator and
+independently locked Marketplace publisher. `npm run audit:npm:publisher`
+checks only the publisher lock with the shared `audit-ci.json` policy; it does
+not require enabling publisher install hooks or publishing an extension.
+
+The local `npm run audit:pip` command already discovers moderation and scanner
+tool projects. PR validation uses separate audit-only Python discovery to cover
+those projects without adding their heavy environments to the lightweight
+Python lint/test matrices. Moderation retains Python 3.11 application support;
+its optional Atheris fuzz group requires Python 3.12 or newer.
+Discovery converts only native directory separators. A literal backslash in a
+Linux directory name is rejected, not rewritten into another project's path.
+
+Both Python audit entry points export with `uv export --locked`, including uv's
+default `dev` group, and use the OSV vulnerability service with pip resolution
+disabled for the already pinned requirements. OSV can audit the
+exact public PyTorch CPU identity, such as `torch==2.14.0+cpu`, without dropping
+its qualifier; the PyPI service cannot find that custom-index version.
+A stale lock, failed export or empty dependency export stops
+the audit before scanning; temporary exports are removed on failure. The local
+command does not apply per-project ignore files, while reusable CI auditing
+reads `pip-audit-known-vulnerabilities.txt`. Configured npm audits apply the
+shared allowlist. Report unfiltered findings separately from policy passes.
+
+Publisher compatibility checks need a separate restore at
+`scripts/extension/marketplace-publisher`, using the exact Node version in
+`.node-version`. Its `.npmrc` disables lifecycle scripts by default. Only after
+explicit approval for that root, run
+`npm ci --prefix scripts/extension/marketplace-publisher --ignore-scripts=false`
+to enable the native hooks required by the production preparation path.
+That permission does not authorize credentials, signing or publication.
 
 ## Python skill test baselines on Windows and Linux
 
@@ -331,6 +365,15 @@ it does not add new ones.
 
 If a proxy-generated lockfile changes source or integrity metadata, regenerate
 it where the public registry is reachable instead of editing it by hand.
+
+### Keep Dependabot uv coverage explicit
+
+`.github/dependabot.yml` lists each uv project (a skill, `scripts/evals/moderation`,
+or a `scripts/tools/*` project) in its own `package-ecosystem: uv` entry with one
+`directory`. A multi-directory uv entry runs security updates against only its
+first directory, so do not use `directories` or globs for uv. When you add or
+remove a project with a `pyproject.toml` and `uv.lock`, add or remove its entry in
+the same change and copy the existing entry's schedule, groups, labels, and limit.
 
 ## Documentation checks and browser lane
 

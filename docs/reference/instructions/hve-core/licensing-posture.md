@@ -1,9 +1,9 @@
 ---
 title: Hve Core/Licensing Posture
 description: "Repository posture for licensing, reproduction, and attribution of third-party standards in skills and tracking artifacts"
-sidebar_position: 6
+sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-31
 ms.topic: reference
 keywords:
   - instruction

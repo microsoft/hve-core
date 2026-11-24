@@ -2,11 +2,9 @@
 name: Codebase Profiler
 description: "Scans the repository to build a technology profile and select applicable security skills"
 tools:
-  - search/changes
-  - search/codebase
-  - search/fileSearch
-  - search/textSearch
-  - read/readFile
+  - search
+  - read
+  - skill
 user-invocable: false
 model: GPT-6 Sol (copilot)
 ---

@@ -23,10 +23,10 @@ Apply these durable conventions whenever prompt-engineering artifacts are create
 | Isolated, independent, high-volume, fresh-context, or model-specific work | Subagent                              |
 | Convention that applies whenever matching paths are edited                | Instruction                           |
 | User-selected multi-turn role or bounded autonomous workflow              | Agent                                 |
-| Repeatable parameterized user entry point                                 | Prompt                                |
+| Repeatable parameterized user entry point                                 | User-invocable skill (slash command)  |
 | Deterministic action or non-negotiable enforcement                        | Tool, hook, schema, or pipeline check |
 
-Select every type that has a distinct responsibility. Prefer the simplest viable architecture, reuse an existing artifact before creating another, and split a request only when activation, authority, or load timing differs materially.
+The Copilot harness does not load prompt files, so build a repeatable entry point as a user-invocable skill. Select every type that has a distinct responsibility. Prefer the simplest viable architecture, reuse an existing artifact before creating another, and split a request only when activation, authority, or load timing differs materially.
 
 ## Keep Context Focused
 
@@ -41,18 +41,21 @@ Select every type that has a distinct responsibility. Prefer the simplest viable
 * Delegate only work that benefits materially from isolation, parallelism, disposable context, or a distinct model profile. Handle tightly coupled, low-volume, latency-sensitive edits in the current context.
 * Define a delegated task's inputs, write boundary, return shape, stage consumer, and nested-dispatch policy. Parallelize only independent work.
 * Keep the parent responsible for synthesis, decisions, and final outcomes. A worker return is evidence, not automatic authority to change scope.
+* Subagents receive no custom instructions. Pass the rules a subagent needs through its own body, a preloaded skill, or the dispatch prompt.
 
 ## Frontmatter and Portability
 
 * Write `description` as concise trigger metadata that says what the artifact does and when it applies.
 * Use stable `name` values for skills and agents. Instruction files alone declare `applyTo`.
-* Keep skill frontmatter portable. Do not put agent-only fields such as `tools`, `model`, `agent`, `handoffs`, or `applyTo` in a skill.
-* Omit `model` unless a stable Medium or Low profile is needed or the caller supplies one; a High responsibility inherits the user's selection. Agent and subagent `model` values are scalar. Prompt model declarations may use the host-supported fallback form. Select a model profile from responsibility rather than authoring effort, and resolve current model names from the Copilot documentation rather than copying them.
+* Keep skill frontmatter portable. Do not put agent or instruction fields such as `tools`, `model`, `skills`, or `applyTo` in a skill.
+* Agent frontmatter uses `name`, `description`, `tools`, `skills`, `model`, `reasoning-effort`, `user-invocable`, and `disable-model-invocation`. The Copilot harness does not support `handoffs`, `agents`, or `argument-hint` on agents, so describe the next agent to switch to, or the subagents to delegate to, in the body.
+* Omit `model` unless a stable Medium or Low profile is needed or the caller supplies one; a High responsibility inherits the user's selection. Agent and subagent `model` values are scalar. Select a model profile from responsibility rather than authoring effort, and resolve current model names from the Copilot documentation rather than copying them.
 * Treat agent and subagent `tools` configuration as user-managed and opaque. Reproduce an exact caller-supplied configuration without assessing it.
+* Copilot recognizes the tool aliases `read`, `edit`, `search`, `execute`, `web`, `agent`, and `todo`, MCP names in `server/tool` or `server/*` form, `skill`, and `ask_user`, and ignores names it does not recognize. An agent cannot load a skill by name without `skill` in its list, subagents never receive `ask_user`, and an empty list grants every tool.
 * Preserve existing non-tool capability-bearing frontmatter in improve and refactor work unless the caller requests a change or verified evidence establishes a defect or capability gap.
 * Within a skill package, use paths relative to the skill root. Refer to other attached artifacts by stable name rather than hard-coded installation paths.
 * Do not use workspace-root `.github/` paths for operational reads, loads, execution, or source-of-truth references in distributable agents, prompts, instructions, or skills. Those paths resolve against the consumer workspace, but extension and plugin artifacts live under their installed artifact root.
-* Use source-relative `#file:` directives for packaged instruction targets, stable artifact or skill names for host discovery, and skill-root-relative paths for resources inside a skill.
+* Do not use `#file:` directives, which the Copilot harness does not load. Preload a skill an agent needs at start with `skills:`, activate other skills by name, read an instruction file by name when an agent depends on it, and use skill-root-relative paths for resources inside a skill.
 * Repository-only frontmatter globs, fenced examples, portable Markdown link labels, placeholder paths, installer destinations, and persisted provenance values may retain `.github/` when they describe repository shape rather than direct runtime navigation.
 
 ## Safety and Evidence

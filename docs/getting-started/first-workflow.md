@@ -3,7 +3,7 @@ title: Your First Full Workflow
 description: Hands-on tutorial using Research, Plan, Implement phases to create a validation script
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-10-28
+ms.date: 2026-10-31
 ms.topic: tutorial
 keywords:
   - getting started
@@ -28,7 +28,7 @@ Build a real validation script using the Research → Plan → Implement workflo
 
 ## Prerequisites
 
-* VS Code with GitHub Copilot Chat extension
+* VS Code with GitHub Copilot Chat and HVE Core installed (see [Installing HVE Core](install.md))
 * This repository cloned locally
 * Basic familiarity with GitHub Copilot
 * ~15 minutes to complete
@@ -57,6 +57,8 @@ The `/clear` command resets Copilot's context between phases. Each RPI phase
 can start fresh because the research and planning artifacts carry verified
 context forward. This tutorial invokes `/rpi-research`, `/rpi-plan`, and
 `/rpi-implement` separately so you can see each responsibility and artifact.
+If you installed HVE Core as a plugin, VS Code shows these skills with the
+plugin name in front, such as `/hve-core:rpi-research`.
 
 > [!NOTE]
 > Understanding why `/clear` matters (not just that you should use it) helps you recognize when context degradation affects your results. See [Context Engineering](../rpi/context-engineering.md) for the full explanation.

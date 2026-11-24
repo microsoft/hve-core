@@ -1,7 +1,8 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, confidenceMeta, h, icon, PRIORITY, riskTypeMeta, sr } from './dom.mjs';
+import { badge, confidenceMeta, h, icon, PHASE_STATUS, PRIORITY, riskTypeMeta, sr } from './dom.mjs';
+import { progressMark } from './diagram.mjs';
 import { ID_KINDS, LEGEND_GROUPS, LINK_ICONS } from './ids.mjs';
 
 const section = (id, title, ...content) => h('section', { class: 'legend-section', 'aria-labelledby': id }, h('h3', { id, text: title }), ...content);
@@ -38,6 +39,10 @@ export function legendContent() {
                 h('dd', null, h('strong', { text: 'Priority' }), ' Of a risk or open question.'),
                 h('dt', null, h('span', { class: 'legend-badges' }, ['risk', 'open question', 'further research'].map((word) => badge(riskTypeMeta(word), { strong: true })))),
                 h('dd', null, h('strong', { text: 'Type' }), ' Of a row in Risks and open questions.'))),
+        section('legend-phase', 'Phase status',
+            h('dl', { class: 'legend-list' },
+                h('dt', null, h('span', { class: 'legend-badges' }, badge(PHASE_STATUS.provided))),
+                h('dd', null, `${PHASE_STATUS.provided.tip}. A provided phase's Source section says where its work came from. While the agent works in the phase, it shows In progress; once the session stops there, it shows Provided.`))),
         section('legend-comments', 'Comments and the canvas menu',
             h('ul', { class: 'legend-steps' },
                 h('li', { text: 'Hover a paragraph, list item, table row, or heading, and choose the speech bubble beside it to comment on exactly that part.' }),
@@ -48,16 +53,16 @@ export function legendContent() {
         section('legend-previews', 'Previews',
             h('ul', { class: 'legend-steps' },
                 h('li', { text: 'Hover over an ID, or move focus to it, to see the whole item.' }),
-                h('li', { text: 'Keep the pointer on it until the ring fills, or middle-click it, to lock the preview. From the keyboard, press Down Arrow.' }),
-                h('li', { text: 'In a locked preview, hover or focus an ID to preview it too.' }),
+                h('li', { text: 'To pin the preview, keep the pointer on the ID until the ring around the pin fills, press the pin, or middle-click the ID. From the keyboard, press Down Arrow. Press the pin again to unpin it.' }),
+                h('li', { text: 'In a pinned preview, hover or focus an ID to preview it too.' }),
                 h('li', { text: 'Escape closes the newest preview. Clicking an ID goes to it.' }))),
         section('legend-map', 'Change map',
             h('ul', { class: 'legend-steps' },
                 h('li', { text: 'A plan\'s change map draws the result of its phases, and a Before when the plan changes how parts connect. Each box is a folder, module, file, or document where changes land, with the parts that change beside the parts they touch. Arrows point from a part to what it uses.' }),
                 h('li', null, h('span', { class: 'legend-swatch is-new' }), ' A dashed border marks a new part or box, ', h('span', { class: 'legend-swatch is-changed' }), ' a thick border a changed part, and ', h('span', { class: 'legend-swatch is-removed' }), ' a dotted border a part the plan removes, which only Before shows.'),
                 h('li', { text: 'A marked part\'s last line, such as "changed · P24", names the phases that make the change. In Plan, Highlight fills one phase\'s parts.' }),
-                h('li', { text: 'In Implement, a check marks a part whose change is done, a dot one in progress, and a hollow circle one still needed.' }),
-                h('li', { text: 'Hover or focus a changed part to see its change, its phases, and the tasks that change it; click it or press Enter to keep that open, then go to a task.' }))),
+                h('li', null, 'In Implement, ', h('span', { class: 'legend-swatch is-done has-mark' }, progressMark('done')), ' a check marks a part whose change is done, ', h('span', { class: 'legend-swatch is-active has-mark' }, progressMark('active')), ' a dot one in progress, and ', h('span', { class: 'legend-swatch is-needed has-mark' }, progressMark('needed')), ' a hollow circle one still needed. In a contrast theme, done parts are also hatched.'),
+                h('li', { text: 'Hover or focus a changed part to see its change, its phases, and the tasks that change it; it goes away when you move off. Click the part, press Enter on it, or press the pin to pin it, then go to a task.' }))),
         section('legend-history', 'Back and forward',
             h('p', { text: 'The arrows beside the phase title, or Alt with the left or right arrow key, retrace the places you moved to, across phases and tasks.' })),
     ];

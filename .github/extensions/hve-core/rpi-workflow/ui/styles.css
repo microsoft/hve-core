@@ -57,6 +57,8 @@
   --rw-hue-blue-bg: light-dark(#d1f0ff, #001a47);
   --rw-hue-brown: light-dark(#755f43, #b69a6d);
   --rw-hue-brown-bg: light-dark(#eeeae2, #241c14);
+  --rw-hue-cobalt: light-dark(#1547b8, #7db1ff);
+  --rw-hue-cobalt-bg: light-dark(#e3ecff, #0d1c3d);
   --rw-hue-coral: light-dark(#ba2e12, #f27d83);
   --rw-hue-coral-bg: light-dark(#ffe5db, #3c0614);
   --rw-hue-cyan: light-dark(#006a80, #07ace4);
@@ -71,6 +73,8 @@
   --rw-hue-lime-bg: light-dark(#e3f2b5, #141f0f);
   --rw-hue-olive: light-dark(#56682c, #a2a626);
   --rw-hue-olive-bg: light-dark(#f0f0ad, #171e0b);
+  --rw-hue-ochre: light-dark(#7a4c00, #e6a940);
+  --rw-hue-ochre-bg: light-dark(#fff0d4, #291b04);
   --rw-hue-orange: light-dark(#a24610, #ed8326);
   --rw-hue-orange-bg: light-dark(#ffe7d1, #311708);
   --rw-hue-pine: light-dark(#156f4b, #1bb673);
@@ -534,6 +538,8 @@ time {
 .id-chip[data-kind="AL"] { --id-hue: var(--rw-hue-pine); --id-tint: var(--rw-hue-pine-bg); }
 .id-chip[data-kind="RV"] { --id-hue: var(--rw-hue-red); --id-tint: var(--rw-hue-red-bg); }
 .id-chip[data-kind="RD"] { --id-hue: var(--rw-hue-auburn); --id-tint: var(--rw-hue-auburn-bg); }
+.id-chip[data-kind="RF"] { --id-hue: var(--rw-hue-cobalt); --id-tint: var(--rw-hue-cobalt-bg); }
+.id-chip[data-kind="FD"] { --id-hue: var(--rw-hue-ochre); --id-tint: var(--rw-hue-ochre-bg); }
 .id-chip[data-kind="FU"] { --id-hue: var(--rw-hue-pink); --id-tint: var(--rw-hue-pink-bg); }
 .id-chip[data-kind="FB"] { --id-hue: var(--rw-hue-plum); --id-tint: var(--rw-hue-plum-bg); }
 
@@ -1631,6 +1637,92 @@ details > summary:hover {
   margin-top: 6px;
   color: var(--rw-fg-muted);
   font: var(--rw-t-meta);
+}
+
+/* The RPI sessions picker: each session is a card with its task, its canvas state, and its controls, all in words. */
+
+.copilot-sessions {
+  display: grid;
+  gap: 8px;
+}
+
+.copilot-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.copilot-head > h3 {
+  margin: 0;
+}
+
+.copilot-head .btn {
+  flex: none;
+}
+
+.copilot-sessions .field-error,
+.copilot-status {
+  margin: 0;
+}
+
+.copilot-list-title {
+  margin: 4px 0 0;
+  color: var(--rw-fg-muted);
+  font: 600 12px/18px var(--rw-font);
+}
+
+.copilot-session-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.copilot-session-card {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--rw-border-muted);
+  border-radius: var(--rw-radius-lg);
+  background: var(--rw-bg);
+}
+
+.copilot-session-title {
+  font: 600 13px/20px var(--rw-font);
+  overflow-wrap: anywhere;
+}
+
+.copilot-session-card > .meta {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.copilot-reason {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.copilot-session-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+
+.copilot-session-card .btn-row {
+  margin-top: 2px;
+}
+
+.copilot-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font: var(--rw-t-ui);
+  overflow-wrap: anywhere;
 }
 
 /* Workspace */
@@ -3329,6 +3421,33 @@ details > summary:hover {
   margin-top: 2px;
 }
 
+/* Where Send now takes the items, in words, between the exact text and what Send now and Queue do. */
+.send-route {
+  margin: 14px 0 0;
+  color: var(--rw-fg-muted);
+  font: 400 12.5px/19px var(--rw-font);
+}
+
+.send-route[hidden] {
+  display: none;
+}
+
+.send-route .notice {
+  margin: 0 0 8px;
+}
+
+.send-route-line {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  margin: 0;
+}
+
+.send-route-line .icon {
+  margin-top: 2px;
+}
+
 .group-hint {
   margin: 0 0 6px;
 }
@@ -3806,6 +3925,13 @@ circle.diagram-mark-glyph {
   stroke: none;
 }
 
+/* A done part's hatch shows only in forced colors, where the done fill gives way to Canvas; it never takes a pointer. */
+.diagram-hatch {
+  display: none;
+  stroke: none;
+  pointer-events: none;
+}
+
 .diagram-edge {
   fill: none;
   stroke: var(--rw-fg-muted);
@@ -3885,9 +4011,17 @@ circle.diagram-mark-glyph {
   background: color-mix(in srgb, var(--rw-accent) 16%, var(--rw-bg));
 }
 
-.legend-swatch.is-needed {
-  border: 1.5px solid var(--rw-fg-muted);
-  border-radius: 50%;
+/* Progress swatches are small parts carrying the map's corner mark, so the mark, not the tone, tells the states apart. */
+.legend-swatch.has-mark {
+  position: relative;
+  margin-inline-end: 5px;
+}
+
+.legend-mark {
+  position: absolute;
+  top: -6px;
+  right: -7px;
+  overflow: visible;
 }
 
 .legend-swatch.is-highlight {
@@ -4935,11 +5069,34 @@ circle.diagram-mark-glyph {
   background: var(--rw-bg-hover);
 }
 
+.preview-hint {
+  margin: -2px 0 6px;
+}
+
+/* The pin: an outlined button while the preview is unpinned and a filled one once pinned, so shape, not tone alone, shows the state. */
 .preview-state {
   display: inline-grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--rw-border-control);
+  border-radius: var(--rw-radius);
+  background: transparent;
+  color: var(--rw-fg-muted);
+  cursor: pointer;
+}
+
+.preview-state:hover {
+  background: var(--rw-bg-hover);
+  color: var(--rw-fg);
+}
+
+.preview-state[aria-pressed="true"] {
+  border-color: var(--rw-accent);
+  background: var(--rw-accent);
+  color: var(--rw-bg);
 }
 
 .preview-state > svg {
@@ -4947,21 +5104,23 @@ circle.diagram-mark-glyph {
 }
 
 .preview-pin {
-  display: none;
-  color: var(--rw-accent);
-}
-
-.preview.is-locked .preview-ring {
-  display: none;
-}
-
-.preview.is-locked .preview-pin {
-  display: block;
+  width: 12px;
+  height: 12px;
 }
 
 .preview-ring {
-  width: 16px;
-  height: 16px;
+  display: none;
+}
+
+/* An ID preview that hovering can still pin rings the pin in place of its border; the ring fills while it arms. */
+.preview.is-hover-pin:not(.is-locked) .preview-state {
+  border-color: transparent;
+}
+
+.preview.is-hover-pin:not(.is-locked) .preview-ring {
+  display: block;
+  width: 22px;
+  height: 22px;
   transform: rotate(-90deg);
 }
 
@@ -4990,14 +5149,15 @@ circle.diagram-mark-glyph {
   }
 }
 
+/* Close keeps its space while hidden, so pinning never moves the pin out from under the pointer. */
 .preview-close {
-  display: none;
   width: 24px;
   height: 24px;
+  visibility: hidden;
 }
 
 .preview.is-locked .preview-close {
-  display: inline-flex;
+  visibility: visible;
 }
 
 .preview-title {
@@ -5844,6 +6004,40 @@ kbd {
     fill: HighlightText;
   }
 
+  /* Done parts: a sparse hatch in the system text color, with labels haloed in the part's fill so they read over it. */
+  .diagram-hatch {
+    display: inline;
+    forced-color-adjust: none;
+  }
+
+  .diagram-hatch-line {
+    forced-color-adjust: none;
+    stroke: CanvasText;
+    stroke-width: 1;
+  }
+
+  .diagram-hatch-line.is-on-highlight {
+    stroke: HighlightText;
+  }
+
+  .diagram-node.is-done text {
+    paint-order: stroke;
+    stroke: Canvas;
+    stroke-width: 4px;
+    stroke-linejoin: round;
+  }
+
+  .diagram-node.is-done.is-highlight text {
+    stroke: Highlight;
+  }
+
+  /* The Done swatch shows the hatch done parts take here. */
+  .legend-swatch.is-done {
+    forced-color-adjust: none;
+    border-color: CanvasText;
+    background: repeating-linear-gradient(135deg, Canvas 0 3px, CanvasText 3px 4px);
+  }
+
   .diagram-box > rect,
   .diagram-box.is-new > rect,
   .diagram-box.is-changed > rect,
@@ -5908,6 +6102,22 @@ kbd {
 
   .preview-ring .ring-fill {
     stroke: Highlight;
+  }
+
+  .preview-state {
+    border-color: ButtonText;
+    color: ButtonText;
+  }
+
+  .preview-state[aria-pressed="true"] {
+    forced-color-adjust: none;
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .preview-state:focus-visible {
+    outline-color: CanvasText;
   }
 }
 

@@ -21,7 +21,9 @@
     agents produce identical customized runs and the comparison cannot discriminate
     between them. `New-CustomizedEnvironment` materializes only the agent under test:
     its own agent file, its declared instructions, its subagents, and just the skills
-    it actually references.
+    it actually references. A skill the agent preloads through its frontmatter
+    `skills` list loads with the agent, so the references inside that skill count as
+    the agent's own.
 
     Second, the baseline is the same for every agent, so re-running it per agent wastes
     roughly half of all trials. `Get-BaselineCacheEntry` and `Save-BaselineCacheEntry`
@@ -33,17 +35,144 @@
 
 Set-StrictMode -Version Latest
 
+Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force
+
+function Get-SkillDirectoryIndex {
+    <#
+    .SYNOPSIS
+        Maps each skill name to its skill directory.
+    .DESCRIPTION
+        A skill's name is the name of the directory that holds its SKILL.md. When two
+        directories share a name, the first one found wins.
+    .OUTPUTS
+        [hashtable] Skill name to workspace-relative skill directory path.
+    .PARAMETER RepoRoot
+        Absolute path to the repository root whose `.github/skills` tree is indexed.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot
+    )
+
+    $Index = @{}
+    $SkillsRoot = Join-Path $RepoRoot '.github/skills'
+    if (-not (Test-Path -LiteralPath $SkillsRoot -PathType Container)) { return $Index }
+
+    foreach ($SkillFile in (Get-ChildItem -LiteralPath $SkillsRoot -Recurse -File -Filter 'SKILL.md' -ErrorAction SilentlyContinue)) {
+        $SkillDir = Split-Path -Parent $SkillFile.FullName
+        $SkillName = Split-Path -Leaf $SkillDir
+        if (-not $Index.ContainsKey($SkillName)) {
+            $Index[$SkillName] = $SkillDir.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
+        }
+    }
+    return $Index
+}
+
+function Get-AgentPreloadedSkill {
+    <#
+    .SYNOPSIS
+        Returns the skill directories an agent preloads through its frontmatter.
+    .DESCRIPTION
+        The frontmatter `skills` list names skills that load with the agent, so each
+        one's body is part of what the agent follows from the start. Names resolve
+        against the skills on disk, and a name with no matching skill is ignored.
+    .OUTPUTS
+        [string[]] Workspace-relative skill directory paths in frontmatter order, deduplicated.
+    .PARAMETER Body
+        Full text of the agent file, including its frontmatter.
+    .PARAMETER SkillIndex
+        Skill name to skill directory map from Get-SkillDirectoryIndex.
+    .PARAMETER Source
+        Agent file path, named in the warning for unreadable frontmatter.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Body,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$SkillIndex,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Source
+    )
+
+    $Frontmatter = [regex]::Match($Body, '(?s)\A---\r?\n(.*?)\r?\n---')
+    if (-not $Frontmatter.Success) { return @() }
+
+    $Names = @()
+    try {
+        $Names = @(Get-YamlFrontmatterList -Yaml $Frontmatter.Groups[1].Value -Field 'skills')
+    }
+    catch {
+        Write-Warning "Unreadable frontmatter in ${Source}: $($_.Exception.Message)"
+        return @()
+    }
+
+    $Directories = [System.Collections.Generic.List[string]]::new()
+    foreach ($Name in $Names) {
+        if ($SkillIndex.ContainsKey($Name) -and -not $Directories.Contains($SkillIndex[$Name])) {
+            $Directories.Add($SkillIndex[$Name])
+        }
+    }
+    return $Directories.ToArray()
+}
+
+function Test-SubagentFrontmatter {
+    <#
+    .SYNOPSIS
+        Reports whether an agent file's frontmatter marks it as a subagent.
+    .DESCRIPTION
+        An agent whose frontmatter sets `user-invocable` to false is a subagent that
+        other agents dispatch. The value is compared case-insensitively with quotes
+        trimmed, which is the same rule AffectedAgents.psm1 uses to tell parent agents
+        from subagents.
+    .OUTPUTS
+        [bool] True when the frontmatter sets `user-invocable: false`.
+    .PARAMETER Text
+        Full text of the agent file, including its frontmatter.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Text
+    )
+
+    $Frontmatter = [regex]::Match($Text, '(?s)\A---\r?\n(.*?)\r?\n---')
+    if (-not $Frontmatter.Success) { return $false }
+
+    foreach ($Line in ($Frontmatter.Groups[1].Value -split '\r?\n')) {
+        if ($Line -match '^\s*user-invocable\s*:\s*(?<Value>.+?)\s*$') {
+            return ($Matches['Value'].Trim().Trim("'", '"').ToLowerInvariant() -eq 'false')
+        }
+    }
+    return $false
+}
+
 function Get-AgentSkillReference {
     <#
     .SYNOPSIS
         Returns the skill directories an agent references, by path or by name.
     .DESCRIPTION
-        Agent bodies cite skills two ways. Some use explicit paths such as
-        `.github/skills/<collection>/<skill>/SKILL.md`. Others name the skill in
-        backticks, which is how the RPI agent references `rpi-research` and its peers.
-        Resolving only the path form yields an empty skill set for those agents, which
-        would materialize an empty customization and make the comparison meaningless.
-        Both forms are resolved here against the skills actually present on disk.
+        Agents cite skills three ways. The frontmatter `skills` list preloads skills by
+        name. Bodies use explicit paths such as
+        `.github/skills/<collection>/<skill>/SKILL.md`, or name the skill in backticks,
+        which is how the RPI agent references `rpi-research` and its peers. Resolving
+        only the path form yields an empty skill set for those agents, which would
+        materialize an empty customization and make the comparison meaningless. All
+        three forms are resolved here against the skills actually present on disk.
+
+        A preloaded skill loads with the agent, so the paths and backticked names in
+        its body are resolved the same way as the agent's own. The RPI agent preloads
+        the `rpi` skill, which names `rpi-plan-critique` only in its body.
     .OUTPUTS
         [string[]] Workspace-relative skill directory paths, deduplicated and sorted.
     .PARAMETER RepoRoot
@@ -63,16 +192,8 @@ function Get-AgentSkillReference {
         [string]$AgentFilePath
     )
 
-    $SkillsRoot = Join-Path $RepoRoot '.github/skills'
-    if (-not (Test-Path -LiteralPath $SkillsRoot -PathType Container)) { return @() }
-
-    $Available = @{}
-    foreach ($SkillFile in (Get-ChildItem -LiteralPath $SkillsRoot -Recurse -File -Filter 'SKILL.md' -ErrorAction SilentlyContinue)) {
-        $SkillDir = Split-Path -Parent $SkillFile.FullName
-        $SkillName = Split-Path -Leaf $SkillDir
-        $RelativePath = $SkillDir.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
-        if (-not $Available.ContainsKey($SkillName)) { $Available[$SkillName] = $RelativePath }
-    }
+    $Available = Get-SkillDirectoryIndex -RepoRoot $RepoRoot
+    if ($Available.Count -eq 0) { return @() }
 
     $FullPath = if ([System.IO.Path]::IsPathRooted($AgentFilePath)) { $AgentFilePath } else { Join-Path $RepoRoot $AgentFilePath }
     if (-not (Test-Path -LiteralPath $FullPath -PathType Leaf)) { return @() }
@@ -80,16 +201,26 @@ function Get-AgentSkillReference {
 
     $Resolved = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 
-    foreach ($PathMatch in [regex]::Matches($Body, '\.github/skills/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)')) {
-        $Candidate = ".github/skills/$($PathMatch.Groups[1].Value)/$($PathMatch.Groups[2].Value)"
-        if (Test-Path -LiteralPath (Join-Path $RepoRoot (Join-Path $Candidate 'SKILL.md')) -PathType Leaf) {
-            [void]$Resolved.Add($Candidate)
-        }
+    $Documents = [System.Collections.Generic.List[string]]::new()
+    $Documents.Add($Body)
+    foreach ($SkillDir in @(Get-AgentPreloadedSkill -Body $Body -SkillIndex $Available -Source $AgentFilePath)) {
+        [void]$Resolved.Add($SkillDir)
+        $SkillText = Get-Content -LiteralPath (Join-Path (Join-Path $RepoRoot $SkillDir) 'SKILL.md') -Raw
+        if ($SkillText) { $Documents.Add($SkillText) }
     }
 
-    foreach ($NameMatch in [regex]::Matches($Body, '`([A-Za-z0-9][A-Za-z0-9_-]{2,})`')) {
-        $SkillName = $NameMatch.Groups[1].Value
-        if ($Available.ContainsKey($SkillName)) { [void]$Resolved.Add($Available[$SkillName]) }
+    foreach ($Document in $Documents) {
+        foreach ($PathMatch in [regex]::Matches($Document, '\.github/skills/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)')) {
+            $Candidate = ".github/skills/$($PathMatch.Groups[1].Value)/$($PathMatch.Groups[2].Value)"
+            if (Test-Path -LiteralPath (Join-Path $RepoRoot (Join-Path $Candidate 'SKILL.md')) -PathType Leaf) {
+                [void]$Resolved.Add($Candidate)
+            }
+        }
+
+        foreach ($NameMatch in [regex]::Matches($Document, '`([A-Za-z0-9][A-Za-z0-9_-]{2,})`')) {
+            $SkillName = $NameMatch.Groups[1].Value
+            if ($Available.ContainsKey($SkillName)) { [void]$Resolved.Add($Available[$SkillName]) }
+        }
     }
 
     return @($Resolved) | Sort-Object
@@ -243,10 +374,19 @@ function Get-AgentDeclaredDependency {
         reported a clean result for a surface that omitted every declared instruction
         and subagent.
 
-        Resolution reads paths from the agent body and recognizes explicit filename
-        declarations in unfenced prose. A filename declaration must identify exactly
-        one link-free instruction beneath .github/instructions; missing or ambiguous
-        declarations fail rather than materializing an incomplete surface.
+        Resolution reads the agent body directly, so it cannot silently degrade: a
+        declared reference that does not exist on disk is an error rather than an
+        omission. Explicit filename declarations in unfenced prose must identify
+        exactly one link-free instruction beneath .github/instructions; missing or
+        ambiguous declarations fail rather than materializing an incomplete surface.
+
+        A skill the agent preloads through its frontmatter `skills` list loads with the
+        agent, so the instructions and subagents its body names are declared too, with
+        relative references resolved against the skill's own directory. The RPI agent
+        preloads the `rpi` skill, which names RPI Researcher, RPI Plan Critic, and RPI
+        Reviewer. A skill body can also name user-facing agents as audiences or
+        consumers, as `disclaimer-language` names the DT Coach, so from a skill body an
+        agent counts only when its frontmatter sets `user-invocable: false`.
     .OUTPUTS
         [hashtable] With keys Instructions and Subagents, each workspace-relative paths.
     .PARAMETER RepoRoot
@@ -274,18 +414,34 @@ function Get-AgentDeclaredDependency {
         throw "Agent file '$AgentRelativePath' does not exist. Refusing to materialize an incomplete customization surface."
     }
     $Body = Get-Content -LiteralPath $FullPath -Raw
-    $AgentDir = Split-Path -Parent $AgentRelativePath
 
-    # Cross-kind references resolve relative to the containing file, so a repository
-    # `#file:` path such as `../../instructions/<name>.instructions.md` is normalized
-    # against the agent's own directory rather than assumed to start at the repo root.
+    # Agent and skill bodies name subagents by display name, such as Report Generator,
+    # because the Copilot subagent tool selects agents by name.
+    $AgentsRoot = Join-Path $RepoRoot '.github/agents'
+    $NameIndex = @{}
+    $SubagentPaths = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($AgentFile in (Get-ChildItem -LiteralPath $AgentsRoot -Recurse -File -Filter '*.agent.md' -ErrorAction SilentlyContinue)) {
+        $AgentText = [System.IO.File]::ReadAllText($AgentFile.FullName)
+        $AgentFileRelative = $AgentFile.FullName.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
+        $NameMatch = [regex]::Match($AgentText, '(?ms)\A---\r?\n.*?^name:\s*["'']?(.+?)["'']?\s*$')
+        if ($NameMatch.Success -and -not $NameIndex.ContainsKey($NameMatch.Groups[1].Value)) {
+            $NameIndex[$NameMatch.Groups[1].Value] = $AgentFileRelative
+        }
+        if (Test-SubagentFrontmatter -Text $AgentText) { [void]$SubagentPaths.Add($AgentFileRelative) }
+    }
+    $NamesLongestFirst = @($NameIndex.Keys | Sort-Object { $_.Length } -Descending)
+
+    # Cross-kind references resolve relative to the containing file, so a relative path
+    # such as `../../instructions/<name>.instructions.md` is normalized against that
+    # file's own directory rather than assumed to start at the repo root. A bare file
+    # name, which is how agents name path-specific instructions, resolves by leaf name.
     $Normalize = {
-        param([string]$Reference)
+        param([string]$Reference, [string]$BaseDir)
 
         $Candidates = [System.Collections.Generic.List[string]]::new()
         $Candidates.Add(($Reference -replace '^(\.\./)+', ''))
-        if ($AgentDir) {
-            $Combined = [System.IO.Path]::GetFullPath((Join-Path (Join-Path $RepoRoot $AgentDir) $Reference))
+        if ($BaseDir) {
+            $Combined = [System.IO.Path]::GetFullPath((Join-Path (Join-Path $RepoRoot $BaseDir) $Reference))
             $RootFull = [System.IO.Path]::GetFullPath($RepoRoot).TrimEnd([System.IO.Path]::DirectorySeparatorChar)
             if ($Combined.StartsWith($RootFull, [System.StringComparison]::OrdinalIgnoreCase)) {
                 $Candidates.Add($Combined.Substring($RootFull.Length).TrimStart('\', '/').Replace('\', '/'))
@@ -295,86 +451,106 @@ function Get-AgentDeclaredDependency {
         foreach ($Candidate in $Candidates) {
             if (Test-Path -LiteralPath (Join-Path $RepoRoot $Candidate) -PathType Leaf) { return $Candidate }
         }
+        if ($Reference -notmatch '/') {
+            $ByLeaf = Get-ChildItem -LiteralPath (Join-Path $RepoRoot '.github/instructions') -Recurse -File -Filter $Reference -ErrorAction SilentlyContinue |
+                Select-Object -First 1
+            if ($ByLeaf) { return $ByLeaf.FullName.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/') }
+        }
         return $null
     }
 
-    $DeclarationOffsets = [System.Collections.Generic.HashSet[int]]::new()
-    $DeclaredNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    $DeclarationBody = [regex]::Replace($Body, '(?s)<!--.*?(?:-->|\z)', { param($Match) ' ' * $Match.Length })
-    $Fence = $null
-    foreach ($Line in [regex]::Matches($DeclarationBody, '(?m)^.*$')) {
-        $FenceMatch = [regex]::Match($Line.Value, '^ {0,3}(`{3,}|~{3,})(.*)$')
-        if ($FenceMatch.Success) {
-            $Marker = $FenceMatch.Groups[1].Value
-            if (-not $Fence) { $Fence = $Marker }
-            elseif ($Marker[0] -eq $Fence[0] -and $Marker.Length -ge $Fence.Length -and [string]::IsNullOrWhiteSpace($FenceMatch.Groups[2].Value)) {
-                $Fence = $null
-            }
-            continue
-        }
-        if ($Fence) { continue }
-        $Declaration = [regex]::Match($Line.Value, '^Follow all instructions from ([A-Za-z0-9][A-Za-z0-9_-]*\.instructions\.md) for all user-facing text, documentation, or responses\.(?=\s|$)')
-        if ($Declaration.Success) {
-            [void]$DeclaredNames.Add($Declaration.Groups[1].Value)
-            [void]$DeclarationOffsets.Add($Line.Index + $Declaration.Groups[1].Index)
-        }
-    }
+    # Adds one document's instruction and agent references. With SubagentsOnly set, an
+    # agent reference counts only when that agent is a subagent.
+    $ScanDocument = {
+        param([string]$Text, [string]$BaseDir, [bool]$SubagentsOnly)
 
-    foreach ($Name in $DeclaredNames) {
-        $InstructionsRoot = Join-Path $RepoRoot '.github/instructions'
-        if (-not (Test-Path -LiteralPath $InstructionsRoot -PathType Container)) {
-            throw 'Explicit instruction declaration has no instructions root. Refusing to materialize an incomplete customization surface.'
-        }
-        $null = Assert-ContainedRepositoryPath -Path $InstructionsRoot -ApprovedRoot $RepoRoot -Because 'instructions root'
-        $Candidates = @(Get-ChildItem -LiteralPath $InstructionsRoot -Recurse -File -Filter $Name -Force -ErrorAction Stop)
-        foreach ($File in $Candidates) {
-            $null = Assert-ContainedRepositoryPath -Path $File.FullName -ApprovedRoot $RepoRoot -Because 'declared instruction'
-            $null = Assert-ContainedRepositoryPath -Path $File.FullName -ApprovedRoot $InstructionsRoot -Because 'declared instruction'
-        }
-        if ($Candidates.Count -ne 1) {
-            throw "Explicit instruction declaration requires exactly one match beneath .github/instructions; found $($Candidates.Count). Refusing to materialize an incomplete customization surface."
-        }
-        [void]$Instructions.Add([System.IO.Path]::GetRelativePath($RepoRoot, $Candidates[0].FullName).Replace('\', '/'))
-    }
+        $AddSubagent = {
+            param([string]$Path)
 
-    foreach ($InstructionMatch in [regex]::Matches($Body, '[A-Za-z0-9_./-]*\.instructions\.md')) {
-        if ($DeclarationOffsets.Contains($InstructionMatch.Index)) { continue }
-        $Resolved = & $Normalize $InstructionMatch.Value
-        if ($Resolved) { [void]$Instructions.Add($Resolved) }
-    }
+            if ([string]::IsNullOrEmpty($Path) -or $Path -eq $AgentRelativePath) { return }
+            if ($SubagentsOnly -and -not $SubagentPaths.Contains($Path)) { return }
+            [void]$Subagents.Add($Path)
+        }
 
-    foreach ($AgentMatch in [regex]::Matches($Body, '[A-Za-z0-9_./*-]*\.agent\.md')) {
-        # Glob references such as `.github/agents/**/name.agent.md` name a subagent
-        # whose collection directory is intentionally unspecified.
-        if ($AgentMatch.Value -match '\*') {
-            $Leaf = Split-Path -Leaf ($AgentMatch.Value -replace '\*+/?', '')
-            if (-not [string]::IsNullOrWhiteSpace($Leaf)) {
-                $File = Get-ChildItem -LiteralPath (Join-Path $RepoRoot '.github/agents') -Recurse -File -Filter $Leaf -ErrorAction SilentlyContinue |
-                    Select-Object -First 1
-                if ($File) {
-                    [void]$Subagents.Add($File.FullName.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/'))
+        $DeclarationOffsets = [System.Collections.Generic.HashSet[int]]::new()
+        $DeclaredNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        $DeclarationBody = [regex]::Replace($Text, '(?s)<!--.*?(?:-->|\z)', { param($Match) ' ' * $Match.Length })
+        $Fence = $null
+        foreach ($Line in [regex]::Matches($DeclarationBody, '(?m)^.*$')) {
+            $FenceMatch = [regex]::Match($Line.Value, '^ {0,3}(`{3,}|~{3,})(.*)$')
+            if ($FenceMatch.Success) {
+                $Marker = $FenceMatch.Groups[1].Value
+                if (-not $Fence) { $Fence = $Marker }
+                elseif ($Marker[0] -eq $Fence[0] -and $Marker.Length -ge $Fence.Length -and [string]::IsNullOrWhiteSpace($FenceMatch.Groups[2].Value)) {
+                    $Fence = $null
                 }
+                continue
             }
-            continue
+            if ($Fence) { continue }
+            $Declaration = [regex]::Match($Line.Value, '^Follow all instructions from ([A-Za-z0-9][A-Za-z0-9_-]*\.instructions\.md) for all user-facing text, documentation, or responses\.(?=\s|$)')
+            if ($Declaration.Success) {
+                [void]$DeclaredNames.Add($Declaration.Groups[1].Value)
+                [void]$DeclarationOffsets.Add($Line.Index + $Declaration.Groups[1].Index)
+            }
         }
-        $Resolved = & $Normalize $AgentMatch.Value
-        if ($Resolved -and $Resolved -ne $AgentRelativePath) { [void]$Subagents.Add($Resolved) }
+
+        foreach ($Name in $DeclaredNames) {
+            $InstructionsRoot = Join-Path $RepoRoot '.github/instructions'
+            if (-not (Test-Path -LiteralPath $InstructionsRoot -PathType Container)) {
+                throw 'Explicit instruction declaration has no instructions root. Refusing to materialize an incomplete customization surface.'
+            }
+            $null = Assert-ContainedRepositoryPath -Path $InstructionsRoot -ApprovedRoot $RepoRoot -Because 'instructions root'
+            $Candidates = @(Get-ChildItem -LiteralPath $InstructionsRoot -Recurse -File -Filter $Name -Force -ErrorAction Stop)
+            foreach ($File in $Candidates) {
+                $null = Assert-ContainedRepositoryPath -Path $File.FullName -ApprovedRoot $RepoRoot -Because 'declared instruction'
+                $null = Assert-ContainedRepositoryPath -Path $File.FullName -ApprovedRoot $InstructionsRoot -Because 'declared instruction'
+            }
+            if ($Candidates.Count -ne 1) {
+                throw "Explicit instruction declaration requires exactly one match beneath .github/instructions; found $($Candidates.Count). Refusing to materialize an incomplete customization surface."
+            }
+            [void]$Instructions.Add([System.IO.Path]::GetRelativePath($RepoRoot, $Candidates[0].FullName).Replace('\', '/'))
+        }
+
+        foreach ($InstructionMatch in [regex]::Matches($Text, '[A-Za-z0-9_./-]*\.instructions\.md')) {
+            if ($DeclarationOffsets.Contains($InstructionMatch.Index)) { continue }
+            $Resolved = & $Normalize $InstructionMatch.Value $BaseDir
+            if ($Resolved) { [void]$Instructions.Add($Resolved) }
+        }
+
+        foreach ($AgentMatch in [regex]::Matches($Text, '[A-Za-z0-9_./*-]*\.agent\.md')) {
+            # Glob references such as `.github/agents/**/name.agent.md` name a subagent
+            # whose collection directory is intentionally unspecified.
+            if ($AgentMatch.Value -match '\*') {
+                $Leaf = Split-Path -Leaf ($AgentMatch.Value -replace '\*+/?', '')
+                if (-not [string]::IsNullOrWhiteSpace($Leaf)) {
+                    $File = Get-ChildItem -LiteralPath $AgentsRoot -Recurse -File -Filter $Leaf -ErrorAction SilentlyContinue |
+                        Select-Object -First 1
+                    if ($File) {
+                        & $AddSubagent $File.FullName.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
+                    }
+                }
+                continue
+            }
+            & $AddSubagent (& $Normalize $AgentMatch.Value $BaseDir)
+        }
+
+        # Longer names match first and are blanked, so 'Report Generator' does not match inside 'Engagement Report Generator'.
+        $Scan = $Text
+        foreach ($Candidate in $NamesLongestFirst) {
+            $Pattern = '(?<![\w-])' + [regex]::Escape($Candidate) + '(?![\w-])'
+            if (-not [regex]::IsMatch($Scan, $Pattern)) { continue }
+            & $AddSubagent $NameIndex[$Candidate]
+            $Scan = [regex]::Replace($Scan, $Pattern, ' ')
+        }
     }
 
-    # Frontmatter `agents:` names subagents by stable name rather than by path.
-    $Frontmatter = [regex]::Match($Body, '(?s)\A---\r?\n(.*?)\r?\n---')
-    if ($Frontmatter.Success) {
-        $AgentsBlock = [regex]::Match($Frontmatter.Groups[1].Value, '(?ms)^agents:\s*$(.*?)(?=^\S|\z)')
-        if ($AgentsBlock.Success) {
-            foreach ($Entry in [regex]::Matches($AgentsBlock.Groups[1].Value, '(?m)^\s*-\s*([A-Za-z0-9_.-]+)\s*$')) {
-                $EntryName = $Entry.Groups[1].Value
-                $File = Get-ChildItem -LiteralPath (Join-Path $RepoRoot '.github/agents') -Recurse -File -Filter "$EntryName.agent.md" -ErrorAction SilentlyContinue |
-                    Select-Object -First 1
-                if ($File) {
-                    [void]$Subagents.Add($File.FullName.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/'))
-                }
-            }
-        }
+    & $ScanDocument $Body (Split-Path -Parent $AgentRelativePath) $false
+
+    # Get-AgentSkillReference already warns about unreadable frontmatter in this file.
+    $SkillIndex = Get-SkillDirectoryIndex -RepoRoot $RepoRoot
+    foreach ($SkillDir in @(Get-AgentPreloadedSkill -Body $Body -SkillIndex $SkillIndex -Source $AgentRelativePath -WarningAction SilentlyContinue)) {
+        $SkillText = Get-Content -LiteralPath (Join-Path (Join-Path $RepoRoot $SkillDir) 'SKILL.md') -Raw
+        if ($SkillText) { & $ScanDocument $SkillText $SkillDir $true }
     }
 
     return @{
@@ -390,7 +566,9 @@ function Get-AgentSurfaceSkill {
     .DESCRIPTION
         The surface carries the skills the agent references and, transitively, the skills
         its declared subagents reference, because a subagent's skills are part of what the
-        parent agent delivers. `New-CustomizedEnvironment` copies exactly these
+        parent agent delivers. Both include what the skills an agent preloads name, so a
+        subagent named only inside a preloaded skill contributes its skills too.
+        `New-CustomizedEnvironment` copies exactly these
         directories, and the change gate in `Get-ChangedAIArtifact.ps1` checks changed
         paths against the same set, so the gate and the harness cannot disagree about
         which skills an agent depends on.

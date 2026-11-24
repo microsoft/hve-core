@@ -25,11 +25,11 @@ User-imported skills (custom frameworks delivered as additional SKILL packages u
 
 ## Host-Aware Multi-Select Pattern
 
-This protocol applies the host-aware enumeration pattern recorded in user memory (`/memories/patterns.md`, section "Host-aware enumeration in planner agents"). The rule is to prefer a chat-native multi-select tool when the host supports it and to fall back to a single batched question otherwise. Never serialize the five framework decisions as five separate questions.
+This protocol applies a host-aware enumeration pattern. The rule is to prefer a chat-native multi-select tool when the host supports it and to fall back to a single batched question otherwise. Never serialize the five framework decisions as five separate questions.
 
 ### Preferred path — multi-select tool
 
-When the host exposes a multi-select capability (for example `vscode_askQuestions` with `multiSelect: true`):
+When the host exposes a multi-select capability (for example `ask_user` with a multi-select field, or `vscode_askQuestions` with `multiSelect: true`):
 
 * Render one option per framework, labelled with the framework id and a short human-readable summary
 * Pre-check the default selection (`wcag-22` at level `AA` plus `section-508`)

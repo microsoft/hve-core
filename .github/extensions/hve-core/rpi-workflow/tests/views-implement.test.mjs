@@ -182,6 +182,9 @@ describe('the change map with progress', () => {
         assert.match(textOf(out), /\(still needed\)/);
         assert.match(textOf(out), /Done\. In progress\. Still needed\. Dashed border: new\. Thick border: changed\. Bold outline: the chosen phase\./, 'the legend names the three states, then the borders the map draws, then the outline');
         assert.match(out, /<span class="legend-swatch is-chosen">/);
+        for (const state of ['done', 'active', 'needed']) {
+            assert.match(out, new RegExp(`<span class="legend-swatch is-${state} has-mark"><svg class="legend-mark"[^>]*aria-hidden="true"[^>]*><g class="diagram-mark is-${state}">`), `the ${state} swatch carries the map's ${state} corner mark, hidden from assistive technology`);
+        }
         const ui = initialUi('implement');
         ui.mapPhase = null;
         assert.match(html(render(session, ui)), /id="impl-map-phase-all" value="all" checked=""/, 'All phases highlights nothing');

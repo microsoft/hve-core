@@ -90,7 +90,7 @@
     {
       "noticeType": "professional-review-reminder",
       "shownAt": "2025-01-01T00:00:00Z",
-      "source": ".github/instructions/rai-planning/rai-identity.instructions.md",
+      "source": ".github/skills/project-planning/rai-planner/references/rai-identity.md",
       "details": { "phase": "phase6" }
     }
   ],

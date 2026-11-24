@@ -23,6 +23,9 @@ BeforeAll {
     function global:pytest { '' }
     function global:uv { '' }
 
+    # Captured before mocking so default mocks can call the real cmdlet
+    $script:RealTestPath = Get-Command -Name Test-Path -CommandType Cmdlet
+
     . $script:ScriptPath
 }
 
@@ -101,6 +104,8 @@ Describe 'pytest Tool Availability' -Tag 'Unit' {
             }
             Mock Get-Command { $null } -ParameterFilter { $Name -eq 'pytest' }
             Mock Get-Command { $null } -ParameterFilter { $Name -eq 'uv' }
+            # Unfiltered Test-Path calls use the real cmdlet
+            Mock Test-Path { & $script:RealTestPath @PesterBoundParameters }
             Mock Test-Path { $true } -ParameterFilter { $Path -like '*tests' }
             Mock Test-Path { $false } -ParameterFilter { $Path -like '*uv.lock' }
         }
@@ -181,6 +186,8 @@ Describe 'Python Skill Discovery for Testing' -Tag 'Unit' {
                     Directory = [PSCustomObject]@{ FullName = $script:NoTestsSkillDir }
                 })
             }
+            # Unfiltered Test-Path calls use the real cmdlet
+            Mock Test-Path { & $script:RealTestPath @PesterBoundParameters }
             Mock Test-Path { $false } -ParameterFilter { $Path -like '*tests' }
             Mock Test-Path { $false } -ParameterFilter { $Path -like '*uv.lock' }
             Mock pytest { $global:LASTEXITCODE = 0; '' }
@@ -245,6 +252,8 @@ Describe 'Pytest Execution' -Tag 'Unit' {
                 Directory = [PSCustomObject]@{ FullName = $script:SkillDir }
             })
         }
+        # Unfiltered Test-Path calls use the real cmdlet
+        Mock Test-Path { & $script:RealTestPath @PesterBoundParameters }
         Mock Test-Path { $true } -ParameterFilter { $Path -like '*tests' }
         Mock Test-Path { $false } -ParameterFilter { $Path -like '*uv.lock' }
     }
@@ -615,6 +624,8 @@ Describe 'Output Persistence' -Tag 'Unit' {
                 Directory = [PSCustomObject]@{ FullName = $script:OutputSkillDir }
             })
         }
+        # Unfiltered Test-Path calls use the real cmdlet
+        Mock Test-Path { & $script:RealTestPath @PesterBoundParameters }
         Mock Test-Path { $true } -ParameterFilter { $Path -like '*tests' }
         Mock Test-Path { $false } -ParameterFilter { $Path -like '*uv.lock' }
         Mock pytest { $global:LASTEXITCODE = 0; 'passed' }

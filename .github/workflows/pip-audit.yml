@@ -115,9 +115,21 @@ jobs:
       - name: Export locked dependencies
         if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"
         run: |
-          uv export --format requirements-txt --no-hashes > "$env:RUNNER_TEMP/requirements.txt"
-          $lineCount = (Get-Content "$env:RUNNER_TEMP/requirements.txt" | Measure-Object).Count
-          Write-Output "Exported $lineCount locked dependencies"
+          $requirementsFile = "$env:RUNNER_TEMP/requirements.txt"
+          try {
+            # uv includes the default dev group, including capture's Pillow dependency.
+            uv export --locked --format requirements-txt --no-hashes > $requirementsFile
+            if ($LASTEXITCODE -ne 0) {
+              throw "Locked dependency export failed (exit $LASTEXITCODE)."
+            }
+            $dependencies = @(Get-Content -LiteralPath $requirementsFile |
+              Where-Object { $_.Trim() -and -not $_.Trim().StartsWith('#') })
+            if ($dependencies.Count -eq 0) { throw 'Locked dependency export was empty.' }
+            Write-Output "Exported $($dependencies.Count) locked dependency lines"
+          } catch {
+            if (Test-Path -LiteralPath $requirementsFile) { Remove-Item -LiteralPath $requirementsFile }
+            throw
+          }
         working-directory: ${{ inputs.working-directory }}
 
       - name: Run pip-audit
@@ -136,17 +148,23 @@ jobs:
             foreach ($vuln in $vulns) { $ignoreArgs += '--ignore-vuln'; $ignoreArgs += $vuln }
             Write-Output "Ignoring $($vulns.Count) known vulnerability ID(s)"
           }
-          uv run --locked --project "$env:GITHUB_WORKSPACE/scripts/tools/pip-audit" pip-audit `
-            -r "$env:RUNNER_TEMP/requirements.txt" `
-            --no-deps `
-            --format json `
-            -o "$env:GITHUB_WORKSPACE/logs/$name.json" `
-            --desc on `
-            --aliases on `
-            --progress-spinner off `
-            --strict `
-            @ignoreArgs
-          if ($LASTEXITCODE -ne 0) { "PIP_AUDIT_FAILED=true" >> $env:GITHUB_ENV }
+          try {
+            uv run --locked --project "$env:GITHUB_WORKSPACE/scripts/tools/pip-audit" pip-audit `
+              -r "$env:RUNNER_TEMP/requirements.txt" `
+              --no-deps `
+              --disable-pip `
+              --vulnerability-service osv `
+              --format json `
+              -o "$env:GITHUB_WORKSPACE/logs/$name.json" `
+              --desc on `
+              --aliases on `
+              --progress-spinner off `
+              --strict `
+              @ignoreArgs
+            if ($LASTEXITCODE -ne 0) { "PIP_AUDIT_FAILED=true" >> $env:GITHUB_ENV }
+          } finally {
+            Remove-Item -LiteralPath "$env:RUNNER_TEMP/requirements.txt"
+          }
           $global:LASTEXITCODE = 0
         working-directory: ${{ inputs.working-directory }}
         continue-on-error: ${{ inputs.soft-fail }}

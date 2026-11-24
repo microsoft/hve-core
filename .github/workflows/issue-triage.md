@@ -11,7 +11,7 @@ on:
 engine:
   id: copilot
   # Pinned Copilot CLI; scripts/security/tool-checksums.json records it.
-  version: "1.0.87"
+  version: "1.0.103"
 runs-on: ubuntu-24.04
 runs-on-slim: ubuntu-24.04
 runtimes:
@@ -157,7 +157,7 @@ block above is also empty:
 
 * Attempt the read once. Do not retry through the `gh` CLI, `search_issues`, or
   list queries.
-* Do not call `report_incomplete` or `missing_data`.
+* Do not call `report_incomplete` or `report_missing_data`.
 * Leave `needs-triage` in place so the issue stays in the human triage queue.
 * Add one comment stating that automated triage could not read the issue and that
   a maintainer will triage it manually, then stop. Do not call `noop` after

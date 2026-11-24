@@ -3,7 +3,7 @@ title: Code-Scanning Alert Lifecycle
 description: How HVE Core detects, blocks, tracks, and resolves code-scanning alerts without ever dismissing them
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-10-06
+ms.date: 2026-11-07
 ms.topic: concept
 keywords:
   - security
@@ -95,12 +95,12 @@ The rule has no exception concept. If a [tracked exception](#tracked-exceptions)
 
 ## Tracking
 
-The [Weekly GitHub Code Scanning](https://github.com/microsoft/hve-core/blob/main/.github/workflows/weekly-gh-code-scanning.yml) workflow runs Mondays at 3 AM UTC and files or updates one issue per rule. Every issue it files is labeled `security`, `automated`, and `code-scanning`, so no automated issue waits on a triage pass. A hidden body marker identifies the kind of issue and keeps reruns updating the same issue instead of filing duplicates.
+The [Weekly GitHub Code Scanning](https://github.com/microsoft/hve-core/blob/main/.github/workflows/weekly-gh-code-scanning.yml) workflow runs Mondays at 3 AM UTC and files or updates one issue per tool and rule. Every issue it files is labeled `security`, `automated`, and `code-scanning`, so no automated issue waits on a triage pass. A hidden body marker identifies the kind of issue and keeps reruns updating the same issue instead of filing duplicates.
 
 | Issue kind                   | Marker                                                    | What it asks for                                                                                          |
 |------------------------------|-----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| Open alert                   | `automation:security-scan:<rule>`                         | Find the root cause and resolve it in code or configuration                                               |
-| Dismissed but still detected | `automation:security-scan-dismissed:<rule>`               | Reopen the alert, then resolve it; the earlier dismissal does not count as a resolution                   |
+| Open alert                   | `automation:security-scan:<tool>:<rule>`                  | Find the root cause and resolve it in code or configuration                                               |
+| Dismissed but still detected | `automation:security-scan-dismissed:<tool>:<rule>`        | Reopen the alert, then resolve it; the earlier dismissal does not count as a resolution                   |
 | Tracked exception follow-up  | `automation:code-scanning-exception:<tool>:<rule>:<path>` | The exception's issue was closed while the finding persists; fix it or renew the exception through review |
 | Upstream watch triggered     | `automation:upstream-watch:<id>`                          | An upstream condition a workaround waits on is met; retire the workaround and remove the watch            |
 

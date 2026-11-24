@@ -3,10 +3,8 @@
 # SPDX-License-Identifier: MIT
 #
 # render-level.sh
-# Render one authored non-character level into a deck, frames, narration, a
-# captioned MP4, a transcript page, and, when the HVE Slides starter is
-# available, a single-file HTML deck, then score the machine-verifiable
-# criteria.
+# Render one authored non-character level into required HTML and matching
+# frames, narration, captioned MP4 and transcript, then score the evidence.
 
 set -euo pipefail
 
@@ -17,13 +15,10 @@ readonly SKILL_ROOT
 SKILLS_ROOT="$(dirname "${SKILL_ROOT}")"
 readonly SKILLS_ROOT
 
-readonly PPTX_PIPELINE="${SKILLS_ROOT}/powerpoint/scripts/invoke-pptx-pipeline.sh"
-readonly VOICEOVER="${SKILLS_ROOT}/tts-voiceover/scripts/generate-voiceover.sh"
-readonly ASSEMBLE="${SKILLS_ROOT}/demo-video/scripts/assemble-video.sh"
+readonly VOICEOVER_SKILL="${SKILLS_ROOT}/tts-voiceover"
+readonly ASSEMBLE_SKILL="${SKILLS_ROOT}/demo-video"
 readonly CAPTURE_SKILL="${SKILLS_ROOT}/vscode-playwright"
 readonly FINALIZE_ACCESSIBLE_VIDEO="${SCRIPT_DIR}/finalize-accessible-video.sh"
-# The HVE Slides starter lives only in the hve-core repository, not in the plugin.
-readonly DEFAULT_HTML_DECK_TEMPLATE="${SKILLS_ROOT}/../hve-slides/templates/deck"
 
 LEVEL=""
 LEVEL_DIR=""
@@ -31,10 +26,8 @@ WORKSPACE=""
 NARRATION="azure"
 CAPTURE=""
 ANIMATION="none"
-VISION_PROMPT_FILE=""
-HTML_DECK_TEMPLATE=""
-HTML_DECK="auto"
-declare -a SKIP_VENV=()
+SLIDES_SKILL_ROOT=""
+declare -a SYNC_ARGS=()
 
 usage() {
   cat <<EOF
@@ -48,10 +41,8 @@ Options:
   --narration <azure|none>      Narration mode (default: azure; CI requires none)
   --capture <live|deck-export>  Capture profile (default: the level default)
   --animation <none|characters>  Only none is supported; use the builder for characters
-  --vision-prompt-file <path>   Run the vision slide check with this prompt
-  --html-deck-template <dir>    HVE Slides starter; required, fails when missing
-  --no-html-deck                Skip the HTML deck even when the starter exists
-  --skip-venv-setup             Skip uv sync in each skill wrapper
+  --slides-skill-root <dir>     Required trusted loaded hve-slides skill root
+  --skip-venv-setup             Use already-restored caller-owned environments
   -h, --help                    Show this help message
 EOF
   exit 0
@@ -66,6 +57,22 @@ log() {
   printf "==> %s\n" "$1"
 }
 
+run_skill_python() {
+  local skill_root="$1"
+  local script="$2"
+  local environment_name
+  environment_name="$(basename "${skill_root}")"
+  local current="${LEVEL_DIR}/.venv/${environment_name}"
+  while [[ "${current}" != "/" && "${current}" != "." ]]; do
+    [[ ! -L "${current}" ]] || err "Refusing a symlink in the caller environment path."
+    current="$(dirname "${current}")"
+  done
+  shift 2
+  UV_PROJECT_ENVIRONMENT="${LEVEL_DIR}/.venv/${environment_name}" \
+    uv run --frozen --directory "${skill_root}" "${SYNC_ARGS[@]}" \
+    python "${script}" "$@"
+}
+
 parse_args() {
   while (( $# > 0 )); do
     case "$1" in
@@ -75,10 +82,8 @@ parse_args() {
       --narration) NARRATION="$2"; shift 2 ;;
       --capture) CAPTURE="$2"; shift 2 ;;
       --animation) ANIMATION="$2"; shift 2 ;;
-      --vision-prompt-file) VISION_PROMPT_FILE="$2"; shift 2 ;;
-      --html-deck-template) HTML_DECK_TEMPLATE="$2"; HTML_DECK="required"; shift 2 ;;
-      --no-html-deck) HTML_DECK="off"; shift ;;
-      --skip-venv-setup) SKIP_VENV=("--skip-venv-setup"); shift ;;
+      --slides-skill-root) SLIDES_SKILL_ROOT="$2"; shift 2 ;;
+      --skip-venv-setup) SYNC_ARGS=("--no-sync"); shift ;;
       -h|--help) usage ;;
       *) err "Unknown option: $1" ;;
     esac
@@ -101,10 +106,30 @@ validate_args() {
   fi
   [[ "${CAPTURE}" =~ ^(live|deck-export)$ ]] || err "--capture must be live or deck-export."
   LEVEL_DIR="$(cd "${LEVEL_DIR}" && pwd)"
+  case "${LEVEL_DIR}/" in
+    "${SKILLS_ROOT}/"*) err "Level outputs must not be inside skill installations." ;;
+  esac
+  if [[ -n "${SLIDES_SKILL_ROOT}" && -d "${SLIDES_SKILL_ROOT}" ]]; then
+    SLIDES_SKILL_ROOT="$(cd "${SLIDES_SKILL_ROOT}" && pwd -P)"
+    case "${LEVEL_DIR}/" in
+      "${SLIDES_SKILL_ROOT}/"*) err "Level outputs must not be inside hve-slides." ;;
+    esac
+  fi
   command -v uv >/dev/null || err "uv is required."
-  uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py \
+  run_skill_python "${SKILL_ROOT}" scripts/render_checks.py \
     scripted-preflight --level "${LEVEL}" --level-dir "${LEVEL_DIR}" \
     --capture "${CAPTURE}" --animation "${ANIMATION}"
+  [[ -f "${SLIDES_SKILL_ROOT}/scripts/render-deck.mjs" ]] \
+    || err "Resolve hve-slides by name and pass its trusted root via --slides-skill-root."
+  command -v node >/dev/null || err "Node.js 24+ is required."
+  command -v npm >/dev/null || err "npm is required for pinned renderer dependencies."
+  node -e 'if (Number(process.versions.node.split(".")[0]) < 24) process.exit(1)' \
+    || err "Node.js 24+ is required."
+  run_skill_python "${SKILL_ROOT}" scripts/render_checks.py \
+    scripted-preflight --level "${LEVEL}" --level-dir "${LEVEL_DIR}" \
+    --capture "${CAPTURE}" --animation "${ANIMATION}" \
+    --slides-skill-root "${SLIDES_SKILL_ROOT}"
+  SLIDES_SKILL_ROOT="$(cd "${SLIDES_SKILL_ROOT}" && pwd -P)"
   local tool_report ffmpeg_path ffprobe_path ffmpeg_dir ffprobe_dir
   tool_report="$(bash "${FINALIZE_ACCESSIBLE_VIDEO}" --check-prerequisites)"
   ffmpeg_path="$(printf '%s\n' "${tool_report}" | sed -n 's/^ffmpeg=//p')"
@@ -117,22 +142,6 @@ validate_args() {
   export FFPROBE_COMMAND="${ffprobe_path}"
   export PATH="${ffmpeg_dir}:${ffprobe_dir}:${PATH}"
   WORKSPACE="$(cd "${WORKSPACE}" && pwd)"
-  case "${HTML_DECK}" in
-    required)
-      [[ -f "${HTML_DECK_TEMPLATE}/bundle.mjs" ]] || err "No HVE Slides starter at ${HTML_DECK_TEMPLATE}."
-      ;;
-    auto)
-      if [[ -f "${DEFAULT_HTML_DECK_TEMPLATE}/bundle.mjs" ]]; then
-        HTML_DECK_TEMPLATE="${DEFAULT_HTML_DECK_TEMPLATE}"
-        HTML_DECK="required"
-      else
-        HTML_DECK="off"
-      fi
-      ;;
-  esac
-  if [[ "${HTML_DECK}" == "required" ]]; then
-    HTML_DECK_TEMPLATE="$(cd "${HTML_DECK_TEMPLATE}" && pwd -P)"
-  fi
 }
 
 run_captures() {
@@ -140,7 +149,7 @@ run_captures() {
   [[ -f "${plan}" ]] || err "capture: live requires ${plan}."
   log "Capturing live VS Code frames"
   local summary exit_code=0
-  summary="$(uv run --directory "${CAPTURE_SKILL}" python scripts/capture_vscode.py \
+  summary="$(run_skill_python "${CAPTURE_SKILL}" scripts/capture_vscode.py \
     --plan "${plan}" \
     --workspace "${WORKSPACE}" \
     --output-root "${LEVEL_DIR}")" || exit_code=$?
@@ -148,48 +157,25 @@ run_captures() {
   (( exit_code == 0 )) || err "Live capture failed; see output/captures.json."
 }
 
-build_and_validate_deck() {
-  local deck="$1"
-  log "Building deck"
-  bash "${PPTX_PIPELINE}" --action build "${SKIP_VENV[@]}" \
-    --content-dir "${LEVEL_DIR}/content" \
-    --style "${LEVEL_DIR}/content/global/style.yaml" \
-    --output "${deck}"
-
-  log "Validating deck"
-  local -a vision=()
-  [[ -n "${VISION_PROMPT_FILE}" ]] && vision=(--validation-prompt-file "${VISION_PROMPT_FILE}")
-  bash "${PPTX_PIPELINE}" --action validate "${SKIP_VENV[@]}" \
-    --input "${deck}" \
-    --content-dir "${LEVEL_DIR}/content" \
-    --image-output-dir "${LEVEL_DIR}/output/validation" \
-    "${vision[@]}"
-
-  log "Exporting deck frames"
-  bash "${PPTX_PIPELINE}" --action export "${SKIP_VENV[@]}" \
-    --input "${deck}" \
-    --image-output-dir "${LEVEL_DIR}/frames/deck"
-}
-
 narrate_and_assemble() {
   local video_name="$1"
   if [[ "${NARRATION}" == "none" ]]; then
     log "Preparing silent slide timing without speech synthesis"
-    uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py silent-timing \
+    run_skill_python "${SKILL_ROOT}" scripts/render_checks.py silent-timing \
       --level-dir "${LEVEL_DIR}"
   else
     log "Synthesizing narration with Azure AI Speech"
-    bash "${VOICEOVER}" "${SKIP_VENV[@]}" \
+    run_skill_python "${VOICEOVER_SKILL}" scripts/generate_voiceover.py \
       --collapse-newlines \
       --content-dir "${LEVEL_DIR}/content" \
       --output-dir "${LEVEL_DIR}/audio"
   fi
 
   log "Assembling MP4 (${NARRATION})"
-  uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py segments \
+  run_skill_python "${SKILL_ROOT}" scripts/render_checks.py segments \
     --level-dir "${LEVEL_DIR}" \
     --output-name "${video_name}"
-  bash "${ASSEMBLE}" \
+  run_skill_python "${ASSEMBLE_SKILL}" scripts/assemble_video.py \
     --manifest "${LEVEL_DIR}/output/segments.yml" \
     --output "${LEVEL_DIR}/output/${video_name}"
 }
@@ -199,26 +185,22 @@ build_html_deck() {
   local root="${LEVEL_DIR}/html-deck"
   local deck_dir="${root}/slides/${name}"
   log "Building the HTML slide deck"
-  rm -rf "${root}"
-  uv run --directory "${SKILL_ROOT}" python scripts/html_deck.py \
+  run_skill_python "${SKILL_ROOT}" scripts/html_deck.py \
     --level "${LEVEL}" \
     --level-dir "${LEVEL_DIR}" \
-    --template "${HTML_DECK_TEMPLATE}" \
+    --template "${SLIDES_SKILL_ROOT}/templates/deck" \
     --deck-dir "${deck_dir}" \
     --workspace "${WORKSPACE}"
   npm ci --prefix "${deck_dir}" --ignore-scripts --no-audit --no-fund --silent
-  # bundle.mjs only runs when invoked by its real path, not through a symlink.
-  deck_dir="$(cd "${deck_dir}" && pwd -P)"
-  node "${deck_dir}/bundle.mjs"
-  mv "$(dirname "$(dirname "${deck_dir}")")/docs/slides/${name}.html" \
-    "${LEVEL_DIR}/output/${name}.html"
+  node "${SLIDES_SKILL_ROOT}/scripts/render-deck.mjs" \
+    --deck-dir "${deck_dir}" --output "${LEVEL_DIR}/output/${name}.html"
   cp "${deck_dir}/demo-material-build.json" "${LEVEL_DIR}/output/html-deck-build.json"
 
   log "Checking the HTML slide deck offline"
-  uv run --directory "${CAPTURE_SKILL}" python "${SCRIPT_DIR}/check_html_deck.py" \
+  run_skill_python "${CAPTURE_SKILL}" "${SCRIPT_DIR}/check_html_deck.py" \
     --deck "${LEVEL_DIR}/output/${name}.html" \
     --output "${LEVEL_DIR}/output/html-deck-check.json" \
-    || log "HTML deck check failed; T-10 records the details."
+    --level-dir "${LEVEL_DIR}" --frames-dir "${LEVEL_DIR}/frames/deck"
 }
 
 write_accessible_media() {
@@ -234,31 +216,23 @@ main() {
   validate_args
   mkdir -p "${LEVEL_DIR}/output" "${LEVEL_DIR}/frames/deck" "${LEVEL_DIR}/audio"
 
-  local deck="${LEVEL_DIR}/output/hve-demo-${LEVEL}.pptx"
   local video_name="hve-demo-${LEVEL}.raw.mp4"
 
   if [[ "${CAPTURE}" == "live" ]]; then
     run_captures
   fi
-  build_and_validate_deck "${deck}"
+  build_html_deck
   narrate_and_assemble "${video_name}"
-  local -a html_deck=()
-  if [[ "${HTML_DECK}" == "required" ]]; then
-    build_html_deck
-    html_deck=(--html-deck)
-  else
-    log "Skipping the HTML slide deck: no HVE Slides starter"
-  fi
   write_accessible_media
 
   log "Scoring machine-verifiable criteria"
   local exit_code=0
-  uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py evaluate \
+  run_skill_python "${SKILL_ROOT}" scripts/render_checks.py evaluate \
     --level "${LEVEL}" \
     --level-dir "${LEVEL_DIR}" \
     --capture "${CAPTURE}" \
     --narration "${NARRATION}" \
-    "${html_deck[@]}" \
+    --slides-skill-root "${SLIDES_SKILL_ROOT}" \
     > "${LEVEL_DIR}/output/render-result.json" || exit_code=$?
   cat "${LEVEL_DIR}/output/render-result.json"
   return "${exit_code}"

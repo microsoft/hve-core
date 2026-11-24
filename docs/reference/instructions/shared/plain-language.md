@@ -1,9 +1,9 @@
 ---
 title: Plain Language
 description: "Apply plain-language.instructions.md when composing user-facing text, documentation, or responses, including questions, progress updates, explanations, and summaries."
-sidebar_position: 4
+sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-29
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - instruction

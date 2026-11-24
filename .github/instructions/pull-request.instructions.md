@@ -22,7 +22,7 @@ Do not annotate an unchecked human-only item as failed.
 
 ## AI Artifact Sections
 
-For changed `.instructions.md`, `.prompt.md`, `.agent.md`, or `SKILL.md` files, populate Sample
+For changed `.instructions.md`, `.agent.md`, or `SKILL.md` files, populate Sample
 Prompts with a compact, natural request, a short execution summary, the user-visible output, and one
 observable success signal. Keep preview content brief. Remove the section when it is not applicable
 and the template permits deletion.
@@ -60,7 +60,7 @@ Infer types from branch and commit prefixes plus changed paths. Common mappings 
 * `docs/` to Documentation update
 * `.github/workflows/` to GitHub Actions workflow
 * dependency manifests and lockfiles to Dependency update
-* `.instructions.md`, `.prompt.md`, `.agent.md`, and `SKILL.md` to their matching AI artifact types
+* `.instructions.md`, `.agent.md`, and `SKILL.md` to their matching AI artifact types
 * `.ps1`, `.sh`, and `.py` to Script or automation
 
 Select all supported types. Do not infer a generic type only to avoid leaving every item unchecked.

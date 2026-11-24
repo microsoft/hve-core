@@ -92,7 +92,7 @@ Describe 'AffectedAgents module' -Tag 'Unit' {
             New-Item -ItemType Directory -Path (Split-Path -Parent $subagentAbsPath) -Force | Out-Null
             New-Item -ItemType Directory -Path (Split-Path -Parent $parentAbsPath) -Force | Out-Null
             Set-Content -LiteralPath $subagentAbsPath -Value "---`nname: Code Review Standards`nuser-invocable: false`n---`n# Agent`n" -Encoding utf8
-            Set-Content -LiteralPath $parentAbsPath -Value "---`nname: Code Review`nagents:`n  - Code Review Standards`nuser-invocable: true`n---`n# Agent`n" -Encoding utf8
+            Set-Content -LiteralPath $parentAbsPath -Value "---`nname: Code Review`nuser-invocable: true`n---`n# Agent`n`nRun the Code Review Standards subagent.`n" -Encoding utf8
             New-DepMap -Map @{
                 'code-review' = @{ subagents = @($subagentPath) }
             }
@@ -115,9 +115,9 @@ Describe 'AffectedAgents module' -Tag 'Unit' {
                 New-Item -ItemType Directory -Path (Join-Path $script:TestRoot (Split-Path -Parent $rel)) -Force | Out-Null
             }
             Set-Content -LiteralPath (Join-Path $script:TestRoot $subA) -Value "---`nname: Code Review Standards`nuser-invocable: false`n---`n# Agent`n" -Encoding utf8
-            Set-Content -LiteralPath (Join-Path $script:TestRoot $parentA) -Value "---`nname: Code Review`nagents:`n  - Code Review Standards`nuser-invocable: true`n---`n# Agent`n" -Encoding utf8
+            Set-Content -LiteralPath (Join-Path $script:TestRoot $parentA) -Value "---`nname: Code Review`nuser-invocable: true`n---`n# Agent`n`nRun the Code Review Standards subagent.`n" -Encoding utf8
             Set-Content -LiteralPath (Join-Path $script:TestRoot $subB) -Value "---`nname: CVE Analyzer`nuser-invocable: false`n---`n# Agent`n" -Encoding utf8
-            Set-Content -LiteralPath (Join-Path $script:TestRoot $parentB) -Value "---`nname: SSSC Reviewer`nagents:`n  - CVE Analyzer`nuser-invocable: true`n---`n# Agent`n" -Encoding utf8
+            Set-Content -LiteralPath (Join-Path $script:TestRoot $parentB) -Value "---`nname: SSSC Reviewer`nuser-invocable: true`n---`n# Agent`n`nRun the CVE Analyzer subagent.`n" -Encoding utf8
             New-DepMap -Map @{
                 'code-review'   = @{ subagents = @() }
                 'sssc-reviewer' = @{ subagents = @() }
@@ -130,6 +130,27 @@ Describe 'AffectedAgents module' -Tag 'Unit' {
                 -SkipDepMapRefresh
 
             $result | Should -Be @('code-review', 'code-review-standards', 'cve-analyzer', 'sssc-reviewer')
+        }
+
+        It 'Ignores subagent names that appear only in parent frontmatter' {
+            $sub = '.github/agents/security/subagents/cve-analyzer.agent.md'
+            $parent = '.github/agents/security/sssc-reviewer.agent.md'
+            foreach ($rel in @($sub, $parent)) {
+                New-Item -ItemType Directory -Path (Join-Path $script:TestRoot (Split-Path -Parent $rel)) -Force | Out-Null
+            }
+            Set-Content -LiteralPath (Join-Path $script:TestRoot $sub) -Value "---`nname: CVE Analyzer`nuser-invocable: false`n---`n# Agent`n" -Encoding utf8
+            Set-Content -LiteralPath (Join-Path $script:TestRoot $parent) -Value "---`nname: SSSC Reviewer`nagents:`n  - CVE Analyzer`nuser-invocable: true`n---`n# Agent`n" -Encoding utf8
+            New-DepMap -Map @{
+                'sssc-reviewer' = @{ subagents = @() }
+            }
+
+            $result = Get-AffectedAgentSlugs `
+                -ChangedFiles @($sub) `
+                -RepoRoot $script:TestRoot `
+                -DepMapPath $script:DepMapPath `
+                -SkipDepMapRefresh
+
+            $result | Should -Be @('cve-analyzer')
         }
 
         It 'Does not include security subagents as direct parents (DD-09: frontmatter wins)' {

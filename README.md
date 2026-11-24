@@ -2,7 +2,7 @@
 title: HVE Core
 description: Agentic SDLC framework for context management, governance, shift-left engineering, reusable organizational knowledge, and consistent practices across teams
 author: Microsoft
-ms.date: 2026-10-28
+ms.date: 2026-10-31
 ms.topic: overview
 keywords:
   - hypervelocity engineering
@@ -47,31 +47,32 @@ HVE Core provides structured workflow building blocks:
 
 ## Where to Start
 
-<!-- markdownlint-disable MD013 -->
-[![Install HVE Core](https://img.shields.io/badge/VS%20Code-Install%20HVE%20Core-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
-<!-- markdownlint-enable MD013 -->
+1. Install the `hve-core` plugin. In VS Code, run **Chat: Open Customizations**, select **Browse**, add the `microsoft/hve-core` marketplace through **Configure Marketplaces**, and install `hve-core`. In GitHub Copilot CLI, run:
 
-1. Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace.
+   ```bash
+   copilot plugin marketplace add microsoft/hve-core
+   copilot plugin install hve-core@hve-core
+   ```
+
 2. Open any project and launch GitHub Copilot Chat (`Ctrl+Alt+I`).
 3. Select **RPI Agent** from the agent picker, then describe the task you want to complete.
 
 > [!TIP]
-> Using GitHub Copilot CLI? Register the consolidated HVE Core marketplace and
-> install its plugin:
->
-> ```bash
-> copilot plugin marketplace add microsoft/hve-core
-> copilot plugin install hve-core@hve-core
-> ```
->
-> Duplicate same-name registration behavior can vary by Copilot CLI version. See
-> [CLI Plugins](docs/getting-started/methods/cli-plugins.md) for details.
+> Prefer the VS Code Marketplace? Install the
+> [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core).
+> It delivers the agents and skills, but its instructions may not reach Copilot
+> sessions and it has no canvases. [Installing HVE Core](docs/getting-started/install.md)
+> compares every route. Use one route at a time so agents don't appear twice.
+
+<!-- markdownlint-disable MD013 -->
+[![Install HVE Core](https://img.shields.io/badge/VS%20Code-Install%20HVE%20Core-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
+<!-- markdownlint-enable MD013 -->
 
 ## Choose Your Path
 
 * New to HVE-Core: Start with [Start Here](docs/getting-started/README.md) to complete your first workflow quickly.
 * Leading a team: Use the [Team Adoption Guide](docs/customization/team-adoption.md) to roll out standards and onboarding.
-* Contributing to this repo: Follow the [Contributing Guide](CONTRIBUTING.md) to add or improve agents, prompts, instructions, and skills.
+* Contributing to this repo: Follow the [Contributing Guide](CONTRIBUTING.md) to add or improve agents, instructions, and skills.
 
 ## Navigate This Repository
 
@@ -97,7 +98,7 @@ Full documentation is available at **<https://microsoft.github.io/hve-core/>**.
 | [Package Migration](docs/getting-started/package-migration.md)   | Move from retired distribution identities        |
 | [RPI Workflow](docs/rpi/README.md)                               | Deep dive into Research, Plan, Implement, Review |
 | [RPI Workflow Canvas](docs/rpi/rpi-workflow-canvas.md)           | Follow and steer an RPI session beside the chat  |
-| [Contributing](docs/contributing/README.md)                      | Create custom agents, instructions, and prompts  |
+| [Contributing](docs/contributing/README.md)                      | Create custom agents, instructions, and skills   |
 | [Agents Reference](.github/CUSTOM-AGENTS.md)                     | All available agents                             |
 | [Instructions Reference](.github/instructions/README.md)         | All coding instructions                          |
 | [AI Artifacts Architecture](docs/architecture/ai-artifacts.md)   | Prompt engineering framework and artifact types  |

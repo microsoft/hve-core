@@ -10,6 +10,8 @@ description: Twelve conformance checks the vally-tests skill emits for .prompt.m
 
 This reference enumerates the twelve conformance checks the `vally-tests` skill knows how to express for `.prompt.md` artifacts. Each check exercises a behavior the prompt's authoring contract already claims, then routes the resulting stimulus block to the canonical Vally eval file declared in `eval-suite-routing.md`.
 
+The Copilot agent harness does not load `.prompt.md` files, and HVE Core ships its entry points as user-invocable skills. Use these checks only for prompt files kept for hosts that still load them, such as VS Code's Local harness. Test a skill entry point with [skills.md](skills.md).
+
 The canonical eval target for this kind is `evals/behavior-conformance/prompts.eval.yaml`. New stimulus blocks are appended to its `stimuli:` array, creating the file on first use, and tagged `tags.advisory: true` per `eval-suite-routing.md`. Authors MUST run every candidate stimulus through `refusal-taxonomy.md` before emission and refuse any match.
 
 Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`, `contains`, `regex`, `json_schema`) per `grader-catalog.md`. Where the research phrasing recommended `output-matches`, the equivalent here is `regex`; where it recommended `output-contains`, the equivalent is `contains`; where it recommended `llm-grader`, the equivalent is `semantic_similarity`.
@@ -120,10 +122,10 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 ### Check 12: Subagent Invocation Uses Human-Readable Names
 
 * Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
-* Testable behavior: when the prompt or its delegated agent invokes a subagent, invocation text MUST reference the subagent by the human-readable `name:` from the subagent's frontmatter (for example, "Run PowerPoint Subagent"). Invocation by filename or by file path is non-conforming.
+* Testable behavior: when the prompt or its delegated agent invokes a subagent, invocation text MUST reference the subagent by the human-readable `name:` from the subagent's frontmatter (for example, "Dispatch the BRD Quality Reviewer subagent"). Invocation by filename or by file path is non-conforming.
 * Suggested stimulus: ask the assistant which subagent a named prompt invokes and how the invocation reads.
-* Grader recommendation: `regex` with positive pattern `(?i)\brun\s+[A-Z][A-Za-z0-9 ]+\s+Subagent\b` and negate pattern `(?i)[A-Za-z0-9_-]+\.agent\.md`.
-* Evidence: `.github/agents/experimental/pptx.agent.md` invokes `PowerPoint Subagent` by its human-readable name.
+* Grader recommendation: `regex` with a positive pattern naming the subagent, for example `(?i)\bBRD Quality Reviewer\b`, and negate pattern `(?i)[A-Za-z0-9_-]+\.agent\.md`.
+* Evidence: `.github/agents/project-planning/brd-builder.agent.md` dispatches `BRD Quality Reviewer` by its human-readable name.
 
 ## Cross-References
 

@@ -3,7 +3,7 @@ title: Testing Architecture
 description: PowerShell Pester test infrastructure and conventions
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-09
+ms.date: 2026-11-02
 ms.topic: concept
 keywords:
   - testing
@@ -13,7 +13,7 @@ keywords:
 
 ## Overview
 
-HVE Core uses Pester 5.x for PowerShell testing with a mirror directory structure that maps production scripts to their corresponding test files. The test infrastructure supports isolated unit testing through mock utilities and enforces an 80% code coverage threshold.
+HVE Core uses Pester 6.x for PowerShell testing with a mirror directory structure that maps production scripts to their corresponding test files. The test infrastructure supports isolated unit testing through mock utilities and enforces an 80% code coverage threshold.
 
 ## Directory Structure
 

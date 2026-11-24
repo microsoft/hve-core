@@ -77,7 +77,7 @@ Use one evidence state for each material item:
 |----------------------------------|-------------------|--------------------------------------------------------------------------|
 | Unverified hypothesis/conjecture | 💡                | A working explanation or prediction now affects research routing         |
 | Partially supported claim        | 🔎                | Available evidence is suggestive but does not yet settle the claim       |
-| Evidence-backed finding          | ✅                 | Sufficient cited evidence supports the finding for the current purpose   |
+| Evidence-backed finding          | ✅                | Sufficient cited evidence supports the finding for the current purpose   |
 | Weakened/disproved claim         | ⚠️                | Evidence materially challenges or invalidates the earlier claim          |
 | Unresolved possibility           | 🔎                | A material possibility remains open because evidence is missing or mixed |
 
@@ -128,8 +128,9 @@ Use one output mode and retain it throughout the artifact. Record the Research d
 * `executed`: rpi-research performed and synthesized task research.
 * `reused`: an explicit parent verified that existing research remains adequate.
 * `satisfied-and-skipped`: an explicit parent determined that supplied evidence is adequate without running new Research.
+* `provided`: an explicit parent records research that the user or another session supplied: an rpi-research artifact copied from another session, for which rpi-research does not run; the user's material in another form, which rpi-research makes into this artifact, keeping the user's content and decisions; or research that came with a provided plan, and that research has no document of its own.
 
-Only `executed` applies to a standalone rpi-research invocation. `reused` and `satisfied-and-skipped` are parent-owned dispositions for RPI Agent contexts.
+Only `executed` applies to a standalone rpi-research invocation. `reused`, `satisfied-and-skipped`, and `provided` are parent-owned dispositions for RPI Agent contexts.
 
 | Output mode                       | Recommendation action                                                                                  | Supports planning                                                                                        |
 |-----------------------------------|--------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
@@ -253,5 +254,5 @@ Use the available host tool in each category and record a gap or fallback in the
 | External research      | Current facts and specific pages                                                     | Web search and fetch                                                         |
 | Repository research    | Patterns from authoritative repositories                                             | Repository and repository text search                                        |
 | Documentation research | Version-aware official documentation                                                 | Documentation MCP or approved documentation tools                            |
-| Optional participation | Decision-relevant caller checkpoints                                                 | The host's question tool, such as `vscode_askQuestions`                      |
+| Optional participation | Decision-relevant caller checkpoints                                                 | The host's question tool, such as `ask_user` or `vscode_askQuestions`        |
 | Optional helper        | Bounded source gathering that returns locations, excerpts, and brief notes to verify | A subagent such as `RPI Researcher`, at the researcher's discretion          |

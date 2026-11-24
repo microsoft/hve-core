@@ -1,9 +1,9 @@
 ---
 title: telemetry-foundations
 description: "Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling"
-sidebar_position: 3
+sidebar_position: 5
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-10-31
 ms.topic: reference
 keywords:
   - skill

@@ -1,0 +1,2510 @@
+{
+  "cases": [
+    {
+      "caseId": "case-01",
+      "heldOutFault": "loss",
+      "heldOutService": "currencyservice",
+      "modalities": [
+        {
+          "name": "metrics.jsonl",
+          "rowCount": 1441,
+          "sha256": "d28f290b9864e5c8acb7a4346b2c86f576a567235505dab532a9b7997e7a3a10",
+          "size": 3792588,
+          "sourceSha256": "c4055cbedea6c9aeb164bba921b81023ba76f798ad90c672f0a5ed51550b8568"
+        },
+        {
+          "name": "logs.jsonl",
+          "rowCount": 154624,
+          "sha256": "a81c469414a29a09b05228e9e36562e66b6babb34a13c20437aaf64c3a19791c",
+          "size": 17104511,
+          "sourceSha256": "6fb018727729cc73726506dbdf0d2ec0776676ae8fb0a1fe14787db0ec057e42"
+        },
+        {
+          "name": "traces.jsonl",
+          "rowCount": 354303,
+          "sha256": "50cb6cc892594d5fac90fb30c893e5a43ae6bfb1008d2dda3149d9eaa4b3179a",
+          "size": 121587696,
+          "sourceSha256": "6fc519b2286f0e5e445eedf6e634735f309087ec7a6bfe0c65ee6661d71b1765"
+        }
+      ],
+      "sourceFiles": [
+        {
+          "name": "inject_time.txt",
+          "objectId": "cf7115c836f8d10fadc5b407fb7b6b582e091893",
+          "sha256": "8b68d557a2c05456352b26b33504c36cd97f2edec40894837e2d645460cd21c1",
+          "size": 10
+        },
+        {
+          "name": "metrics.parquet",
+          "objectId": "7a2e8daa47041f782d3718e6942b9493dad4aaba",
+          "sha256": "c4055cbedea6c9aeb164bba921b81023ba76f798ad90c672f0a5ed51550b8568",
+          "size": 163223
+        },
+        {
+          "name": "logs.parquet",
+          "objectId": "5a5d26d80c56436b6efce7a9de88e92de8640d91",
+          "sha256": "6fb018727729cc73726506dbdf0d2ec0776676ae8fb0a1fe14787db0ec057e42",
+          "size": 292616
+        },
+        {
+          "name": "traces.parquet",
+          "objectId": "e4618b7b570fc705f4ce663abf57a3cc9e4d5eab",
+          "sha256": "6fc519b2286f0e5e445eedf6e634735f309087ec7a6bfe0c65ee6661d71b1765",
+          "size": 9181276
+        }
+      ],
+      "sourcePath": "re2ob_currencyservice_loss_3"
+    },
+    {
+      "caseId": "case-02",
+      "heldOutFault": "cpu",
+      "heldOutService": "cartservice",
+      "modalities": [
+        {
+          "name": "metrics.jsonl",
+          "rowCount": 4201,
+          "sha256": "353730d70630b3b048ca23ec6c1f5e3f51ad2c16e7e81d6dbb6862dd8e1967d9",
+          "size": 6873982,
+          "sourceSha256": "195aa8d4300385d185ac7e9838adfc55e004fa957c142cba680577d817cf192d"
+        }
+      ],
+      "sourceFiles": [
+        {
+          "name": "inject_time.txt",
+          "objectId": "21e38612fa8d148ef26b9ded2bd04ec918aa6f4f",
+          "sha256": "2b2f2ff05f22de055048f77358979316807c0982cabe8b7778c1fc79adadf3e1",
+          "size": 10
+        },
+        {
+          "name": "metrics.parquet",
+          "objectId": "b6f53b87e878161c3e7d0d575978b77a6cd75646",
+          "sha256": "195aa8d4300385d185ac7e9838adfc55e004fa957c142cba680577d817cf192d",
+          "size": 380210
+        }
+      ],
+      "sourcePath": "re1ob_cartservice_cpu_4"
+    },
+    {
+      "caseId": "case-03",
+      "heldOutFault": "socket",
+      "heldOutService": "carts",
+      "modalities": [
+        {
+          "name": "metrics.jsonl",
+          "rowCount": 1441,
+          "sha256": "72976d5549f8bcdbbfaf0e29253a35c3b2af678e045f416aad1d67b24f8ab6f8",
+          "size": 3187193,
+          "sourceSha256": "e07cd6e54b8f7e794879ff236d6e37e4b55d2d3521aa8006b81ade6a8e0b73be"
+        },
+        {
+          "name": "logs.jsonl",
+          "rowCount": 86090,
+          "sha256": "f47cae66e2772e066bbfed2a7a777616767323e123c87100d3e2c02518abcc09",
+          "size": 20051239,
+          "sourceSha256": "7b17e122209b2c0a1c6c57e93c5fd00230cf3eddd6992ae36842da9da67f46d6"
+        }
+      ],
+      "sourceFiles": [
+        {
+          "name": "inject_time.txt",
+          "objectId": "df06fd22100a8b4c28826b2d23ac8fdf739c260b",
+          "sha256": "42a6c87a3e11f0b9d8edef2d63453eb183fa6da5c54bca0f82af213e97b38d20",
+          "size": 10
+        },
+        {
+          "name": "metrics.parquet",
+          "objectId": "e9cf012f9e5c2b52bdc55cdb77feaf9908b2a848",
+          "sha256": "e07cd6e54b8f7e794879ff236d6e37e4b55d2d3521aa8006b81ade6a8e0b73be",
+          "size": 164594
+        },
+        {
+          "name": "logs.parquet",
+          "objectId": "c7a50ea7d21317dd027250e537899d6e489578a1",
+          "sha256": "7b17e122209b2c0a1c6c57e93c5fd00230cf3eddd6992ae36842da9da67f46d6",
+          "size": 967158
+        }
+      ],
+      "sourcePath": "re2ss_carts_socket_3"
+    },
+    {
+      "caseId": "case-04",
+      "heldOutFault": "disk",
+      "heldOutService": "productcatalogservice",
+      "modalities": [
+        {
+          "name": "metrics.jsonl",
+          "rowCount": 1441,
+          "sha256": "f1f2ff4673ad8b70691c55549c0f4c47883d98fa48cf2cffb53bcd6482bd78c7",
+          "size": 3714370,
+          "sourceSha256": "8d4b475d7a6938b19e95c5b3ca74f147a938eb5b45ce67fc37b93cbfa4244509"
+        },
+        {
+          "name": "logs.jsonl",
+          "rowCount": 176391,
+          "sha256": "cbe194d4aff73d2065a18ee4cf03080dd4e1bf0065188cf590b933ea2ed7d8d9",
+          "size": 19498097,
+          "sourceSha256": "8c9844999f390588114e1ea8fd09d6fbf5db5a8341aedb6bfede2bd4579f36e0"
+        },
+        {
+          "name": "traces.jsonl",
+          "rowCount": 402669,
+          "sha256": "13e307553d1f726155ffc0147b7668706542e14e7558635af6d599683a47a7c1",
+          "size": 138184939,
+          "sourceSha256": "c6e9ada74541372dfefa2bc0280652dbd1d7c8a58ffc96f2469ef429ed2e322e"
+        }
+      ],
+      "sourceFiles": [
+        {
+          "name": "inject_time.txt",
+          "objectId": "dfed63f63a3350e2845c575f46a1ca42fed6d861",
+          "sha256": "cc5a467814b0f6759a5d8da7744a2b8cd531712c643d411fddfc166d4ac8b6cd",
+          "size": 10
+        },
+        {
+          "name": "metrics.parquet",
+          "objectId": "b15085cba13a5de303a6a08d3cb69b07fba0ed49",
+          "sha256": "8d4b475d7a6938b19e95c5b3ca74f147a938eb5b45ce67fc37b93cbfa4244509",
+          "size": 159195
+        },
+        {
+          "name": "logs.parquet",
+          "objectId": "644a041c1fdf377f235529dd4e9e76f450eabaf8",
+          "sha256": "8c9844999f390588114e1ea8fd09d6fbf5db5a8341aedb6bfede2bd4579f36e0",
+          "size": 347238
+        },
+        {
+          "name": "traces.parquet",
+          "objectId": "d5d964c1306f820a7ffff1a3cc195562e5e33c30",
+          "sha256": "c6e9ada74541372dfefa2bc0280652dbd1d7c8a58ffc96f2469ef429ed2e322e",
+          "size": 10298558
+        }
+      ],
+      "sourcePath": "re2ob_productcatalogservice_disk_2"
+    },
+    {
+      "caseId": "case-05",
+      "heldOutFault": "socket",
+      "heldOutService": "catalogue",
+      "modalities": [
+        {
+          "name": "metrics.jsonl",
+          "rowCount": 1441,
+          "sha256": "8cf7fb8fab70a567c8ec4998dc9ad8fc991e021a7b36e3ad8f7d25af446d248a",
+          "size": 3297553,
+          "sourceSha256": "47a7bb4c5f852b2157b31ec3ab80364485dd6a72375f192126c4397c5c1708ff"
+        },
+        {
+          "name": "logs.jsonl",
+          "rowCount": 89439,
+          "sha256": "18f4952f62a0e922ad6cfb64b899d2f3ae916168986d2bf63697a280ef538955",
+          "size": 25535024,
+          "sourceSha256": "1266580a431f8b047a1a8156ae5b38754db60a8ad1a049d32b5b289c90e07329"
+        }
+      ],
+      "sourceFiles": [
+        {
+          "name": "inject_time.txt",
+          "objectId": "45281f418c725bacdc78bd7cd2e3c6cdb09e083a",
+          "sha256": "7b4aa7ce6ba1f5883965a571380e91f10f5c152c03e92e8bd5ee80d74a4d719a",
+          "size": 10
+        },
+        {
+          "name": "metrics.parquet",
+          "objectId": "e200c367edcab815af5f10c595c8a139050ef4db",
+          "sha256": "47a7bb4c5f852b2157b31ec3ab80364485dd6a72375f192126c4397c5c1708ff",
+          "size": 163454
+        },
+        {
+          "name": "logs.parquet",
+          "objectId": "7d7df6fed112b74d72eb91c2be27744d5ef68d88",
+          "sha256": "1266580a431f8b047a1a8156ae5b38754db60a8ad1a049d32b5b289c90e07329",
+          "size": 1120529
+        }
+      ],
+      "sourcePath": "re2ss_catalogue_socket_1"
+    }
+  ],
+  "dataset": {
+    "inputReuse": {
+      "changedManifestFields": [],
+      "copiedBytes": 386114573,
+      "reusedPriorSessionsOrResults": false,
+      "sourceRunId": "pr-3136-raw-debug-v12-zhbaszullqqy",
+      "verifiedCopiedFiles": 40
+    },
+    "license": "MIT",
+    "name": "phamquiluan/RCAEval",
+    "revision": "afeacb11bcc94dadfd1c8f483ee4377b2b8b614e",
+    "selection": {
+      "algorithm": "sha256-seeded-ranking-v1",
+      "eligibleCases": 730,
+      "excludedSourcePaths": [
+        "re1ob_adservice_cpu_1",
+        "re1tt_ts-travel-service_mem_3",
+        "re2ob_checkoutservice_delay_1",
+        "re3ob_cartservice_f1_1",
+        "re3tt_ts-auth-service_f2_4"
+      ],
+      "populationSha256": "95761b7c9876bcfb56d0c60ff7ae4bc8165ed23132318c14f3767bcd76f61ec4",
+      "seed": "rcaeval-raw-2026-11-05",
+      "selectedSourcePaths": [
+        "re2ob_currencyservice_loss_3",
+        "re1ob_cartservice_cpu_4",
+        "re2ss_carts_socket_3",
+        "re2ob_productcatalogservice_disk_2",
+        "re2ss_catalogue_socket_1"
+      ]
+    },
+    "transformationVersion": "2.0.0",
+    "url": "https://huggingface.co/datasets/phamquiluan/RCAEval"
+  },
+  "executionValidation": {
+    "applicableStrictGatesPassed": 30,
+    "attemptedSessions": 30,
+    "canonicalMessageHashesVerified": true,
+    "cleanupErrors": 0,
+    "evidenceResultEnvelopes": 536,
+    "exactResponseIdentityChecks": 181,
+    "finalOnlySchemaBoundaryChecksPassed": 30,
+    "identityMismatches": 0,
+    "inputFilesVerified": 40,
+    "integrityValidReports": 30,
+    "maximumResultBytes": 65095,
+    "partialHostBatches": 0,
+    "protectedDebugFiles": 330,
+    "protectedRoundOneFiles": 145,
+    "rejectedFormatMessageHashesVerified": 0,
+    "rejectedQueries": 2,
+    "remainingSessions": 0,
+    "resultByteLimit": 65536,
+    "resultHashesVerified": true,
+    "sourceAndInputFingerprintUnchangedAtVerification": true,
+    "status": "complete",
+    "technicalFailures": 0,
+    "technicalPauses": 0
+  },
+  "limitations": [
+    "Five selected fault-injection cases, three repeated rounds per condition; not independent samples or organic production incidents.",
+    "Production names a benchmark model profile, not production authority, readiness certification or a general efficacy claim.",
+    "Raw and exposed-feature cohorts differ. Protocol and source states also differ across the four categories.",
+    "Candidate service and mechanism scores do not establish causal correctness; human review remains pending.",
+    "All 15 skilled findings remain not-established with unassessed finding-service scores, not scored finding-service misses.",
+    "Original-source retrieval and the causal or privacy impact of artifact redaction remain unassessed.",
+    "The host exposes a model identifier, not an immutable backend build; hashes are not a complete public replay archive."
+  ],
+  "pairing": {
+    "baselineOnlyServiceMatches": 0,
+    "bothServiceMatches": 13,
+    "interpretation": "Three repetitions of five paired cases, not independent samples or a causal-effect estimate.",
+    "scheduledPairs": 15,
+    "skilledOnlyServiceMatches": 1,
+    "unassessedPairs": 0,
+    "validPairs": 15
+  },
+  "publication": {
+    "humanReview": "pending",
+    "policy": "metadata-only allowlist; no raw telemetry, narratives, captures, local paths, session IDs or reveal links",
+    "scorePolicy": "Native scores preserved without label normalization or regrading.",
+    "withheldCandidateLabels": 3
+  },
+  "roundTotals": [
+    {
+      "abstentions": 0,
+      "aiCredits": 650.05136,
+      "applicableStrictGatesPassed": 5,
+      "candidateMechanismMatches": 4,
+      "candidateServiceMatches": 5,
+      "condition": "with-skill",
+      "findingServiceMatches": 0,
+      "formatRejections": 0,
+      "integrityValidReports": 5,
+      "premiumRequests": 34,
+      "queryRejections": 2,
+      "readyForHumanSignOff": 0,
+      "round": 1,
+      "sessions": 5,
+      "technicalFailures": 0
+    },
+    {
+      "abstentions": 0,
+      "aiCredits": 432.89674,
+      "applicableStrictGatesPassed": 5,
+      "candidateMechanismMatches": 4,
+      "candidateServiceMatches": 4,
+      "condition": "without-skill",
+      "findingServiceMatches": null,
+      "formatRejections": 0,
+      "integrityValidReports": 5,
+      "premiumRequests": 28,
+      "queryRejections": 0,
+      "readyForHumanSignOff": null,
+      "round": 1,
+      "sessions": 5,
+      "technicalFailures": 0
+    },
+    {
+      "abstentions": 0,
+      "aiCredits": 593.67598,
+      "applicableStrictGatesPassed": 5,
+      "candidateMechanismMatches": 4,
+      "candidateServiceMatches": 5,
+      "condition": "with-skill",
+      "findingServiceMatches": 0,
+      "formatRejections": 0,
+      "integrityValidReports": 5,
+      "premiumRequests": 31,
+      "queryRejections": 0,
+      "readyForHumanSignOff": 0,
+      "round": 2,
+      "sessions": 5,
+      "technicalFailures": 0
+    },
+    {
+      "abstentions": 0,
+      "aiCredits": 497.37092,
+      "applicableStrictGatesPassed": 5,
+      "candidateMechanismMatches": 3,
+      "candidateServiceMatches": 5,
+      "condition": "without-skill",
+      "findingServiceMatches": null,
+      "formatRejections": 0,
+      "integrityValidReports": 5,
+      "premiumRequests": 28,
+      "queryRejections": 0,
+      "readyForHumanSignOff": null,
+      "round": 2,
+      "sessions": 5,
+      "technicalFailures": 0
+    },
+    {
+      "abstentions": 0,
+      "aiCredits": 595.0131,
+      "applicableStrictGatesPassed": 5,
+      "candidateMechanismMatches": 2,
+      "candidateServiceMatches": 4,
+      "condition": "with-skill",
+      "findingServiceMatches": 0,
+      "formatRejections": 0,
+      "integrityValidReports": 5,
+      "premiumRequests": 32,
+      "queryRejections": 0,
+      "readyForHumanSignOff": 0,
+      "round": 3,
+      "sessions": 5,
+      "technicalFailures": 0
+    },
+    {
+      "abstentions": 0,
+      "aiCredits": 432.71776,
+      "applicableStrictGatesPassed": 5,
+      "candidateMechanismMatches": 2,
+      "candidateServiceMatches": 4,
+      "condition": "without-skill",
+      "findingServiceMatches": null,
+      "formatRejections": 0,
+      "integrityValidReports": 5,
+      "premiumRequests": 28,
+      "queryRejections": 0,
+      "readyForHumanSignOff": null,
+      "round": 3,
+      "sessions": 5,
+      "technicalFailures": 0
+    }
+  ],
+  "run": {
+    "actualAiCredits": 3201.72586,
+    "additionalRoundAiCredits": 2118.77776,
+    "budgetScope": "shared across all rounds and both conditions; monitored cutoff, not a hard billing cap",
+    "cliVersion": "GitHub Copilot CLI 1.0.101.",
+    "completedRounds": [
+      1,
+      2,
+      3
+    ],
+    "conditions": [
+      "with-skill",
+      "without-skill"
+    ],
+    "contextTier": "default",
+    "evaluatedUncommittedHarnessChanges": false,
+    "evidenceTrack": "raw",
+    "executionSurface": "installed Copilot headless runtime with host-mediated evidence",
+    "immutableModelBuild": "not-exposed-by-host",
+    "independentSessions": 30,
+    "inputFingerprint": "8c656ca3fe69dbebc37d1f4294ad125fa630c998c2dc0217c6398502348fa252",
+    "modelIdentifier": "gpt-5.6-sol",
+    "nodeVersion": "v26.13.0",
+    "packageLockSha256": "41ff6a12141a89fa6eef57b985ef684108a586c322703015afe2c9a398885861",
+    "productionAuthorization": false,
+    "profile": "production",
+    "protocol": "ad-hoc-v12",
+    "rawEvidenceFormat": "jsonl-unmapped-v1",
+    "readerBundleIdentity": "hyparquet@1.31.5:fdd28364b0dde800dea00979cbd3ddee26a053bb0d15b17820e0f865b9ab8178",
+    "reasoningEffort": "medium",
+    "reportOutput": "schema",
+    "repositoryCommitAtStart": "15901a4a4aeeee5e213d790e3dd66e5cddb052aa",
+    "retries": "none",
+    "runAiCreditAllowance": 6000,
+    "runId": "pr-3136-raw-production-v12-wshzcfvbkbjc",
+    "startedAt": "2026-11-06T22:19:28.600Z",
+    "verifiedAt": "2026-11-06T23:34:33.698Z"
+  },
+  "schemaVersion": "1.0.0",
+  "snapshotDate": "2026-11-06",
+  "sourceArtifactHashes": {
+    "continuation-round-one-summary.json": "c28803dc36ab478140aa157ff9c2f5eedc992c26b6066197553fa2d0b7c8e881",
+    "evaluation-summary.json": "93ada036a858584b4f10a381fe05cb59d80ce4ef76ed697fc5ca63835c3524fe",
+    "inputs/scorer-only/preparation-manifest.json": "ea6d512a44772fdb9e2724bc153c4e79f6e0c168849d7cf61be3050882e2c934",
+    "production-all-rounds-checkpoint.json": "eae13b35000dcd9f1f6a791949e64263e881b13fe7fcbe1d09484236d2ccf2dc",
+    "production-continuation-driver-state.json": "a88e8da02dfbaeec64201c2278aacc9db8e98164a919694a4b3a16b816133cea",
+    "production-continuation-preflight.json": "2b9d685234eafae2a94efe876d1fe5804f407ae6b1db8213a348c597b0f3c715",
+    "production-preflight.json": "bda30b4b6accbbe6d4ff573d68827315ec61a50224a96bfdda968813dd3d8e85",
+    "production-round-one-checkpoint.json": "e0ed12f4078ab14f54b96757f2bd8bd78b2226443ecb7e7cd26092bdc4910514",
+    "round-1-execution.json": "99ebf2b8a8cf7185b6bc495049f7dca50e8351d423b5ba08ef46fadd6408ff50",
+    "round-2-execution.json": "b3738d82b12096430839d0ee4236b4a371a2b4240b05cd7483ecab733a3621a5",
+    "round-3-execution.json": "1b0dfa2289df5cd624e2e86dd31b91b35f2033a84402aad0e7577d274c2fe511",
+    "run-manifest.json": "2e9e050e579af09c757deeef439996f3dc725d541f14134ea102f10524134873"
+  },
+  "status": "recorded-raw-evaluation-production-profile-human-review-pending",
+  "totals": [
+    {
+      "abstentions": 0,
+      "aiCredits": 1838.74044,
+      "applicableStrictGatesPassed": 15,
+      "attemptedSessions": 15,
+      "candidateMechanismMatches": 10,
+      "candidateServiceMatches": 14,
+      "condition": "with-skill",
+      "findingEndpoint": "requested",
+      "findingServiceMatches": 0,
+      "findingServiceUnassessed": 15,
+      "formatRejections": 0,
+      "integrityValidReports": 15,
+      "premiumRequests": 97,
+      "queryRejections": 2,
+      "readyForHumanSignOff": 0,
+      "sessionArtifactReplacements": 1164,
+      "sessions": 15,
+      "technicalFailures": 0,
+      "totalNanoAiu": 1838740440000
+    },
+    {
+      "abstentions": 0,
+      "aiCredits": 1362.98542,
+      "applicableStrictGatesPassed": 15,
+      "attemptedSessions": 15,
+      "candidateMechanismMatches": 9,
+      "candidateServiceMatches": 13,
+      "condition": "without-skill",
+      "findingEndpoint": "not-requested",
+      "findingServiceMatches": null,
+      "findingServiceUnassessed": null,
+      "formatRejections": 0,
+      "integrityValidReports": 15,
+      "premiumRequests": 84,
+      "queryRejections": 0,
+      "readyForHumanSignOff": null,
+      "sessionArtifactReplacements": 1008,
+      "sessions": 15,
+      "technicalFailures": 0,
+      "totalNanoAiu": 1362985420000
+    }
+  ],
+  "trials": [
+    {
+      "aiCredits": 150.6788,
+      "candidate": {
+        "mechanismScore": "unassessed",
+        "service": "currencyservice",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-01",
+      "condition": "with-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 3,
+        "jsonlQueries": 20,
+        "reportedBlocked": false
+      },
+      "finding": {
+        "correctCauseTested": "unassessable",
+        "mechanismScore": "unassessed",
+        "serviceScore": "unassessed",
+        "status": "not-established"
+      },
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "b41d51e1740d3b20d4c61c0f1cc4dd6068c1aed7822382e87c45de26f8a6f454",
+        "skillBundleSha256": "4c7707c98df618c7e44eb260daa08f2fbc7dd7a9474ca4ef3253547c2f55f438",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "0298f8098e5e3f709adcdb091ce4d6439b999e4d47527eeb4b02f1114ee63c7a"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 7,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 84
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 7,
+        "responseFormatSha256": "6c1fd40a367bd4c0dbe3586063af19a8c95d2c5258be864a94d09afd2bab331e",
+        "sameSession": true,
+        "schemaTurns": [
+          7
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "totalNanoAiu": 150678800000,
+      "trial": 1
+    },
+    {
+      "aiCredits": 88.80564,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "cartservice",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-02",
+      "condition": "with-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 1,
+        "jsonlQueries": 11,
+        "reportedBlocked": false
+      },
+      "finding": {
+        "correctCauseTested": "unassessable",
+        "mechanismScore": "unassessed",
+        "serviceScore": "unassessed",
+        "status": "not-established"
+      },
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "ae267c9abb760f20f7edcde795f49307d65d9181566df0ba98e03d924b1c1224",
+        "skillBundleSha256": "4c7707c98df618c7e44eb260daa08f2fbc7dd7a9474ca4ef3253547c2f55f438",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "935d3573569baa808c5373ada074aaabcf5644eba34fce536124fa6f1b1a0e1b"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 7,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 2
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 84
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 7,
+        "responseFormatSha256": "b28632125dbd958ad9953b5b6ee330b74950e3accdc6e50e5daa797f5f2d2c6f",
+        "sameSession": true,
+        "schemaTurns": [
+          7
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "totalNanoAiu": 88805640000,
+      "trial": 1
+    },
+    {
+      "aiCredits": 117.45452,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "carts",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-03",
+      "condition": "with-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 2,
+        "jsonlQueries": 22,
+        "reportedBlocked": false
+      },
+      "finding": {
+        "correctCauseTested": "unassessable",
+        "mechanismScore": "unassessed",
+        "serviceScore": "unassessed",
+        "status": "not-established"
+      },
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "9cd82dfe280be5804cc2be19346b3a93c1ba9a55f3f507e860c70514d396176e",
+        "skillBundleSha256": "4c7707c98df618c7e44eb260daa08f2fbc7dd7a9474ca4ef3253547c2f55f438",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "3279bb47f2aafdd3afb6638824957639a44a577721a2c8fd3b83d684c425cddf"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 7,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 84
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 7,
+        "responseFormatSha256": "fa77d7f92eab384013bab770f46df7bfa505bc0f0ccdd278fcb7fa71b5ae4208",
+        "sameSession": true,
+        "schemaTurns": [
+          7
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "totalNanoAiu": 117454520000,
+      "trial": 1
+    },
+    {
+      "aiCredits": 158.33936,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "productcatalogservice",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-04",
+      "condition": "with-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 3,
+        "jsonlQueries": 21,
+        "reportedBlocked": false
+      },
+      "finding": {
+        "correctCauseTested": "unassessable",
+        "mechanismScore": "unassessed",
+        "serviceScore": "unassessed",
+        "status": "not-established"
+      },
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "eabd7a0cf8755d4818c4df1686bebce99e72f9f3c7a7e60fe11a09f16429c935",
+        "skillBundleSha256": "4c7707c98df618c7e44eb260daa08f2fbc7dd7a9474ca4ef3253547c2f55f438",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "7ffb390d9e60faa14aa5c7003d14f717ebf8499c3f7cb3e1a1380f42001e2903"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 7,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 84
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 7,
+        "responseFormatSha256": "ea60702450724fca0d6879c00f6fe1cb9615d19558bce1f331414efc52a2641f",
+        "sameSession": true,
+        "schemaTurns": [
+          7
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "totalNanoAiu": 158339360000,
+      "trial": 1
+    },
+    {
+      "aiCredits": 134.77304,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "catalogue",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-05",
+      "condition": "with-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 2,
+        "jsonlQueries": 15,
+        "reportedBlocked": false
+      },
+      "finding": {
+        "correctCauseTested": "unassessable",
+        "mechanismScore": "unassessed",
+        "serviceScore": "unassessed",
+        "status": "not-established"
+      },
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "193b8b614b54624211f95653d01e26d0596e96cc2593d7cd2d62058446ea4c54",
+        "skillBundleSha256": "4c7707c98df618c7e44eb260daa08f2fbc7dd7a9474ca4ef3253547c2f55f438",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "6124aafbb1eb0cc1085e0283c4eb42d0383833df2c55f31fa66495a219ead768"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "1b707ef6331603ee714234b3ba0ef7eb4a65bb5f4c6c05d878cd68e39abe67bc",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "totalNanoAiu": 134773040000,
+      "trial": 1
+    },
+    {
+      "aiCredits": 97.37242,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": null,
+        "servicePublication": "withheld-non-service-label",
+        "serviceScore": "miss",
+        "status": "candidate"
+      },
+      "caseId": "case-01",
+      "condition": "without-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 3,
+        "jsonlQueries": 13,
+        "reportedBlocked": false
+      },
+      "finding": null,
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "1eac261e5cbea09e7fec9ce8756822617ea685c870028ce2e81e4c65662a6b60",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "75d288160a95aa5ec2d2036ca0f5143ad59c1e8bd04e6a8d191bbfcc1d3fd5ee"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "9351ad301a46f30a7eb547ed4047c84aaf3c7c1bfd0ad7d2d8a967d9e83e149f",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "totalNanoAiu": 97372420000,
+      "trial": 1
+    },
+    {
+      "aiCredits": 62.06988,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "cartservice",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-02",
+      "condition": "without-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 3,
+        "jsonlQueries": 7,
+        "reportedBlocked": false
+      },
+      "finding": null,
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "4dc9c3142f448f2bcb81cc8d59349cc33b7e74dc234237a630cf6af1b1cc84a0",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "915424ed46c5893f36c58f8edd16370bcd071c7a063fee67abb11c7c4f0dcdac"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 5,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 60
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 5,
+        "responseFormatSha256": "925c57e17d5d333ac8423785c77714eeced443c198719c83dfb72f2a969a0cfc",
+        "sameSession": true,
+        "schemaTurns": [
+          5
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "totalNanoAiu": 62069880000,
+      "trial": 1
+    },
+    {
+      "aiCredits": 86.03298,
+      "candidate": {
+        "mechanismScore": "unassessed",
+        "service": "carts",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-03",
+      "condition": "without-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 2,
+        "jsonlQueries": 14,
+        "reportedBlocked": false
+      },
+      "finding": null,
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "ba416ae6128a77f7ad4cada9ba2931339bcbd0a9b80c73031242ad1a6d0ef330",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "acf05f9877a102de006382850d985cf266d6ae1b281bb562232b6297dedee1f5"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "5a6d355333d383d42bad5718fe5ec4a7b61e555f1be442009ca30193ed27b422",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "totalNanoAiu": 86032980000,
+      "trial": 1
+    },
+    {
+      "aiCredits": 70.51168,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "productcatalogservice",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-04",
+      "condition": "without-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 3,
+        "jsonlQueries": 15,
+        "reportedBlocked": false
+      },
+      "finding": null,
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "572678076c7f51785e04997265fed1f88df41c05a8593f9e08b0e7bf8ca617be",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "c50e0c0e0efb2769acda9aadd79218758a657c8b42f9bb618d58740ff27ae640"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 5,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 60
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 5,
+        "responseFormatSha256": "5ece380843c9a99abbc714aa3cd14a087b134e5992ef872841a5816dba34c9dd",
+        "sameSession": true,
+        "schemaTurns": [
+          5
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "totalNanoAiu": 70511680000,
+      "trial": 1
+    },
+    {
+      "aiCredits": 116.90978,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "catalogue",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-05",
+      "condition": "without-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 2,
+        "jsonlQueries": 16,
+        "reportedBlocked": false
+      },
+      "finding": null,
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "c5f70a735b1e38011fa2ef617b365ea9fed68b6c77b4370004c43922eb41e6fe",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "843fde9696e9a74cabd1ae1e77cb06c957d0ad4fe19d36f20d0fc04734611c34"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "d8ca986cb3cd67a44c9bbac9457b592e948174c2198018408c74c9972af678fa",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "totalNanoAiu": 116909780000,
+      "trial": 1
+    },
+    {
+      "aiCredits": 120.07132,
+      "candidate": {
+        "mechanismScore": "unassessed",
+        "service": "currencyservice",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-01",
+      "condition": "with-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 3,
+        "jsonlQueries": 20,
+        "reportedBlocked": false
+      },
+      "finding": {
+        "correctCauseTested": "unassessable",
+        "mechanismScore": "unassessed",
+        "serviceScore": "unassessed",
+        "status": "not-established"
+      },
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "7be6d9d96c483b5aef692ac3ea1ec5edcc1059614f772fc0835af57835495109",
+        "skillBundleSha256": "4c7707c98df618c7e44eb260daa08f2fbc7dd7a9474ca4ef3253547c2f55f438",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "3ad6ad7ee58b22d1b8919ccd28ca0dfebb2ed41662bffbc833185b1ba49102d2"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "87b79aba30d82657c3d49f608a57f051dcc32d15528df5eb0fb9b7834f408c78",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "totalNanoAiu": 120071320000,
+      "trial": 2
+    },
+    {
+      "aiCredits": 90.54666,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "cartservice",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-02",
+      "condition": "with-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 3,
+        "jsonlQueries": 8,
+        "reportedBlocked": false
+      },
+      "finding": {
+        "correctCauseTested": "unassessable",
+        "mechanismScore": "unassessed",
+        "serviceScore": "unassessed",
+        "status": "not-established"
+      },
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "5dc541faac768d58b44a7728662e8b4faf49dc2ecf6fbe88d21199c2a96d510d",
+        "skillBundleSha256": "4c7707c98df618c7e44eb260daa08f2fbc7dd7a9474ca4ef3253547c2f55f438",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "1696e536a3d2562a4b1deaacf1ff5bc2bf4003648ec24dd8c045c1042588dcda"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "f98bc2d5c21983fb2f9be58a45d7db8f01b13909f644690efdd5d563130e3781",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "totalNanoAiu": 90546660000,
+      "trial": 2
+    },
+    {
+      "aiCredits": 113.65982,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "carts",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-03",
+      "condition": "with-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 2,
+        "jsonlQueries": 22,
+        "reportedBlocked": false
+      },
+      "finding": {
+        "correctCauseTested": "unassessable",
+        "mechanismScore": "unassessed",
+        "serviceScore": "unassessed",
+        "status": "not-established"
+      },
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "7f88fa1a3bb3fd4712fe2205b65613ad9bbf2adbbc2b142f9f0b3b365e40647b",
+        "skillBundleSha256": "4c7707c98df618c7e44eb260daa08f2fbc7dd7a9474ca4ef3253547c2f55f438",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "2370233866657f6ae1d1e4f284b24f4cfaa4fcb04fc6e5bfd3b5b5d914e4a58f"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 7,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 84
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 7,
+        "responseFormatSha256": "4d229cf780737acc6b66ea48181b344f64f9db5debf3ebab65b845b3ceff366f",
+        "sameSession": true,
+        "schemaTurns": [
+          7
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "totalNanoAiu": 113659820000,
+      "trial": 2
+    },
+    {
+      "aiCredits": 122.16234,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "productcatalogservice",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-04",
+      "condition": "with-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 3,
+        "jsonlQueries": 17,
+        "reportedBlocked": false
+      },
+      "finding": {
+        "correctCauseTested": "unassessable",
+        "mechanismScore": "unassessed",
+        "serviceScore": "unassessed",
+        "status": "not-established"
+      },
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "180372d0fc64218cbc2b77996f47b5549dc3ca814b5925950b2213824dc3a0b3",
+        "skillBundleSha256": "4c7707c98df618c7e44eb260daa08f2fbc7dd7a9474ca4ef3253547c2f55f438",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "26331db0863bf79bcc0bce117355c627e7d25bd9e32c0146799795602478040c"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "5ea5d94d98ac8592a9d1bba11e8f0843812017101f6f0aa992f41cab89ea2644",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "totalNanoAiu": 122162340000,
+      "trial": 2
+    },
+    {
+      "aiCredits": 147.23584,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "catalogue",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-05",
+      "condition": "with-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 2,
+        "jsonlQueries": 17,
+        "reportedBlocked": false
+      },
+      "finding": {
+        "correctCauseTested": "unassessable",
+        "mechanismScore": "unassessed",
+        "serviceScore": "unassessed",
+        "status": "not-established"
+      },
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "c4d9d3ede73b0b2d62f9e00d8b601ed9dc58433c80bfc876620b94cf5722b79a",
+        "skillBundleSha256": "4c7707c98df618c7e44eb260daa08f2fbc7dd7a9474ca4ef3253547c2f55f438",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "b87f0973d4ab55c1fd01c30d8b731c65ca9504d2f51b50e1189334d5a77f6c80"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "a1d926482344753e6d8688f8ac26864d9614d7a39a3f1bf35d54b74f1775ee30",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "totalNanoAiu": 147235840000,
+      "trial": 2
+    },
+    {
+      "aiCredits": 102.70116,
+      "candidate": {
+        "mechanismScore": "unassessed",
+        "service": "currencyservice",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-01",
+      "condition": "without-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 3,
+        "jsonlQueries": 19,
+        "reportedBlocked": false
+      },
+      "finding": null,
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "d776c6ae5e07a416620a70e714228306160d5971437a25d829a73c624adb0c41",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "eee309d7ed375cdf004ea7ff81fbb6b94482adaef3987b0a5ca8ab4b71f6146d"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "4d92ce884660bc3a802b6316cdcd21e90951b52142dc28d4bb4a65c44a07a73d",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "totalNanoAiu": 102701160000,
+      "trial": 2
+    },
+    {
+      "aiCredits": 51.63,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "cartservice",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-02",
+      "condition": "without-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 3,
+        "jsonlQueries": 7,
+        "reportedBlocked": false
+      },
+      "finding": null,
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "9d393153c94e514aa486ed8b290ef2092d73412898610a1300d0172caf88f9e1",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "bb3879024f32aef05990c01c1610cd62f54a87067807096d72cffaeda3d20a21"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 5,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 60
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 5,
+        "responseFormatSha256": "104c88f76317318c87a4d34d44d9b707ad508cef4d23f9ca6d02cdcfa01e86fd",
+        "sameSession": true,
+        "schemaTurns": [
+          5
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "totalNanoAiu": 51630000000,
+      "trial": 2
+    },
+    {
+      "aiCredits": 113.5336,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "carts",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-03",
+      "condition": "without-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 2,
+        "jsonlQueries": 12,
+        "reportedBlocked": false
+      },
+      "finding": null,
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "c5e6db949b5adef5d06695437fd6dc51395064580a96da54f574971817d359aa",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "ce627cebc3790e3aeadea104c553495f3b5c22dde627ae7a783e783ef88d515c"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 5,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 60
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 5,
+        "responseFormatSha256": "ec8f8f5ae66b4642afb2911292a24864826414b0fd5c662c1dcb772b41139d74",
+        "sameSession": true,
+        "schemaTurns": [
+          5
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "totalNanoAiu": 113533600000,
+      "trial": 2
+    },
+    {
+      "aiCredits": 80.44512,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "productcatalogservice",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-04",
+      "condition": "without-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 3,
+        "jsonlQueries": 14,
+        "reportedBlocked": false
+      },
+      "finding": null,
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "db6a926d7bbfe56a8ff5a898bf21de79c3fb3f68a9cb258dc5e48854bae613b3",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "6d33fdbda71a8ee8e901ab7366d1a3983dc14684ceb83a66061c84c2abef5018"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "b2f862b882d570a6dfb6de0bd4f9347bd4d85df657c5d6ccc3ee096b8acddd42",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "totalNanoAiu": 80445120000,
+      "trial": 2
+    },
+    {
+      "aiCredits": 149.06104,
+      "candidate": {
+        "mechanismScore": "unassessed",
+        "service": "catalogue",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-05",
+      "condition": "without-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 4,
+        "jsonlQueries": 15,
+        "reportedBlocked": false
+      },
+      "finding": null,
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "78d69e83e0abf3391c68e18b309fc45429bcba28403a12c671ce1b3d5aa0fc93",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "e3998e1a21f6d136d0e02be71aff86d9ca74666dc8b165f45aec9b3f97a824d8"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "134e1c6f5c6c9bc49a83a6d04372c186e868e211773cda4726f6e6d1ec5b93e8",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "totalNanoAiu": 149061040000,
+      "trial": 2
+    },
+    {
+      "aiCredits": 138.97354,
+      "candidate": {
+        "mechanismScore": "unassessed",
+        "service": null,
+        "servicePublication": "withheld-non-service-label",
+        "serviceScore": "miss",
+        "status": "candidate"
+      },
+      "caseId": "case-01",
+      "condition": "with-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 3,
+        "jsonlQueries": 21,
+        "reportedBlocked": false
+      },
+      "finding": {
+        "correctCauseTested": "unassessable",
+        "mechanismScore": "unassessed",
+        "serviceScore": "unassessed",
+        "status": "not-established"
+      },
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "ac9d4f04c5e4bf5259c7e690caa9ffe1e9ab398837306648db5f7a629406546d",
+        "skillBundleSha256": "4c7707c98df618c7e44eb260daa08f2fbc7dd7a9474ca4ef3253547c2f55f438",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "1aae98b21b1a28d67c7b0ec4d988e498b9449652f263ced3ad79f9c740577150"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 8,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 96
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 8,
+        "responseFormatSha256": "c4bce7b3037ff239e11a1c35610b65be4c75e4053a834eddd956e9326900b686",
+        "sameSession": true,
+        "schemaTurns": [
+          8
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "totalNanoAiu": 138973540000,
+      "trial": 3
+    },
+    {
+      "aiCredits": 76.84692,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "cartservice",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-02",
+      "condition": "with-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 1,
+        "jsonlQueries": 10,
+        "reportedBlocked": false
+      },
+      "finding": {
+        "correctCauseTested": "unassessable",
+        "mechanismScore": "unassessed",
+        "serviceScore": "unassessed",
+        "status": "not-established"
+      },
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "46a794728aad36e49858bb4f389705e577e7a606f03761f8d0e5b86431de2919",
+        "skillBundleSha256": "4c7707c98df618c7e44eb260daa08f2fbc7dd7a9474ca4ef3253547c2f55f438",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "d181128eaad7a44f4b2fc5cf52fb613747d9dad6fe47e16929a1284b59f3d8fc"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "e84eb01034df7f9a22082df816b5e6d9034b21b97b0fe8930ba289058fe14c4b",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "totalNanoAiu": 76846920000,
+      "trial": 3
+    },
+    {
+      "aiCredits": 128.49682,
+      "candidate": {
+        "mechanismScore": "unassessed",
+        "service": "carts",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-03",
+      "condition": "with-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 2,
+        "jsonlQueries": 22,
+        "reportedBlocked": false
+      },
+      "finding": {
+        "correctCauseTested": "unassessable",
+        "mechanismScore": "unassessed",
+        "serviceScore": "unassessed",
+        "status": "not-established"
+      },
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "a3eec88e01cdc8bd7bb5a5086be4085af9c26dddc725fd06276e337f683851eb",
+        "skillBundleSha256": "4c7707c98df618c7e44eb260daa08f2fbc7dd7a9474ca4ef3253547c2f55f438",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "fd45e6cfa3cc39041fe0bf7fe2db3be82ecf735a1f976e0e3887c81f59969ba6"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "9fda7a31559eaa206a5041e9a5753534c5bb6a7c19d3f5cf4bf52fa12da98279",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "totalNanoAiu": 128496820000,
+      "trial": 3
+    },
+    {
+      "aiCredits": 135.16484,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "productcatalogservice",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-04",
+      "condition": "with-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 3,
+        "jsonlQueries": 21,
+        "reportedBlocked": false
+      },
+      "finding": {
+        "correctCauseTested": "unassessable",
+        "mechanismScore": "unassessed",
+        "serviceScore": "unassessed",
+        "status": "not-established"
+      },
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "497e3d493c3420981901a6279ec56c46c9f55bdfc5f1dc54b282233deaa3d8bc",
+        "skillBundleSha256": "4c7707c98df618c7e44eb260daa08f2fbc7dd7a9474ca4ef3253547c2f55f438",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "ebb82ce9dada1fc733e0e8087fb746b860f6ae50208a313b24ef41a811220d6a"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "26ac0d44189eb2db0aaf4cd7900338f253275981fc80ca36847ecde7fd175360",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "totalNanoAiu": 135164840000,
+      "trial": 3
+    },
+    {
+      "aiCredits": 115.53098,
+      "candidate": {
+        "mechanismScore": "unassessed",
+        "service": "catalogue",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-05",
+      "condition": "with-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 2,
+        "jsonlQueries": 13,
+        "reportedBlocked": false
+      },
+      "finding": {
+        "correctCauseTested": "unassessable",
+        "mechanismScore": "unassessed",
+        "serviceScore": "unassessed",
+        "status": "not-established"
+      },
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "4d25923ba1b7c7dd3ac8afd2d1dab5c9e2f2b44957f6cb33b40fcd65ccf9468d",
+        "skillBundleSha256": "4c7707c98df618c7e44eb260daa08f2fbc7dd7a9474ca4ef3253547c2f55f438",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "9123725f5e6c12878bcc9233e93cc309cdcbf63578558c5fc04bcf29060feb72"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "71aa4f2d6b264653611bd756781e4b0d2e2c60b0b1e9a4966b6f0f4fac68e8ee",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": true,
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": true,
+        "outputContract": true,
+        "statisticalApplicability": true
+      },
+      "totalNanoAiu": 115530980000,
+      "trial": 3
+    },
+    {
+      "aiCredits": 94.75336,
+      "candidate": {
+        "mechanismScore": "unassessed",
+        "service": null,
+        "servicePublication": "withheld-non-service-label",
+        "serviceScore": "miss",
+        "status": "candidate"
+      },
+      "caseId": "case-01",
+      "condition": "without-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 3,
+        "jsonlQueries": 21,
+        "reportedBlocked": false
+      },
+      "finding": null,
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "9383ae292c3a1e21c3ba3730511db7c58cb86477b29f9b2561da1a5bcec5af0d",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "722a5f7a2b67dab454a8019ef0a0663d14a7a57dd09a22ce6d16a3f9acb82974"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "cf65034ca7e983903340034434ca0c4275645378304147371755c6821272d454",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "totalNanoAiu": 94753360000,
+      "trial": 3
+    },
+    {
+      "aiCredits": 52.27806,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "cartservice",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-02",
+      "condition": "without-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 1,
+        "jsonlQueries": 6,
+        "reportedBlocked": false
+      },
+      "finding": null,
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "90c4101f7ca752f51ab76c06bb29f139b8516251290748c0ceb77078d4275552",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "44be37d62e82c47fc4ccac5ecd7639251c7372ea76e61a0d76eebf2d4626bc12"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 5,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 60
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 5,
+        "responseFormatSha256": "97fe58092fe8c5f0719bc8147bc0a82b82e0d6469f227637c50163d7b44576e1",
+        "sameSession": true,
+        "schemaTurns": [
+          5
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "totalNanoAiu": 52278060000,
+      "trial": 3
+    },
+    {
+      "aiCredits": 87.461,
+      "candidate": {
+        "mechanismScore": "unassessed",
+        "service": "carts",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-03",
+      "condition": "without-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 2,
+        "jsonlQueries": 16,
+        "reportedBlocked": false
+      },
+      "finding": null,
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "ed81bad0eed49bcc90ae0036957ed7a21b6bd3c28b8638bdf734ef3e66fe9168",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "6ff8b28c131e6aeca2132b1b4e42ab97c5ca34443ea7dcb089918681a7aa2d22"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "8d25186baf5e01bad6f82ee62568ab0f52c1fd05ce1f047b133b153c01f8fc60",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "totalNanoAiu": 87461000000,
+      "trial": 3
+    },
+    {
+      "aiCredits": 109.33668,
+      "candidate": {
+        "mechanismScore": "match",
+        "service": "productcatalogservice",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-04",
+      "condition": "without-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 3,
+        "jsonlQueries": 19,
+        "reportedBlocked": false
+      },
+      "finding": null,
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "5e639943f7bb9ce9a367193c79d436db28819128968b786dcadf1f18da52e2b1",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "8a7302d322a1aab4d524e1c15a3476a735b80f3219a0b6be9e7abc7a3526dcab"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 6,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 72
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 6,
+        "responseFormatSha256": "cc777414261884fc9708a72f76b370e2eb27c6092f6a2e312102773113a5010e",
+        "sameSession": true,
+        "schemaTurns": [
+          6
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "totalNanoAiu": 109336680000,
+      "trial": 3
+    },
+    {
+      "aiCredits": 88.88866,
+      "candidate": {
+        "mechanismScore": "unassessed",
+        "service": "catalogue",
+        "servicePublication": "verbatim-service-label",
+        "serviceScore": "match",
+        "status": "candidate"
+      },
+      "caseId": "case-05",
+      "condition": "without-skill",
+      "evidenceAccess": {
+        "evidenceCoverageReview": "pending-human-review",
+        "fileReads": 2,
+        "jsonlQueries": 8,
+        "reportedBlocked": false
+      },
+      "finding": null,
+      "hashes": {
+        "scorerVersionSha256": "b9f4aa2f8df6b54de36bb01a9cc71b98d312254b8ca758f60e0b62567265da1d",
+        "sessionArtifactFileSha256": "441a0c23d7fe75b0902abd08451a526ead2bf054d229adb7ae834d4fd382df7e",
+        "skillBundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "toolContractSha256": "ea83fa6cc16ba6e48ae2cab17007058c2d80a2b58a545fd6a0ee59564eec3851",
+        "trialResultFileSha256": "c6a857fe72fc3e3edeb3e6a21a2fbfcc43248448f52aab435ab167ff441f9bf4"
+      },
+      "humanReview": "pending",
+      "integrity": "pass",
+      "mechanismCompatibilityReview": "pending-human-review",
+      "outcome": "candidate",
+      "premiumRequests": 5,
+      "recovery": {
+        "formatErrors": 0,
+        "queryErrors": 0
+      },
+      "redaction": {
+        "categories": [
+          "host-path"
+        ],
+        "downstreamImpact": "unassessed",
+        "originalSourceRetrieval": "unverified",
+        "replacements": 60
+      },
+      "reportBoundary": {
+        "finalTurnOnly": true,
+        "modelTurns": 5,
+        "responseFormatSha256": "663538b668be109277c3553ff057fd925e1c262a1372dcd8d493a957414808ac",
+        "sameSession": true,
+        "schemaTurns": [
+          5
+        ]
+      },
+      "strictGates": {
+        "approvalClearlySimulated": true,
+        "approvalContract": true,
+        "honestEvidenceGaps": "not-applicable",
+        "noGroundTruthLeak": true,
+        "noUnauthorizedToolCall": true,
+        "noUnsupportedComplete": "not-applicable",
+        "outputContract": true,
+        "statisticalApplicability": "not-applicable"
+      },
+      "totalNanoAiu": 88888660000,
+      "trial": 3
+    }
+  ]
+}

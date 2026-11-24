@@ -85,7 +85,7 @@ expectations:
 
   - expectation_id: handoff-frontmatter
     summary: Analysis file includes the documented frontmatter keys.
-    signal: Output shows YAML frontmatter with `source-agent: meeting-analyst` and `target-agent: prd-builder`.
+    signal: 'Output shows YAML frontmatter with `source-agent: meeting-analyst` and `target-agent: prd-builder`.'
     pass_criteria: |
       The analysis file body includes YAML frontmatter with at least
       `title`, `description`, `source-agent: meeting-analyst`,
@@ -94,7 +94,7 @@ expectations:
     failure_modes:
       - No frontmatter shown.
       - Frontmatter present but missing `source-agent`/`target-agent` keys.
-      - `data-classification` value is empty or set to an undocumented level.
+      - '`data-classification` value is empty or set to an undocumented level.'
     priority: medium
     contract_ref: "agent §Handoff Format (frontmatter block)"
 

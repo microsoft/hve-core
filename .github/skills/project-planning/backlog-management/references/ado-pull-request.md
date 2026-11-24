@@ -11,22 +11,24 @@ Azure DevOps pull request delta for the [backlog-management](../SKILL.md) skill.
 
 Apply this procedure when creating a new Azure DevOps pull request with automated PR description generation, work item discovery and linking, reviewer identification from git history, and complete traceability through planning documents.
 
-Output planning files to `.copilot-tracking/pr/new/<normalized-branch-name>/` using the specified Azure DevOps project `${input:adoProject}` and repository `${input:repository}`.
+Output planning files to `.copilot-tracking/pr/new/<normalized-branch-name>/` using the specified Azure DevOps project `adoProject` and repository `repository`.
 
 ## Inputs
 
-* `${input:adoProject}`: (Required) Azure DevOps project name or ID.
-* `${input:repository}`: (Required) Repository name or ID.
-* `${input:sourceBranch}`: (Optional) Source branch name. Defaults to current git branch.
-* `${input:baseBranch:origin/main}`: (Optional) Base branch for comparison.
-* `${input:similarityThreshold:50}`: (Optional) Minimum similarity score (0-100) for work item matching.
-* `${input:workItemStates:["New", "Active", "Resolved"]}`: (Optional) Work item state filter.
-* `${input:areaPath}`: (Optional) Area Path filter for work item searches.
-* `${input:iterationPath}`: (Optional) Iteration Path filter for work item searches.
-* `${input:workItemIds}`: (Optional) Explicit work item IDs to link, bypassing discovery.
-* `${input:isDraft:false}`: (Optional) Create PR as draft.
-* `${input:noGates:false}`: (Optional) Skip user confirmation gates.
-* `${input:includeMarkdown:true}`: (Optional) Include markdown file diffs in PR reference.
+Take these inputs from the request or the calling agent.
+
+* `adoProject` (required): Azure DevOps project name or ID.
+* `repository` (required): Repository name or ID.
+* `sourceBranch` (optional): Source branch name. Defaults to current git branch.
+* `baseBranch` (optional, default `origin/main`): Base branch for comparison.
+* `similarityThreshold` (optional, default `50`): Minimum similarity score (0-100) for work item matching.
+* `workItemStates` (optional, default `["New", "Active", "Resolved"]`): Work item state filter.
+* `areaPath` (optional): Area Path filter for work item searches.
+* `iterationPath` (optional): Iteration Path filter for work item searches.
+* `workItemIds` (optional): Explicit work item IDs to link, bypassing discovery.
+* `isDraft` (optional, default `false`): Create PR as draft.
+* `noGates` (optional, default `false`): Skip user confirmation gates.
+* `includeMarkdown` (optional, default `true`): Include markdown file diffs in PR reference.
 
 ## Deliverables
 
@@ -40,10 +42,10 @@ Output planning files to `.copilot-tracking/pr/new/<normalized-branch-name>/` us
 
 ## Tooling
 
-Generate a PR reference XML containing commit history and diffs using the `pr-reference` skill, comparing against `${input:baseBranch}` and saving to the tracking directory. After generation, use the pr-reference skill to query the XML: extract changed file paths with change type filters and output format options, and read diff content in chunks by number, line range, or specific file path.
+Generate a PR reference XML containing commit history and diffs using the `pr-reference` skill, comparing against `baseBranch` and saving to the tracking directory. After generation, use the pr-reference skill to query the XML: extract changed file paths with change type filters and output format options, and read diff content in chunks by number, line range, or specific file path.
 When the skill is unavailable, parse the XML directly or use `git diff --name-status` and `git diff` commands for equivalent extraction.
 
-Git operations via `run_in_terminal`:
+Git operations in the terminal:
 
 * `git fetch <remote> <branch-name> --prune` to sync remote
 * `git config user.email` for current user
@@ -61,7 +63,7 @@ Git operations via `run_in_terminal`:
 * `mcp_ado_wit_get_work_items_batch_by_ids` - Batch get work items. Parameters: `project`, `ids` (array), `fields`.
 * `mcp_ado_core_get_identity_ids` - Resolve identity GUIDs from email or name. Parameters: `searchFilter`.
 
-Workspace utilities: `list_dir`, `read_file`, `grep_search`
+Workspace utilities: list, read, and search files with the host's file tools.
 
 Persist all tool output into planning files per the backlog-management skill conventions.
 
@@ -349,7 +351,7 @@ Present each confirmation gate separately and wait for user response before proc
 
 ### No-Gates Mode
 
-When `${input:noGates}` is true:
+When `noGates` is true:
 
 * Skip Phase 5 (all confirmation gates) entirely
 * After completing Phase 4, proceed directly to Phase 6
@@ -380,12 +382,12 @@ Record the resolved platform, confirmed destination, and autonomy tier in `plann
 
 Execute without presenting details to user:
 
-1. Determine normalized branch name from `${input:sourceBranch}` or current git branch.
+1. Determine normalized branch name from `sourceBranch` or current git branch.
 2. Create planning directory: `.copilot-tracking/pr/new/<normalized-branch-name>/`
 3. Initialize `planning-log.md` with Phase-1 status.
 4. Check if `pr-reference.xml` exists:
    * If exists: Use existing file silently.
-   * If not exists: Generate using the `pr-reference` skill with optional `--no-md-diff` flag if `${input:includeMarkdown}` is false.
+   * If not exists: Generate using the `pr-reference` skill with optional `--no-md-diff` flag if `includeMarkdown` is false.
 5. Read complete `pr-reference.xml`. For files exceeding 2000 lines, read in 1000-2000 line chunks, capturing complete commit boundaries before advancing to the next chunk.
 6. Log artifact in `planning-log.md` with status `Complete`.
 
@@ -460,7 +462,7 @@ Execute without presenting to user yet:
 
 ### Phase 3: Discover Related Work Items
 
-**Skip this phase entirely if `${input:workItemIds}` is provided by the user.**
+**Skip this phase entirely if `workItemIds` is provided by the user.**
 
 Execute without presenting to user yet:
 
@@ -470,18 +472,18 @@ Execute without presenting to user yet:
    * Conventional commit scopes
    * Technical terms from diff content
 2. For each keyword group, call `mcp_ado_search_workitem` with:
-   * `project`: `${input:adoProject}`
+   * `project`: `adoProject`
    * `searchText`: constructed from keyword groups using OR/AND syntax
    * `workItemType`: ["User Story", "Bug"] (NEVER include Feature or Epic)
-   * `state`: Parse `${input:workItemStates}` into array format
+   * `state`: Parse `workItemStates` into array format
    * `top`: 50; increment `skip` as needed
-   * Optional filters: `${input:areaPath}`, `${input:iterationPath}`
+   * Optional filters: `areaPath`, `iterationPath`
 3. Hydrate results via `mcp_ado_wit_get_work_item` (batch variant preferred).
 4. Compute similarity using semantic analysis of:
    * Work item title + description vs. PR title + description
    * Work item acceptance criteria vs. PR change summary
    * Boost for matching commit scopes, file paths, technical terms
-5. Filter work items with similarity >= `${input:similarityThreshold}`.
+5. Filter work items with similarity >= `similarityThreshold`.
 6. Capture findings in `pr-analysis.md` with relevance reasoning.
 7. Log discovered work items in `planning-log.md`.
 8. If NO viable work items are discovered (zero work items with similarity >= threshold):
@@ -527,7 +529,7 @@ Execute without presenting to user yet:
 
 ### Phase 5: User Review and Confirmation
 
-Skip this phase when `${input:noGates}` is true; proceed directly to Phase 6 using all discovered work items, created work items from Phase 3a, and top 2 reviewers by contribution score.
+Skip this phase when `noGates` is true; proceed directly to Phase 6 using all discovered work items, created work items from Phase 3a, and top 2 reviewers by contribution score.
 
 Present each gate separately and wait for user approval before proceeding to the next gate.
 
@@ -603,7 +605,7 @@ Reply with "Continue", "Change title to: [new title]", or "Regenerate descriptio
 
 #### Gate 3: Work Items Review
 
-1. If `${input:workItemIds}` was provided: Present those work items for confirmation.
+1. If `workItemIds` was provided: Present those work items for confirmation.
 2. If work item was created in Phase 3a: Present the created work item for confirmation.
 3. If discovered in Phase 3: Present up to 10 highest similarity work items.
 4. For each work item provide:
@@ -679,14 +681,14 @@ When user requests modifications at any gate, update the relevant planning file,
 Proceed after user gives explicit approval.
 
 1. Resolve repository and project IDs:
-   * Use `${input:repository}` directly if GUID format; otherwise call `mcp_ado_repo_get_repo_by_name_or_id` with project and repository name.
-   * Use `${input:adoProject}` directly if GUID; otherwise extract from `mcp_ado_search_workitem` response metadata.
+   * Use `repository` directly if GUID format; otherwise call `mcp_ado_repo_get_repo_by_name_or_id` with project and repository name.
+   * Use `adoProject` directly if GUID; otherwise extract from `mcp_ado_search_workitem` response metadata.
    * For GitHub-backed Azure DevOps projects where repository is not found: Verify the GitHub connection in Azure DevOps project settings (Project Settings → Repos → GitHub connections). The repository may require explicit configuration before appearing in ADO queries.
    * Log both IDs in `planning-log.md`.
 
 2. Prepare branch references:
-   * Source: `refs/heads/${input:sourceBranch}` (or current branch)
-   * Target: Remove remote prefix from `${input:baseBranch}` and prepend `refs/heads/`. Examples:
+   * Source: `refs/heads/`sourceBranch`` (or current branch)
+   * Target: Remove remote prefix from `baseBranch` and prepend `refs/heads/`. Examples:
      * `origin/main` → `refs/heads/main`
      * `upstream/develop` → `refs/heads/develop`
      * `main` → `refs/heads/main`

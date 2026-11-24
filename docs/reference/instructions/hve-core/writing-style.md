@@ -1,9 +1,9 @@
 ---
 title: Hve Core/Writing Style
 description: "Use for Markdown-specific voice, tone, and presentation alongside the shared Plain Language instruction."
-sidebar_position: 8
+sidebar_position: 6
 author: Microsoft
-ms.date: 2026-10-15
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - instruction

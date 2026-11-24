@@ -2,7 +2,7 @@
 title: Customizing with Instructions
 description: Configure Copilot behavior using copilot-instructions.md and instruction files with applyTo targeting and stacking patterns
 author: Microsoft
-ms.date: 2026-10-26
+ms.date: 2026-10-31
 ms.topic: how-to
 keywords:
   - instructions
@@ -78,7 +78,7 @@ Organization follows a collection subdirectory convention:
 │   ├── markdown.instructions.md
 │   └── writing-style.instructions.md
 └── shared/
-    └── untrusted-content-boundary.instructions.md
+    └── content-policy-citation.instructions.md
 ```
 
 Every instruction file requires YAML frontmatter with at least a `description` field. The
@@ -192,15 +192,15 @@ Practical stacking example:
 
 ## Common Patterns
 
-| Customization Goal             | Instruction File Approach                                               |
-|--------------------------------|-------------------------------------------------------------------------|
-| Enforce a language style guide | Create `{language}.instructions.md` with `applyTo: '**/*.{ext}'`        |
-| Standardize commit messages    | Create `commit-message.instructions.md` with `applyTo: '**'`            |
-| Apply framework conventions    | Create `{framework}.instructions.md` targeting framework file patterns  |
-| Set documentation standards    | Create `writing-style.instructions.md` with `applyTo: '**/*.md'`        |
-| Enforce test patterns          | Create `test-conventions.instructions.md` with `applyTo: '**/*.test.*'` |
-| Add project-specific context   | Add a `## Project Structure` section to `copilot-instructions.md`       |
-| Scope rules to a subdirectory  | Use a path-specific glob like `applyTo: '**/src/api/**'`                |
+| Customization Goal             | Instruction File Approach                                                                                           |
+|--------------------------------|---------------------------------------------------------------------------------------------------------------------|
+| Enforce a language style guide | Create `{language}.instructions.md` with `applyTo: '**/*.{ext}'`                                                    |
+| Standardize commit messages    | Put commit conventions in a skill such as `git-commit`, because `applyTo` patterns match files, not commit messages |
+| Apply framework conventions    | Create `{framework}.instructions.md` targeting framework file patterns                                              |
+| Set documentation standards    | Create `writing-style.instructions.md` with `applyTo: '**/*.md'`                                                    |
+| Enforce test patterns          | Create `test-conventions.instructions.md` with `applyTo: '**/*.test.*'`                                             |
+| Add project-specific context   | Add a `## Project Structure` section to `copilot-instructions.md`                                                   |
+| Scope rules to a subdirectory  | Use a path-specific glob like `applyTo: '**/src/api/**'`                                                            |
 
 For full frontmatter schema, field definitions, and validation rules, see [Contributing: Instructions](../contributing/instructions.md).
 

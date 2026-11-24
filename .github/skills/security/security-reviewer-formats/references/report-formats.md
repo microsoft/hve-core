@@ -213,7 +213,7 @@ Where:
 ## RAI Report Format
 
 `RAI_REPORT_V1` applies to RAI audit, diff, and plan modes. It contains report metadata, the
-verbatim RAI Planning CAUTION supplied by the parent from `disclaimer-language.instructions.md`,
+verbatim RAI Planning CAUTION supplied by the parent from the `disclaimer-language` skill,
 an executive summary, findings by framework, recommendations or mitigations, structured
 limitations, an evidence appendix, and an unchecked human-review handoff. Audit and diff also
 contain verification summary counts. Plan mode contains no verification summary and uses only

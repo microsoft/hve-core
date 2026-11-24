@@ -10,7 +10,8 @@
 .DESCRIPTION
     Uses the canonical artifact inventory, expands runtime skill Markdown, masks
     non-runtime regions, and reports operational .github references that would
-    resolve against a consumer workspace after distribution.
+    resolve against a consumer workspace after distribution. Also reports `#file:`
+    directives outside inline code, which the Copilot agent harness does not load.
 .PARAMETER RepoRoot
     Repository root to scan.
 .PARAMETER OutputPath
@@ -220,8 +221,8 @@ function Test-ArtifactPathReferenceAllowed {
 
     $exactAllowedReferences = @{
         '.github/agents/rai-planning/rai-planner.agent.md' = @('.github/skills/rai/rai-standards/SKILL.md')
-        '.github/instructions/rai-planning/rai-identity.instructions.md' = @('.github/skills/rai/rai-standards/SKILL.md')
-        '.github/instructions/hve-core/hve-builder.instructions.md' = @('.github/', '#file:')
+        '.github/skills/project-planning/rai-planner/references/rai-identity.md' = @('.github/skills/rai/rai-standards/SKILL.md')
+        '.github/instructions/hve-core/hve-builder.instructions.md' = @('.github/')
     }
     $trimmedReference = $Reference.Trim('(', ')', '[', ']')
     if ($exactAllowedReferences.ContainsKey($RelativePath) -and $trimmedReference -in $exactAllowedReferences[$RelativePath]) {
@@ -273,8 +274,23 @@ function Test-ArtifactPathPortability {
         $lines = @(Get-ArtifactPathPortabilityMaskedLines -Content $content)
         for ($lineIndex = 0; $lineIndex -lt $lines.Count; $lineIndex++) {
             $line = $lines[$lineIndex]
+            $withoutInlineCode = [regex]::Replace($line, '`[^`]*`', { param($m) ' ' * $m.Length })
+            $directiveSpans = [System.Collections.Generic.List[object]]::new()
+            foreach ($directive in [regex]::Matches($withoutInlineCode, '#file:(?<Target>[^\s`''"()\[\]<>,]+)')) {
+                $directiveSpans.Add(@{ Start = $directive.Index; End = $directive.Index + $directive.Length })
+                $findings.Add([pscustomobject]@{
+                        File      = $relativePath
+                        Line      = $lineIndex + 1
+                        Reference = $directive.Value.TrimEnd('.', ',', ';', ':')
+                        Reason    = '#file: directives are not loaded by the Copilot agent harness; preload or activate a skill, or name the file instead.'
+                    })
+            }
+
             foreach ($match in [regex]::Matches($line, '(?<![\w/.-])(?:\./)?(?<Root>\.github/)')) {
                 $referenceIndex = $match.Groups['Root'].Index
+                if (@($directiveSpans | Where-Object { $referenceIndex -ge $_.Start -and $referenceIndex -lt $_.End }).Count -gt 0) {
+                    continue
+                }
                 $reference = Get-ArtifactPathReference -Line $line -Index $referenceIndex
                 if (Test-ArtifactPathReferenceAllowed -RelativePath $relativePath -Line $line -Index $referenceIndex -Reference $reference) {
                     continue

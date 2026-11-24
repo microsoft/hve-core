@@ -620,6 +620,30 @@ Describe 'Invoke-PSModuleInstall end-to-end' -Tag 'Unit' {
         }
     }
 
+    Context 'when -Module selects a pinned subset' {
+        BeforeAll {
+            Mock Get-Module {}
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
+            Mock Install-Module {}
+            Mock Import-Module {}
+        }
+
+        It 'Installs only the selected module, matching its name case-insensitively' {
+            Invoke-PSModuleInstall -ConfigPath $script:ConfigFile -Module 'fakemodulea'
+
+            Should -Invoke Install-Module -Times 1 -Exactly
+            Should -Invoke Install-Module -ParameterFilter { $Name -eq 'FakeModuleA' -and $RequiredVersion -eq '1.0.0' } -Times 1 -Exactly
+        }
+
+        It 'Rejects a module the manifest does not pin' {
+            { Invoke-PSModuleInstall -ConfigPath $script:ConfigFile -Module 'FakeModuleA', 'UnpinnedModule' } |
+                Should -Throw '*not pinned*UnpinnedModule*'
+        }
+    }
+
     Context 'when config file does not exist' {
         It 'Throws a descriptive error' {
             { Invoke-PSModuleInstall -ConfigPath (Join-Path $TestDrive 'nonexistent.json') } |

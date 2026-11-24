@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2026-10-15
+ms.date: 2026-11-06
 ms.topic: reference
 ---
 
@@ -46,6 +46,10 @@ npm ci
 
 Packaging scripts invoke the repository-pinned `vsce` executable. They do not
 download or install a fallback version.
+On Windows, packaging selects npm's `vsce.cmd` shim; other platforms use the
+`vsce` launcher. Non-signing package checks can use the locked dependencies with
+lifecycle scripts disabled. Signing and protected Marketplace preparation have
+separate prerequisites and are not part of local packaging validation.
 
 Install the PowerShell-Yaml module (required for Prepare-Extension.ps1):
 

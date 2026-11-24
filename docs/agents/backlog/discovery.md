@@ -2,7 +2,7 @@
 title: Discovery Workflow
 description: Discover and categorize work items across Azure DevOps, GitHub, and Jira through user-centric, artifact-driven, and search-based paths
 author: Microsoft
-ms.date: 2026-08-07
+ms.date: 2026-11-06
 ms.topic: tutorial
 keywords:
   - backlog management

@@ -23,13 +23,13 @@ function response(body: object): Response {
 
 function indexWithL100() {
   return {
-    schema_version: 'demo-material-site/v1',
+    schema_version: 'demo-material-site/v2',
     levels: {
       L100: {
+        renderer: 'hve-slides', format: 'html', render_schema_version: 2, manifest_schema_version: 6,
         files: {
           page: 'L100/index.html',
           html: 'L100/hve-demo-L100.html',
-          pptx: 'L100/hve-demo-L100.pptx',
           mp4: 'L100/hve-demo-L100.mp4',
           vtt: 'L100/hve-demo-L100.vtt',
         },
@@ -134,7 +134,7 @@ describe('DemoMaterialCatalog', () => {
 
   it.each([null, [], 'invalid'])('handles malformed nested checks (%s)', async (check) => {
     mockFetch.mockResolvedValue(response({
-      schema_version: 'demo-material-site/v1',
+      schema_version: 'demo-material-site/v2',
       levels: { L400: { last_failed_attempt: { checks: { 'T-07': check } } } },
     }));
 

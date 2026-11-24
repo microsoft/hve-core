@@ -120,9 +120,9 @@ jobs:
 
       - name: Install uv package manager
         env:
-          UV_VERSION: '0.10.9'
-          UV_X86_64_SHA256: '20d79708222611fa540b5c9ed84f352bcd3937740e51aacc0f8b15b271c57594'
-          UV_AARCH64_SHA256: 'cc0c5a8573e7d6d78aecb954e0a62b5c0d18217bb81f1e19363b428c57a9962a'
+          UV_VERSION: '0.13.6'
+          UV_X86_64_SHA256: 'f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645'
+          UV_AARCH64_SHA256: '229e194255c7958d86d56e8790d969a6f74736592133f0dfd0076f754c642c1d'
           GITHUB_RELEASES_URL: ${{ vars.HVE_GITHUB_RELEASES_URL || 'https://github.com' }}
         run: |
           ARCH=$(uname -m)
@@ -224,4 +224,3 @@ jobs:
           echo ""
           echo "=== npm Scripts Available ==="
           npm run --list
-

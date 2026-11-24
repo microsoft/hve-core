@@ -267,6 +267,8 @@ jobs:
 
 Reusable workflows in this repository MUST be called with the `$/` self-repository reference (`uses: $/.github/workflows/<name>.yml`), with explicit permissions and inputs. Annotate every permission beyond `contents: read` with a reason comment.
 
+A called workflow is the exception to job-level replacement: the calling job's grant is a ceiling for everything the called workflow requests, at its workflow level and in each of its jobs. GitHub refuses to start the run when any request exceeds that grant, so a called workflow whose jobs declare their own blocks SHOULD set `permissions: {}` at the workflow level. The workflow validator reports a request above the caller's grant as `workflow-check/reusable-workflow-permissions`.
+
 **Example usage:**
 
 ```yaml
@@ -298,7 +300,7 @@ All workflows MUST pass the following validation checks:
 ### Workflow Validation
 
 * **Script:** `scripts/linting/workflow-validator/validate-workflows.mjs` (`npm run lint:workflows`)
-* **What it enforces:** GitHub's own workflow parser validates every workflow and composite action, custom checks catch undefined references and undeclared action inputs, and the manifest-pinned shellcheck checks every bash and sh `run:` script. Nothing is ignored or disabled.
+* **What it enforces:** GitHub's own workflow parser validates every workflow and composite action, custom checks catch undefined references, undeclared action inputs, and reusable-workflow permission requests above the caller's grant, and the manifest-pinned shellcheck checks every bash and sh `run:` script. Nothing is ignored or disabled.
 * **CI blocking:** `workflow-validation-scan.yml` reports SARIF to code scanning and fails PR validation on any finding that no tracked exception in `security/code-scanning-exceptions.yml` excuses (`npm run lint:workflows:gated` runs the same gate locally)
 
 ### zizmor Audit

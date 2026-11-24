@@ -13,7 +13,7 @@ tags:
   - rai-planning
   - how-to
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-31
 ms.topic: how-to
 estimated_reading_time: 5
 ---
@@ -75,7 +75,7 @@ Use from-security-plan mode after completing a security plan with the Security P
 4. Threat IDs start at the next sequence after the security plan's threat count, maintaining continuity across both assessments
 5. Phase 1 begins with pre-populated AI element inventory; the agent asks targeted questions about RAI-specific aspects not covered in the security plan
 
-To start from-security-plan mode, select the **RAI Planner** agent and ask it to start from your completed security plan, or choose the **RAI Planner** handoff at the end of a Security Planner session. When no security plan exists, the agent offers to switch to capture mode.
+To start from-security-plan mode, select the **RAI Planner** agent and ask it to start from your completed security plan, including when a Security Planner session recommends it at the end. When no security plan exists, the agent offers to switch to capture mode.
 
 ### When to Choose From-Security-Plan Mode
 

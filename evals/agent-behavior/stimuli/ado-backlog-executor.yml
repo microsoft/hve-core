@@ -4,9 +4,8 @@
 # Conformance checks emitted per the vally-tests agent reference.
 # Applicable to this subagent: Check 1 (required frontmatter), Check 4
 # (user-invocable flag), Check 5 (subagent structural template), Check 7 (tool
-# restrictions). Check 6 does not apply: this subagent declares no handoffs.
-# Check 9 does not apply: it carries no phase or step headings, and the artifact
-# is not edited to make an inapplicable check pass.
+# restrictions). Check 9 does not apply: it carries no phase or step headings,
+# and the artifact is not edited to make an inapplicable check pass.
 stimuli:
   - name: ado-backlog-executor-frontmatter-name-and-description
     prompt: |

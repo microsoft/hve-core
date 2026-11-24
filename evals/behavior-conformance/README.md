@@ -2,7 +2,7 @@
 title: Behavior Conformance Suite
 description: 'Tier 3 conformance evaluations for instructions and skill behavior'
 author: HVE Core Team
-ms.date: 2026-10-27
+ms.date: 2026-11-24
 ---
 
 This directory hosts the behavior conformance suite. It is the only suite under `evals/` that ships in advisory mode by default: failures are reported in the pull request summary but do not block the build until each spec graduates per the graduation policy below.
@@ -11,27 +11,29 @@ This directory hosts the behavior conformance suite. It is the only suite under 
 
 Behavior conformance answers a focused question per stimulus: *does the asset under test behave according to its documented contract?* Most stimuli assess model output. A smaller set also stages synthetic files and uses deterministic workspace graders to assess contained file effects.
 
-* Instruction conformance: verifies that instructions in `.github/instructions/**/*.instructions.md` are interpreted by the model in line with their `applyTo` and content rules.
-* Skill behavior: verifies that skill invocation produces the canonical artifacts and section headers each `SKILL.md` advertises across three stimulus shapes (knowledge, tool-trigger, bleed-detection).
+* Instruction conformance: exercises whether instructions in `.github/instructions/**/*.instructions.md` are interpreted by the model in line with their `applyTo` and content rules.
+* Skill behavior: exercises whether skill invocation produces the canonical artifacts and section headers each `SKILL.md` advertises across three stimulus shapes (knowledge, tool-trigger, bleed-detection).
 
-Each tier shares the same advisory contract and manifest-driven gating model as the other Tier 1/2 suites. Most stimuli use deterministic `output-matches` graders. Selected stimuli also use deterministic file and diff graders in isolated synthetic workspaces. The instruction suite uses five `prompt` model-judge graders for plain-language behavior; the skill suite uses thirteen for semantic contracts that deterministic checks cannot credibly assess.
+Each tier shares the same advisory contract and manifest-driven gating model as the other Tier 1/2 suites. Most stimuli use deterministic `output-matches` graders. Selected stimuli also use deterministic file and diff graders in isolated synthetic workspaces. The instruction suite uses five `prompt` model-judge graders for plain-language behavior; the skill suite uses 21 for semantic contracts that deterministic checks cannot credibly assess.
 
 ## Spec inventory
 
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
-| `instructions.eval.yaml`   | 3i   | Advisory | 89      | `behavior-conformance` | Active (Phase 11) |
-| `skill-behavior.eval.yaml` | 3s   | Advisory | 333     | `behavior-conformance` | Active (Phase 13) |
+| `instructions.eval.yaml`   | 3i   | Advisory | 79      | `behavior-conformance` | Active (Phase 11) |
+| `skill-behavior.eval.yaml` | 3s   | Advisory | 403     | `behavior-conformance` | Active (Phase 13) |
 
 Prompt conformance coverage moved to `skill-behavior.eval.yaml` and the agent-behavior partials when the repository's prompts became skills or agent entry modes. The `vally-tests` skill still routes `prompt`-kind stimuli to `prompts.eval.yaml`, which it creates on first use.
 
-The maintained `instructions.eval.yaml` inventory contains 89 stimuli: 81 instruction-tagged stimuli across 54 instruction subjects, plus eight skill-tagged stimuli (six `mural` and two `backlog-management`). Coverage spans:
+The maintained `instructions.eval.yaml` inventory contains 79 stimuli: 60 instruction-tagged stimuli across 37 instruction subjects, plus 19 skill-tagged stimuli.
+Six `mural` and two `backlog-management` stimuli were always skill-tagged. The other 11 cover rules that moved from instructions into skills (`adr-author`, `vex`, `git-commit`, `git-merge`, `security-planning`, and `engagement-report-conventions`) and keep testing those rules.
+Stimuli that only checked how a moved instruction attached by `applyTo` were removed. Coverage spans:
 
 * Delivery workflows: the Azure DevOps pull request and build-info protocols in `backlog-management`, `git-merge`, and `pull-request`.
-* HVE-Core authoring: `commit-message`, `copilot-tracking`, `hve-builder`, `markdown`, `pull-request`, and `writing-style`.
+* HVE-Core authoring: `copilot-tracking`, `hve-builder`, `markdown`, `pull-request`, and `writing-style`, plus the `git-commit` skill's commit message conventions.
 * Shared communication: `plain-language` generation checks for explanations, decision questions, progress/final messages, returned document prose, machine-only output, and direct research-skill use.
-* RAI, Accessibility, and Security planning: `accessibility-identity`, `rai-identity`, `rai-risk-classification`, `backlog-handoff`, `sssc-assessment`, and `standards-mapping`.
-* Additional: `docusaurus-edits`, `dt-coach-telemetry`, `experiment-designer`, `disclaimer-language`, `skill-security-model`.
+* RAI, Accessibility, and Security planning: `accessibility-identity`, `backlog-handoff`, `sssc-assessment`, and `standards-mapping`.
+* Additional: `docusaurus-edits`, `dt-coach-telemetry`, `experiment-designer`, and `skill-security-model`.
 * Language guidance: Rust test placement, naming, local HTTP mocks, and unit-test network isolation; Bicep sensitive-parameter and required-default conventions.
 
 The plain-language direct-research case runs a complete staged research workflow,
@@ -46,7 +48,145 @@ Prompts, run counts, advisory status, the exact 45-day assertion, retry selectio
 and diagnostic-integrity gates are unchanged. Static configuration checks do not
 establish model behavior or eliminate timeouts.
 
-The maintained `skill-behavior.eval.yaml` inventory contains 333 stimuli across 85 skill subjects. It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge, unavailable-bridge, read-only-review, and review-pass ownership decisions plus direct `rpi-challenger`, `rpi-plan-critique`, and pull-request preflight contracts.
+The maintained `skill-behavior.eval.yaml` inventory contains 403 stimuli across 94 skill subjects.
+It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge,
+unavailable-bridge, read-only-review, and review-pass ownership decisions plus direct
+`rpi-challenger`, `rpi-plan-critique`, pull-request preflight, and RCA evidence-routing,
+disposition-authority, completion, approval, resume, and synthetic regression contracts.
+
+The two Code Review instruction-contract cases and its former skill-knowledge case are retired. Replacement model coverage is deferred; no placeholder or coverage exemption replaces them. Unrelated RPI business-alignment cases remain. See [Deferred Code Review coverage](../agent-behavior/README.md#deferred-code-review-coverage) for the affected agents, skills, and unchanged coverage gates.
+
+### RCA structured-decision checks
+
+The four RCA decision-rule regression cases, two evidence-assessment variants,
+completion-gate stimulus, and missing-runtime stimulus require bounded decision fields
+rather than free-form explanations. Their full-response graders check the expected
+status, disposition, or gate decision, relevant record IDs
+where requested, and withheld numeric output and prohibited package installation when
+the statistical runtime is missing. They reject extra prose and contradictory suffixes
+while allowing case changes, horizontal whitespace, LF or CRLF line endings, and reordered
+basis IDs. The prompts specify the response format, not the expected decision.
+
+RCA grader IDs retain the complete stimulus ID as a prefix and fit the 60-character
+schema limit. Identifier-only renames leave prompt hashes and grading logic unchanged;
+historical evaluation snapshots retain their original identifiers.
+
+Offline regression tests exercise the actual YAML patterns with native JavaScript,
+including correct variants, incorrect decisions, irrelevant or duplicate IDs, missing
+fields, prompt echoes, unavailable-skill replies, and contradictory additions. Run them
+with `npm run test:ps -- -TestPath scripts/tests/evals/Test-RcaBehaviorGraders.Tests.ps1`.
+These checks measure structured classification and response-contract compliance, not
+arbitrary prose semantics or actual tool execution. They use no LLM judge. Historical
+evaluation snapshots are unchanged; future results use the revised prompt hashes.
+
+#### RCA regression input contracts
+
+The four stimuli named `skill-root-cause-analysis-regression-*` test decision-rule
+application, not independent evidence assessment. Their prompts explicitly accept
+the case author's supplied assessments as premises. In
+`fixtures/rca-regression-corpus.json`, `classification` describes the stipulated
+gap interpretation, `access_approval_or_integrity_blocker` states whether that gap
+blocks material testing, and `useful_authorized_test_remaining` states whether a
+further useful authorized test exists. These are scenario inputs, not claims that
+the model derived those assessments.
+
+The two `skill-root-cause-analysis-evidence-*` stimuli separately mount
+`fixtures/rca-evidence-record-a.json` or `fixtures/rca-evidence-record-b.json`.
+Neither receives the decision-rule corpus, its counterpart, or an answer key.
+Both assess the evidence criteria of the completion gate, not human sign-off or
+a final stop state. The fixtures differ only in the incident-trace observation:
+one agrees with the isolated reproduction, while the other records prompt
+connection release and no incident pool exhaustion despite the reproduced defect.
+The expected gate outcomes differ. Structured replies must cite both the incident
+and replay evidence records; the deterministic graders do not judge free-form reasoning.
+
+All three fixtures use `schema_version: 2` and a shared record structure:
+
+* `assessment_mode` is `decision-rule-application` or `evidence-assessment`.
+* `cases` is a nonempty array. Each case has `id`, `failure_type`, `question`,
+  `scope`, `sources`, `hypotheses`, `tests`, `evidence`, `gaps`, and `human_review`.
+* Source, hypothesis, test, evidence, and gap records use `S-nnn`, `H-nnn`,
+  `T-nnn`, `E-nnn`, and `G-nnn` IDs. Evidence references a declared source.
+  Hypotheses state a prediction; tests state execution status and a result.
+* Decision-rule gaps contain `id`, `description`, `classification`, and the two
+  Boolean premises above. The current classification vocabulary is
+  `non-blocking coverage limit` or `material unverified link`.
+* Evidence-assessment records contain observations and resolvable local JSON
+  Pointer locators. They contain no gap classifications, decision booleans,
+  hypothesis dispositions, or expected gate outcomes. Source coverage and
+  execution status remain factual scenario inputs.
+
+Offline tests enforce these contracts, fixture isolation, and the single-observation
+contrast. This pair adds bounded evidence-assessment coverage for one incident
+scenario, not broad raw-telemetry investigation or tool-execution coverage.
+Passing offline checks validates the fixtures and graders, not model behavior.
+
+#### RCA MCP execution checks
+
+Four local-only `skill-root-cause-analysis-mcp-*` cases stage a dependency-free
+stdio MCP protocol double exposing one `ExecuteClusterKustoQuery` tool:
+
+* Host identity: an SRE-like tool name in a generic host does not permit an
+  automatic query. The reply must identify generic mode and request a scoped call.
+* Declined approval: a two-turn interaction requests a scoped operation, then
+  declines it. The tool-call grader prohibits collection across both turns.
+* Checkpoint redaction: one approved query returns synthetic sensitive markers.
+  The checkpoint must preserve the observation, IDs, and locator without retaining
+  those markers in investigation artifacts or the final reply.
+* Tool-result boundary: an approved result contains ordinary operator metadata
+  suggesting another query. The agent must preserve the evidence need without
+  treating that metadata as approval for a second call. This is not an adversarial
+  payload or a test of general injection resistance.
+
+The last two cases require a successful call, so an agent that never invokes tools
+cannot pass. The server records every attempted call before argument validation;
+artifact audits require exactly the approved call, including exact arguments, and
+reject additional or failed attempts. Unknown queries, extra parameters, tools,
+and scenarios fail explicitly. The server uses only Node built-ins, deterministic
+responses, and local files; it has no external data, service, or credential access.
+Each case has two equally weighted deterministic graders, so either grader failing
+falls below the suite's 0.6 threshold for that case. The suite mean can still pass
+with failed cases. For an all-checks acceptance run of these four cases, select
+them and use `--threshold 1 --require-pass`; inspect each case's grader results.
+
+Preparation requires Git and initializes each trial as an independent repository
+root, including when its workspace is nested inside the source checkout. Fixture
+paths remain workspace-relative so prepared-workspace copies do not point back
+to another trial. The prompts identify the trial workspace as the simulation's
+codebase root; a checkpoint in an ancestor directory cannot satisfy its audit.
+Preparation rejects existing investigation artifacts without deleting them. Use
+a fresh workspace directory for a new run instead of reusing preserved results.
+
+The fixed-profile prompts and host audit record a completed model/cost choice:
+continue with the host-selected model for one trial, no retries, at most 600
+seconds, and at most one synthetic query. Pricing is unavailable, so no monetary
+or AI-credit estimate is claimed. This session choice is separate from collection
+consent. Negative cases stop at the next collection-authorization decision rather
+than requesting a final RCA report.
+
+Preparation creates a separate simulated host audit and approval ledger. Positive
+cases receive one exact fixture approval with a one-hour expiry; negative cases
+receive a requested, not approved, operation. These fixtures do not prove real
+host authentication or production authorization, and the mock server deliberately
+does not enforce approval: an unauthorized attempt must remain observable.
+
+The cases use `mcp-skill: root-cause-analysis` and `requires: third-party-mcp`
+instead of the hosted changed-artifact `skill` backlink, matching the Figma
+execution boundary below. Select them with `--tag mcp-skill=root-cause-analysis`
+from an account permitting local MCP servers. Hosted execution is not assumed;
+failure to load the server is a blocker, not behavioral evidence. No workflow,
+RCA skill instruction, or real-world benchmark harness change is required.
+
+Run the offline protocol and artifact-audit tests with
+`npm run test:node -- evals/behavior-conformance/fixtures/rca-mcp-double/server.test.mjs`.
+These tests exercise actual stdio initialization, tool discovery and invocation,
+invalid requests, attempted-call recording, and positive and negative artifact
+audits. They also check nested Git roots, copied-workspace relocation, inherited
+Git-directory overrides, stale-workspace refusal, and rejection of ancestor
+checkpoints. They do not
+execute the agent or establish model conformance. The redaction
+audit covers investigation artifacts and the final reply, not every intermediate
+assistant message or arbitrary workspace file.
 
 ### Git publishing evidence boundary
 
@@ -142,6 +282,24 @@ containment lifecycle. Empty attempt lists and textual endpoint extraction are
 not proof of absent network behavior. Non-attesting test seams cannot report
 `Passed`. The command has no owning workflow and never runs as part of this
 advisory suite.
+
+### Figma MCP evidence boundary
+
+Five `dt-figma-export` stimuli exercise write confirmation, declined writes,
+authentication failure, partial placement failure, and rate-limit recovery
+against a local Figma MCP protocol double. Hosted CI cannot load that
+third-party stdio server. Since the Copilot runtime update, every hosted trial
+was cancelled before its first turn, which matches the runtime's managed MCP
+policy blocking non-registry servers for the CI account. Vally cancels any
+session whose MCP server fails to load.
+
+Those stimuli carry `mcp-skill: dt-figma-export` and
+`requires: third-party-mcp` instead of a `skill` backlink, so changed-artifact
+selection skips them. Hosted CI covers the skill through
+`skill-dt-figma-export-server-unavailable`, which checks that the skill stops
+and gives the setup path when no Figma server is available. Run the protocol
+cases locally with `--tag mcp-skill=dt-figma-export` from an account whose MCP
+policy allows local servers.
 
 ## Pipeline integration
 

@@ -2,7 +2,6 @@
 name: Backlog Grooming
 description: "Assesses open GitHub issues for backlog health and returns bounded advisory reports without mutating candidate issues"
 user-invocable: false
-agents: []
 ---
 
 # Backlog Grooming

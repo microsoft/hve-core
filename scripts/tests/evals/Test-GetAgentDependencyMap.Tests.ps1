@@ -70,7 +70,7 @@ Describe 'Get-AgentDependencyMap.ps1' -Tag 'Unit' {
             $script:Record.instructions | Should -Contain '.github/instructions/minimal.instructions.md'
         }
 
-        It 'Resolves #file: directives to subagent entries' {
+        It 'Resolves agents named in the body to subagent entries' {
             $script:Record.subagents | Should -Contain '.github/agents/minimal-coll/subagents/minimal-subagent.agent.md'
         }
 
@@ -79,6 +79,54 @@ Describe 'Get-AgentDependencyMap.ps1' -Tag 'Unit' {
             # resolve to the single fixture subagent file.
             @($script:Record.subagents | Where-Object { $_ -like '*subagents/minimal-subagent.agent.md' }).Count |
                 Should -BeGreaterThan 0
+        }
+    }
+
+    Context 'Commented frontmatter lists' {
+        It 'Resolves skills and instructions declared in lists with comments' {
+            $agentPath = Join-Path $script:TestRoot '.github/agents/minimal-coll/commented-agent.agent.md'
+            Set-Content -LiteralPath $agentPath -Value "---`ndescription: Commented fixture agent.`nskills: [fixture-skill] # preloads`ninstructions:`n  # declared`n  - .github/instructions/minimal.instructions.md`n---`n`nBody." -Encoding UTF8
+            $skillDir = Join-Path $script:TestRoot '.github/skills/pkg/fixture-skill'
+            New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $skillDir 'SKILL.md') -Value 'Fixture skill.' -Encoding UTF8
+
+            & $script:ScriptPath -RepoRoot $script:TestRoot -OutputPath $script:OutputPath 3>$null 6>$null
+
+            $record = (Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json).'commented-agent'
+            $record.skills | Should -Contain '.github/skills/pkg/fixture-skill/SKILL.md'
+            $record.instructions | Should -Contain '.github/instructions/minimal.instructions.md'
+            $record.warnings | Should -HaveCount 0
+        }
+
+        It 'Records a warning when frontmatter cannot be parsed' {
+            $agentPath = Join-Path $script:TestRoot '.github/agents/minimal-coll/malformed-agent.agent.md'
+            Set-Content -LiteralPath $agentPath -Value "---`nskills: [one`nname: : :`n---`n`nBody." -Encoding UTF8
+
+            & $script:ScriptPath -RepoRoot $script:TestRoot -OutputPath $script:OutputPath 3>$null 6>$null
+
+            $record = (Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json).'malformed-agent'
+            ($record.warnings -join "`n") | Should -Match 'frontmatter not parsed'
+        }
+    }
+
+    Context 'Preloaded skill references' {
+        It 'Adds the subagents and instructions a preloaded skill names, skipping user-invocable agents' {
+            $collDir = Join-Path $script:TestRoot '.github/agents/minimal-coll'
+            Set-Content -LiteralPath (Join-Path $collDir 'subagents/checker.agent.md') -Value "---`nname: Checker`nuser-invocable: false`n---`n`nChecks work." -Encoding UTF8
+            Set-Content -LiteralPath (Join-Path $collDir 'coach.agent.md') -Value "---`nname: Coach`n---`n`nCoaches teams." -Encoding UTF8
+            $skillDir = Join-Path $script:TestRoot '.github/skills/pkg/protocol-skill'
+            New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $skillDir 'SKILL.md') -Value "---`nname: protocol-skill`n---`n`nDispatch the Checker subagent and follow [rules](../../../instructions/minimal.instructions.md). The Coach adopts this protocol too." -Encoding UTF8
+            Set-Content -LiteralPath (Join-Path $collDir 'preloader.agent.md') -Value "---`ndescription: Preloads the protocol.`nskills:`n  - protocol-skill`n---`n`nFollow the preloaded protocol." -Encoding UTF8
+
+            & $script:ScriptPath -RepoRoot $script:TestRoot -OutputPath $script:OutputPath 3>$null 6>$null
+
+            $record = (Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json).'preloader'
+            $record.subagents | Should -Contain '.github/agents/minimal-coll/subagents/checker.agent.md'
+            $record.subagents | Should -Not -Contain '.github/agents/minimal-coll/coach.agent.md'
+            $record.instructions | Should -Contain '.github/instructions/minimal.instructions.md'
+            $record.skills | Should -Contain '.github/skills/pkg/protocol-skill/SKILL.md'
+            $record.warnings | Should -HaveCount 0
         }
     }
 

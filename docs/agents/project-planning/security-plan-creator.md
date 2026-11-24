@@ -3,7 +3,7 @@ title: Security Planner (Moved)
 description: This page has moved to the Security Planning documentation
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-11-03
 ms.topic: tutorial
 keywords:
   - security planner

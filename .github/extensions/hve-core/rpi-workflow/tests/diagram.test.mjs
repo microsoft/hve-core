@@ -430,6 +430,27 @@ describe('renderDiagram', () => {
         assert.match(text, /\(still needed\)/);
     });
 
+    it('hatches done parts for forced colors with a pattern named from the diagram, and no other parts', () => {
+        const figure = diagram.renderDiagram(MAP, { idPrefix: 'hatch', highlight: ['compose'], progress: new Map([['pair', 'done'], ['compose', 'active'], ['gone', 'needed']]) });
+        const all = elements(figure);
+        const hatches = all.filter((el) => el.getAttribute?.('class') === 'diagram-hatch');
+        assert.equal(hatches.length, 1, 'only the done part is hatched');
+        const done = hatches[0].parentNode;
+        assert.match(done.getAttribute('class'), /\bis-done\b/);
+        assert.equal(hatches[0].localName, 'path', 'a path, so the part rect rules never style it');
+        assert.equal(hatches[0].getAttribute('fill'), 'url(#hatch-hatch)', 'an attribute, since the canvas policy blocks inline styles');
+        assert.ok(!hatches[0].hasAttribute('style'));
+        assert.equal(hatches[0].getAttribute('aria-hidden'), 'true');
+        const children = [...done.childNodes].map((el) => el.localName);
+        assert.ok(children.indexOf('path') > children.indexOf('rect') && children.indexOf('path') < children.indexOf('text'), 'the hatch draws over the box and under the label');
+        const patterns = all.filter((el) => el.localName === 'pattern').map((el) => el.getAttribute('id'));
+        assert.deepEqual(patterns, ['hatch-hatch', 'hatch-hatch-highlight']);
+        const highlighted = diagram.renderDiagram(MAP, { idPrefix: 'hl', highlight: ['pair'], progress: new Map([['pair', 'done']]) });
+        assert.match(serialize(highlighted), /class="diagram-hatch" fill="url\(#hl-hatch-highlight\)"/, 'a highlighted done part uses the HighlightText hatch');
+        const none = serialize(diagram.renderDiagram(MAP, { idPrefix: 'none', progress: new Map([['compose', 'active']]) }));
+        assert.doesNotMatch(none, /diagram-hatch|<pattern/);
+    });
+
     it('makes the changed parts it is given buttons with part previews, and the drawing a group', () => {
         const figure = diagram.renderDiagram(MAP, { idPrefix: 'select', progress: new Map([['pair', 'done']]), select: { side: 'after', ids: ['pair', 'compose', 'elsewhere'] } });
         const svg = elements(figure).find((el) => el.localName === 'svg');

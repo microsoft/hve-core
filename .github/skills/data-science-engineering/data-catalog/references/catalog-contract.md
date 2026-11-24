@@ -156,6 +156,6 @@ Cap illustrative values deliberately. A profile is metadata about a dataset, and
 
 When the engagement has stated analytical intent, record it beside the profile: the objective type, the business questions behind it, the metrics that matter, and what success would look like. Declared intent is what lets a later analysis prioritize; without it, every column looks equally important.
 
-The footer is the canonical Data Science and Engineering Coaching disclaimer published by `disclaimer-language.instructions.md`. Reproduce it verbatim as the last section of every customer-facing catalog, including the template and the complete example.
+The footer is the canonical Data Science and Engineering Coaching disclaimer published by the `disclaimer-language` skill. Reproduce it verbatim as the last section of every customer-facing catalog, including the template and the complete example.
 
 Generate tables and diagrams from frontmatter. When narrative and machine facts disagree, correct the narrative or update frontmatter through an explicit enrichment decision.

@@ -21,6 +21,7 @@ export const CHECK_RULES = {
   'workflow-check/invalid-env-name': 'Environment variable name is not a valid shell identifier',
   'workflow-check/unknown-action-input': 'with: passes an input the action or reusable workflow does not declare',
   'workflow-check/missing-required-input': 'A required reusable workflow input or secret is not passed',
+  'workflow-check/reusable-workflow-permissions': 'A called workflow requests a permission the calling job does not grant, so the run fails at startup',
   'workflow-check/action-metadata-unavailable': 'Action or reusable workflow metadata could not be read, so its inputs were not verified',
   'workflow-check/sourced-helper-unavailable': 'A gh-aw helper script that a run: step sources could not be read at its pinned commit, so shellcheck could not follow it',
 };
@@ -45,6 +46,8 @@ const FILTER_KEYS = new Set(['branches', 'branches-ignore', 'tags', 'tags-ignore
 const DEPRECATED_COMMANDS = /::(set-output|save-state|set-env|add-path)\b/;
 const ENV_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const REMOTE_USES = /^(?<owner>[A-Za-z0-9_.-]+)\/(?<repo>[A-Za-z0-9_.-]+)(?<path>\/[^@]*)?@(?<ref>[^\s]+)$/;
+const PERMISSION_LEVELS = { none: 0, read: 1, write: 2 };
+const PERMISSION_NAMES = ['none', 'read', 'write'];
 
 // One lookup per URL per fetch function, so a missing file is fetched once per
 // run however many workflows reference it.
@@ -126,7 +129,7 @@ export async function getCheckFindings(path, content, kind, options) {
       for (const step of steps.items) await checkStep(ctx, step, scope);
     }
     const uses = scalarString(job.get('uses', true));
-    if (uses) await checkReusableWorkflowCall(ctx, job, uses);
+    if (uses) await checkReusableWorkflowCall(ctx, job, uses, root.get('permissions', true));
   }
   return ctx.findings;
 }
@@ -291,11 +294,12 @@ async function checkActionInputs(ctx, step, uses, usesNode) {
   }
 }
 
-async function checkReusableWorkflowCall(ctx, job, uses) {
+async function checkReusableWorkflowCall(ctx, job, uses, workflowPermissions) {
   const usesNode = job.get('uses', true);
   const content = await readUsedFile(ctx, uses, usesNode, null);
   if (content === undefined) return;
   const callee = parseDocument(content);
+  await checkReusableWorkflowPermissions(ctx, job, uses, usesNode, callee, workflowPermissions);
   const call = isMap(callee.contents) ? callee.contents.getIn(['on', 'workflow_call'], true) : null;
   for (const [section, label] of [['inputs', 'input'], ['secrets', 'secret']]) {
     const declared = isMap(call) ? call.get(section, true) : null;
@@ -324,6 +328,100 @@ async function checkReusableWorkflowCall(ctx, job, uses) {
       }
     }
   }
+}
+
+// GitHub caps a called workflow's permissions, at its workflow level and in
+// each of its jobs, at what the calling job grants, and refuses to start the
+// run when a request exceeds that grant. The cap carries through nested calls:
+// a called job without a permissions block inherits its workflow's block, or
+// else the ceiling it was called with.
+async function checkReusableWorkflowPermissions(ctx, job, uses, usesNode, callee, workflowPermissions) {
+  const ceiling = permissionGrant(job.has('permissions') ? job.get('permissions', true) : workflowPermissions);
+  if (!ceiling) return;
+  await checkCalleePermissions(ctx, usesNode, ceiling, uses, callee, []);
+}
+
+async function checkCalleePermissions(ctx, usesNode, ceiling, uses, callee, via) {
+  const root = callee.contents;
+  if (!isMap(root)) return;
+  const target = uses.split('@')[0];
+  const subject = via.length ? `${target}, called through ${via.join(' -> ')},` : target;
+  const grantor = via.length ? 'the calling chain grants' : 'this job grants';
+  const exceeds = (where, request) => {
+    if (request.all > ceiling.all) {
+      report(ctx, 'workflow-check/reusable-workflow-permissions', usesNode, 0, `${subject} requests ${PERMISSION_NAMES[request.all]}-all at its ${where}, but ${grantor} less`);
+    }
+    for (const [scope, level] of request.scopes) {
+      const granted = ceiling.scopes.get(scope) ?? ceiling.all;
+      if (level > granted) {
+        report(ctx, 'workflow-check/reusable-workflow-permissions', usesNode, 0, `${subject} requests ${scope}: ${PERMISSION_NAMES[level]} at its ${where}, but ${grantor} ${scope}: ${PERMISSION_NAMES[granted]}`);
+      }
+    }
+  };
+  // Returns the effective grant for a permissions block, or null when the
+  // block is present but not statically known.
+  const effective = (where, node, inherited) => {
+    if (node === undefined || node === null) return inherited;
+    const request = permissionGrant(node);
+    if (!request) return null;
+    exceeds(where, request);
+    return intersectGrants(request, ceiling);
+  };
+
+  const workflowGrant = effective('workflow level', root.get('permissions', true), ceiling);
+  const jobs = root.get('jobs', true);
+  if (!isMap(jobs)) return;
+  for (const pair of jobs.items) {
+    const calleeJob = pair.value;
+    if (!isMap(calleeJob)) continue;
+    const jobGrant = effective(`job ${scalarString(pair.key)}`, calleeJob.get('permissions', true), workflowGrant);
+    const nestedUses = scalarString(calleeJob.get('uses', true));
+    if (!jobGrant || !nestedUses) continue;
+    const nestedTarget = nestedUses.split('@')[0];
+    const chain = [...via, target];
+    if (chain.some((item) => usesIdentity(item) === usesIdentity(nestedTarget))) continue;
+    // A local reference inside a remote workflow resolves against that remote
+    // repository, which this check does not read.
+    if (isLocalUses(nestedUses) && !isLocalUses(uses)) continue;
+    // The nested workflow's own validation reports a file it cannot read.
+    const content = await readUsedFile({ ...ctx, findings: [] }, nestedUses, usesNode, null);
+    if (content === undefined) continue;
+    await checkCalleePermissions(ctx, usesNode, jobGrant, nestedUses, parseDocument(content), chain);
+  }
+}
+
+function isLocalUses(uses) {
+  return uses.startsWith('./') || uses.startsWith('$/');
+}
+
+function usesIdentity(target) {
+  return isLocalUses(target) ? target.slice(2) : target;
+}
+
+function intersectGrants(left, right) {
+  const scopes = new Map();
+  for (const scope of new Set([...left.scopes.keys(), ...right.scopes.keys()])) {
+    scopes.set(scope, Math.min(left.scopes.get(scope) ?? left.all, right.scopes.get(scope) ?? right.all));
+  }
+  return { all: Math.min(left.all, right.all), scopes };
+}
+
+// Returns the level every unlisted scope gets and the listed scope levels, or
+// null when the block is absent or not statically known.
+function permissionGrant(node) {
+  if (node === undefined || node === null) return null;
+  const scalar = scalarString(node);
+  if (scalar === 'read-all') return { all: 1, scopes: new Map() };
+  if (scalar === 'write-all') return { all: 2, scopes: new Map() };
+  if (!isMap(node)) return null;
+  const scopes = new Map();
+  for (const pair of node.items) {
+    const scope = scalarString(pair.key);
+    const level = PERMISSION_LEVELS[scalarString(pair.value)];
+    if (scope === null || level === undefined) return null;
+    scopes.set(scope.toLowerCase(), level);
+  }
+  return { all: 0, scopes };
 }
 
 async function readActionMetadata(ctx, uses, usesNode) {

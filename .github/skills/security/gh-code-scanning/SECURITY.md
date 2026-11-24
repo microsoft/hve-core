@@ -2,7 +2,7 @@
 title: GH Code Scanning Skill Security Model
 description: STRIDE threat model for the gh-code-scanning skill organized by assets, adversaries, and trust buckets (CLI to gh/GitHub API subprocess, untrusted alert-data rendering, CLI caller process and credentials) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-10-02
+ms.date: 2026-11-07
 ms.topic: reference
 estimated_reading_time: 8
 keywords:
@@ -17,7 +17,7 @@ keywords:
 
 This document records the STRIDE threat model for the gh-code-scanning skill (`scripts/Get-CodeScanningAlerts.ps1` and `scripts/get-code-scanning-alerts.sh`, the PowerShell and POSIX twins). The model is organized by trust bucket: CLI → gh/GitHub API subprocess (B1), Untrusted alert-data rendering (B2), and CLI caller process and credentials (B3). Each bucket enumerates all six STRIDE categories with the in-code mitigations that address them. Assets and adversaries are enumerated first. Acknowledged enterprise readiness gaps are listed at the end.
 
-The skill reads open GitHub code-scanning alerts for a repository and branch through the `gh` CLI, groups them by rule, and prints a table or JSON. With the opt-in `-IncludeDismissedStillDetected` (`-d` in bash) option it makes one more read-only GET on the same endpoint with `state=dismissed`, keeps alerts whose branch instance is not fixed, and adds their `dismissed_reason` enum value to the output; the dismissal comment is not read or rendered. It handles no credential directly (`gh` owns the token), opens no local listener, and writes no files: output goes to stdout only.
+The skill reads open GitHub code-scanning alerts for a repository and branch through the `gh` CLI, groups them by tool and rule, and prints a table or JSON. With the opt-in `-IncludeDismissedStillDetected` (`-d` in bash) option it makes one more read-only GET on the same endpoint with `state=dismissed`, keeps alerts whose branch instance is not fixed, and adds their `dismissed_reason` enum value to the output; the dismissal comment is not read or rendered. It handles no credential directly (`gh` owns the token), opens no local listener, and writes no files: output goes to stdout only.
 
 > **See also: repo-wide STRIDE model.** This skill participates in the repository-wide threat model at [`docs/security/security-model.md`](../../../../docs/security/security-model.md) and is registered in its [Skill Security Models](../../../../docs/security/security-model.md#skill-security-models) section.
 
@@ -51,7 +51,7 @@ The gh-code-scanning skill is a read-only reporting wrapper over `gh api`. Its h
 
 ### Components
 
-1. `scripts/Get-CodeScanningAlerts.ps1` — PowerShell twin: validates parameters via `[ValidatePattern]`/`[ValidateSet]`, calls `gh api`, groups alerts by rule, and prints a table or JSON.
+1. `scripts/Get-CodeScanningAlerts.ps1` — PowerShell twin: validates parameters via `[ValidatePattern]`/`[ValidateSet]`, calls `gh api`, groups alerts by tool and rule, and prints a table or JSON.
 2. `scripts/get-code-scanning-alerts.sh` — POSIX/bash twin with the same behavior, validating arguments with regex guards and grouping via `jq`.
 
 ### Data Flow

@@ -3,7 +3,7 @@ title: "Tutorial: Handing Off from DT to RPI"
 description: Step-by-step tutorial for performing Design Thinking to RPI handoffs at each exit point
 sidebar_position: 15
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-31
 ms.topic: tutorial
 keywords:
   - design thinking
@@ -46,7 +46,7 @@ When you review the handoff before activating `rpi-research`, pay attention to i
 
 ### Step 1: Confirm Readiness with DT Coach
 
-After completing Method 9, ask the coach to assess readiness, or select the **🎯 Method Next** handoff:
+After completing Method 9, ask the coach to assess readiness:
 
 ```text
 We've finished Method 9. Assess where we are and recommend the next step.
@@ -79,15 +79,16 @@ Open `.copilot-tracking/research/factory-floor-maintenance-research-topic.md` an
 
 ### Step 4: Hand Off to rpi-research
 
-Clear your chat context, open the generated handoff file in your editor, and
-invoke the Research phase skill:
+Clear your chat context, then invoke the Research phase skill with the path to the generated handoff file:
 
 ```text
 /clear
 /rpi-research Research implementation options for the voice-guided
-repair system based on the DT handoff artifact that is open in the
-editor at .copilot-tracking/research/factory-floor-maintenance-research-topic.md
+repair system based on the DT handoff artifact at
+.copilot-tracking/research/factory-floor-maintenance-research-topic.md
 ```
+
+With the plugin installed in VS Code, the Research skill appears as `/hve-core:rpi-research`.
 
 `rpi-research` uses the handoff to:
 
@@ -106,18 +107,20 @@ After research completes, continue with the standard RPI phases:
 
 The research artifact carries the validated DT context into planning and implementation rather than recreating it from scratch.
 
+Each phase ends with a Next Steps section that names the exact command to run next. To have one agent carry the work through the phases instead, select **RPI Agent** in the agent picker and point it at the research artifact.
+
 ## When RPI Returns to DT
 
 The handoff is not one-way. `rpi-research` can recommend returning to DT coaching when research reveals issues that trace back to DT assumptions. When that happens, open a new DT Coach session, restate the finding that invalidated the assumption, and resume from the earlier method that needs revision.
 
 ## Quick Reference
 
-| Action                              | Command or Step                                                                    |
-|-------------------------------------|------------------------------------------------------------------------------------|
-| Check readiness                     | Select **🎯 Method Next** or ask DT Coach for the next step                        |
-| Generate the implementation handoff | Ask DT Coach to prepare the Implementation Space handoff to RPI                    |
-| Switch to RPI                       | `/clear`, open the handoff artifact, then invoke `/rpi-research`                   |
-| Return to DT from RPI               | Start a new `@dt-coach` session and describe the finding that triggered the return |
+| Action                              | Command or Step                                                                            |
+|-------------------------------------|--------------------------------------------------------------------------------------------|
+| Check readiness                     | Ask DT Coach to assess readiness and recommend the next step                               |
+| Generate the implementation handoff | Ask DT Coach to prepare the Implementation Space handoff to RPI                            |
+| Switch to RPI                       | `/clear`, then run `/rpi-research` with the path to the handoff artifact                   |
+| Return to DT from RPI               | Select **DT Coach** in the agent picker and describe the finding that triggered the return |
 
 ## Related Resources
 

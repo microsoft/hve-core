@@ -1395,6 +1395,39 @@ Describe 'ConvertFrom-EquivalenceResults' -Tag 'Unit' {
     }
 }
 
+Describe 'ConvertFrom-EquivalenceResults against Vally 0.21 output' -Tag 'Unit' {
+    # Synthetic records in the Vally 0.21 results.jsonl shape: tool_call events
+    # carry endTimestamp, auto-mode runs add system events and
+    # metadata.modelDisplayName, and user-invoked skill_activation events precede
+    # the first user_message with or without a turn stamp.
+    BeforeAll {
+        $runDir = Join-Path $TestDrive 'vally-0.21'
+        New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $script:FixturesRoot 'vally-0.21-results.jsonl') -Destination (Join-Path $runDir 'results.jsonl')
+        $script:V021Records = ConvertFrom-EquivalenceResults -RunDir $runDir -WarningAction SilentlyContinue
+    }
+
+    It 'Loads one record per trial-result line and skips the run summary' {
+        $script:V021Records | Should -HaveCount 4
+        $script:V021Records.stimulusName | Should -Be @('tool-timing', 'auto-mode', 'skill-stamped', 'skill-unstamped')
+    }
+
+    It 'Preserves the <Stimulus> verdict, score, and wall time' -ForEach @(
+        @{ Stimulus = 'tool-timing'; WallTimeMs = 1200 }
+        @{ Stimulus = 'auto-mode'; WallTimeMs = 1300 }
+        @{ Stimulus = 'skill-stamped'; WallTimeMs = 1400 }
+        @{ Stimulus = 'skill-unstamped'; WallTimeMs = 1500 }
+    ) {
+        $record = $script:V021Records | Where-Object { $_.stimulusName -eq $Stimulus }
+        $record.trial | Should -Be 0
+        $record.passed | Should -BeTrue
+        $record.score | Should -Be 1.0
+        $record.wallTimeMs | Should -Be $WallTimeMs
+        $record.totalTokens | Should -Be 110
+        @($record.details.code) | Should -HaveCount 1
+    }
+}
+
 Describe 'Merge-EquivalenceStimuli' -Tag 'Unit' {
     BeforeAll {
         $script:Baseline = ConvertFrom-EquivalenceResults -RunDir (Join-Path $script:FixturesRoot 'baseline') -WarningAction SilentlyContinue

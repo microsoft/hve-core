@@ -143,7 +143,7 @@
     {
       "noticeType": "session-start-disclaimer",
       "shownAt": "2026-09-01T12:00:00Z",
-      "source": ".github/instructions/shared/disclaimer-language.instructions.md",
+      "source": ".github/skills/shared/disclaimer-language/SKILL.md",
       "details": {
         "phase": "phase1"
       }

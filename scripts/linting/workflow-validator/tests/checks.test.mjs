@@ -333,3 +333,109 @@ describe('action and reusable workflow inputs', () => {
     assert.deepEqual(rules(await check(caller('    with:\n      needed: 1\n    secrets: inherit\n'), { files })), []);
   });
 });
+
+describe('reusable workflow permissions', () => {
+  const callee = (workflowLevel, jobLevel) => [
+    'on:',
+    '  workflow_call:',
+    ...(workflowLevel ? [`permissions: ${workflowLevel}`] : []),
+    'jobs:',
+    '  work:',
+    '    runs-on: ubuntu-24.04',
+    ...(jobLevel ? ['    permissions:', ...jobLevel.map((line) => `      ${line}`)] : []),
+    '    steps: []',
+  ].join('\n');
+  const files = (workflowLevel, jobLevel) => ({ '.github/workflows/callee.yml': callee(workflowLevel, jobLevel) });
+  const caller = ({ workflowLevel = '{}', jobLevel = ['issues: write'] } = {}) => [
+    'on: push',
+    `permissions: ${workflowLevel}`,
+    'jobs:',
+    '  call:',
+    '    uses: $/.github/workflows/callee.yml',
+    ...(jobLevel ? ['    permissions:', ...jobLevel.map((line) => `      ${line}`)] : []),
+  ].join('\n');
+  const RULE = 'workflow-check/reusable-workflow-permissions';
+
+  it('accepts a callee that requests nothing beyond the caller grant', async () => {
+    assert.deepEqual(rules(await check(caller(), { files: files('{}', ['issues: write']) })), []);
+    assert.deepEqual(rules(await check(caller(), { files: files(null, ['issues: read', 'contents: none']) })), []);
+  });
+
+  it('reports a workflow-level request above the caller job grant', async () => {
+    const findings = await check(caller(), { files: files('\n  contents: read', ['issues: write']) });
+    assert.deepEqual(rules(findings), [RULE]);
+    assert.match(findings[0].message, /contents: read at its workflow level, but this job grants contents: none/);
+    assert.equal(findings[0].line, 5);
+  });
+
+  it('reports a job-level request above the caller job grant', async () => {
+    const findings = await check(caller(), { files: files('{}', ['issues: write', 'pull-requests: write']) });
+    assert.deepEqual(rules(findings), [RULE]);
+    assert.match(findings[0].message, /pull-requests: write at its job work/);
+  });
+
+  it('uses the caller workflow-level grant when the job declares none', async () => {
+    const inherited = caller({ workflowLevel: '\n  contents: read', jobLevel: null });
+    assert.deepEqual(rules(await check(inherited, { files: files('\n  contents: read') })), []);
+    assert.deepEqual(rules(await check(inherited, { files: files('\n  contents: write') })), [RULE]);
+  });
+
+  it('treats read-all and write-all as grants and requests on every scope', async () => {
+    assert.deepEqual(rules(await check(caller({ jobLevel: null, workflowLevel: 'read-all' }), { files: files('\n  contents: read') })), []);
+    assert.deepEqual(rules(await check(caller(), { files: files('read-all') })), [RULE]);
+    assert.deepEqual(rules(await check(caller({ jobLevel: null, workflowLevel: 'write-all' }), { files: files('read-all') })), []);
+  });
+
+  it('skips grants that are not statically known', async () => {
+    const noBlocks = 'on: push\njobs:\n  call:\n    uses: $/.github/workflows/callee.yml\n';
+    assert.deepEqual(rules(await check(noBlocks, { files: files('\n  contents: write') })), []);
+    const expression = caller({ jobLevel: ['contents: ${{ github.event_name }}'] });
+    assert.deepEqual(rules(await check(expression, { files: files('\n  contents: write') })), []);
+  });
+
+  describe('nested calls', () => {
+    const middle = (lines = []) => [
+      'on:',
+      '  workflow_call:',
+      ...lines,
+      'jobs:',
+      '  relay:',
+      '    uses: ./.github/workflows/leaf.yml',
+    ].join('\n');
+    const leaf = (permissions) => `on:\n  workflow_call:\npermissions:${permissions}\njobs:\n  work:\n    runs-on: ubuntu-24.04\n    steps: []\n`;
+    const nested = (middleLines, leafPermissions) => ({
+      '.github/workflows/callee.yml': middle(middleLines),
+      '.github/workflows/leaf.yml': leaf(leafPermissions),
+    });
+
+    it('carries the caller ceiling through a middle workflow that omits permissions', async () => {
+      const findings = await check(caller(), { files: nested([], '\n  contents: read') });
+      assert.deepEqual(rules(findings), [RULE]);
+      assert.match(findings[0].message, /\.\/\.github\/workflows\/leaf\.yml, called through \$\/\.github\/workflows\/callee\.yml, requests contents: read at its workflow level, but the calling chain grants contents: none/);
+      assert.equal(findings[0].line, 5);
+    });
+
+    it('matches the direct call finding for the same request', async () => {
+      assert.deepEqual(rules(await check(caller(), { files: files('\n  contents: read') })), [RULE]);
+    });
+
+    it('accepts a nested request within the inherited ceiling', async () => {
+      assert.deepEqual(rules(await check(caller(), { files: nested([], '\n  issues: read') })), []);
+    });
+
+    it('narrows the ceiling to an explicit middle workflow block', async () => {
+      const narrowed = nested(['permissions:', '  issues: read'], '\n  issues: write');
+      const findings = await check(caller(), { files: narrowed });
+      assert.deepEqual(rules(findings), [RULE]);
+      assert.match(findings[0].message, /issues: write at its workflow level, but the calling chain grants issues: read/);
+    });
+
+    it('stops at a call cycle', async () => {
+      const cycle = {
+        '.github/workflows/callee.yml': 'on:\n  workflow_call:\njobs:\n  loop:\n    uses: ./.github/workflows/other.yml\n',
+        '.github/workflows/other.yml': 'on:\n  workflow_call:\njobs:\n  loop:\n    uses: $/.github/workflows/callee.yml\n',
+      };
+      assert.deepEqual(rules(await check(caller(), { files: cycle })), []);
+    });
+  });
+});

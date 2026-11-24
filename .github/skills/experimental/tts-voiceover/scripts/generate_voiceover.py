@@ -451,8 +451,7 @@ def _run(args: argparse.Namespace) -> int:
         else:
             logger.error("  FAILED: %s", wav_path.name)
             failed_count += 1
-            # Remove potentially partial file left by the SDK on failure
-            # so embed_audio.py does not embed a corrupt zero-duration WAV.
+            # Do not expose a partial SDK output as completed narration.
             if wav_path.is_file():
                 wav_path.unlink(missing_ok=True)
                 logger.debug("Removed partial file: %s", wav_path.name)
@@ -463,7 +462,7 @@ def _run(args: argparse.Namespace) -> int:
         if slide_count == 0:
             logger.warning(
                 "No slides with speaker_notes found in %s. "
-                "Verify --content-dir points to a PowerPoint skill content directory.",
+                "Verify --content-dir points to a slide content directory.",
                 content_dir,
             )
             return EXIT_FAILURE

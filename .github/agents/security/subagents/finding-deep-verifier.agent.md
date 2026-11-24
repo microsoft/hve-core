@@ -2,10 +2,9 @@
 name: Finding Deep Verifier
 description: "Deep adversarial verification of FAIL and PARTIAL findings for a single security skill"
 tools:
-  - search/codebase
-  - search/fileSearch
-  - search/textSearch
-  - read/readFile
+  - search
+  - read
+  - skill
 user-invocable: false
 ---
 

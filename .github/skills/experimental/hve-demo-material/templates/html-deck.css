@@ -8,7 +8,7 @@
 .reveal .lead { margin: 12px 0 28px; }
 .reveal .label {
   margin-bottom: 10px;
-  color: var(--cyan);
+  color: var(--accent);
   font: 18px/1.4 var(--font-mono);
   letter-spacing: 1px;
 }
@@ -24,7 +24,7 @@
   gap: 28px;
   margin-top: 28px;
 }
-.card-grid .panel h3 { font-size: 24px; letter-spacing: .5px; color: var(--cyan); margin-bottom: 14px; }
+.card-grid .panel h3 { font-size: 24px; letter-spacing: .5px; color: var(--accent); margin-bottom: 14px; }
 .demo-steps {
   display: grid;
   gap: 18px;
@@ -47,7 +47,7 @@
   height: 52px;
   border: 1px solid var(--line);
   border-radius: 50%;
-  color: var(--cyan);
+  color: var(--accent);
   font: 600 26px/50px var(--font-mono);
   text-align: center;
 }
@@ -68,7 +68,7 @@
   padding: 20px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #1b2028;
+  background: var(--surface-raised);
   font-size: 24px;
   font-weight: 580;
 }
@@ -78,11 +78,11 @@
   left: -22px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--cyan);
+  color: var(--accent);
 }
 .reveal table { width: 100%; margin-top: 24px; border-collapse: collapse; font-size: 22px; line-height: 1.35; }
 .reveal th, .reveal td { padding: 10px 14px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
-.reveal th { background: #1b2028; color: var(--cyan); }
+.reveal th { background: var(--surface-raised); color: var(--accent); }
 .slide-body > .shot {
   flex: 1 1 0;
   min-height: 200px;

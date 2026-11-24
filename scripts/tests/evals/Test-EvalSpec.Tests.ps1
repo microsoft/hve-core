@@ -75,7 +75,7 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
             ($script:RepairCases[1].rubric -join ' ') | Should -Match 'Stop only.*unrelated work may continue'
             ($script:RepairCases[2].rubric -join ' ') | Should -Match 'scope.*E1.*option A.*assumptions.*trade-offs'
             ($script:RepairCases[2].rubric -join ' ') | Should -Match 'reliability and cost.*budget approval.*limit'
-            ($script:RepairCases[2].rubric -join ' ') | Should -Match 'dispositions.*decision owners.*persist.*before.*handoff'
+            ($script:RepairCases[2].rubric -join ' ') | Should -Match 'dispositions.*decision owners.*persist.*before.*next step'
             ($script:RepairCases[2].rubric -join ' ') | Should -Match 'authority stays in the ADR and with the user'
         }
 
@@ -286,8 +286,6 @@ console.log(JSON.stringify({ items: plan.items.map(i => ({ name: i.stimulus.name
 
     Context 'Branch-profile and Rust stimulus contracts' {
         BeforeAll {
-            $partial = ConvertFrom-Yaml (Get-Content (Join-Path $script:RepoRoot 'evals/agent-behavior/stimuli/code-review.yml') -Raw)
-            $script:ProfileCase = @($partial.stimuli | Where-Object name -EQ 'code-review-branch-diff-standard-profile')[0]
             $script:ContractControls = (Get-Content (Join-Path $PSScriptRoot 'fixtures/specs/pr3241-contract-controls.json') -Raw | ConvertFrom-Json).controls
             $script:RustCases = foreach ($path in @(
                 'evals/baseline-equivalence/stimuli.yml'
@@ -316,79 +314,6 @@ console.log(JSON.stringify({ items: plan.items.map(i => ({ name: i.stimulus.name
             }
         }
 
-        It 'Uses one mandatory binary branch judge without changing suite policy or staging' -Tag 'ContractProfile' {
-            $case = $script:ProfileCase
-            $case.graders | Should -HaveCount 1
-            $case.graders[0].name | Should -Be 'branch-standard-profile-contract'
-            $case.graders[0].type | Should -Be 'strict-prompt'
-            $case.graders[0].config.scoring | Should -Be 'binary'
-            $case.graders[0].config.threshold | Should -Be 0.85
-            $case.graders[0].config.ContainsKey('model') | Should -BeFalse
-            $case.tags.ContainsKey('advisory') | Should -BeFalse
-            $case.tags.scorecard | Should -Be 'complete'
-            $case.rubric | Should -HaveCount 4
-            $ids = @($case.rubric | ForEach-Object {
-                $_ | Should -Match '^\[([a-z-]+)\]'
-                if ($_ -cmatch '^\[([a-z-]+)\]') { $Matches[1] }
-            })
-            $ids | Should -Be @('target', 'perspectives', 'confirmation', 'honest-scope')
-            $case.agent_environment.files.dest | Should -Contain '.github/copilot-instructions.md'
-            $case.agent_environment.skills | Should -Contain '../../.github/skills/coding-standards/code-review'
-            $rubric = ($case.rubric -join ' ') + ' ' + $case.graders[0].config.prompt
-            $rubric | Should -Match 'All criteria are mandatory'
-            $rubric | Should -Match 'contradictory'
-            $rubric | Should -Match 'equivalent descriptions'
-            $rubric | Should -Match 'confirm or adjust'
-            $rubric | Should -Match 'Do not require pull-request metadata'
-            $rubric | Should -Match 'prompt echo'
-            $rubric | Should -Match 'conditional security or accessibility'
-            $rubric | Should -Match 'exactly four rubric_scores'
-        }
-
-        It 'Exercises native binary judge wiring with a mock rather than claiming semantic calibration' -Tag 'ContractProfile' {
-            $probe = @'
-const { pathToFileURL } = await import('node:url');
-const path = await import('node:path');
-const root = process.argv[1];
-const modulePath = path.join(root, 'scripts', 'evals', 'graders', 'strict-prompt.mjs');
-const { createStrictPromptGrader } = await import(pathToFileURL(modulePath).href);
-const stimulus = JSON.parse(process.argv[2]);
-const results = [];
-for (const score of [0, 1]) {
-    let calls = 0;
-    let shutdowns = 0;
-    const grader = createStrictPromptGrader(async () => ({ supportsWorkspaceDelivery: true, judge: async request => {
-        calls++;
-        if (!request.userMessage.includes('All criteria are mandatory') ||
-            !request.userMessage.includes('exactly four rubric_scores')) throw new Error('Scorecard instructions were not delivered');
-        const args = { overall_score: score, overall_reasoning: 'Mock wiring only.',
-            rubric_scores: Object.fromEntries(stimulus.rubric.map(text => {
-                const id = text.match(/^\[([a-z-]+)\]/)[1];
-                return [id, { score, reasoning: 'Mock wiring only.' }];
-            })) };
-        const validated = request.tool.parameters.safeParse(args);
-        if (!validated.success) throw new Error('Invalid mock native form.');
-        return { args: validated.data, latencyMs: 1, remindersUsed: 0 };
-    }, shutdown: async () => { shutdowns++; } }));
-    const result = await grader.grade({ config: stimulus.graders[0].config, stimulus,
-        trajectory: { id: 'mock-control', stimulus, events: [], output: 'Synthetic wiring fixture.' } });
-    if (result.status === 'error') throw new Error(result.evidence);
-    results.push({ passed: result.passed, expected: score === 1, calls, shutdowns, details: result.details.length });
-}
-console.log(JSON.stringify(results));
-'@
-            $json = & node --input-type=module -e $probe $script:RepoRoot ($script:ProfileCase | ConvertTo-Json -Depth 20 -Compress)
-            $LASTEXITCODE | Should -Be 0
-            $results = @($json | ConvertFrom-Json)
-            $results | Should -HaveCount 2
-            foreach ($result in $results) {
-                $result.passed | Should -Be $result.expected
-                $result.calls | Should -Be 1
-                $result.shutdowns | Should -Be 1
-                $result.details | Should -Be $script:ProfileCase.rubric.Count
-            }
-        }
-
         It 'Keeps the broad Rust prompt and deterministic invariant synchronized' {
             $prompts = @($script:RustCases | ForEach-Object {
                 if ($_.ContainsKey('prompt')) { $_.prompt } else { $_.turns[-1] }
@@ -396,7 +321,7 @@ console.log(JSON.stringify(results));
             $prompts | Should -HaveCount 4
             @($prompts | Sort-Object -Unique) | Should -HaveCount 1
             foreach ($prompt in $prompts) {
-                $prompt | Should -Be 'Write a Rust function that reverses a string and returns the reversed value.'
+                $prompt | Should -Be 'Write a Rust function that reverses a string and returns the reversed value. Show the code in your reply.'
             }
             $script:RustCases[0].invariants | Should -Contain 'rust-fn-syntax'
             foreach ($case in $script:RustCases[0..2]) {
@@ -424,53 +349,6 @@ console.log(controls.length);
             $count = & node --input-type=module -e $probe $script:RepoRoot $config ($controls | ConvertTo-Json -Compress)
             $LASTEXITCODE | Should -Be 0
             [int]$count | Should -Be 20
-        }
-    }
-
-    Context 'Unreadable-base semantic contract' {
-        BeforeAll {
-            $partial = ConvertFrom-Yaml (Get-Content (Join-Path $script:RepoRoot 'evals/agent-behavior/stimuli/code-review.yml') -Raw)
-            $script:FallbackCase = @($partial.stimuli | Where-Object name -EQ 'code-review-business-alignment-unreadable-base-fallback')[0]
-            $script:FallbackControls = Get-Content (Join-Path $PSScriptRoot 'fixtures/specs/post-repair-grader-controls.json') -Raw | ConvertFrom-Json
-        }
-
-        It 'Keeps one binary judge under the existing natural-language scenario' {
-            $script:FallbackCase.graders | Should -HaveCount 1
-            $grader = $script:FallbackCase.graders[0]
-            $grader.name | Should -Be 'code-review-unreadable-base-contract'
-            $grader.type | Should -Be 'prompt'
-            $grader.config.scoring | Should -Be 'binary'
-            $grader.config.threshold | Should -Be 0.85
-            $grader.config.ContainsKey('model') | Should -BeFalse
-            $script:FallbackCase.tags.category | Should -Be 'agent-behavior'
-            $script:FallbackCase.tags.ContainsKey('advisory') | Should -BeFalse
-            $script:FallbackCase.prompt | Should -Match 'response-only'
-            $script:FallbackCase.agent_environment.files.dest | Should -Contain '.github/copilot-instructions.md'
-        }
-
-        It 'Requires every baseline relationship and rejects contradictory clearance' {
-            $rubric = $script:FallbackCase.rubric -join ' '
-            $rubric | Should -Match '(?s)(?=.*one bounded)(?=.*unchanged)(?=.*FR-008)(?=.*baseline is head)'
-            $rubric | Should -Match 'FR-007.*removed pre-change.*baseline diff'
-            $rubric | Should -Match 'FR-009.*unavailable.*unassessed.*cannot.*clear drift'
-            $rubric | Should -Match 'All criteria are mandatory'
-            $rubric | Should -Match 'equivalent wording.*clause order'
-            $rubric | Should -Match 'contradictory.*even if correct phrases'
-            $rubric | Should -Match 'prompt echoes.*unavailable-policy.*live review'
-        }
-
-        It 'Retains eight labeled controls as calibration inputs, not measured verdicts' {
-            $script:FallbackControls.subject | Should -Be $script:FallbackCase.name
-            $controls = $script:FallbackControls.controls
-            $controls | Should -HaveCount 8
-            @($controls.id | Sort-Object -Unique) | Should -HaveCount 8
-            @($controls | Where-Object expected -EQ $true) | Should -HaveCount 2
-            @($controls | Where-Object expected -EQ $false) | Should -HaveCount 6
-            foreach ($control in $controls) {
-                $control.expected | Should -BeOfType ([bool])
-                $control.answer | Should -Not -BeNullOrEmpty
-                $control.rationale | Should -Not -BeNullOrEmpty
-            }
         }
     }
 
@@ -1039,5 +917,51 @@ stimuli:
         $report.inventoryError | Should -Not -BeNullOrEmpty
         $report.inventoryError | Should -Match 'Agent inventory not found'
         $report.orphanedTags.Count | Should -Be 0
+    }
+}
+
+Describe 'Get-NewParentAgentSlugFromGit (function)' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath -SkipAgentCoverage *> $null
+    }
+
+    It 'Returns an empty array when AgentsRoot contains only a user-invocable: false agent outside subagents/' {
+        $gitRoot = Join-Path $TestDrive ("git-agents-" + [Guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $gitRoot -Force | Out-Null
+
+        Push-Location -LiteralPath $gitRoot
+        try {
+            git init --quiet
+            git config user.email 'eval@example.invalid'
+            git config user.name 'Eval Fixture'
+            Set-Content -LiteralPath (Join-Path $gitRoot 'README.md') -Value 'base' -Encoding UTF8
+            git add README.md
+            git commit --quiet -m 'base'
+
+            $customAgentsDir = Join-Path $gitRoot 'custom-agents'
+            New-Item -ItemType Directory -Path $customAgentsDir -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $customAgentsDir 'internal-helper.agent.md') -Value "---`nname: Internal Helper`nuser-invocable: false`n---`n`n# Helper`n" -Encoding UTF8
+            git add 'custom-agents/internal-helper.agent.md'
+            git commit --quiet -m 'add non-invocable helper outside subagents'
+        }
+        finally {
+            Pop-Location
+        }
+
+        $added = @(Get-NewParentAgentSlugFromGit -RepoRoot $gitRoot -BaseRef 'HEAD~1' -AgentsRoot 'custom-agents')
+        $added.Count | Should -Be 0
+
+        Push-Location -LiteralPath $gitRoot
+        try {
+            Set-Content -LiteralPath (Join-Path $gitRoot 'custom-agents/public-parent.agent.md') -Value "---`nname: Public Parent`n---`n`n# Parent`n" -Encoding UTF8
+            git add 'custom-agents/public-parent.agent.md'
+            git commit --quiet -m 'add parent agent'
+        }
+        finally {
+            Pop-Location
+        }
+
+        $addedWithParent = @(Get-NewParentAgentSlugFromGit -RepoRoot $gitRoot -BaseRef 'HEAD~2' -AgentsRoot 'custom-agents')
+        $addedWithParent | Should -Be @('public-parent')
     }
 }

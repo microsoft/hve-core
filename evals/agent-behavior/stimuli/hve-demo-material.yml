@@ -26,6 +26,9 @@ stimuli:
         - ../../.github/skills/experimental/hve-demo-material
     tags:
       category: agent-behavior
+    constraints:
+      max_agent_duration: 240s
+      max_duration: 300s
     graders:
       - type: prompt
         name: hve-demo-material-class-recipe-content

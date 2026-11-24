@@ -2,7 +2,7 @@
 title: HVE Core Installer Skill Security Model
 description: STRIDE threat model for the hve-core-installer skill organized by assets, adversaries, and trust buckets (source clone and plugin manifest, target repository writes, tracking manifest and eject, caller process and local tools) with in-code mitigations, verified platform coverage, and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-10-04
+ms.date: 2026-10-31
 ms.topic: reference
 estimated_reading_time: 11
 keywords:
@@ -175,7 +175,7 @@ flowchart TD
 
 ### Spoofing
 
-* For the mounted and multi-root methods, installation guidance runs `git -C <HveCoreBasePath> remote get-url origin` before any write. When `origin` is missing or does not match an expected `github.com/microsoft/hve-core` HTTPS, SCP-like SSH, or `ssh://` form, it warns and requires an explicit `yes` to continue. This is an advisory trust signal, not proof of repository integrity. Intentional forks and local development clones are allowed after confirmation (G-SPF-1).
+* For the mounted and multi-root methods, and for a clone the user already had, installation guidance runs `git -C <HveCoreBasePath> remote get-url origin` before any write. When `origin` is missing or does not match an expected `github.com/microsoft/hve-core` HTTPS, SCP-like SSH, or `ssh://` form, it warns and requires an explicit `yes` to continue. This is an advisory trust signal, not proof of repository integrity. Intentional forks and local development clones are allowed after confirmation (G-SPF-1).
 
 ### Tampering
 

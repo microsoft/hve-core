@@ -252,6 +252,53 @@ function Get-ArtifactFrontmatter {
     }
 }
 
+function Get-YamlFrontmatterList {
+    <#
+    .SYNOPSIS
+    Reads a top-level list field from YAML frontmatter text.
+
+    .DESCRIPTION
+    Parses the frontmatter with ConvertFrom-Yaml, so flow lists, block lists,
+    quoted items, blank lines, and comments all yield the same items. A scalar
+    value counts as a one-item list, and a missing or empty field yields an
+    empty array. Throws when the YAML is malformed or the field holds a
+    mapping, so callers can report the file.
+
+    .PARAMETER Yaml
+    Frontmatter text between the opening and closing `---` fences.
+
+    .PARAMETER Field
+    Top-level key to read, such as `skills`.
+
+    .OUTPUTS
+    [string[]] Trimmed, non-empty items in declaration order.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Yaml,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Field
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Yaml)) { return @() }
+
+    $data = ConvertFrom-Yaml -Yaml ($Yaml -replace '\r\n?', "`n")
+    if ($data -isnot [System.Collections.IDictionary] -or -not $data.Contains($Field)) { return @() }
+
+    $value = $data[$Field]
+    if ($null -eq $value) { return @() }
+    if ($value -is [System.Collections.IDictionary]) {
+        throw "Frontmatter field '$Field' must be a list, not a mapping."
+    }
+
+    return @(@($value) | Where-Object { $null -ne $_ } | ForEach-Object { ([string]$_).Trim() } | Where-Object { $_ })
+}
+
 function Get-ArtifactFiles {
     <#
     .SYNOPSIS
@@ -556,6 +603,7 @@ Export-ModuleMember -Function @(
     'Get-MaturityRank',
     'Get-MaturityVocabulary',
     'Get-PackageDocArtifactHeadingPattern',
+    'Get-YamlFrontmatterList',
     'Resolve-ArtifactMaturity',
     'Resolve-StrictSafeMaturity',
     'Set-ContentIfChanged',

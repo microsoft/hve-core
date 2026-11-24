@@ -821,6 +821,7 @@ psgallery
 pseudonymization
 pseudonymize
 pseudonymized
+pseudonymizes
 psql
 pstn
 psversiontable
@@ -1167,6 +1168,7 @@ vwan
 vxlan
 wafs
 walkback
+walkbacks
 walkthrough
 wans
 webgui
@@ -1557,8 +1559,12 @@ Pipfile
 manylinux
 pipx
 pypa
+certifi
+filelock
+setuptools
 zizmor
 zizmorcore
+deepmerge
 
 # Video & Image Processing
 drawtext
@@ -1654,6 +1660,7 @@ DSSE
 intoto
 SSML
 auditd
+callees
 callsite
 callsites
 DPAPI
@@ -1674,3 +1681,22 @@ urlsafe
 wberry
 writeback
 Brussee
+adservice
+cartservice
+cartstore
+checkoutservice
+emailservice
+frontendservice
+paymentservice
+phamquiluan
+rcaeval
+redactions
+rescored
+rescoring
+shippingservice
+strippable
+unassessable
+unrecovered
+currencyservice
+productcatalogservice
+nonfinite

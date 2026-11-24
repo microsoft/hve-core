@@ -3,7 +3,7 @@ title: Your First Research
 description: Use the rpi-research skill to investigate your own codebase
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-10-23
+ms.date: 2026-10-31
 ms.topic: tutorial
 keywords:
   - getting started
@@ -35,7 +35,7 @@ teach methodology; real questions teach methodology and produce useful output.
 ## Run the Research
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`).
-2. Invoke `/rpi-research` from the skill surface.
+2. Type `/rpi-research` in the chat input. If you installed HVE Core as a plugin, VS Code lists it as `/hve-core:rpi-research`.
 3. Type your question as a prompt.
 
 The skill creates a research document at

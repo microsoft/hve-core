@@ -201,8 +201,44 @@ watches:
   # generated findings recorded as generated-code exceptions.
   - id: gh-aw-release-newer
     kind: release-newer
-    issue: 3112
+    issue: 3137
     action: >-
       Upgrade gh-aw following "Upgrading gh-aw" in docs/architecture/agentic-workflows.md, then retire generated-code exceptions the new compiler output no longer needs
     repo: github/gh-aw
-    pinned: 0.89.21
+    pinned: 1.0.1
+  - id: gh-aw-permission-comments
+    kind: issue-closed
+    issue: 3137
+    action: >-
+      Upgrade gh-aw to a release with the fix, recompile, and remove the zizmor undocumented-permissions generated-code exceptions the new output no longer needs
+    url: https://github.com/github/gh-aw/issues/75581
+  # CodeQL analyzes $/-called reusable workflows as externally callable; the
+  # CodeQL false-positive exceptions retire once it resolves these callers.
+  - id: codeql-self-repository-callers
+    kind: issue-closed
+    issue: 3137
+    action: >-
+      Confirm the CodeQL action bundle includes the fix, then remove the CodeQL false-positive exceptions for backlog-groom.lock.yml and extension-marketplace-publish.yml
+    url: https://github.com/github/codeql/issues/22755
+  - id: poutine-runner-temp-scripts
+    kind: issue-closed
+    issue: 3137
+    action: >-
+      Upgrade Poutine to a release with the fix, then remove the .poutine.yml untrusted_checkout_exec skips for backlog-groom.lock.yml and pr-review.lock.yml
+    url: https://github.com/boostsecurityio/poutine/issues/457
+  # Scorecard Vulnerabilities reports this advisory although its CVE was
+  # rejected; the alert clears once the advisory is withdrawn.
+  - id: advisory-deepmerge-withdrawal
+    kind: issue-closed
+    issue: 3125
+    action: >-
+      Confirm GHSA-gcqx-w48m-w2h4 is withdrawn and the Scorecard Vulnerabilities alert clears on main, then update the deepmerge VEX statement
+    url: https://github.com/github/advisory-database/issues/10910
+  # Scorecard credits merge queues for up-to-date branches after ossf/scorecard#5281.
+  - id: scorecard-action-release-newer
+    kind: release-newer
+    issue: 3124
+    action: >-
+      Bump ossf/scorecard-action in scorecard.yml, then recheck the Branch-Protection alert for the up-to-date branches warning
+    repo: ossf/scorecard-action
+    pinned: 2.5.0

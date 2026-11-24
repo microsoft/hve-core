@@ -2,16 +2,16 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-11-02
+ms.date: 2026-11-24
 ---
 
 ## Purpose
 
-This suite covers every user-invocable hve-core agent with at least one functional stimulus and at least one functional grader, so a regression in any single agent's behavior is detectable from a per-agent eval run.
+This suite requires every user-invocable hve-core agent to have at least one functional stimulus and at least one functional grader.
 
 The complement to [baseline-equivalence](../baseline-equivalence/README.md) is intentional: baseline-equivalence asserts the customization layer does not alter underlying model behavior beyond documented divergences, while agent-behavior asserts each agent actually performs its declared job.
 
-The suite is organized around four behavioral classes (research-writer, code-reviewer, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; the maintained stimulus inventory contains 65 enrolled agents, including 33 subagents.
+The suite is organized around four behavioral classes (research-writer, code-reviewer, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; the generated inventory contains 55 enrolled agents, including 23 subagents.
 
 ## Layout
 
@@ -21,7 +21,7 @@ evals/agent-behavior/
 ├── AGENTS.yml          # authoritative inventory (slug, path, class, cost_tier)
 ├── eval.yaml           # generated executable spec - do not edit by hand
 └── stimuli/
-  └── <agent-slug>.yml  # one partial per inventoried agent (65 files)
+  └── <agent-slug>.yml  # one partial per enrolled agent (55 partials)
 ```
 
 The partials in [stimuli/](stimuli/) are the source of truth for stimuli. The top-level [eval.yaml](eval.yaml) is regenerated from those partials by [scripts/evals/Build-AgentBehaviorSpec.ps1](../../scripts/evals/Build-AgentBehaviorSpec.ps1). The inventory at [AGENTS.yml](AGENTS.yml) is regenerated from the agent frontmatter on disk by [scripts/evals/Build-AgentInventory.ps1](../../scripts/evals/Build-AgentInventory.ps1) and the agent-behavior generator only reads slugs whose partials exist in [stimuli/](stimuli/).
@@ -34,6 +34,9 @@ The generator concatenates every [stimuli/](stimuli/) partial, prepends the file
 # Regenerate the spec from partials
 pwsh -NoProfile -File scripts/evals/Build-AgentBehaviorSpec.ps1 -Force
 
+# Refresh enrollment after adding or retiring partials
+pwsh -NoProfile -File scripts/evals/Build-AgentInventory.ps1 -Force
+
 # Drift check (CI-safe): exit 0 if eval.yaml matches rendered output, exit 1 + diff if not
 pwsh -NoProfile -File scripts/evals/Build-AgentBehaviorSpec.ps1 -WhatIf
 ```
@@ -41,6 +44,17 @@ pwsh -NoProfile -File scripts/evals/Build-AgentBehaviorSpec.ps1 -WhatIf
 When the drift check fails, a unified diff is written to [logs/agent-behavior-spec-drift.diff](../../logs/agent-behavior-spec-drift.diff). Inspect that file, re-run the generator with `-Force`, and commit the regenerated [eval.yaml](eval.yaml) alongside any stimulus partial change in the same commit.
 
 The drift check is wired into the repository's `ci:eval:lint:vally` npm script in [package.json](../../package.json) so vally lint cannot pass while [eval.yaml](eval.yaml) is out of sync with the partials.
+
+### Retired grader aliases
+
+[Build-GraderLineageMap.ps1](../../scripts/evals/Build-GraderLineageMap.ps1) owns an explicit retired-source list. When historical revisions cannot be regenerated, use its retirement-only operation:
+
+```bash
+npm run eval-grader-lineage:retire
+npm run lint:eval-grader-lineage
+```
+
+Retirement verifies the map committed at `HEAD`, removes only listed aliases, and checks every retained target before writing. It refuses unrelated uncommitted map changes. Historical revisions, source/target digests, 1240 source-to-target pairs, and 171 generated copies remain unchanged. The active map contains 397 aliases after retiring the 14 Code Review aliases. `lint:eval-grader-lineage` only checks the map; it never prunes or regenerates it.
 
 ## RPI Assessment Policy Regressions
 
@@ -79,6 +93,8 @@ Three coverage kinds are distinct and do not overlap:
 
 A per-stimulus `agent_environment.skills` list is concatenated with the suite-level list rather than replacing it, so an isolated stimulus loads its agent-declared skills in addition to the suite-level skills. Declare the skills the agent's contract names and do not assume the suite-level skills are excluded.
 
+Some stimuli intentionally stage fewer skills than their agent preloads. A stimulus that declares a response-only or isolated behavior-contract scenario, tests a missing source such as `security-planner-disclaimer-source-missing`, or stages a synthetic policy fixture instead of the agent omits the agent's preloads, because staging them would change or defeat the behavior under test.
+
 Vally has no agent-routing option, and staging an `.agent.md` at its normal `.github/agents/` path does not place it in model context. Most isolated functional stimuli use workspace instructions by remapping the agent file. A contained policy-reading case can instead explicitly ask the model to read a staged source-relative agent path; this tests the supplied contract, not native agent selection.
 
 ### Demo Planning and Meaning-Based Contracts
@@ -116,29 +132,14 @@ rejections, rather than requiring every answer to pass. Accept the demo repair
 only after checking file presence for every executed trial separately; the
 existing suite mean can hide an individual missing file.
 
-The code-review unreadable-base fallback case also uses one binary prompt judge.
-It requires the bounded unchanged-source read and the correct baseline for each
-passage, and rejects contradictory clearance claims even when correct phrases
-also appear. The eight labeled controls in
-[post-repair-grader-controls.json](../../scripts/tests/evals/fixtures/specs/post-repair-grader-controls.json)
-are inputs for later genuine calibration, not measured judge results.
-
-The branch-diff standard-profile case uses one binary `strict-prompt` judge at `0.85`
-for its complete recommendation contract. It requires the resolved branch
-target, the three default perspectives and their purpose, scope confirmation
-before dispatch, and no PR-metadata prerequisite. Equivalent descriptions,
-ordering and explanation length are accepted; a later exclusion contradicting
-an otherwise correct recommendation fails. Conditional specialist perspectives
-are allowed when justified. This ordinary agent-behavior stimulus remains
-non-advisory, with the existing five trials and `0.7` suite threshold.
-
-The four behavior criteria have stable IDs: `target`, `perspectives`,
-`confirmation`, and `honest-scope`. The
-[native grader module](../../scripts/evals/graders/strict-prompt.mjs), registered in
-[the project config](../../.vally.yaml), reuses Vally's public prompt grader and
-client. Its verdict tool requires an object with exactly those four keys, binary
-scores and an overall pass only when all four pass. It validates the submitted
-overall score rather than replacing an inconsistent verdict.
+The [native `strict-prompt` grader module](../../scripts/evals/graders/strict-prompt.mjs),
+registered in [the project config](../../.vally.yaml), reuses Vally's public
+prompt grader and client. It requires four stable criterion IDs: `target`,
+`perspectives`, `confirmation`, and `honest-scope`. Its verdict tool requires an
+object with exactly those four keys, binary scores and an overall pass only when
+all four pass. It validates the submitted overall score rather than replacing an
+inconsistent verdict. No current stimulus uses this grader; the Code Review
+consolidation retired the branch-diff standard-profile case it was built for.
 
 The module is inert during registration and lint. Each grade owns its native
 client and awaits cleanup, including cancellation and late startup. Client
@@ -147,7 +148,7 @@ Native format-validation reminders remain bounded by the framework default of
 two before a judgment is accepted. They do not authorize caller retries of an
 accepted negative verdict or a calibration mismatch.
 
-The stimulus opts into `scorecard: complete`; after validated native projection,
+A stimulus that uses it opts into `scorecard: complete`; after validated native projection,
 the runner independently verifies the same contract. Missing, duplicate, unknown
 or contradictory scores fail evidence integrity even when the native overall
 verdict passes. Incomplete scorecards are not retried until green.
@@ -158,12 +159,9 @@ labels and reasoning are not published. Other stimuli retain their existing
 `2.0.0` diagnostic contract and behavior.
 
 The [contract controls](../../scripts/tests/evals/fixtures/specs/pr3241-contract-controls.json)
-contain 16 labeled prose answers and 20 Rust declaration-floor answers.
-Native mocked prompt-grader tests verify wiring only. Genuine prose calibration
-grades every fixed answer in three independent rounds with the configured judge,
-requiring agreement with all 48 expected labels, criterion/overall consistency,
-and zero judge errors. This is a bounded contract check, not a population-wide
-accuracy claim. Live judging and hosted acceptance are separate from local tests.
+contain 16 labeled prose answers for the retired branch-diff case and 20 Rust
+declaration-floor answers. Native mocked prompt-grader tests verify wiring only.
+Live judging and hosted acceptance are separate from local tests.
 
 The experiment outcome case keeps deterministic measurement and evidence-binding
 checks. Percentage units may appear in the value or in a label/table header,
@@ -225,6 +223,12 @@ The resumed-review sample metadata has LF checkout endings pinned in
 [.gitattributes](../../.gitattributes). Its protected-file grader compares exact
 bytes, so Windows checkout conversion must not alter the sample. The equality
 check still rejects changes to protected files.
+
+### Consolidated Code Review coverage
+
+The primary Code Review agent is covered by [stimuli/code-review.yml](stimuli/code-review.yml), and the consolidated `code-review` skill is covered in `evals/behavior-conformance/skill-behavior.eval.yaml`. The nine former Code Review worker subagents and nine separate `code-review-*` skills have been retired and consolidated into `.github/skills/coding-standards/code-review/`.
+
+The three shared baseline-equivalence scenarios retain their `rpi-agent` routing without backlinking Code Review. Unrelated RPI business-alignment cases remain. Code Review business-alignment confirmation evidence for proposed [ADR-0012](../../docs/planning/adrs/0012-close-the-business-alignment-loop-in-rpi.md) remains tracked under that ADR until a dedicated business-alignment stimulus or native run records it.
 
 ### Data Science Coach RPI Scenarios
 
@@ -354,36 +358,6 @@ Agents that analyze code, diffs, or artifacts and surface issues, risks, or reco
 
 * `header-present` - No code-reviewer agents currently declare a `Start responses with:` directive. This grader is omitted for all 8 members of this class.
 
-#### Worked Example: code-review
-
-```yaml
-# evals/agent-behavior/stimuli/code-review.yml
-stimuli:
-  - name: code-review-identifies-security
-    prompt: |
-      Review this diff and identify any security concerns:
-      ```diff
-      -password = input("Enter password: ")
-      +password = getpass("Enter password: ")
-      ```
-    tags:
-      category: agent-behavior
-    graders:
-      - type: output-matches
-        name: findings-table-present
-        config:
-          pattern: '(?m)^\|.*\|.*\|'
-      - type: output-matches
-        name: severity-vocab
-        config:
-          pattern: '(?i)(security|credential|password|risk|severity)'
-      - type: output-matches
-        name: no-source-edit
-        config:
-          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
-          negate: true
-```
-
 ### Class 3: workitem-manager
 
 Agents that convert user requests, PRDs, or triage input into work item drafts (ADO, GitHub, Jira).
@@ -434,7 +408,7 @@ stimuli:
 
 Agents that sequence work, plan tasks, coach the user through a process, or orchestrate multi-phase workflows.
 
-**Members (14):** accessibility-planner, agentic-workflows, data-science-engineering-coach, documentation, dt-coach, dt-learning-tutor, experiment-designer, hve-demo-material, pptx, privacy-planner, rai-planner, rpi-agent, security-planner, sssc-planner
+**Members (13):** accessibility-planner, agentic-workflows, data-science-engineering-coach, documentation, dt-coach, dt-learning-tutor, experiment-designer, hve-demo-material, privacy-planner, rai-planner, rpi-agent, security-planner, sssc-planner
 
 **Required Graders:**
 
@@ -481,7 +455,6 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | issue-triage                   | workitem-manager | light     | [.github/agents/issue-triage.agent.md](../../.github/agents/issue-triage.agent.md)                                                                                       |
 | meeting-analyst                | research-writer  | light     | [.github/agents/project-planning/meeting-analyst.agent.md](../../.github/agents/project-planning/meeting-analyst.agent.md)                                               |
 | network-isa95-planner          | research-writer  | light     | [.github/agents/project-planning/network-isa95-planner.agent.md](../../.github/agents/project-planning/network-isa95-planner.agent.md)                                   |
-| pptx                           | planner-coach    | light     | [.github/agents/experimental/pptx.agent.md](../../.github/agents/experimental/pptx.agent.md)                                                                             |
 | prd-builder                    | research-writer  | light     | [.github/agents/project-planning/prd-builder.agent.md](../../.github/agents/project-planning/prd-builder.agent.md)                                                       |
 | privacy-planner                | planner-coach    | light     | [.github/agents/privacy/privacy-planner.agent.md](../../.github/agents/privacy/privacy-planner.agent.md)                                                                 |
 | privacy-reviewer               | code-reviewer    | light     | [.github/agents/privacy/privacy-reviewer.agent.md](../../.github/agents/privacy/privacy-reviewer.agent.md)                                                               |
@@ -495,8 +468,13 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | system-architecture-reviewer   | research-writer  | light     | [.github/agents/project-planning/system-architecture-reviewer.agent.md](../../.github/agents/project-planning/system-architecture-reviewer.agent.md)                     |
 | ux-ui-designer                 | research-writer  | light     | [.github/agents/project-planning/ux-ui-designer.agent.md](../../.github/agents/project-planning/ux-ui-designer.agent.md)                                                 |
 
-The maintained stimulus inventory totals 65 agents: 32 parent agents plus 33
-enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/).
+The generated inventory totals 55 agents: 32 parent agents plus 23
+enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/),
+with 55 partials on disk. The
+table above lists the 31 user-invocable parents; the repository-only
+`backlog-grooming` parent also has a partial but declares
+`user-invocable: false`, so the coverage check in `Test-EvalSpec.ps1` counts 31
+parents.
 Subagents without a matching stimulus partial remain excluded from the matrix
 run set and are documented separately in the inventory generator and related
 eval research. [AGENTS.yml](AGENTS.yml) remains generator-owned and is refreshed
