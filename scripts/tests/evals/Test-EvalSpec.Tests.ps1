@@ -222,7 +222,7 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
         }
 
         It 'Separates ordinary RPI questions from workflow state and progression' {
-            $agent = Get-Content -Raw (Join-Path $script:RepoRoot '.github/agents/hve-core/rpi-agent.agent.md')
+            $agent = Get-Content -Raw (Join-Path $script:RepoRoot '.github/skills/rpi/rpi/SKILL.md')
             $agent | Should -Match '## Applicability'
             $agent | Should -Match '(?s)ordinary questions.*answer directly.*self-introductions.*phase headings.*unsolicited task redirection'
             $agent | Should -Match 'Do not recover, create, or update task or session tracking state'

@@ -18,10 +18,34 @@ BeforeAll {
 
 Describe 'Complete prompt scorecards' -Tag 'Unit' {
     BeforeAll {
+        $script:ScorecardSpec = Join-Path $TestDrive 'scorecard-spec.yaml'
+        Set-Content -LiteralPath $script:ScorecardSpec -Encoding utf8 -Value @'
+name: synthetic-scorecard
+defaults:
+  runs: 1
+  judge_model: claude-sonnet-5
+stimuli:
+  - name: code-review-branch-diff-standard-profile
+    prompt: Synthetic request.
+    rubric:
+      - "[target] Synthetic target criterion."
+      - "[perspectives] Synthetic perspectives criterion."
+      - "[confirmation] Synthetic confirmation criterion."
+      - "[honest-scope] Synthetic honest-scope criterion."
+    tags:
+      agent: code-review
+      scorecard: complete
+    graders:
+      - type: strict-prompt
+        name: branch-standard-profile-contract
+        config:
+          scoring: binary
+          threshold: 0.85
+'@
+
         function New-ScorecardFixture {
             param([string]$Root, [string]$Mutation = 'clean')
-            $spec = Join-Path $script:RepositoryRoot 'evals/agent-behavior/eval.yaml'
-            $config = Get-VallyDiagnosticConfiguration -SpecPath $spec -Tag 'agent=code-review'
+            $config = Get-VallyDiagnosticConfiguration -SpecPath $script:ScorecardSpec -Tag 'agent=code-review'
             $name = 'code-review-branch-diff-standard-profile'
             $inventory = [ordered]@{}
             $inventory[$name] = [ordered]@{ runs = 1; graders = $config.stimuli[$name].graders }
