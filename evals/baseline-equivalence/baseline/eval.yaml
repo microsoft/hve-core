@@ -16,7 +16,7 @@ type: capability
 # environment.files. Several stimuli read or edit ordinary project files; without
 # this fixture those tool calls fail identically in both variants and the
 # comparison scores that mutual failure as equivalence.
-environment:
+agent_environment:
   files:
     - src: ../seed-workspace
       dest: .

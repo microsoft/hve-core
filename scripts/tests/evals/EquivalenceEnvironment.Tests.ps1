@@ -596,7 +596,7 @@ Describe 'Seed workspace fixture' -Tag 'Unit' {
 Describe 'Trial environment delivery' -Tag 'Unit' {
     # vally materializes each trial in <workspace>/<variant>/<stimulus>/, so files
     # written to the workspace root are never seen by the agent. Delivery has to go
-    # through environment.files, which means the paths the specs read from must
+    # through agent_environment.files, which means the paths the specs read from must
     # match the paths the driver writes to. Neither file constrains the other on
     # its own: when that coupling broke, the customization surface silently stopped
     # reaching the agent and the suite reported equivalence between two variants
@@ -609,7 +609,7 @@ Describe 'Trial environment delivery' -Tag 'Unit' {
         function Get-EnvironmentFileMap {
             <#
             .SYNOPSIS
-                Returns a spec's environment.files entries as resolved src/dest pairs.
+                Returns a spec's agent_environment.files entries as resolved src/dest pairs.
             #>
             param([string]$SpecPath)
 
@@ -618,7 +618,7 @@ Describe 'Trial environment delivery' -Tag 'Unit' {
             $pendingSrc = $null
             $inEnvironment = $false
             foreach ($line in (Get-Content -LiteralPath $SpecPath)) {
-                if ($line -match '^environment:') { $inEnvironment = $true; continue }
+                if ($line -match '^agent_environment:') { $inEnvironment = $true; continue }
                 if ($inEnvironment -and $line -match '^\S') { break }
                 if (-not $inEnvironment) { continue }
                 if ($line -match '^\s*-\s*src:\s*(\S+)\s*$') { $pendingSrc = $Matches[1]; continue }

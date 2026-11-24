@@ -17,7 +17,7 @@ type: capability
 # trial. File presence alone is not invocation: the explicit launch turn reads the
 # agent before the user question, and the driver reconciles structured read evidence
 # for every model, stimulus, and trial.
-environment:
+agent_environment:
   files:
     - src: ../seed-workspace
       dest: .
