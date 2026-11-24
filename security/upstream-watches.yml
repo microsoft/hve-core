@@ -234,11 +234,3 @@ watches:
     action: >-
       Confirm GHSA-gcqx-w48m-w2h4 is withdrawn and the Scorecard Vulnerabilities alert clears on main, then update the deepmerge VEX statement
     url: https://github.com/github/advisory-database/issues/10910
-  # Scorecard credits merge queues for up-to-date branches after ossf/scorecard#5281.
-  - id: scorecard-action-release-newer
-    kind: release-newer
-    issue: 3124
-    action: >-
-      Bump ossf/scorecard-action in scorecard.yml, then recheck the Branch-Protection alert for the up-to-date branches warning
-    repo: ossf/scorecard-action
-    pinned: 2.5.0
