@@ -5,4 +5,4 @@ applyTo: '**/.copilot-tracking/dt/**'
 
 # Design Thinking Coach Telemetry Overlay
 
-Follow all instructions from #file:../../skills/design-thinking/dt-methods/references/dt-coach-telemetry.md.
+Follow all instructions in the `dt-methods` skill's `references/dt-coach-telemetry.md`.

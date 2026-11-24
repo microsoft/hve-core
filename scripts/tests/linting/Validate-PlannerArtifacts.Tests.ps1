@@ -74,7 +74,7 @@ artifact-classification:
       - sssc-handoff-summary
 "@
 
-    # Create valid disclaimer-language.instructions.md (markdown source of truth)
+    # Create a valid disclaimer-language skill file (markdown source of truth)
     $script:DisclaimerSourceContent = @"
 ---
 description: "Test disclaimer source"
@@ -96,10 +96,10 @@ description: "Test disclaimer source"
     $script:FooterConfigPath = Join-Path $script:ConfigDir 'footer-with-review.yml'
     Set-Content -Path $script:FooterConfigPath -Value $script:FooterConfigContent -Encoding utf8
 
-    $script:DisclaimerSourceDir = Join-Path $script:TempTestDir '.github/instructions/shared'
+    $script:DisclaimerSourceDir = Join-Path $script:TempTestDir '.github/skills/shared/disclaimer-language'
     New-Item -ItemType Directory -Path $script:DisclaimerSourceDir -Force | Out-Null
-    $script:DisclaimerSourcePath = Join-Path $script:DisclaimerSourceDir 'disclaimer-language.instructions.md'
-    $script:DisclaimerSourceRelative = '.github/instructions/shared/disclaimer-language.instructions.md'
+    $script:DisclaimerSourcePath = Join-Path $script:DisclaimerSourceDir 'SKILL.md'
+    $script:DisclaimerSourceRelative = '.github/skills/shared/disclaimer-language/SKILL.md'
     Set-Content -Path $script:DisclaimerSourcePath -Value $script:DisclaimerSourceContent -Encoding utf8
 }
 
@@ -697,7 +697,7 @@ $($script:Tier1Text)
             $result = Test-AIArtifactValidation `
                 -Paths @('.github/instructions') `
                 -FooterConfigPath '.github/config/footer-with-review.yml' `
-                -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md'
+                -DisclaimerSourcePath '.github/skills/shared/disclaimer-language/SKILL.md'
 
             $result.TotalFiles | Should -BeGreaterOrEqual 2
             $result.FilesWithArtifacts | Should -BeGreaterOrEqual 2
@@ -724,7 +724,7 @@ $($script:Tier1Text)
             $result = Test-AIArtifactValidation `
                 -Paths @('.github/instructions') `
                 -FooterConfigPath '.github/config/footer-with-review.yml' `
-                -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md' `
+                -DisclaimerSourcePath '.github/skills/shared/disclaimer-language/SKILL.md' `
                 -ExcludePaths @('**/excluded/**')
 
             $excludedResults = $result.Results | Where-Object { $_.RelativePath -like '*excluded*' }
@@ -746,7 +746,7 @@ $($script:Tier1Text)
             $result = Test-AIArtifactValidation `
                 -Paths @('.github/instructions') `
                 -FooterConfigPath '.github/config/footer-with-review.yml' `
-                -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md' `
+                -DisclaimerSourcePath '.github/skills/shared/disclaimer-language/SKILL.md' `
                 -FailOnMissing
 
             $result.HasFailures | Should -BeTrue
@@ -765,7 +765,7 @@ $($script:Tier1Text)
             $result = Test-AIArtifactValidation `
                 -Paths @('.github/instructions') `
                 -FooterConfigPath '.github/config/footer-with-review.yml' `
-                -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md'
+                -DisclaimerSourcePath '.github/skills/shared/disclaimer-language/SKILL.md'
 
             $result.HasFailures | Should -BeFalse
         }
@@ -788,7 +788,7 @@ $($script:Tier1Text)
             Test-AIArtifactValidation `
                 -Paths @('.github/instructions') `
                 -FooterConfigPath '.github/config/footer-with-review.yml' `
-                -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md' `
+                -DisclaimerSourcePath '.github/skills/shared/disclaimer-language/SKILL.md' `
                 -OutputPath $outputPath
 
             $outputFullPath | Should -Exist
@@ -828,9 +828,9 @@ Describe 'Backlog handoff classification' -Tag 'Unit' {
         New-Item -ItemType Directory -Path $fixtureConfigDir -Force | Out-Null
         Copy-Item -Path (Join-Path $repoRoot '.github/config/footer-with-review.yml') -Destination (Join-Path $fixtureConfigDir 'footer-with-review.yml') -Force
 
-        $fixtureDisclaimerDir = Join-Path $script:HandoffRoot '.github/instructions/shared'
+        $fixtureDisclaimerDir = Join-Path $script:HandoffRoot '.github/skills/shared/disclaimer-language'
         New-Item -ItemType Directory -Path $fixtureDisclaimerDir -Force | Out-Null
-        Copy-Item -Path $script:DisclaimerSourcePath -Destination (Join-Path $fixtureDisclaimerDir 'disclaimer-language.instructions.md') -Force
+        Copy-Item -Path $script:DisclaimerSourcePath -Destination (Join-Path $fixtureDisclaimerDir 'SKILL.md') -Force
     }
 
     It 'Classifies a scoped handoff.md as human-facing under <_>' -ForEach @(
@@ -881,7 +881,7 @@ Describe 'Backlog handoff classification' -Tag 'Unit' {
         $result = Test-AIArtifactValidation `
             -Paths @('.copilot-tracking/github-issues') `
             -FooterConfigPath '.github/config/footer-with-review.yml' `
-            -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md' `
+            -DisclaimerSourcePath '.github/skills/shared/disclaimer-language/SKILL.md' `
             -FailOnMissing
 
         $result.FilesWithArtifacts | Should -Be 1

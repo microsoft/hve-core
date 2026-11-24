@@ -3,7 +3,7 @@ title: Using the DT Learning Tutor
 description: Guide to using the dt-learning-tutor agent for self-paced Design Thinking education
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-31
 ms.topic: tutorial
 keywords:
   - dt-learning-tutor
@@ -33,7 +33,7 @@ Start with the learning tutor when you want to:
 5. Adapts depth and rigor based on your responses
 
 > [!NOTE]
-> The tutor is syllabus-driven, not project-driven. It teaches DT methodology so you understand the framework. When you are ready to apply DT to a real challenge, hand off to [DT Coach](dt-coach.md).
+> The tutor is syllabus-driven, not project-driven. It teaches DT methodology so you understand the framework. When you are ready to apply DT to a real challenge, switch to [DT Coach](dt-coach.md).
 
 ## Output
 
@@ -43,14 +43,14 @@ The tutor tracks curriculum progress in the DT session state at:
 .copilot-tracking/dt/{project-slug}/
 ```
 
-Progress artifacts include comprehension assessment results and exercise outputs for each completed module. The tutor loads the `dt-curriculum` skill entrypoint from `.github/skills/design-thinking/dt-curriculum/SKILL.md` at the start of the session, and it hands off to the `dt-coach` agent through the **Start a DT project** handoff when the learner is ready to apply the curriculum to a real project.
+Progress artifacts include comprehension assessment results and exercise outputs for each completed module. The tutor loads the `dt-curriculum` skill by name at the start of each session and reads the matching module reference before it teaches that module. When you finish, it presents a competency summary and offers to start a project with DT Coach, which you select in the agent picker.
 
 ## How to Use DT Learning Tutor
 
 ### Step 1: Select the Agent
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Click the agent picker dropdown at the top
+2. Open the agent picker
 3. Select **DT Learning Tutor**
 
 ### Step 2: Introduce Yourself
@@ -80,7 +80,7 @@ Each module delivers five components:
 
 ## Example
 
-Select the **dt-learning-tutor** agent, then start a learning session:
+Select **DT Learning Tutor** in the agent picker, then start a learning session:
 
 ```text
 I'm new to Design Thinking and want to learn the full
@@ -144,7 +144,7 @@ After completing the curriculum (or the modules relevant to your goals):
 3. Explore the end-to-end walkthrough in [Using DT Methods Together](using-together.md)
 
 > [!TIP]
-> Use the **Start a DT project** handoff button to transition directly from learning to coaching with DT Coach, or select DT Coach and ask it to start a new project.
+> When the tutor offers to start a project, select **DT Coach** in the agent picker and ask it to start a new project.
 
 ---
 

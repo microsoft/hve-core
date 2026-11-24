@@ -46,6 +46,7 @@ coverage:
 ignore:
   - "scripts/tests/**"
   - "logs/**"
+  - ".github/extensions/**/tests/**"
 
 comment:
   layout: "reach,diff,flags,files"
@@ -64,4 +65,5 @@ flags:
   node:
     paths:
       - ".github/skills/**/scripts/**"
+      - ".github/extensions/**"
     carryforward: true

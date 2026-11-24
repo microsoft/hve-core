@@ -2,7 +2,7 @@
 title: Task Planning Workflow
 description: Retrieve your assigned work and enrich it into an implementation-ready handoff
 author: Microsoft
-ms.date: 2026-08-07
+ms.date: 2026-11-06
 ms.topic: tutorial
 keywords:
   - backlog management

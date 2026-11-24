@@ -42,7 +42,7 @@ stakeholders:
   partner: [] # optional; SI, ISV, or other partners on the engagement
 
 # Preferred spellings used in reports. Add only terms relevant to this
-# engagement; never modify the packaged terminology instruction.
+# engagement; never modify the packaged terminology rules in the engagement-report-conventions skill.
 terminology:
   terms: []
   # Example:

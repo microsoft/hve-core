@@ -5,8 +5,8 @@
 
 This script reads a YAML manifest describing ordered visual segments (still
 images or motion clips) and matching narration WAV files. Each segment is
-normalized into a short MP4 clip, then concatenated into a final output MP4
-with the narration audio track.
+normalized into a short clip with uncompressed audio, then joined into a final
+output MP4 whose audio is encoded once.
 """
 
 from __future__ import annotations
@@ -30,6 +30,9 @@ EXIT_ERROR = 2
 
 DEFAULT_TIMEOUT_SECONDS = 600
 MAX_TIMEOUT_SECONDS = 86400
+# Segments keep PCM audio so AAC frame padding cannot accumulate across scenes;
+# 48 kHz keeps the single final AAC frame pad near 21 ms.
+FINAL_AUDIO_RATE = "48000"
 
 
 class ManifestError(ValueError):
@@ -397,9 +400,7 @@ def _render_segment(
             "-vf",
             video_filter,
             "-c:a",
-            "aac",
-            "-b:a",
-            "192k",
+            "pcm_s16le",
             "-shortest",
             "-t",
             f"{rendered_duration}",
@@ -426,9 +427,7 @@ def _render_segment(
             "-vf",
             video_filter,
             "-c:a",
-            "aac",
-            "-b:a",
-            "192k",
+            "pcm_s16le",
             "-t",
             f"{rendered_duration}",
             str(output_path),
@@ -595,7 +594,7 @@ def assemble_video(
                 "Rendering segment #%d (duration=%.3fs)", index, float(duration)
             )
 
-            normalized_path = temp_dir / f"segment-{index:02d}.mp4"
+            normalized_path = temp_dir / f"segment-{index:02d}.mkv"
             segment_data = dict(segment)
             segment_data["narration"] = str(narration_path)
             segment_data["duration"] = duration
@@ -654,6 +653,8 @@ def assemble_video(
                     "yuv420p",
                     "-c:a",
                     "aac",
+                    "-ar",
+                    FINAL_AUDIO_RATE,
                     "-b:a",
                     "192k",
                     "-movflags",
@@ -676,8 +677,14 @@ def assemble_video(
                 "0",
                 "-i",
                 str(concat_list_path),
-                "-c",
+                "-c:v",
                 "copy",
+                "-c:a",
+                "aac",
+                "-ar",
+                FINAL_AUDIO_RATE,
+                "-b:a",
+                "192k",
                 str(staged_output),
             ]
             _run_ffmpeg(concat_command, timeout=timeout, step="FFmpeg concat")

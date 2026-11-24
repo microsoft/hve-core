@@ -1,6 +1,6 @@
 ---
 description: "Shared .copilot-tracking conventions for RPI, HVE Builder, proposal response, and compatibility workflow evidence"
-applyTo: '.copilot-tracking/research/**, .copilot-tracking/plans/**, .copilot-tracking/changes/**, .copilot-tracking/reviews/**, .copilot-tracking/challenges/**, .copilot-tracking/prompts/**, .copilot-tracking/walkthroughs/**, .copilot-tracking/hve-builder/**, .copilot-tracking/proposal-responses/**'
+applyTo: '.copilot-tracking/research/**, .copilot-tracking/plans/**, .copilot-tracking/changes/**, .copilot-tracking/reviews/**, .copilot-tracking/rpi-sessions/**, .copilot-tracking/challenges/**, .copilot-tracking/prompts/**, .copilot-tracking/walkthroughs/**, .copilot-tracking/hve-builder/**, .copilot-tracking/proposal-responses/**'
 ---
 
 # Copilot Tracking Conventions
@@ -12,7 +12,7 @@ Apply these conventions whenever an RPI, HVE Builder, or compatibility workflow 
 * Default to `.copilot-tracking/` for every intermediate, working, or scratch file a skill produces. This file-based tracking takes precedence over memory: persist durable working state to the dated tracking artifact rather than relying on session, conversation, or working memory.
 * Resolve where `.copilot-tracking/` lives and search its gitignored files as `copilot-tracking-location.instructions.md` defines.
 * Persist research, planning, details, changes, and review outputs under `.copilot-tracking/` using the conventions below.
-* Use `{{task_slug}}` for task slugs and `{{YYYY-MM-DD}}` for dates. Keep `{{task_slug}}` lower-kebab-case.
+* Use `{{task_slug}}` for task slugs and `{{YYYY-MM-DD}}` for dates. Keep `{{task_slug}}` lower-kebab-case and at most 60 characters, because it names every tracking file; shorten a longer slug at the last hyphen within the cap, or at the cap when there is none.
 * Generated tracking Markdown starts with `<!-- markdownlint-disable-file -->` and never uses `#file:` directives or line-number references.
 * Plans under `.copilot-tracking/plans/` and changes records under `.copilot-tracking/changes/` are read by people in an editor. In those two artifacts, wrap code, commands, and symbols in backticks, and link an existing file or folder with the workspace-relative path as the link text and a path relative to the artifact file as the destination, for example `[scripts/plugins/Sync-PluginManifest.ps1](../../../scripts/plugins/Sync-PluginManifest.ps1)`. Keep a not-yet-created path in backticks.
 * Research, critique, review, and other tracking artifacts use plain-text workspace-relative paths without Markdown links or backticks around paths.
@@ -33,9 +33,12 @@ Apply these conventions whenever an RPI, HVE Builder, or compatibility workflow 
 
 * Primary research notes stay under `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`. When the caller supplies a trusted alternate evidence root, they stay at `<root>/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`, with the date resolved as `rpi-research` defines.
 * Planning evidence stays under `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`.
-* Plan critique evidence stays under `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md`. A follow-up critique adds a numbered suffix, such as `{{task_slug}}-plan-critique-2.md`.
+* Plan critique evidence stays under `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md`. A follow-up critique of the same plan adds a numbered suffix, such as `{{task_slug}}-plan-critique-2.md`.
 * Implementation evidence stays under `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`.
-* Review evidence stays under `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`. A new review of the same task adds a numbered suffix, such as `{{task_slug}}-review-2.md`.
+* Acceptance review evidence stays under `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`. A new or `surface` review of the same work adds a numbered suffix, such as `{{task_slug}}-review-2.md`.
+* Subtractive refinement review evidence stays under `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-refinement.md`. A new or `surface` refinement review of the same work adds a numbered suffix, such as `{{task_slug}}-refinement-2.md`.
+* A session that takes on a later request names that work's documents for the work instead of numbering them: a short lower-kebab-case name that describes the work and differs from the session's other document names, such as `task-board-polish`, takes the place of `{{task_slug}}` in its research and plan paths. The plan's critique, changes record, review, and refinement record take the plan's name. The RPI Agent's state lists every document and names the ones the current work uses, and with the documents' references to each other, it ties a session's documents together.
+* RPI Agent session state stays under `.copilot-tracking/rpi-sessions/{{YYYY-MM-DD}}/{{session_slug}}/{{task_slug}}-state.json`. One folder holds every task of one session and is dated by the session's first day, and `{{session_slug}}` is at most 40 characters. The RPI Agent's State contract defines how session folders and state file names are derived, shortened, and kept unique, and defines the state fields; research, plan, critique, changes, and review records keep their own dated folders.
 * Challenge session records stay under `.copilot-tracking/challenges/{{YYYY-MM-DD}}/{{task_slug}}-challenge.md`.
 * Walkthrough decisions-and-changes ledgers stay under `.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-decisions.md`.
 * HVE Builder stage evidence stays under `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/{{artifact_slug}}-{{stage}}-{{attempt}}.md`. Scan existing files and increment `{{attempt}}` rather than overwriting another run.
@@ -49,5 +52,5 @@ Apply these conventions whenever an RPI, HVE Builder, or compatibility workflow 
 * Use one stable task ID across the plan, critique, changes, and review records.
 * Use `Pxx` for phases and `Pxx-Txx` for tasks. Place `<!-- rpi:phase id=P01 -->` or `<!-- rpi:task id=P01-T01 -->` immediately before the matching heading.
 * Use descriptive headings and related plan or task markers for implementation evidence. Do not create a second per-entry identity scheme in the changes record.
-* Use `PC-xxx` only in the plan critique and `RV-xxx` only in the review record.
+* Use `PC-xxx` only in the plan critique, `RV-xxx` (with `RD-xxx` decision events) only in the acceptance review record, and `RF-xxx` (`<!-- rpi:refinement id=RF-001 -->`, with `FD-xxx` decision events) only in the refinement review record.
 * Use stable IDs, markers, and headings to navigate. Do not maintain line numbers, line ranges, or detail-line verification.

@@ -64,7 +64,7 @@ Help the user examine a confirmed subject through adaptive, skeptical questions 
 
 ## Handoff
 
-* Advisory only: in a standalone invocation, after the challenge concludes, state the exact `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` command only when an unresolved item makes that next step useful. Do not invoke it. Otherwise state the explicit no-handoff reason.
+* Advisory only: in a standalone invocation, after the challenge concludes, state the exact `/rpi-research`, `/rpi-plan`, `/rpi-implement`, `/rpi-review`, or `/rpi-refine` command only when an unresolved item makes that next step useful. Do not invoke it. Otherwise state the explicit no-handoff reason.
 * In an active confirmed automatic RPI Agent context, return the challenge record to the parent and state that it selects any eligible continuation.
 
 ## Final response

@@ -1,9 +1,9 @@
 ---
 title: Rai Planning/Rai License Posture
 description: RAI-specific overlay mapping RAI standards onto the repository licensing posture
-sidebar_position: 2
+sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-10-31
 ms.topic: reference
 keywords:
   - instruction

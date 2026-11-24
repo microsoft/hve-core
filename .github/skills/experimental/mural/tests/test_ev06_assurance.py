@@ -179,7 +179,7 @@ def test_manifest_covers_all_findings_and_required_dimensions() -> None:
         "rai-planner",
         "ux-ui-designer",
     ]
-    assert len(rows["RAI-P08-G02-A087-C01"]["destinations"]) == 7
+    assert len(rows["RAI-P08-G02-A087-C01"]["destinations"]) == 6
     assert "azure-blob-sas-upload" in rows["RAI-P08-G04-A191-C01"]["surfaces"]
 
 

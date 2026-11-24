@@ -12,7 +12,7 @@ Choose every type whose responsibility is independently necessary. Prefer skills
 
 The Choose Artifacts by Responsibility section of `hve-builder.instructions.md` holds the canonical responsibility, form, and activation table. Confirm that the host loaded it; otherwise read that instruction by its stable name before routing. Do not assume path matching loads it in every host or read-only review context. This reference depends on that instruction file, and both ship in the same package. Keep them together when redistributing the skill.
 
-When a request spans responsibilities, split it deliberately: a skill may own the workflow, subagents may isolate execution and review, an instruction file may govern matching paths, and a prompt may provide a user entry point. Confirm only splits that widen the caller's write boundary or product surface.
+When a request spans responsibilities, split it deliberately: a skill may own the workflow, subagents may isolate execution and review, an instruction file may govern matching paths, and a user-invocable skill may provide a slash-command entry point. Confirm only splits that widen the caller's write boundary or product surface.
 
 Selecting an agent tool set is outside this routing. Apply the Tool-configuration boundary in [requirements-catalog.md](requirements-catalog.md).
 
@@ -57,7 +57,7 @@ Example: a team wants `rpi-research` and `rpi-plan` to draw on an internal desig
 
 ## Choose the model profile
 
-The `model:` field is optional and omitted by default. An omitted subagent model inherits the invoking parent's model; an omitted directly invoked agent or prompt uses the current session or model-picker selection. Omission keeps the choice with the user, who sees the models their plan and client offer.
+The `model:` field is optional and omitted by default. An omitted subagent model inherits the invoking parent's model; an omitted directly invoked agent uses the current session or model-picker selection. Omission keeps the choice with the user, who sees the models their plan and client offer.
 
 When a stable profile is needed, select High, Medium, or Low from the responsibility before touching `model:`:
 
@@ -65,7 +65,7 @@ When a stable profile is needed, select High, Medium, or Low from the responsibi
 * Medium covers semantic discovery, architecture, authoring, research, and calibrated review. Declare `model:` only when the artifact must run at a predictable profile regardless of the session, for example a fresh-context reviewer that should not inherit a Low parent.
 * Low covers bounded, literal, mechanical execution. Declaring `model:` is common here, because pinning a fast, low-cost model is the point.
 
-Agent and subagent frontmatter accepts only a single scalar string for `model:`; the Copilot CLI's frontmatter parser rejects an array value and drops the artifact entirely. A prompt may instead declare an ordered list, which the host uses for availability fallback within the selected profile; the list never replaces profile selection. Use the exact model-picker name with the `(copilot)` suffix.
+HVE Core accepts only a single scalar string for agent and subagent `model:`. Copilot CLI versions before the fix for [github/copilot-cli#2133](https://github.com/github/copilot-cli/issues/2133) rejected an array and dropped the artifact, and the HVE Core model linter still reports an array as an error. Use the exact model-picker name with the `(copilot)` suffix.
 
 ### Resolve current model names
 
@@ -74,7 +74,7 @@ Do not copy model names from this reference or from sibling artifacts; models ar
 1. Fetch the supported-models page in the GitHub Copilot docs (`docs.github.com`, under `copilot/reference/ai-models/supported-models`). It lists every current model, per-client availability, the retirement table with suggested replacements, and which models support configurable reasoning levels.
 2. Fetch the model-comparison page beside it (`copilot/reference/ai-models/model-comparison`). Its "Recommended models by task" table groups models by task area. Map task areas to profiles: deep reasoning, debugging, and long-horizon autonomous work are High; general-purpose coding and agent tasks and agentic software development are Medium; fast help with simple or repetitive tasks is Low.
 3. When the rendered pages are unavailable, search the `github/docs` repository for the same content under `content/copilot/reference/ai-models/`. The source uses Liquid variables for some names, so prefer the rendered page when both are reachable.
-4. Confirm the candidate is available in the target client (VS Code, Copilot CLI, or the coding agent) and does not appear in the retirement table with a past date. For a prompt fallback list, order models within the profile by the comparison page's description, strongest fit first.
+4. Confirm the candidate is available in the target client (VS Code, Copilot CLI, or the coding agent) and does not appear in the retirement table with a past date.
 
 These locations and headings describe where the information lives today. If they move, search the Copilot documentation for the current model list and task comparison rather than treating the paths above as fixed.
 

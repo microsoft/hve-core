@@ -30,7 +30,7 @@ Started journey contains its four required pages.
 
 ## Prerequisites
 
-* VS Code with GitHub Copilot Chat extension
+* VS Code with GitHub Copilot Chat and HVE Core installed (see [Installing HVE Core](install))
 * This repository cloned locally
 * Basic familiarity with GitHub Copilot
 * About 20 minutes to complete
@@ -60,7 +60,9 @@ Multiple unknowns make RPI a good fit for this task: existing script patterns, P
 The `/clear` command resets Copilot's conversational context between phases.
 Each phase can start fresh because dated RPI artifacts carry evidence and
 decisions forward. This tutorial invokes the four phase skills separately so
-you can see each responsibility and artifact.
+you can see each responsibility and artifact. If you installed HVE Core as a
+plugin, VS Code shows these skills with the plugin name in front, such as
+`/hve-core:rpi-research`.
 
 > [!NOTE]
 > A context reset is useful when a long conversation is no longer serving the
@@ -268,6 +270,11 @@ this prompt:
 
 RPI Agent coordinates the applicable skills without requiring manual agent
 switches between phases.
+
+If your host shows canvases, the agent also opens the RPI Workflow canvas,
+where you can watch this task move through each phase and answer the decisions
+it leaves to you. The [RPI Workflow Canvas](../rpi/rpi-workflow-canvas) guide
+shows this same task in the canvas, from research to follow-up.
 
 ## What You Learned
 

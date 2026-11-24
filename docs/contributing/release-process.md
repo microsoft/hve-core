@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-10-07
+ms.date: 2026-10-31
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -65,6 +65,12 @@ Workflow ownership is explicit:
 * `release-stable-publish.yml` validates reviewed heads, synchronizes release
     preparation, and lets release-please create the Stable tag and draft.
 * `release-vsix-publish.yml` is the sole post-tag producer for both channels.
+
+Every job that mints a release GitHub App token reads the app key from the
+`release-governance` environment, which admits only `main`, the two release
+branches, and the `v*` and `prerelease-v*` tags. The three merge-driven
+workflows therefore start on the push a reviewed merge produces rather than on
+the pull request event, whose `refs/pull/N/merge` ref the environment rejects.
 
 ### Release Branch Gating
 
@@ -138,8 +144,8 @@ flowchart TD
 
 ### PreRelease Flow
 
-1. `Pre-Release Promotion Preparation` runs after an eligible merged PR to
-   `main`, or through its input-free recovery dispatch.
+1. `Pre-Release Promotion Preparation` runs on each push to `main` (a merged
+   PR), or through its input-free recovery dispatch.
 2. It refreshes the target-based promotion head from `release/prerelease`,
    merges current `main`, restores channel-owned release state, writes the
    exact `release-as`, and opens a reviewed PR to `release/prerelease`.
@@ -243,10 +249,16 @@ and target `refs/tags/v*` and `refs/tags/prerelease-v*`:
 * `release-tags-immutable` restricts updates, deletion, and force pushes with
     no bypass
 
-Ruleset bypass lists are visible only to repository administrators. The
-signer's authorization job re-reads both rulesets at release time and fails
-unless the creation ruleset grants exactly one bypass, to the Release App, and
-the immutability ruleset grants none.
+No release has run under these rulesets yet. The provenance signer checks
+both rulesets before packaging, but its token cannot see bypass lists, so it
+cannot detect another actor added as a bypass. Before each release, a
+repository administrator completes this audit:
+
+1. Open **Settings → Rules → Rulesets** for `microsoft/hve-core`.
+2. Confirm `release-tags-creation-by-release-app` is active and lists only the
+    Release App as a bypass actor.
+3. Confirm `release-tags-immutable` is active and lists no bypass actors.
+4. Stop the release if either check fails.
 
 > [!IMPORTANT]
 > This release architecture does not establish SLSA Build Level 3. Future
@@ -306,7 +318,7 @@ entries. Commit type does not select the release version.
 
 ```bash
 # Feature changelog entry
-git commit -m "feat: add new prompt for code review"
+git commit -m "feat: add new skill for code review"
 
 # Fix changelog entry
 git commit -m "fix: resolve parsing error in instruction files"
@@ -318,7 +330,7 @@ git commit -m "docs: update installation guide"
 git commit -m "feat!: redesign configuration schema"
 ```
 
-For more details, see the [commit message instructions](https://github.com/microsoft/hve-core/blob/main/.github/instructions/hve-core/commit-message.instructions.md).
+For more details, see the [commit message conventions in the `git-commit` skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/git-commit/references/commit-message.md).
 
 ## For Maintainers
 
@@ -486,7 +498,7 @@ matching channel workflow dispatch fallback:
 
 Publish the extension after merging a Release PR that includes extension-relevant changes:
 
-* New prompts, instructions, or custom agents
+* New skills, instructions, or custom agents
 * Bug fixes affecting extension behavior
 * Updated extension metadata or documentation
 

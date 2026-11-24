@@ -16,7 +16,7 @@ type: capability
 # environment.files. Several stimuli read or edit ordinary project files; without
 # this fixture those tool calls fail identically in both variants and the
 # comparison scores that mutual failure as equivalence.
-environment:
+agent_environment:
   files:
     - src: ../seed-workspace
       dest: .
@@ -102,12 +102,12 @@ stimuli:
 
   - name: code-reverse-string-rust
     constraints: *agent-time-limit
-    prompt: "Write a Rust function that reverses a string and returns the reversed value."
+    prompt: "Write a Rust function that reverses a string and returns the reversed value. Show the code in your reply."
     tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
         name: rust-fn-syntax
-        config: {pattern: "(?i)fn\\s+\\w+\\s*\\([^)]*&?str"}
+        config: {pattern: "(?i)\\bfn\\s+\\w+\\s*(?=[^{;]*\\b(?:str|String)\\b)(?:<[^{;()]*>)?\\s*\\("}
       - type: prompt
         name: code-reverse-string-rust-response-quality
         config: {prompt: "Does the response define a Rust function that reverses a string?"}
@@ -115,7 +115,7 @@ stimuli:
   - name: code-walkthrough-fizzbuzz
     constraints: *agent-time-limit
     prompt: "Explain step by step how a fizzbuzz implementation works for the first 15 numbers."
-    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [code-review, rpi-agent], policy: equivalent}
+    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
         name: mentions-fizz-buzz
@@ -127,7 +127,7 @@ stimuli:
   - name: code-error-explain-indexerror
     constraints: *agent-time-limit
     prompt: "Explain what this Python error means: IndexError: list index out of range."
-    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [code-review, rpi-agent], policy: equivalent}
+    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
         name: mentions-index-or-range
@@ -282,7 +282,7 @@ stimuli:
 
   - name: multi-turn-confirm-action
     constraints: *agent-time-limit
-    prompt: "You proposed renaming the function to `loadConfig`. Confirm the new name and list one rationale."
+    prompt: "Earlier we agreed to rename the function `readSettings` to `loadConfig`. Confirm that `loadConfig` is the new name and list one rationale."
     tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
@@ -319,7 +319,7 @@ stimuli:
   - name: multi-turn-correct-misunderstanding
     constraints: *agent-time-limit
     prompt: "You assumed Python 2 syntax, but the project uses Python 3. Restate your earlier print example correctly."
-    tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [code-review, rpi-agent], policy: equivalent}
+    tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
         name: mentions-print-paren

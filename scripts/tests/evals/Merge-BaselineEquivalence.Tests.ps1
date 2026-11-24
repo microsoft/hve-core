@@ -331,7 +331,7 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
         $detect.run | Should -Match '\$relevant = \$true'
         $checkouts = @($script:EvalWorkflow.jobs['eval-validation'].steps | Where-Object { $_.uses -like 'actions/checkout@*' })
         $checkouts[0].with['fetch-depth'] | Should -Be 0
-        $checkouts[0].with['ref'] | Should -BeExactly '${{ github.sha }}'
+        $checkouts[0].with.Contains('ref') | Should -BeFalse
     }
 
     It 'keeps baseline equivalence out of ordinary eval dispatch' {

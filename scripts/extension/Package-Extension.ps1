@@ -319,6 +319,7 @@ function Get-PinnedVsceCommand {
     $rootPackage = Get-Content -LiteralPath (Join-Path $RepoRoot 'package.json') -Raw -Encoding utf8 | ConvertFrom-Json
     $expected = [string]$rootPackage.devDependencies.'@vscode/vsce'
     $local = Join-Path $RepoRoot 'node_modules/.bin/vsce'
+    if ($IsWindows) { $local += '.cmd' }
     $command = if (Test-Path -LiteralPath $local -PathType Leaf) { $local } else { (Get-Command vsce -ErrorAction SilentlyContinue).Source }
     if (-not $command) { return @{ IsAvailable = $false; Command = ''; ExpectedVersion = $expected; ActualVersion = '' } }
     $actual = (& $command --version 2>$null | Select-Object -First 1).Trim()

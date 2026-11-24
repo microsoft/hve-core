@@ -54,8 +54,10 @@ Rate each finding by its consequence for how this plan will actually run, such a
 
 ## Merge the returns
 
-1. Read every return, and treat each concern under Outside the lens as a candidate too. Verify each candidate by finding its quote at the cited location, and check the named evidence there when the concern depends on it. Do not reassess the plan beyond the candidates.
-2. Merge duplicates across lenses into one finding keyed to the earliest affected ID.
-3. Record a `PC-xxx` finding only for a verified candidate, with its final severity from the scale. Reject a candidate that the cited evidence contradicts or that confirmed user direction resolves, and note the reason in Lens Assessments.
+Merge each lens's result as it arrives, whether a critic's return or a lens you assessed yourself, and save the record before the next, so the critique record shows each lens as it lands. When you dispatch the lenses, set their rows to `in progress`.
+
+1. Read the return, and treat each concern under Outside the lens as a candidate too. Verify each candidate by finding its quote at the cited location, and check the named evidence there when the concern depends on it. Do not reassess the plan beyond the candidates.
+2. Merge a duplicate of a finding already recorded, from this lens or an earlier one, into that finding, keyed to the earliest affected ID.
+3. Record a `PC-xxx` finding only for a verified candidate, with its final severity from the scale. Reject a candidate that the cited evidence contradicts or that confirmed user direction resolves, and note the reason in Lens Assessments. Set the lens's status and save the record.
 4. When a lens returns `Partial`, `Blocked`, `Needs clarification`, or nothing, cover the gap yourself when it is small; otherwise record the unassessed boundary and set critique execution to Partial.
 5. Do not dispatch a second round of lenses for the same critique.

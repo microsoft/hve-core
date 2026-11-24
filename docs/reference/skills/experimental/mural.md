@@ -1,9 +1,9 @@
 ---
 title: mural
 description: "Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation."
-sidebar_position: 7
+sidebar_position: 8
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-27
 ms.topic: reference
 keywords:
   - skill

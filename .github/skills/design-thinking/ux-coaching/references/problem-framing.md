@@ -12,7 +12,7 @@ The practitioner has a task, often already shaped as a solution, and needs to kn
 Grounded in GOV.UK Service Manual discovery guidance and the UK Government Digital, Data and Technology (DDaT) capability framework's evidence-based design expectations.
 
 * Source: <https://www.gov.uk/service-manual/agile-delivery/how-the-discovery-phase-works>
-* Source: <https://www.gov.uk/government/collections/digital-data-and-technology-profession-capability-framework>
+* Source: <https://understand-digital-data-roles-skills.service.gov.uk/>
 * Licence: Open Government Licence v3.0, <https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/>
 * Contains public sector information licensed under the OGL v3.0. Adapted for coaching use; wording and structure are not the originals.
 

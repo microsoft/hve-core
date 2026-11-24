@@ -849,7 +849,7 @@ Describe 'Invoke-BaselineEquivalence.ps1 (stubbed nightly run)' -Tag 'Unit' {
         New-Item -ItemType Directory -Path $stubAgentsDir -Force | Out-Null
         Set-Content -LiteralPath (Join-Path $stubAgentsDir 'rpi-agent.agent.md') -Encoding UTF8 -Value "---`nname: RPI Agent`n---`n`nStub agent for driver tests."
 
-        # vally copies this fixture into each trial via environment.files, and the
+        # vally copies this fixture into each trial via agent_environment.files, and the
         # driver folds its content into the baseline cache key. The stub repo carries
         # one so that key is computed over the same shape as a real run.
         $script:StubSeedDir = Join-Path $baselineRoot 'seed-workspace'
@@ -1641,7 +1641,30 @@ Describe 'Invoke-BaselineEquivalence.ps1 (sharded compare)' -Tag 'Unit' {
 
     AfterEach {
         Remove-Item Alias:vally -Force -ErrorAction SilentlyContinue
-        Remove-Item Env:STUB_VALLY_MODE, Env:STUB_VALLY_COMPARE_MODE, Env:STUB_VALLY_CALL_LOG, Env:STUB_VALLY_COMPARE_COUNT_DIR -ErrorAction SilentlyContinue
+        Remove-Item Env:STUB_VALLY_MODE, Env:STUB_VALLY_COMPARE_MODE, Env:STUB_VALLY_CALL_LOG, Env:STUB_VALLY_COMPARE_COUNT_DIR, Env:STUB_VALLY_DIAGNOSTIC_CASE -ErrorAction SilentlyContinue
+    }
+
+    It 'Recovers a transient executor error so the comparison keeps its full population' {
+        $clean = Invoke-ShardedDriver -ShardCount 1 -CompareMode 'echo'
+        $env:STUB_VALLY_DIAGNOSTIC_CASE = 'transient-error'
+        $recovered = Invoke-ShardedDriver -ShardCount 1 -CompareMode 'echo'
+
+        $recovered.Summary.runs | Should -Be 12
+        $recovered.Summary.dataQualityViolations | Should -Be $clean.Summary.dataQualityViolations
+        @($recovered.Summary.executionDiagnostics | ForEach-Object erroredTrials) | Should -Be @(1, 1)
+        @($recovered.Summary.phaseTimings | Where-Object worker -EQ 'gpt-6-luna:recovery' | ForEach-Object phase) | Should -Be @('baseline-eval', 'customized-eval')
+        @($recovered.Calls | Where-Object { $_[0] -eq 'eval' -and $_[2] -like '*.recovery-*' }) | Should -HaveCount 2
+        @(Get-ChildItem -LiteralPath (Join-Path $script:ShardRepoRoot 'evals/baseline-equivalence') -Recurse -Force -Filter '.recovery-*') | Should -HaveCount 0
+    }
+
+    It 'Reports partially judged shards without counting them as run-health failures' {
+        $echo = Invoke-ShardedDriver -ShardCount 5 -CompareMode 'echo'
+        $partial = Invoke-ShardedDriver -ShardCount 5 -CompareMode 'partial'
+
+        $partial.Summary.judgeErrors | Should -Be 5
+        $partial.Summary.runs | Should -Be 7
+        $partial.Summary.runHealthFailures | Should -Be $echo.Summary.runHealthFailures
+        $partial.Summary.dataQualityViolations | Should -Be $echo.Summary.dataQualityViolations
     }
 
     It 'Matches the serial comparison tally and summary statistics with five concurrent shards' {
@@ -1698,5 +1721,26 @@ Describe 'Invoke-BaselineEquivalence.ps1 (sharded compare)' -Tag 'Unit' {
         $result.Summary.runHealthFailures | Should -BeGreaterOrEqual 5
         $result.Summary.dataQualityViolations | Should -BeGreaterThan 0
         $result.Summary.verdict | Should -Be 'fail'
+    }
+}
+
+Describe 'Test-JudgeErrorOnlyCompareFailure' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+    }
+
+    It 'Returns <Expected> for a shard with <Case>' -ForEach @(
+        @{ Case = 'judged and judge-errored trials'; Expected = $true; Lines = @('{"type":"comparison","stimuli":[{"stimulusName":"a","trials":[{"trialIndex":0,"winner":"tie","score":0,"errored":false},{"trialIndex":1,"errored":true}]}]}') }
+        @{ Case = 'only judge-errored trials'; Expected = $false; Lines = @('{"type":"comparison","stimuli":[{"stimulusName":"a","trials":[{"trialIndex":0,"errored":true}]}]}') }
+        @{ Case = 'no judge error'; Expected = $false; Lines = @('{"type":"comparison","stimuli":[{"stimulusName":"a","trials":[{"trialIndex":0,"winner":"tie","score":0,"errored":false}]}]}') }
+        @{ Case = 'a malformed line'; Expected = $false; Lines = @('{"type":"comparison","stimuli":[{"stimulusName":"a","trials":[{"trialIndex":1,"errored":true},{"trialIndex":0,"winner":"tie"}]}]}', 'not json') }
+    ) {
+        $path = Join-Path $TestDrive "shard-$([guid]::NewGuid()).jsonl"
+        Set-Content -LiteralPath $path -Value $Lines -Encoding utf8NoBOM
+        Test-JudgeErrorOnlyCompareFailure -OutputPath $path | Should -Be $Expected
+    }
+
+    It 'Returns false when the shard wrote no output' {
+        Test-JudgeErrorOnlyCompareFailure -OutputPath (Join-Path $TestDrive 'absent.jsonl') | Should -BeFalse
     }
 }

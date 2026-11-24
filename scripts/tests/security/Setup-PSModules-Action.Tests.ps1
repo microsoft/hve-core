@@ -18,9 +18,10 @@ Describe 'setup-ps-modules composite action' -Tag 'Unit' {
             $script:ActionYaml.inputs.Keys | Should -Not -Contain 'scope'
         }
 
-        It 'Exposes import, force, and cache-key-suffix inputs' {
+        It 'Exposes import, force, modules, and cache-key-suffix inputs' {
             $script:ActionYaml.inputs.Keys | Should -Contain 'import'
             $script:ActionYaml.inputs.Keys | Should -Contain 'force'
+            $script:ActionYaml.inputs.Keys | Should -Contain 'modules'
             $script:ActionYaml.inputs.Keys | Should -Contain 'cache-key-suffix'
         }
     }
@@ -45,6 +46,13 @@ Describe 'setup-ps-modules composite action' -Tag 'Unit' {
             $cacheStep = $script:ActionYaml.runs.steps | Where-Object { $_.id -eq 'ps-cache' }
             $cacheStep.with.path | Should -Be '~/.local/share/powershell/Modules'
         }
+
+        It 'Keys a module selection apart from the full install' {
+            $selectionStep = $script:ActionYaml.runs.steps | Where-Object { $_.id -eq 'ps-selection' }
+            $selectionStep.if | Should -Be "inputs.modules != ''"
+            $cacheStep = $script:ActionYaml.runs.steps | Where-Object { $_.id -eq 'ps-cache' }
+            $cacheStep.with.key | Should -Match ([regex]::Escape("steps.ps-selection.outputs.key && format('-{0}', steps.ps-selection.outputs.key)"))
+        }
     }
 
     Context 'eval workflow consumers' {
@@ -56,7 +64,7 @@ Describe 'setup-ps-modules composite action' -Tag 'Unit' {
             @{ Job = 'equivalence-execute'; NextStep = 'Create logs directory' }
         ) {
             $steps = @($script:EvalWorkflow.jobs[$Job].steps)
-            $setupSteps = @($steps | Where-Object { $_.uses -eq './.github/actions/setup-ps-modules' })
+            $setupSteps = @($steps | Where-Object { $_.uses -eq '$/.github/actions/setup-ps-modules' })
             $setupSteps | Should -HaveCount 1
             $setupStep = $setupSteps[0]
             $setupIndex = [array]::IndexOf($steps, $setupStep)
@@ -69,6 +77,14 @@ Describe 'setup-ps-modules composite action' -Tag 'Unit' {
             $setupStep.Keys | Should -Not -Contain 'run'
             $setupStep.with.Keys | Should -Not -Contain 'force'
             ($steps.run -join "`n") | Should -Not -Match '\bInstall-Module\b'
+        }
+
+        It 'Installs only PowerShell-Yaml in every eval job' {
+            $setupSteps = @(foreach ($job in $script:EvalWorkflow.jobs.Values) {
+                @($job.steps) | Where-Object { $_.uses -eq '$/.github/actions/setup-ps-modules' }
+            })
+            $setupSteps.Count | Should -BeGreaterThan 0
+            foreach ($setupStep in $setupSteps) { $setupStep.with.modules | Should -Be 'PowerShell-Yaml' }
         }
     }
 }

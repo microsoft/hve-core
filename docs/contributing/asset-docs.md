@@ -1,9 +1,9 @@
 ---
 title: Asset reference documentation
-description: How contributors generate, author, and validate reference pages for agents, prompts, instructions, and skills
+description: How contributors generate, author, and validate reference pages for agents, instructions, and skills
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-09-19
+ms.date: 2026-10-31
 ms.topic: how-to
 keywords:
   - asset documentation
@@ -16,7 +16,7 @@ keywords:
 estimated_reading_time: 7
 ---
 
-Every documentable agent, prompt, instruction, and skill has a paired page in the
+Every documentable agent, instruction, and skill has a paired page in the
 [Asset Catalog](../reference/README.md). Treat that page as part of the artifact,
 not as optional follow-up documentation. The generator keeps source metadata in
 sync, while contributors own the usage guidance that requires human judgment.
@@ -30,9 +30,12 @@ deprecated directories are excluded.
 | Source asset                                               | Reference page                                 |
 |------------------------------------------------------------|------------------------------------------------|
 | `.github/agents/<path>/<name>.agent.md`                    | `docs/reference/agents/<path>/<name>.md`       |
-| `.github/prompts/<path>/<name>.prompt.md`                  | `docs/reference/prompts/<path>/<name>.md`      |
 | `.github/instructions/<path>/<name>.instructions.md`       | `docs/reference/instructions/<path>/<name>.md` |
 | `.github/skills/<path>/<skill>/SKILL.md` and support files | `docs/reference/skills/<path>/<skill>.md`      |
+
+The generator and validator still recognize a `prompt` kind under `.github/prompts/`, but
+HVE Core no longer accepts prompt files, so no prompt pages exist. A reusable slash
+command is a user-invocable skill and gets a skill page.
 
 Nested paths are preserved. For example,
 `.github/agents/hve-core/subagents/rpi-researcher.agent.md` maps to
@@ -98,7 +101,7 @@ frontmatter alone:
 * `When to use it` identifies the right scenarios, prerequisites, and nearby
   alternatives.
 * `How to use it` explains invocation and the important steps for an interactive
-   agent or prompt. Skills use `Example usage` for invocation and workflow steps;
+   agent. Skills use `Example usage` for invocation and workflow steps;
    their `How to use it` section is not applicable under the shared contract.
 * `Example usage` shows representative input, the expected execution flow or
   output, and a clear success signal.
@@ -137,18 +140,18 @@ another model to rewrite generated regions.
 
 Local and pull request validation use the same validator at different scopes:
 
-| Context                   | Scope                | Enforcement                                                                                            |
-|---------------------------|----------------------|--------------------------------------------------------------------------------------------------------|
-| `npm run lint:asset-docs` | Full repository      | Coverage, orphans, structure, generated-region sync, and Required authored guidance for all four kinds |
-| Pull request validation   | Changed assets/pages | The same checks, limited to paths affected relative to the configured base                             |
+| Context                   | Scope                | Enforcement                                                                                                     |
+|---------------------------|----------------------|-----------------------------------------------------------------------------------------------------------------|
+| `npm run lint:asset-docs` | Full repository      | Coverage, orphans, structure, generated-region sync, and Required authored guidance for every documentable kind |
+| Pull request validation   | Changed assets/pages | The same checks, limited to paths affected relative to the configured base                                      |
 
 The changed-files scope prevents unrelated pre-existing findings from blocking a
 pull request. It still catches a changed source with a missing or stale page, a
 changed page with no source, and renames or deletions that leave an orphan.
 
 The generator and CI gate do not author human judgment. Required authored stubs
-are errors for agents, prompts, instructions, and skills in every validator
-invocation, including direct script calls. There is no per-kind opt-in selector
+are errors for every documentable kind in every validator invocation, including
+direct script calls. There is no per-kind opt-in selector
 or warning-first tier. Optional instruction examples remain advisory, and
 NotApplicable sections are excluded from authored-content checks.
 
@@ -159,13 +162,14 @@ artifact rather than removing the marker alone.
 ## Apply the completed completeness rollout
 
 The four increments established the current Required, Optional, and NotApplicable
-section rules. All four kinds now enforce Required authored content:
+section rules. Every documentable kind now enforces Required authored content:
 
 1. [Instructions (#2361)](https://github.com/microsoft/hve-core/issues/2361),
    enforced: require `When to use it`; `How to use it` is not applicable and
    `Example usage` is optional.
 2. [Prompts (#2362)](https://github.com/microsoft/hve-core/issues/2362), enforced:
-   require `When to use it`, `How to use it`, and `Example usage`.
+   require `When to use it`, `How to use it`, and `Example usage`. HVE Core has since
+   stopped accepting prompt files.
 3. [Skills (#2363)](https://github.com/microsoft/hve-core/issues/2363), enforced:
    require `When to use it` and `Example usage`, with richer multi-mode examples
    where needed; `How to use it` is not applicable.

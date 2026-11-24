@@ -2,9 +2,14 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
+$script:BashAvailable = [bool](Get-Command bash -ErrorAction SilentlyContinue) -and [bool](Get-Command jq -ErrorAction SilentlyContinue)
+
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../scripts/Get-CodeScanningAlerts.ps1'
     $script:OriginalGhPager = $env:GH_PAGER
+
+    # Two zizmor rules that, like zizmor's real output, publish an empty description
+    $script:SharedDescriptionJson = '[{"number":1,"rule":{"id":"zizmor/anonymous-definition","name":"anonymous-definition","description":"","severity":"note"},"tool":{"name":"zizmor"},"most_recent_instance":{"location":{"path":"a.yml"},"message":{"text":"no name"}}},{"number":2,"rule":{"id":"zizmor/anonymous-definition","name":"anonymous-definition","description":"","severity":"note"},"tool":{"name":"zizmor"},"most_recent_instance":{"location":{"path":"b.yml"},"message":{"text":"no name"}}},{"number":3,"rule":{"id":"zizmor/undocumented-permissions","name":"undocumented-permissions","description":"","severity":"note"},"tool":{"name":"zizmor"},"most_recent_instance":{"location":{"path":"a.yml"},"message":{"text":"no comment"}}},{"number":4,"rule":{"id":"zizmor/concurrency-limits","description":"","severity":"note"},"tool":{"name":"zizmor"},"most_recent_instance":{"location":{"path":"c.yml"},"message":{"text":"no concurrency"}}}]'
 
     # Sample alert JSON representing two rules with multiple occurrences
     $script:MockAlertJson = '[{"number":1,"rule":{"id":"js/sql-injection","description":"Database query built from user-controlled sources","security_severity_level":"high","severity":"error"},"tool":{"name":"CodeQL"},"html_url":"https://github.com/owner/repo/security/code-scanning/1","most_recent_instance":{"location":{"path":"src/db.js"},"message":{"text":"SQL injection from user input"}}},{"number":2,"rule":{"id":"js/sql-injection","description":"Database query built from user-controlled sources","security_severity_level":"high","severity":"error"},"tool":{"name":"CodeQL"},"html_url":"https://github.com/owner/repo/security/code-scanning/2","most_recent_instance":{"location":{"path":"src/api.js"},"message":{"text":"SQL injection from user input"}}},{"number":3,"rule":{"id":"js/xss","description":"Cross-site scripting vulnerability","security_severity_level":"medium","severity":"warning"},"tool":{"name":"CodeQL"},"html_url":"https://github.com/owner/repo/security/code-scanning/3","most_recent_instance":{"location":{"path":"src/render.js"},"message":{"text":"Unsanitized input rendered"}}}]'
@@ -177,6 +182,23 @@ Describe 'Get-CodeScanningAlerts' -Tag 'Unit' {
 
             $parsed[0].FindingDescription | Should -Not -BeNullOrEmpty
         }
+
+        It 'Keeps rules that share an empty description in separate groups titled by rule name, then rule ID' {
+            $sharedJson = $script:SharedDescriptionJson
+            ${Function:gh} = {
+                $global:LASTEXITCODE = 0
+                return $sharedJson
+            }.GetNewClosure()
+
+            $parsed = & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' -OutputFormat Json | ConvertFrom-Json
+
+            $parsed | Should -HaveCount 3
+            $parsed[0].RuleId | Should -Be 'zizmor/anonymous-definition'
+            $parsed[0].Count | Should -Be 2
+            $parsed[0].RuleDescription | Should -Be 'anonymous-definition'
+            ($parsed | Where-Object RuleId -eq 'zizmor/undocumented-permissions').RuleDescription | Should -Be 'undocumented-permissions'
+            ($parsed | Where-Object RuleId -eq 'zizmor/concurrency-limits').RuleDescription | Should -Be 'zizmor/concurrency-limits'
+        }
     }
 
     Context 'Branch parameter' {
@@ -332,5 +354,42 @@ Describe 'Get-CodeScanningAlerts - Prerequisite guards' -Tag 'Unit' {
 
             { & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' } | Should -Throw '*gh auth login*'
         }
+    }
+}
+
+Describe 'get-code-scanning-alerts.sh grouping parity' -Tag 'Unit' -Skip:(-not $script:BashAvailable) {
+
+    BeforeAll {
+        $script:BashScriptPath = Join-Path $PSScriptRoot '../scripts/get-code-scanning-alerts.sh'
+        $script:FakeBin = Join-Path $TestDrive 'bin'
+        New-Item -ItemType Directory -Path $script:FakeBin -Force | Out-Null
+        $script:AlertsFile = Join-Path $TestDrive 'alerts.json'
+        Set-Content -Path $script:AlertsFile -Value $script:SharedDescriptionJson -NoNewline
+        # Stands in for gh: 'auth status' succeeds and 'api ... --jq .[]' prints one alert per line.
+        $fakeGh = Join-Path $script:FakeBin 'gh'
+        Set-Content -Path $fakeGh -Value "#!/usr/bin/env bash`nif [ `"`$1`" = api ]; then jq -c '.[]' `"`$FAKE_GH_ALERTS`"; fi`n" -NoNewline
+        chmod +x $fakeGh
+        $script:OriginalPath = $env:PATH
+    }
+
+    AfterAll {
+        $env:PATH = $script:OriginalPath
+        Remove-Item Env:FAKE_GH_ALERTS -ErrorAction SilentlyContinue
+    }
+
+    It 'Groups by tool and rule ID with the same titles as the PowerShell script' {
+        $env:PATH = '{0}{1}{2}' -f $script:FakeBin, [System.IO.Path]::PathSeparator, $script:OriginalPath
+        $env:FAKE_GH_ALERTS = $script:AlertsFile
+
+        $bashGroups = bash $script:BashScriptPath -o testorg -r testrepo | ConvertFrom-Json
+
+        $LASTEXITCODE | Should -Be 0
+        $bashGroups | Should -HaveCount 3
+        $actual = @($bashGroups | ForEach-Object { '{0}|{1}|{2}' -f $_.RuleId, $_.RuleDescription, $_.Count }) | Sort-Object
+        $actual | Should -Be @(
+            'zizmor/anonymous-definition|anonymous-definition|2'
+            'zizmor/concurrency-limits|zizmor/concurrency-limits|1'
+            'zizmor/undocumented-permissions|undocumented-permissions|1'
+        )
     }
 }

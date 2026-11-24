@@ -13,16 +13,18 @@
 #   STUB_VALLY_MODE            Default mode for any spec ('pass' when unset).
 #   STUB_VALLY_MODES_JSON      Optional JSON object mapping spec basenames to
 #                              modes; overrides STUB_VALLY_MODE per-spec.
-#   STUB_VALLY_COMPARE_MODE    Compare mode: pass, fail-empty, echo, echo-scored, or
-#                              fail-first. echo pairs --baseline and --treatment
-#                              trials by stimulus name and trial index and emits a
-#                              tie per matched pair plus unmatched lists.
+#   STUB_VALLY_COMPARE_MODE    Compare mode: pass, fail-empty, echo, echo-scored,
+#                              partial, or fail-first. echo pairs --baseline and
+#                              --treatment trials by stimulus name and trial index and
+#                              emits a tie per matched pair plus unmatched lists.
 #                              echo-scored pairs the same way but assigns each pair
 #                              a deterministic signed score and computes the summary
 #                              over those scores with vally's formula, so it serves
-#                              as an oracle for summary statistics. fail-first exits
-#                              1 with no output on the first call per --output path
-#                              (tracked under STUB_VALLY_COMPARE_COUNT_DIR), then
+#                              as an oracle for summary statistics. partial pairs like
+#                              echo, marks the first pair as a judge error, and exits
+#                              1, as vally does for a partial comparison. fail-first
+#                              exits 1 with no output on the first call per --output
+#                              path (tracked under STUB_VALLY_COMPARE_COUNT_DIR), then
 #                              behaves like echo.
 #
 # Supported modes:
@@ -100,7 +102,7 @@ if ($args[0] -eq 'compare') {
         }
     }
 
-    if ($env:STUB_VALLY_COMPARE_MODE -in @('echo', 'echo-scored', 'fail-first')) {
+    if ($env:STUB_VALLY_COMPARE_MODE -in @('echo', 'echo-scored', 'partial', 'fail-first')) {
         # Mirrors the pairing contract of `vally compare`: both inputs are loaded from a
         # JSONL file or the top-level *.jsonl and *.trajectory.json files of a directory,
         # and trials pair on trajectory stimulus name plus trial index. Matched pairs
@@ -193,7 +195,12 @@ if ($args[0] -eq 'compare') {
             unmatchedTreatment = $unmatchedTreatment
             summary            = $summary
         }
+        $partial = $env:STUB_VALLY_COMPARE_MODE -eq 'partial' -and $comparison.stimuli.Count -gt 0
+        if ($partial) {
+            $comparison.stimuli[0].trials[0] = [ordered]@{ trialIndex = $comparison.stimuli[0].trials[0].trialIndex; errored = $true }
+        }
         Set-Content -LiteralPath $outputPath -Value ($comparison | ConvertTo-Json -Depth 10 -Compress) -Encoding utf8NoBOM
+        if ($partial) { exit 1 }
         exit 0
     }
 
@@ -383,6 +390,15 @@ $records = switch ($mode) {
                     $record['status'] = 'error'
                     $record.Remove('gradeResult')
                 }
+                # Models a transient executor fault: the original run errors one trial, and
+                # the filtered recovery copy of the spec runs cleanly.
+                if ($env:STUB_VALLY_DIAGNOSTIC_CASE -eq 'transient-error' -and $specBase -notlike '.recovery-*' -and
+                    $stimulus.name -eq $configuredSpec.stimuli[0].name -and $trialIndex -eq ($configuredRuns - 1)) {
+                    $record['status'] = 'error'
+                    $record['error'] = 'Transient executor failure'
+                    $record['trajectory'] = $null
+                    $record.Remove('gradeResult')
+                }
                 if ($env:STUB_VALLY_DIAGNOSTIC_CASE -eq 'duplicate' -and $trialIndex -eq 1) {
                     $record.trialIndex = 0
                     $record.itemId = "synthetic::$($stimulus.name)::0"
@@ -528,9 +544,19 @@ $lines = foreach ($r in $records) { $r | ConvertTo-Json -Depth 10 -Compress }
 if ($mode -eq 'typed-pass') {
     $lines += [ordered]@{ type = 'run-summary'; passed = $true } | ConvertTo-Json -Compress
 }
+# Real vally reports execution errors in the run-summary and exits nonzero for them.
+$transientErrors = $mode -eq 'diagnostic' -and @($records | Where-Object { $_.status -eq 'error' }).Count -gt 0
+if ($transientErrors) {
+    $lines += [ordered]@{
+        type = 'run-summary'; passed = $true; hadExecutionErrors = $true; hadGradingErrors = $false
+        evals = @([ordered]@{ name = $specBase; hadExecutionErrors = $true; hadGradingErrors = $false })
+    } | ConvertTo-Json -Depth 5 -Compress
+}
 Set-Content -LiteralPath $resultsPath -Value $lines -Encoding utf8NoBOM
 
 Set-Content -LiteralPath (Join-Path $runDir 'eval-results.md') -Value "# stub eval ($mode)" -Encoding utf8NoBOM
+
+if ($transientErrors) { exit 1 }
 
 if ($mode -eq 'fail') { exit 1 }
 if ($mode -eq 'fail-noname') { exit 1 }

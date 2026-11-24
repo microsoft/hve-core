@@ -2,10 +2,9 @@
 name: RAI Skill Assessor
 description: "Assesses a single Responsible AI framework from the rai-standards skill against the codebase, reading framework references and returning structured findings"
 tools:
-  - search/codebase
-  - search/fileSearch
-  - search/textSearch
-  - read/readFile
+  - search
+  - read
+  - skill
 user-invocable: false
 ---
 
@@ -194,7 +193,7 @@ Behavior varies by mode. The mode is inferred from the invocation prompt: the pr
 2. Infer the mode from the invocation prompt: changed files list signals diff mode, plan document signals plan mode, neither signals audit mode.
 3. Process all in-scope requirements within this single invocation. Do not defer requirements to separate invocations.
 4. Use the accumulated reference knowledge from the reference file when analyzing each codebase pattern or evaluating plan content.
-5. Respect the licensing posture declared in the skill's `SKILL.md` and the shared `rai-license-posture.instructions.md`. Paraphrase normative text in findings; never reproduce standards-body verbatim text without the prescribed attribution.
+5. Respect the licensing posture declared in the skill's `SKILL.md` and the RAI license rules the parent passes in its prompt. Paraphrase normative text in findings; never reproduce standards-body verbatim text without the prescribed attribution.
 6. Do not modify any files in the repository.
 7. Do not produce an executive summary or content beyond what the output format (RAI_FINDINGS_V1 or RAI_PLAN_FINDINGS_V1) specifies.
 

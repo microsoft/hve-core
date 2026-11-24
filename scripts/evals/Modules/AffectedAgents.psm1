@@ -321,9 +321,16 @@ function Build-ParentAgentNameIndex {
     parent agents, so name-referenced subagents can be resolved to their
     parents without re-scanning per candidate.
 
+    .DESCRIPTION
+    Parent agents name their subagents by display name in the body, because the
+    Copilot subagent tool selects agents by name. Only the body is scanned, so
+    frontmatter keys such as a parent's own `name` never count as a mention.
+    Longer names match first and are blanked, so 'Report Generator' does not
+    match inside 'Engagement Report Generator'.
+
     .OUTPUTS
-    [hashtable] keyed (case-insensitively) by the display name a parent lists
-    under `agents:`; each value is a HashSet of parent slugs.
+    [hashtable] keyed (case-insensitively) by the display name a parent body
+    mentions; each value is a HashSet of parent slugs.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -336,24 +343,33 @@ function Build-ParentAgentNameIndex {
     if (-not (Test-Path -LiteralPath $agentsRoot -PathType Container)) { return $index }
 
     $agentFiles = @(Get-ChildItem -Path $agentsRoot -Recurse -Filter '*.agent.md' -File -ErrorAction SilentlyContinue)
+    $names = [System.Collections.Generic.List[string]]::new()
+    foreach ($file in $agentFiles) {
+        $raw = [System.IO.File]::ReadAllText($file.FullName)
+        if ($raw -notmatch '(?ms)^---\s*\r?\n(.*?)\r?\n---\s*(?:\r?\n|$)') { continue }
+        $name = Get-FrontmatterStringValue -Frontmatter $matches[1] -Field 'name'
+        if (-not [string]::IsNullOrWhiteSpace($name) -and -not $names.Contains($name.Trim())) { $names.Add($name.Trim()) }
+    }
+    $orderedNames = @($names | Sort-Object { $_.Length } -Descending)
+
     foreach ($file in $agentFiles) {
         $relPath = ConvertTo-NormalizedPath -RepoRoot $RepoRoot -Path $file.FullName
         if (-not (Test-IsParentAgentByFrontmatter -RepoRoot $RepoRoot -RelativePath $relPath)) { continue }
 
-        $body = [System.IO.File]::ReadAllText($file.FullName)
-        if ($body -notmatch '(?ms)^---\s*\r?\n(.*?)\r?\n---\s*(?:\r?\n|$)') { continue }
-        $listedNames = @(Get-FrontmatterListValues -Frontmatter $matches[1] -Field 'agents')
-        if ($listedNames.Count -eq 0) { continue }
-
         $slug = $file.Name -replace '\.agent\.md$', ''
         if (-not $slug) { continue }
-        foreach ($name in $listedNames) {
-            if ([string]::IsNullOrWhiteSpace($name)) { continue }
-            $key = $name.Trim()
-            if (-not $index.ContainsKey($key)) {
-                $index[$key] = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+
+        $raw = [System.IO.File]::ReadAllText($file.FullName)
+        $frontmatter = [regex]::Match($raw, '(?ms)^---\s*\r?\n(.*?)\r?\n---\s*(?:\r?\n|$)')
+        $scan = if ($frontmatter.Success -and $frontmatter.Index -eq 0) { $raw.Substring($frontmatter.Length) } else { $raw }
+        foreach ($name in $orderedNames) {
+            $pattern = '(?<![\w-])' + [regex]::Escape($name) + '(?![\w-])'
+            if (-not [regex]::IsMatch($scan, $pattern)) { continue }
+            if (-not $index.ContainsKey($name)) {
+                $index[$name] = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
             }
-            [void]$index[$key].Add($slug)
+            [void]$index[$name].Add($slug)
+            $scan = [regex]::Replace($scan, $pattern, ' ')
         }
     }
 
@@ -461,10 +477,10 @@ function Get-AffectedAgentSlugs {
             foreach ($slug in $subagentIndex[$rel]) { [void]$result.Add($slug) }
         }
         else {
-            # The dep-map records `agents:` frontmatter references by display
-            # name, not path, so the reverse index misses name-referenced
-            # subagents. Resolve them against a name -> parent-slug index built
-            # once per call (single pass over the parents).
+            # Parents name subagents by display name in their bodies. When the
+            # reverse index has no path entry for this subagent, resolve it against
+            # a name -> parent-slug index built once per call (single pass over the
+            # parents).
             if ($null -eq $parentNameIndex) {
                 $parentNameIndex = Build-ParentAgentNameIndex -RepoRoot $resolvedRoot
             }

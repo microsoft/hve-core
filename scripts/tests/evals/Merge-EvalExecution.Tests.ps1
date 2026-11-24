@@ -115,6 +115,40 @@ Describe 'Merge-EvalExecution.ps1' -Tag 'Unit' {
         $spec.integrity.integrityPassed | Should -BeFalse
         $spec.integrity.issues | Should -Contain 'duplicate-trial'
     }
+    It '<Outcome> one errored trial when its stimulus advisory flag is <Advisory>' -ForEach @(
+        @{ Advisory = $true; Outcome = 'reports without blocking'; FailedSpecs = 0 }
+        @{ Advisory = $false; Outcome = 'blocks'; FailedSpecs = 1 }
+    ) {
+        $plan = New-FanInPlan
+        $summaries = New-ValidFanInSummary $plan
+        $source = $summaries[0].perSpec[0]
+        $attempt = $source.diagnostics.attempts[0]
+        $trial = $attempt.trials[1]
+        $trial.executionStatus = 'error'
+        $trial.errorCategory = 'unknown'
+        $trial.score = $null
+        $trial.thresholdPassed = $null
+        $trial.allGradersPassed = $false
+        $trial.gradeStatus = 'missing'
+        $trial.endReason = $null
+        $trial.observedTurns = 0
+        $trial.responseTurns = 0
+        $trial.graders[0].score = $null
+        $trial.graders[0].passed = $null
+        $trial.graders[0].status = 'missing'
+        $attempt.assertionsPassed = 1
+        $attempt.erroredTrials = 1
+        $attempt.exitCategory = 'unknown'
+        $source | Add-Member -NotePropertyName perStimulusAdvisory -NotePropertyValue ([pscustomobject]@{ synthetic = $Advisory })
+
+        $result = Merge-EvalSummaryValue -Plan $plan -Summary $summaries
+
+        $result.totals.failedSpecs | Should -Be $FailedSpecs
+        $spec = @($result.perSpec | Where-Object specPath -eq 'alpha.yaml')[0]
+        $spec.integrity.integrityPassed | Should -BeFalse
+        [bool]$spec.PSObject.Properties['integrityTolerance'] | Should -Be $Advisory
+        ([string]$spec.status -eq 'integrity-failure') | Should -Be (-not $Advisory)
+    }
     It 'preserves bounded completion evidence through authoritative fan-in' {
         $plan = New-FanInPlan
         $result = Merge-EvalSummaryValue -Plan $plan -Summary (New-ValidFanInSummary $plan)

@@ -42,7 +42,7 @@ permissions:
 jobs:
   msdate-freshness:
     name: Check ms.date Freshness
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -51,13 +51,11 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-          ref: ${{ github.sha }}
 
       - name: Verify resolved head commit
-        if: inputs.change-mode == 'range'
         shell: pwsh
         env:
-          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+          EXPECTED_HEAD_SHA: ${{ inputs.change-mode == 'range' && inputs.head-sha || inputs.change-mode != 'range' && github.sha || '' }}
         run: |
           $actualHeadSha = (git rev-parse HEAD).Trim()
           if ($env:EXPECTED_HEAD_SHA -cnotmatch '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' -or $actualHeadSha -cne $env:EXPECTED_HEAD_SHA) {
@@ -71,7 +69,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path logs | Out-Null
 
       - name: Setup PowerShell modules
-        uses: ./.github/actions/setup-ps-modules
+        uses: $/.github/actions/setup-ps-modules
 
       - name: Run ms.date freshness check
         shell: pwsh
@@ -100,7 +98,7 @@ jobs:
 
       - name: Upload freshness results
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: msdate-freshness-results
           path: logs/msdate-freshness-results.json

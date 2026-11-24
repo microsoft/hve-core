@@ -1,0 +1,12 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: probe invalid-env-name
+permissions: {}
+on: push
+env:
+  BAD-NAME: x
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo hi

@@ -821,6 +821,7 @@ psgallery
 pseudonymization
 pseudonymize
 pseudonymized
+pseudonymizes
 psql
 pstn
 psversiontable
@@ -1167,6 +1168,7 @@ vwan
 vxlan
 wafs
 walkback
+walkbacks
 walkthrough
 wans
 webgui
@@ -1262,8 +1264,14 @@ seaborn
 timescaledb
 trendline
 underrepresent
+misdescribe
 
 # Security & Compliance
+Cavoukian
+centricity
+organisational
+rollups
+rulemaking
 antimalware
 auditable
 auditability
@@ -1378,6 +1386,7 @@ windows
 gruntwork
 
 # File Formats & Extensions
+asar
 csv
 docx
 json
@@ -1414,6 +1423,7 @@ frontend
 haspopup
 hoverable
 hrefs
+inuse
 labelledby
 middleware
 microservice
@@ -1424,10 +1434,14 @@ webhooks
 
 # Proper Nouns & Company Names
 Berryiii
+Cascadia
 Chronograf
+Consolas
 Kapacitor
 Katello
+Menlo
 Metaverse
+Neue
 Newtonsoft
 rhysd
 Segoe
@@ -1542,6 +1556,15 @@ untriaged
 unvalidated
 vscodeignore
 Pipfile
+manylinux
+pipx
+pypa
+certifi
+filelock
+setuptools
+zizmor
+zizmorcore
+deepmerge
 
 # Video & Image Processing
 drawtext
@@ -1637,6 +1660,7 @@ DSSE
 intoto
 SSML
 auditd
+callees
 callsite
 callsites
 DPAPI
@@ -1657,3 +1681,22 @@ urlsafe
 wberry
 writeback
 Brussee
+adservice
+cartservice
+cartstore
+checkoutservice
+emailservice
+frontendservice
+paymentservice
+phamquiluan
+rcaeval
+redactions
+rescored
+rescoring
+shippingservice
+strippable
+unassessable
+unrecovered
+currencyservice
+productcatalogservice
+nonfinite

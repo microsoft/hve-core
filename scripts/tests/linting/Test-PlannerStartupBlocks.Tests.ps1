@@ -24,8 +24,8 @@ Describe 'Planner startup disclosures' -Tag 'Unit' {
         $script:accessibilityIdentityPath = Join-Path $script:repoRoot '.github/instructions/accessibility/accessibility-identity.instructions.md'
         $script:securityAgentPath = Join-Path $script:repoRoot '.github/agents/security/security-planner.agent.md'
         $script:securityIdentityPath = Join-Path $script:repoRoot '.github/instructions/security/identity.instructions.md'
-        $script:sharedBasePath = Join-Path $script:repoRoot '.github/instructions/shared/planner-identity-base.instructions.md'
-        $script:disclaimerSourcePath = Join-Path $script:repoRoot '.github/instructions/shared/disclaimer-language.instructions.md'
+        $script:sharedBasePath = Join-Path $script:repoRoot '.github/skills/shared/planner-identity/SKILL.md'
+        $script:disclaimerSourcePath = Join-Path $script:repoRoot '.github/skills/shared/disclaimer-language/SKILL.md'
     }
 
     Context 'Security and SSSC planner startup attribution' {
@@ -39,16 +39,16 @@ Describe 'Planner startup disclosures' -Tag 'Unit' {
     }
 
     Context 'Security disclaimer cadence contract' {
-        It 'Security entry surfaces load the canonical instruction and halt when it is unavailable' {
+        It 'Security entry surfaces preload the canonical disclaimer skill and halt when it is unavailable' {
             $paths = @(
                 $script:securityAgentPath
             )
 
             foreach ($path in $paths) {
                 $content = Get-Content -Path $path -Raw
-                $content | Should -Match 'locate .*instruction file named `disclaimer-language\.instructions\.md`'
-                $content | Should -Not -Match '#file:\.\./\.\./instructions/shared/disclaimer-language\.instructions\.md'
-                $content | Should -Match 'read .*disclaimer-language\.instructions\.md.*in full'
+                $content | Should -Match '(?ms)^skills:\s*$.*?^\s+-\s+disclaimer-language\s*$'
+                $content | Should -Not -Match 'instruction file named `disclaimer-language'
+                $content | Should -Match '`Security Planning` section of the preloaded `disclaimer-language` skill'
                 $content | Should -Match 'cannot be found or loaded, halt before questions, analysis, state initialization, or phase work'
             }
         }

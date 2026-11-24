@@ -1,0 +1,193 @@
+{
+  "cases": [
+    {
+      "files": [
+        {
+          "name": "inject_time.txt",
+          "objectId": "cf7115c836f8d10fadc5b407fb7b6b582e091893",
+          "sha256": "8b68d557a2c05456352b26b33504c36cd97f2edec40894837e2d645460cd21c1",
+          "size": 10
+        },
+        {
+          "name": "metrics.parquet",
+          "objectId": "7a2e8daa47041f782d3718e6942b9493dad4aaba",
+          "sha256": "c4055cbedea6c9aeb164bba921b81023ba76f798ad90c672f0a5ed51550b8568",
+          "size": 163223
+        },
+        {
+          "name": "logs.parquet",
+          "objectId": "5a5d26d80c56436b6efce7a9de88e92de8640d91",
+          "sha256": "6fb018727729cc73726506dbdf0d2ec0776676ae8fb0a1fe14787db0ec057e42",
+          "size": 292616
+        },
+        {
+          "name": "traces.parquet",
+          "objectId": "e4618b7b570fc705f4ce663abf57a3cc9e4d5eab",
+          "sha256": "6fc519b2286f0e5e445eedf6e634735f309087ec7a6bfe0c65ee6661d71b1765",
+          "size": 9181276
+        }
+      ],
+      "modalities": [
+        "metrics",
+        "logs",
+        "traces"
+      ],
+      "neutralId": "case-01",
+      "sourcePath": "re2ob_currencyservice_loss_3",
+      "trialOrder": 1
+    },
+    {
+      "files": [
+        {
+          "name": "inject_time.txt",
+          "objectId": "21e38612fa8d148ef26b9ded2bd04ec918aa6f4f",
+          "sha256": "2b2f2ff05f22de055048f77358979316807c0982cabe8b7778c1fc79adadf3e1",
+          "size": 10
+        },
+        {
+          "name": "metrics.parquet",
+          "objectId": "b6f53b87e878161c3e7d0d575978b77a6cd75646",
+          "sha256": "195aa8d4300385d185ac7e9838adfc55e004fa957c142cba680577d817cf192d",
+          "size": 380210
+        }
+      ],
+      "modalities": [
+        "metrics"
+      ],
+      "neutralId": "case-02",
+      "sourcePath": "re1ob_cartservice_cpu_4",
+      "trialOrder": 2
+    },
+    {
+      "files": [
+        {
+          "name": "inject_time.txt",
+          "objectId": "df06fd22100a8b4c28826b2d23ac8fdf739c260b",
+          "sha256": "42a6c87a3e11f0b9d8edef2d63453eb183fa6da5c54bca0f82af213e97b38d20",
+          "size": 10
+        },
+        {
+          "name": "metrics.parquet",
+          "objectId": "e9cf012f9e5c2b52bdc55cdb77feaf9908b2a848",
+          "sha256": "e07cd6e54b8f7e794879ff236d6e37e4b55d2d3521aa8006b81ade6a8e0b73be",
+          "size": 164594
+        },
+        {
+          "name": "logs.parquet",
+          "objectId": "c7a50ea7d21317dd027250e537899d6e489578a1",
+          "sha256": "7b17e122209b2c0a1c6c57e93c5fd00230cf3eddd6992ae36842da9da67f46d6",
+          "size": 967158
+        }
+      ],
+      "modalities": [
+        "metrics",
+        "logs"
+      ],
+      "neutralId": "case-03",
+      "sourcePath": "re2ss_carts_socket_3",
+      "trialOrder": 3
+    },
+    {
+      "files": [
+        {
+          "name": "inject_time.txt",
+          "objectId": "dfed63f63a3350e2845c575f46a1ca42fed6d861",
+          "sha256": "cc5a467814b0f6759a5d8da7744a2b8cd531712c643d411fddfc166d4ac8b6cd",
+          "size": 10
+        },
+        {
+          "name": "metrics.parquet",
+          "objectId": "b15085cba13a5de303a6a08d3cb69b07fba0ed49",
+          "sha256": "8d4b475d7a6938b19e95c5b3ca74f147a938eb5b45ce67fc37b93cbfa4244509",
+          "size": 159195
+        },
+        {
+          "name": "logs.parquet",
+          "objectId": "644a041c1fdf377f235529dd4e9e76f450eabaf8",
+          "sha256": "8c9844999f390588114e1ea8fd09d6fbf5db5a8341aedb6bfede2bd4579f36e0",
+          "size": 347238
+        },
+        {
+          "name": "traces.parquet",
+          "objectId": "d5d964c1306f820a7ffff1a3cc195562e5e33c30",
+          "sha256": "c6e9ada74541372dfefa2bc0280652dbd1d7c8a58ffc96f2469ef429ed2e322e",
+          "size": 10298558
+        }
+      ],
+      "modalities": [
+        "metrics",
+        "logs",
+        "traces"
+      ],
+      "neutralId": "case-04",
+      "sourcePath": "re2ob_productcatalogservice_disk_2",
+      "trialOrder": 4
+    },
+    {
+      "files": [
+        {
+          "name": "inject_time.txt",
+          "objectId": "45281f418c725bacdc78bd7cd2e3c6cdb09e083a",
+          "sha256": "7b4aa7ce6ba1f5883965a571380e91f10f5c152c03e92e8bd5ee80d74a4d719a",
+          "size": 10
+        },
+        {
+          "name": "metrics.parquet",
+          "objectId": "e200c367edcab815af5f10c595c8a139050ef4db",
+          "sha256": "47a7bb4c5f852b2157b31ec3ab80364485dd6a72375f192126c4397c5c1708ff",
+          "size": 163454
+        },
+        {
+          "name": "logs.parquet",
+          "objectId": "7d7df6fed112b74d72eb91c2be27744d5ef68d88",
+          "sha256": "1266580a431f8b047a1a8156ae5b38754db60a8ad1a049d32b5b289c90e07329",
+          "size": 1120529
+        }
+      ],
+      "modalities": [
+        "metrics",
+        "logs"
+      ],
+      "neutralId": "case-05",
+      "sourcePath": "re2ss_catalogue_socket_1",
+      "trialOrder": 5
+    }
+  ],
+  "evidenceTrack": "raw",
+  "schemaVersion": "1.0.0",
+  "selection": {
+    "algorithm": "sha256-seeded-ranking-v1",
+    "eligibleCases": 730,
+    "excludedSourcePaths": [
+      "re1ob_adservice_cpu_1",
+      "re1tt_ts-travel-service_mem_3",
+      "re2ob_checkoutservice_delay_1",
+      "re3ob_cartservice_f1_1",
+      "re3tt_ts-auth-service_f2_4"
+    ],
+    "populationSha256": "95761b7c9876bcfb56d0c60ff7ae4bc8165ed23132318c14f3767bcd76f61ec4",
+    "seed": "rcaeval-raw-2026-11-05",
+    "selectedSourcePaths": [
+      "re2ob_currencyservice_loss_3",
+      "re1ob_cartservice_cpu_4",
+      "re2ss_carts_socket_3",
+      "re2ob_productcatalogservice_disk_2",
+      "re2ss_catalogue_socket_1"
+    ]
+  },
+  "source": {
+    "caseIndex": {
+      "path": "cases.parquet",
+      "sha256": "c49a288920dbba2e8e724679a14636d5c7eb2b45426bba14007ef79a6c0ab1bb",
+      "size": 29500
+    },
+    "dataset": "phamquiluan/RCAEval",
+    "license": "MIT",
+    "licenseCard": {
+      "objectId": "ffea80ee16798b1cbe9997a4132c3d55bf3c75e3",
+      "path": "README.md"
+    },
+    "revision": "afeacb11bcc94dadfd1c8f483ee4377b2b8b614e",
+    "sourceUrl": "https://huggingface.co/datasets/phamquiluan/RCAEval"
+  }
+}

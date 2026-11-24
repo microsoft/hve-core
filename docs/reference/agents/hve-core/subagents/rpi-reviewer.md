@@ -3,7 +3,7 @@ title: RPI Reviewer
 description: "Reviews one bounded, context-heavy portion of RPI evidence assigned by the review parent and returns findings with evidence locations, why each matters, and suggested severity and route as suggestions for the calling agent to verify. Use during review when isolating a large comparison would help."
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-19
+ms.date: 2026-11-13
 ms.topic: reference
 keywords:
   - agent

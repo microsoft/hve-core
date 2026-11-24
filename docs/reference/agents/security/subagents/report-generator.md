@@ -3,7 +3,7 @@ title: Report Generator
 description: Collates verified security or accessibility skill assessment findings and generates a comprehensive report written to the domain-appropriate reports directory
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-21
 ms.topic: reference
 keywords:
   - agent

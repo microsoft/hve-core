@@ -8,7 +8,22 @@ on:
   skip-bots: ["dependabot[bot]", "github-actions[bot]"]
   reaction: eyes
 
-engine: copilot
+engine:
+  id: copilot
+  # Pinned Copilot CLI; scripts/security/tool-checksums.json records it.
+  version: "1.0.103"
+runs-on: ubuntu-24.04
+runs-on-slim: ubuntu-24.04
+runtimes:
+  node:
+    version: "24.21.0"
+# runtimes.node opts the agent into Node registry and CDN domains; the agent
+# installs no packages, so the Node ecosystem stays blocked.
+network:
+  allowed:
+    - defaults
+  blocked:
+    - node
 timeout-minutes: 10
 
 # The opened and template-applied needs-triage labeled events both fire within a
@@ -41,6 +56,8 @@ permissions:
   issues: read
 
 safe-outputs:
+  threat-detection:
+    runs-on: ubuntu-24.04
   # An unreadable issue is an expected author-trust condition, not a workflow
   # fault. Genuine faults still report through the remaining categories.
   report-failure-as-issue:
@@ -140,7 +157,7 @@ block above is also empty:
 
 * Attempt the read once. Do not retry through the `gh` CLI, `search_issues`, or
   list queries.
-* Do not call `report_incomplete` or `missing_data`.
+* Do not call `report_incomplete` or `report_missing_data`.
 * Leave `needs-triage` in place so the issue stays in the human triage queue.
 * Add one comment stating that automated triage could not read the issue and that
   a maintainer will triage it manually, then stop. Do not call `noop` after

@@ -102,8 +102,24 @@ function Get-FileChanges {
     $content = Get-Content -LiteralPath $XmlPath -Raw
     $changes = @()
 
-    # Match diff headers and analyze change type
-    $diffPattern = '(?ms)diff --git a/(.+?) b/(.+?)(?=\n)(.*?)(?=diff --git|</full_diff>)'
+    # Pair the commit-section close with the diff opener so standalone opening tags in
+    # hunk context cannot move the boundary. The final pair follows unescaped commit bodies;
+    # generate.sh can append </commits> to the last commit line.
+    $boundaries = [regex]::Matches($content, '(?m)</commits>[ \t]*\r?\n(?:[ \t]*\r?\n)*  <full_diff>[ \t]*\r?$')
+    if ($boundaries.Count -gt 0) {
+        $boundary = $boundaries[$boundaries.Count - 1]
+        $content = $content.Substring($boundary.Index + $boundary.Length)
+    } else {
+        # References without commit metadata start at their first diff opener.
+        $open = [regex]::Match($content, '(?m)^  <full_diff>[ \t]*\r?$')
+        if ($open.Success) { $content = $content.Substring($open.Index + $open.Length) }
+    }
+
+    # Match diff headers and analyze change type. Headers start a line: at column 0
+    # from generate.sh, or indented two spaces by generate.ps1. Anchoring there keeps
+    # 'diff --git' text inside diff content from being read as a header.
+    $indent = if ($content -cmatch '(?m)^diff --git ') { '' } else { '  ' }
+    $diffPattern = "(?ms)^${indent}diff --git a/(.+?) b/(.+?)(?=\n)(.*?)(?=^${indent}diff --git|</full_diff>)"
     $regexMatches = [regex]::Matches($content, $diffPattern)
 
     foreach ($match in $regexMatches) {
@@ -111,14 +127,15 @@ function Get-FileChanges {
         $newPath = $match.Groups[2].Value.Trim()
         $diffBlock = $match.Groups[3].Value
 
+        # Mode lines are header lines at the same indent; hunk lines start with ' ', '+', '-' or '\'
         $changeType = 'Modified'
-        if ($diffBlock -match 'new file mode') {
+        if ($diffBlock -cmatch "(?m)^${indent}new file mode") {
             $changeType = 'Added'
         }
-        elseif ($diffBlock -match 'deleted file mode') {
+        elseif ($diffBlock -cmatch "(?m)^${indent}deleted file mode") {
             $changeType = 'Deleted'
         }
-        elseif ($diffBlock -match 'rename from' -or $oldPath -ne $newPath) {
+        elseif ($diffBlock -cmatch "(?m)^${indent}rename from" -or $oldPath -ne $newPath) {
             $changeType = 'Renamed'
         }
 

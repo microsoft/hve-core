@@ -8,6 +8,7 @@
 *.docx binary
 *.jpg binary
 *.png binary
+*.webp binary
 
 # Override Linguist vendored classification for Python skill files.
 # GitHub Linguist excludes .github/ via its vendor.yml regex, hiding Python

@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Contributing AI Artifacts"
 pagination_label: Contributing AI Artifacts
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-31
 ms.topic: overview
 keywords:
   - contributing
@@ -33,7 +33,7 @@ Use this table to navigate to the appropriate guide based on what you want to co
 | Create or modify a hook                 | [Hooks](hooks.md)                                                                                               |
 | Create or modify an agent               | [Custom Agents](custom-agents.md)                                                                               |
 | Create or modify an instruction file    | [Instructions](instructions.md)                                                                                 |
-| Create or modify a prompt               | [Prompts](prompts.md)                                                                                           |
+| Contribute a slash command              | [Slash Commands](prompts.md)                                                                                    |
 | Create or modify a skill                | [Skills](skills.md)                                                                                             |
 | Understand shared AI artifact standards | [Common Standards](ai-artifacts-common.md)                                                                      |
 | Learn about the release process         | [Release Process](release-process.md)                                                                           |
@@ -49,7 +49,7 @@ Use this table to navigate to the appropriate guide based on what you want to co
 | [Accessibility Manual Validation](accessibility-manual-validation.md) | Public-safe, manual validation steps for the HVE Core docs accessibility bug set |
 | [Custom Agents](custom-agents.md)                                     | How to create and submit new agent definitions                                   |
 | [Instructions](instructions.md)                                       | How to create repository-specific coding guidelines                              |
-| [Prompts](prompts.md)                                                 | How to create reusable prompt templates                                          |
+| [Slash Commands](prompts.md)                                          | Why reusable slash commands are contributed as skills                            |
 | [Skills](skills.md)                                                   | How to create skill packages with scripts and documentation                      |
 | [Hooks](hooks.md)                                                     | How to implement hook manifests, scripts, and collection registration            |
 | [Release Process](release-process.md)                                 | Extension channels, maturity levels, and publishing workflow                     |

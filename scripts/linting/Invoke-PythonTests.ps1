@@ -25,6 +25,94 @@ $ErrorActionPreference = 'Stop'
 
 #region Functions
 
+function Invoke-UvEnvironmentSync {
+    <#
+    .SYNOPSIS
+        Provisions the current Python project before test execution.
+    .DESCRIPTION
+        Uses locked project sync for public sources and hash-verified mirrored
+        restore for projects without custom uv source policy. Restores index
+        variables on every exit. Successful callers run pytest with --no-sync.
+    .PARAMETER Locked
+        Whether the project has a committed uv.lock.
+    .OUTPUTS
+        Hashtable with exitCode and output. A nonzero exitCode prevents pytest.
+    .EXAMPLE
+        Invoke-UvEnvironmentSync -Locked $true
+    .NOTES
+        Unsupported mirrored source policies fail before export or installation.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [bool]$Locked
+    )
+
+    if (-not $Locked) {
+        $output = & uv sync --dev 2>&1
+        return @{
+            exitCode = $LASTEXITCODE
+            output = $output
+        }
+    }
+
+    $defaultIndex = if ($env:UV_DEFAULT_INDEX) {
+        $env:UV_DEFAULT_INDEX
+    } elseif ($env:UV_INDEX_URL) {
+        $env:UV_INDEX_URL
+    } else {
+        'https://pypi.org/simple'
+    }
+    if ($defaultIndex.TrimEnd('/') -eq 'https://pypi.org/simple') {
+        $output = & uv sync --locked --dev 2>&1
+        return @{
+            exitCode = $LASTEXITCODE
+            output = $output
+        }
+    }
+
+    $sourceCheck = @'
+import sys
+import tomllib
+with open("pyproject.toml", "rb") as project_file:
+    uv_config = tomllib.load(project_file).get("tool", {}).get("uv", {})
+if any(key in uv_config for key in ("index", "sources", "workspace")):
+    print("ERROR: Mirrored restore cannot preserve this project's uv source policy; "
+          "use a network that can reach its canonical sources.", file=sys.stderr)
+    sys.exit(2)
+'@
+    $output = & uv run --no-project --offline python -c $sourceCheck 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        return @{ exitCode = $LASTEXITCODE; output = $output }
+    }
+
+    $requirementsFile = New-TemporaryFile
+    $originalDefaultIndex = $env:UV_DEFAULT_INDEX
+    $originalIndexUrl = $env:UV_INDEX_URL
+    try {
+        Remove-Item Env:UV_DEFAULT_INDEX -ErrorAction SilentlyContinue
+        Remove-Item Env:UV_INDEX_URL -ErrorAction SilentlyContinue
+        $output = & uv export --locked --offline --no-emit-project --quiet --output-file $requirementsFile 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            return @{ exitCode = $LASTEXITCODE; output = $output }
+        }
+        $pythonPath = if ($IsWindows) { '.venv/Scripts/python.exe' } else { '.venv/bin/python' }
+        if (-not (Test-Path $pythonPath)) {
+            $output = & uv venv .venv 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                return @{ exitCode = $LASTEXITCODE; output = $output }
+            }
+        }
+        $output = & uv pip sync --python $pythonPath --require-hashes --default-index $defaultIndex $requirementsFile 2>&1
+        return @{ exitCode = $LASTEXITCODE; output = $output }
+    } finally {
+        [Environment]::SetEnvironmentVariable('UV_DEFAULT_INDEX', $originalDefaultIndex)
+        [Environment]::SetEnvironmentVariable('UV_INDEX_URL', $originalIndexUrl)
+        Remove-Item $requirementsFile -Force -ErrorAction SilentlyContinue
+    }
+}
+
 function Invoke-PythonTests {
     [CmdletBinding()]
     param(
@@ -85,16 +173,17 @@ function Invoke-PythonTests {
                 # use uv if the command is available, regardless of whether uv.lock exists
                 if ($uvCommand) {
                     $runner = 'uv'
-                    
-                    if (Test-Path $uvLockPath) {
+                    $hasLock = Test-Path $uvLockPath
+
+                    if ($hasLock) {
                         Write-Host '  Using uv locked environment' -ForegroundColor Gray
-                        $syncOutput = & uv sync --locked --dev 2>&1
                     } else {
                         Write-Host '  Using uv environment (syncing dev dependencies)' -ForegroundColor Gray
-                        $syncOutput = & uv sync --dev 2>&1
                     }
 
-                    $syncExitCode = $LASTEXITCODE
+                    $syncResult = Invoke-UvEnvironmentSync -Locked $hasLock
+                    $syncOutput = $syncResult.output
+                    $syncExitCode = $syncResult.exitCode
                     Write-Host "$syncOutput"
 
                     if ($syncExitCode -ne 0) {
@@ -115,7 +204,7 @@ function Invoke-PythonTests {
                         continue
                     }
 
-                    $output = & uv run pytest tests/ $Verbosity --tb=short 2>&1
+                    $output = & uv run --no-sync pytest tests/ $Verbosity --tb=short 2>&1
                     $exitCode = $LASTEXITCODE
                 } else {
                     # Resolve pytest: prefer skill venv, fall back to global

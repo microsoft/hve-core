@@ -1,9 +1,9 @@
 ---
 title: engagement-report-council-critique
 description: Run one independent Council critique against engagement-report research evidence. Use as the manual separate-session fallback when independent critic agents are unavailable.
-sidebar_position: 1
+sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-31
 ms.topic: reference
 keywords:
   - skill

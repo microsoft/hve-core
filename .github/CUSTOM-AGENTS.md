@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-10-07
+ms.date: 2026-11-17
 ms.topic: guide
 keywords:
   - copilot
@@ -63,10 +63,10 @@ Use the self-contained `rpi-challenger` skill to interrogate a confirmed subject
 
 ### Code and Review Agents
 
-| Agent                 | Purpose                                                                | Key Constraint                                                |
-|-----------------------|------------------------------------------------------------------------|---------------------------------------------------------------|
-| **security-reviewer** | OWASP vulnerability assessment with subagent-driven verification       | Delegates all reference reading to subagents                  |
-| **code-review**       | Human-gated review orchestrator dispatching five perspective subagents | Operator confirms scope, perspectives, and depth; review-only |
+| Agent                 | Purpose                                                                                     | Key Constraint                                                                    |
+|-----------------------|---------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
+| **security-reviewer** | OWASP vulnerability assessment with subagent-driven verification                            | Delegates all reference reading to subagents                                      |
+| **code-review**       | Prioritizes functional code review through the `code-review` skill on one captured snapshot | Functional by default; non-functional vectors opt-in; posting needs human consent |
 
 ### Related Workflow Skills
 
@@ -102,9 +102,12 @@ subagents, and skills.
 * `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
 * `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`
 
-**Modes:** Manual mode stays in the active phase until you invoke the next `/rpi-*` command or select a phase handoff. The **Full Auto** handoff requests an automatic session; after you confirm whether ordinary Research and Plan decisions are agent-owned or user-retained, the agent continues through Review without routine approval prompts.
+**Modes:** When your request doesn't say how to proceed, the agent asks how you want to work: handle it end to end, keep going but check with you on unclear decisions, research and plan with you and stop before implementation, or work through each phase with you.
+Asking for "full auto" or "automatic mode" starts an automatic session without the question. Manual mode stays in the active phase until you invoke the next `/rpi-*` command or ask for the next phase. An automatic session continues through Review without routine approval prompts.
 
 After Review, an automatic session offers ranked follow-up choices plus **Stop automatic session** and **Switch to manual mode**. Blockers, required human review, and destructive or externally visible actions still stop for confirmation.
+
+**Canvas:** When the host offers canvases, the agent opens the RPI Workflow canvas on its session, where you follow each phase, answer the agent's decisions, and send it input that it reads back. See the [RPI Workflow Canvas guide](../docs/rpi/rpi-workflow-canvas.md).
 
 **Critical:** `RPI Agent` is a user-selected lifecycle wrapper, not a dispatcher for named specialized task workers. Automatic mode begins only after explicit confirmation and never infers consent from a handoff request. It may use generic bounded delegation only when it materially improves an isolated activity. Navigate durable artifacts with the task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
 
@@ -189,7 +192,8 @@ After Review, an automatic session offers ranked follow-up choices plus **Stop a
 
 **Workflow:** Discover → Extract → Synthesize → Handoff
 
-**Critical:** Experimental. Requires the `workiq` MCP server in `.vscode/mcp.json` (not included in the installer skill or curated MCP documentation; see [official documentation](https://learn.microsoft.com/microsoft-365-copilot/extensibility/workiq-overview#install-in-vs-code) for setup). Requires `mcp_workiq_accept_eula` call before querying. Uses `mcp_workiq_ask_work_iq` for Microsoft 365 meeting data. Query budget of approximately 30 per session. Hands off to **prd-builder** for PRD creation.
+**Critical:** Experimental. Requires the `workiq` MCP server in `.mcp.json` (see [MCP Server Configuration](../docs/getting-started/mcp-configuration.md#workiq) and the [official documentation](https://learn.microsoft.com/microsoft-365-copilot/extensibility/workiq-overview#install-in-vs-code) for setup).
+Requires `mcp_workiq_accept_eula` call before querying. Uses `mcp_workiq_ask_work_iq` for Microsoft 365 meeting data. Query budget of approximately 30 per session. Hands off to **prd-builder** for PRD creation.
 
 **Data Sensitivity Warning:** Meeting transcripts retrieved by this agent may contain PII, customer confidential information, and proprietary business data. Analysis files and state files are written to `.copilot-tracking/prd-sessions/` which is gitignored by default when following HVE Core setup guidance, but the files exist **unencrypted on disk**.
 Users are responsible for verifying their repository's `.gitignore` configuration, complying with their organization's data handling policies, and deleting both the `<name>-transcript-analysis.md` and `<name>-transcript.state.json` files after the PRD handoff is complete. The agent will prompt for deletion at handoff completion, but deletion is the user's responsibility.
@@ -264,15 +268,21 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 ### code-review
 
-**Creates:** Merged review artifacts in a normalized branch folder:
+**Creates:** One folder per review at `.copilot-tracking/reviews/code-reviews/<date>/<review-id>/`, as defined by the `code-review` skill's `references/review-contract.md`:
 
-* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/review.md` (merged review document, per the shared persistence protocol in `review-artifacts.instructions.md`)
-* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/metadata.json` (review metadata record)
+* `snapshots/<snapshot-id>/snapshot.json` (immutable capture of the reviewed change)
+* `review-state.json` (scope, work items, verified vector-tagged findings, limitations, and outcome)
+* `results/<snapshot-id>/<work-id>.json` (one result per perspective or context/investigation task)
+* `review.md` (human-editable report, with a PR comment draft for PR and MR targets)
 
-**Workflow:** Context Bootstrap → Human Scope Confirmation → Perspective + Depth Selection → Prepare Dispatch State → Dispatch Selected Perspectives → Merge and Persist
+**Skills:** The agent preloads `code-review` and `disclaimer-language` and follows the same workflow as `/code-review`. All perspective and phase guidance lives under `.github/skills/coding-standards/code-review/references/`.
 
-**Critical:** Human-gated orchestrator invoked from the agent picker. After computing the diff via the `pr-reference` skill, it confirms scope with the operator, then lets the operator choose any combination of five perspectives (`functional`, `standards`, `accessibility`, `security`, `pr`) or `full` to run all five, plus a depth tier (`basic`, `standard`, or `comprehensive`) applied independently of perspective.
-It dispatches thin perspective subagents under `.github/agents/coding-standards/subagents/`, shares the computed diff to avoid duplicate git operations, and merges every report into a single output. Review-only; never modifies code. Maturity: experimental.
+**Workflow:** Resolve target → Capture snapshot → Map areas and reasons → Run functional review (inline or parallel general-purpose tasks) → Verify findings → Render report → Publish only with consent
+
+**Critical:** Prioritizes functional review by default across codebase requirements, code quality and standards, unintended behaviors and side effects, refactored code paths, missed APIs/SDKs, missed abstractions, and unneeded edge-case checks.
+Non-functional review vectors (`security`, `rai`, `sssc`, `performance`, `privacy`, `accessibility`) and BRD/PRD/ADR alignment remain strictly unloaded unless explicitly requested by the user (per area or across all areas).
+Orchestrates parallel `general-purpose` tasks across vectors, phases, and areas, or reports recommended sessions back to a Project coordinator when operating inside a Project. An optional Code Review canvas displays vector pills (`functional`, `security`, `rai`, `sssc`, `performance`, `privacy`) on findings and comments and lets users request non-functional reviews per area.
+Review-only: source and Git state stay read-only, and staging or posting to a PR needs explicit human consent. Maturity: experimental.
 
 ### backlog-manager
 
@@ -309,10 +319,10 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 ### Code Review
 
-1. Select **code-review** from agent picker
-2. Confirm the change scope when prompted
-3. Choose perspectives (`functional`, `standards`, `accessibility`, `security`, `pr`, or `full`) and a depth tier
-4. Receive a merged `review.md` under `.copilot-tracking/reviews/code-reviews/<branch>/`
+1. Run `/code-review` with a target, or select **Code Review** from the agent picker and name the target
+2. Accept the functional-first scope summary, or add `mode=guided` and optional area-scoped non-functional vectors (`security`, `rai`, `sssc`, `performance`, `privacy`)
+3. Optionally set `depth=basic|standard|comprehensive`
+4. Review `review.md` under `.copilot-tracking/reviews/code-reviews/<date>/<review-id>/` before acting on findings or approving any PR posting
 
 ### Creating Instructions
 

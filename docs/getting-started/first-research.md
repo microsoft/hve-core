@@ -36,7 +36,8 @@ teach methodology; real questions teach methodology and produce useful output.
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I` on Windows and Linux or
   `Control+Command+I` on macOS).
-2. Invoke `/rpi-research` from the skill surface.
+2. Type `/rpi-research` in the chat input. If you installed HVE Core as a
+  plugin, VS Code lists it as `/hve-core:rpi-research`.
 3. Type your question as a prompt.
 
 The skill creates a dated research document at
@@ -46,7 +47,8 @@ on the scope and available evidence.
 
 ## Read the Output
 
-Open the research document. You'll find:
+Open the research document. Start with the Executive Summary, then read the
+findings. You'll find:
 
 * The skill cites source references for load-bearing facts.
 * Conclusions trace back to actual code through evidence-linked findings.

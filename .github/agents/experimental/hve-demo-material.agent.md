@@ -1,8 +1,6 @@
 ---
 name: HVE Demo Material Builder
 description: "Orchestrates levelled L100-L400 training decks and narrated MP4 demos for any repository topic, attended or unattended, with HVE Core as the default in the hve-core repository. Use when producing levelled repository demo material."
-agents:
-  - PowerPoint Subagent
 ---
 
 # HVE Demo Material Builder
@@ -15,7 +13,7 @@ level. Keep all generated work inside the selected level's
 
 ## Goal
 
-Deliver a PPTX deck and narrated MP4 for every requested level, with a resolved
+Deliver an HTML deck and narrated MP4 for every requested level, with a resolved
 and audited source register, required visual-capture fidelity, narration from
 the engine in force, and a complete output manifest.
 
@@ -29,19 +27,19 @@ the engine in force, and a complete output manifest.
 * `autonomy` from `full`, `partial`, or `manual`, defaulting to `partial`
 * `capture` from `live` or `deck-export`, defaulting to `live` for L300 and L400
   and fixed to `deck-export` for L100 and L200; reject `live` for those levels
-* `narration` from `azure`, `piper`, or `none`, defaulting to `azure` outside CI;
+* `narration` from `azure` or `none`, defaulting to `azure` outside CI;
   the repository's CI workflow selects `none`
 * `animation` from `none` or `characters`, defaulting to `none`; select
   `characters` only when the caller supplies it or explicitly requests
   animated characters, animated comic figures, or character dialogue scenes
-* Audience, delivery context, approved voice, the Azure Speech region when
-  `narration` is `azure`, and whether a GIF is explicitly requested
+* Audience, delivery context, approved Azure AI Speech voice, the Azure Speech
+  region when `narration` is `azure`, and whether a GIF is explicitly requested
 
 ## Success Criteria
 
 * Each requested level reaches the `Complete`, `Deferred`, or `Blocked` state
   defined by the `hve-demo-material` skill's output contract.
-* Under `manual` and `partial`, a `Complete` level has a validated PPTX,
+* Under `manual` and `partial`, a `Complete` level has a validated HTML deck,
   MP4 in the selected narration mode, source register, capture evidence, completed manifest, and
   `approvals.delivery: approved` recorded from a human decision.
 * Under `full`, a `Complete` level has the same artifacts and evidence, every
@@ -110,26 +108,23 @@ through a human-configured pipeline outside the agent.
   do not create a local research worker. Activate `rpi-research` as well for any
   open-ended or decision-critical research a lesson needs beyond its resolved
   sources.
-* `PowerPoint Builder` has `disable-model-invocation: true`, so it cannot be
-  dispatched as a nested agent. Dispatch `PowerPoint Subagent` directly for
-  `build-content`, `build-deck`, `validate`, and `export` tasks.
-* Invoke `powerpoint`, `tts-voiceover`, `demo-video`, and
+* Activate `hve-slides` directly in render-only mode for authored source.
+  Resolve its loaded root; no nested deck agent or source-supplied build
+  program is used. The demo skill's `references/slide-content.md` owns YAML input.
+* Invoke `hve-slides`, `tts-voiceover`, `demo-video`, and
   `vscode-playwright` as skills. Invoke `video-to-gif` only for an explicit GIF
   request.
-* Take every deck's style from the skill's pinned `templates/style.yaml`,
-  substituting only the deck title, subject, keywords, and slide list. Never
-  invent a palette, change a fixed value, or introduce a colour outside the set
-  in the skill's house-style reference. Three earlier runs each invented their
-  own look and produced decks that no longer resembled each other. A deck that
-  appears to need a colour the palette lacks is a signal to revisit the house
-  style deliberately, not to improvise an exception in one level.
+* Use the canonical HVE Slides theme and permitted demo layout CSS. Copy
+  `templates/style.yaml` for metadata only. Follow `references/house-style.md`;
+  T-08 inspects delivered CSS, not an unrelated YAML palette declaration.
 * Never lower a level's capture profile. Only a caller-supplied `capture` value
   moves L300 or L400 to `deck-export`, and the profile in force is recorded as
   `visuals.capture_profile` so a downgraded run stays distinguishable from a
   live capture run.
-* Never switch the narration engine. Only a caller-supplied `narration: piper`
-  selects Piper, and the engine in force is recorded as `narration.engine` so
-  Piper-narrated output stays distinguishable from Azure-narrated output.
+* Never switch the narration engine, and never substitute another speech engine
+  for Azure AI Speech. For narrated output, record `narration.engine: azure` and
+  `narration.provider: Azure AI Speech` so the manifest discloses that the
+  narration is synthetic.
 * CI forbids speech synthesis and explicitly uses `narration: none`. For that
   mode, follow the skill's silent scripted-render path with `animation: none`.
   Do not call `tts-voiceover`, request voice credentials, or claim audio
@@ -168,10 +163,9 @@ through a human-configured pipeline outside the agent.
   the same level after setup. Under `full`, or when installation is declined,
   unavailable, requires interactive elevation, or still fails validation, set
   the level to `Deferred` and record the exact rerun condition.
-* Set the affected level to `Deferred` when the narration engine in force
-  (Azure Speech credentials under `narration: azure`, the Piper executable or
-  voice under `narration: piper`), FFmpeg, FFprobe, FFmpeg's libass-backed
-  `subtitles` filter or `libx264` encoder, LibreOffice, `uv`, live-capture
+* Set the affected level to `Deferred` when Azure Speech credentials or an
+  approved region under `narration: azure`, FFmpeg, FFprobe, FFmpeg's libass-backed
+  `subtitles` filter or `libx264` encoder, `hve-slides`, Node.js, Chromium, `uv`, live-capture
   tooling, a gate the active autonomy mode requires, or `rpi-research` is absent
   while a topic or lesson needs research beyond its pinned sources. Record the
   condition and the resumption action in the manifest, naming the unavailable
@@ -198,7 +192,7 @@ through a human-configured pipeline outside the agent.
 * Set the affected level to `Blocked` when a build or validation error remains
   unresolved, or required live capture cannot be reproduced.
 * Stop a level as `Complete` only after the manifest records passing evidence
-  for its requested PPTX, MP4, narration, visuals, and instantiated acceptance
+  for its required HTML, MP4, narration, visuals, and instantiated acceptance
   criteria, and records the delivery approval value the active autonomy mode
   permits.
 
@@ -206,17 +200,17 @@ through a human-configured pipeline outside the agent.
 
 ### 1. Confirm Scope and Prerequisites
 
-1. Confirm requested levels, topic, autonomy mode, capture profile, narration
-   engine, audience, delivery context, approved voice, the Azure Speech region
-   under `narration: azure`, and whether a GIF is explicitly requested. Apply
+1. Confirm requested levels, topic, autonomy mode, capture profile, audience,
+   delivery context, approved voice, the Azure Speech region, and whether a GIF
+   is explicitly requested. Apply
    the documented defaults for anything unstated, and under `full` never prompt
   for them. Reject `capture: live` for L100 and L200 before creating level
   artifacts; those levels require deterministic deck-export frames.
 2. Create `.copilot-tracking/demo-material/{{YYYY-MM-DD}}/{{level}}/` with the
    subdirectories defined in the skill's output contract.
-3. Check `uv`, LibreOffice, the narration engine in force (Azure Speech
-  authentication, or the Piper executable and voice), and `rpi-research`
-  availability as needed. For `capture: live`, check the VS Code CLI and
+3. Check `uv`, the loaded `hve-slides` root, Node.js 24+, pinned reveal.js,
+  Chromium in `vscode-playwright`, Azure Speech authentication under
+  `narration: azure`, and `rpi-research` availability as needed. For `capture: live`, check the VS Code CLI and
   select the `vscode-playwright` scripted path for unattended or repeatable
   work. Check its Playwright environment and Chromium. The interactive path
   instead requires Playwright MCP browser tools and `curl`; test navigation
@@ -258,21 +252,21 @@ through a human-configured pipeline outside the agent.
 ### 3. Build and Validate the Deck
 
 1. Copy the skill's `templates/style.yaml` to the level's
-   `content/global/style.yaml` and substitute only the deck title, subject,
-   keywords, and slide list. Leave every other value as the template sets it.
-2. Dispatch `PowerPoint Subagent` with the level directory as its working
-   directory, `content/` as content directory,
-   `content/global/style.yaml` as style path, the research document, writing
-   guidance, output PPTX path, and a `changes/` execution log path.
-3. Dispatch the `build-content`, `build-deck`, and `validate` tasks in order.
-   Consume each returned log before starting the next task.
-4. Run the `powerpoint` skill's vision slide check over the exported frames as
-   part of deck validation. The property and geometry checks do not inspect
-   rendered text, so they pass decks whose shape labels are clipped or broken
-   mid-word. Record `validation.deck: pass` only when the vision check reports
-   no error-severity finding.
-5. Resolve validation errors before capture. Record validation warnings and
-   their disposition in the manifest.
+  `content/global/style.yaml` and set title, subject, keywords and language.
+2. Author using `references/slide-content.md`. Preserve notes, citations,
+  significant text, order and relationships. Resolve unsupported mappings and
+  missing images rather than dropping content to obtain a successful build.
+3. Complete live captures needed by image elements before building, applying
+  the capture-plan gate and procedure in step 4.2 before any capture runs.
+  Run `html_deck.py` with the canonical template from the loaded `hve-slides`
+  root and caller-owned source destination, then activate `hve-slides`
+  render-only with `output/hve-demo-<level>.html` as destination.
+4. Run the demo skill's `check_html_deck.py` offline check/export. Keep its
+  HTML/build hashes, ordered IDs and frame evidence. Inspect the delivered
+  slides for clipping, readable text, contrast and fidelity; a successful
+  bundle or metadata check alone does not establish visual quality.
+5. Record `validation.deck: pass` only when required HTML checks and visual
+  inspection have no unresolved errors. Record warnings and dispositions.
 
 ### 4. Capture and Narrate
 
@@ -281,9 +275,11 @@ For `narration: none`, use the skill's scripted rendering path with
 capture profile and approval gates; verify `T-11` and record the silent timing
 basis before delivery.
 
-1. For any level under `capture: deck-export`, dispatch `PowerPoint Subagent`
-   with task type `export` to place deterministic deck frames in `frames/`.
-2. For L300 and L400 under `capture: live`, gate the live VS Code capture plan
+1. Use `check_html_deck.py --level-dir <level-dir> --frames-dir <level-dir>/frames/deck` to export
+  1920x1080 slide-canvas frames from the delivered HTML. Supporting frames
+  do not waive required live-capture or character evidence.
+2. For L300 and L400 under `capture: live`, acquire image inputs before the
+  HTML build and reuse that current evidence here. Gate the live VS Code capture plan
    under `manual` only; under `partial` and `full` record
   `approvals.capture_plan: auto` and proceed. Prefer the `vscode-playwright`
   scripted capture with the approved plan, workspace, and level output root;
@@ -298,8 +294,8 @@ basis before delivery.
   to reset narrative motion. Author scenes now but record them
   only after their narration WAVs exist. Under `animation: none`, do not
   create character assets or animation clips.
-4. Use `tts-voiceover` with the narration engine in force to create per-slide
-   WAV files in `audio/`, passing `--engine piper` under `narration: piper`.
+4. Under `narration: azure`, use `tts-voiceover` with Azure AI Speech to create
+   per-slide WAV files in `audio/`.
   Apply the approved speaker-to-voice map to character scenes, keeping one
   authored content item and WAV per scene. Measure each generated WAV with
   FFprobe before recording its animation.
@@ -309,8 +305,8 @@ basis before delivery.
    Pass `--collapse-newlines` whenever speaker notes use
    YAML block scalars, because each hard line wrap in a block scalar is
    otherwise spoken as a pause: one measured level ran 361 seconds without the
-   option and 284 seconds with it. Under `narration: azure`, verify `SPEECH_KEY`
-   or `SPEECH_RESOURCE_ID` and `SPEECH_REGION` are available without reading or
+   option and 284 seconds with it. Under `narration: azure`, verify
+   `SPEECH_RESOURCE_ID` or `SPEECH_KEY` and `SPEECH_REGION` are available without reading or
    recording secret values.
 5. Under `animation: characters`, invoke the `vscode-playwright` browser-video
   recorder for each ready scene with its measured WAV duration, target WebM
@@ -356,8 +352,14 @@ basis before delivery.
 
 ## Response Format
 
+When the run stops before delivery, such as at a storyboard or capture-plan
+gate or after a planning request, first list the remaining workflow phases in
+order, from source resolution through the finalized MP4.
+
 Return a compact table with level, topic, autonomy mode, capture profile,
-animation mode, state, PPTX path, MP4 path, manifest path, delivery approval
-value, and unresolved prerequisite or blocker. Follow it with the next approval
-request when a level is `Deferred` under `manual` or `partial`, or the named
-shortfall when a level is `Deferred` under `full`.
+animation mode, narration engine, duration contract stated as the curriculum
+range (for example, `4 to 6 minutes` for L100), state, HTML path, MP4 path,
+manifest path, delivery approval value, and unresolved prerequisite or blocker.
+Follow it with the next approval request when a level is `Deferred` under
+`manual` or `partial`, or the named shortfall when a level is `Deferred` under
+`full`.

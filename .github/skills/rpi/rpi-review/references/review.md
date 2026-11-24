@@ -6,7 +6,7 @@ description: "Reference protocol for evidence-based RPI review, outcome separati
 
 ## Artifact set
 
-Review one task set using these paths:
+Review one piece of work's documents using these paths, where `{{task_slug}}` is the work's name: the task slug for a task's first work, or the name a later request's documents carry:
 
 * `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`
 * `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md`
@@ -61,6 +61,14 @@ Pass the level through the dispatch tool's reasoning-effort parameter, such as `
 
 Treat each return as suggestions. Read the cited evidence yourself, go deeper on any candidate that needs it, record an `RV-xxx` finding only when you confirm it, and assign IDs, execution status, outcome, and routes yourself. Count a requirement as consistent only when the lane cites where it is met, and read that location yourself before a material requirement supports a conformant outcome. Treat a requirement reported consistent without a location as not assessed, and compare it yourself. Helpers do not write the review record, ask the user, or decide anything. Record each lane in Scope and Evidence with its question, its reasoning effort and that effort's source (selected, user- or caller-set, frontmatter default, or host default), and what was verified.
 
+## Depth tiers
+
+| Depth      | When used                                                             | Boundary                                                                                                                                                |
+|------------|-----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `surface`  | Repeated loop in the same session that introduced significant changes | Check only files, contracts, requirements, and behavior modified by the latest loop without re-auditing settled work from earlier passes.               |
+| `standard` | Default on a task's initial Review pass                               | Reconcile every in-scope requirement, task marker, critique disposition, alignment entry, and validation check concisely without low-impact commentary. |
+| `deep`     | Explicit user request (`depth=deep`)                                  | Exhaustive contract, edge-case, cross-module, and helper-lane (`max` effort on non-mechanical lanes) reconciliation across the full boundary.           |
+
 ## Separate execution from outcome
 
 Execution status says whether planned work ran:
@@ -106,7 +114,7 @@ The opening state that the skill's Flow step 5 persists records the interpreted 
 * Review scope: [full task, Pxx, or Pxx-Txx scope]
 * Evidence set and readiness: [available compared artifacts and readiness]
 * Acceptance basis: [requirements, acceptance criteria, critique dispositions, or other review basis]
-* Review depth: [standard default or explicit-user deep]
+* Review depth: [surface, standard default, or explicit-user deep]
 * Comparison boundary: [evidence comparison and its limit]
 * Authority: [review parent compares evidence, writes findings, and owns outcome, routes, and continuation]
 * Current blockers: [active blockers]
@@ -152,12 +160,13 @@ For each user-owned or user-retained `RV-xxx`, first persist the pending item. T
 * The proposed destination and the suggested answer
 * Material uncertainty and whether more evidence could change the decision
 
-Use the host's question tool, such as `vscode_askQuestions`, when available, with one finding per turn. Configure freeform input and offer:
+Use the host's question tool, such as `ask_user` or `vscode_askQuestions`, when available, with one finding per turn. Configure freeform input and offer:
 
 * `Use suggested action: [plain-language action]`, marked recommended
 * `Gather more information`
 * `Skip this item`
 * `Finish review decisions`
+* `Answered in the canvas`, only while an RPI Workflow canvas shows the session; when the user chooses it, collect the answer with the canvas's `take_feedback` action
 
 The freeform box lets the user provide another route, owner, rationale, constraint, or evidence request. When the question tool is unavailable, present the same choices in chat and wait.
 

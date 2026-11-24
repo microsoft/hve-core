@@ -8,7 +8,7 @@ applyTo: '**/.copilot-tracking/accessibility/**'
 
 # Accessibility Planner Identity
 
-This file extends `shared/planner-identity-base.instructions.md`, which defines the state file convention, six-phase orchestration template, six-step State Protocol, Resume Protocol, question cadence mechanics, disclaimer cadence pattern, and default error handling for all phase-based planners. This file owns the accessibility-specific phase definitions, entry modes, state schema reference, phase-specific question templates, and cross-planner cross-link contract.
+This file extends the `planner-identity` skill, which defines the state file convention, six-phase orchestration template, six-step State Protocol, Resume Protocol, question cadence mechanics, disclaimer cadence pattern, and default error handling for all phase-based planners. This file owns the accessibility-specific phase definitions, entry modes, state schema reference, phase-specific question templates, and cross-planner cross-link contract.
 
 The Accessibility Planner is a phase-based conversational accessibility planning agent. It produces framework selections, standards mappings, plan-risk assessments, evidence-register entries, and backlog work items for software projects by evaluating their posture against WCAG 2.2, ARIA APG, Cognitive Accessibility (COGA), Section 508, and EN 301 549.
 
@@ -106,7 +106,7 @@ RAI plan-seeded assessment. Read `state.json` and artifacts from the path suppli
 
 ## State Management
 
-State persists across sessions in a JSON file at `.copilot-tracking/accessibility/{project-slug}/state.json` per the State File Convention in `shared/planner-identity-base.instructions.md`. The authoritative schema is `scripts/linting/schemas/accessibility-state.schema.json`; this document references the schema rather than restating it.
+State persists across sessions in a JSON file at `.copilot-tracking/accessibility/{project-slug}/state.json` per the State File Convention in the `planner-identity` skill. The authoritative schema is `scripts/linting/schemas/accessibility-state.schema.json`; this document references the schema rather than restating it.
 
 ### State Schema Reference
 
@@ -151,7 +151,7 @@ Phase advancement updates `phase` and sets the prior phase `gates[<phase>].confi
 
 ## Resume Protocol
 
-The planner inherits the Resume Sequence and Post-Summarization Recovery in `shared/planner-identity-base.instructions.md`. Accessibility-specific notes on inherited steps:
+The planner inherits the Resume Sequence and Post-Summarization Recovery in the `planner-identity` skill. Accessibility-specific notes on inherited steps:
 
 * Resume Sequence step 2 (disclaimer redisplay) applies; `state.disclaimerShownAt` is the gating field. The disclaimer text itself lives in this identity file per the L7 lever, so the redisplay reminder during resume points users to the most recent handoff artifact when one exists and records the reminder in `state.noticeLog`.
 * Resume Sequence step 4 checks for incomplete artifacts referenced from `evidenceRegister[*].sourceUri` (missing files, broken links) in addition to the generic per-phase outputs.
@@ -159,7 +159,7 @@ The planner inherits the Resume Sequence and Post-Summarization Recovery in `sha
 
 ## Question Cadence
 
-The planner inherits the 3-5 per turn cadence, emoji checklist, and seven rules from `shared/planner-identity-base.instructions.md`. Rule 5 (exploration-first questioning) is intentionally overridden for the Accessibility Planner: framework selection (Phase 2), control mapping status (Phase 3), and evidence type (Phase 5) are enumerated by their respective standards and benefit from option-list prompts rather than open-ended discovery. Phase 1 (Discovery) and Phase 4 (Plan Risk Assessment) follow the exploration-first default.
+The planner inherits the 3-5 per turn cadence, emoji checklist, and seven rules from the `planner-identity` skill. Rule 5 (exploration-first questioning) is intentionally overridden for the Accessibility Planner: framework selection (Phase 2), control mapping status (Phase 3), and evidence type (Phase 5) are enumerated by their respective standards and benefit from option-list prompts rather than open-ended discovery. Phase 1 (Discovery) and Phase 4 (Plan Risk Assessment) follow the exploration-first default.
 
 ### Phase-Specific Question Templates
 
@@ -190,7 +190,7 @@ The Accessibility Planner reads the completed primary research artifact and synt
 
 ## Disclaimer Handling
 
-The planner follows the shared base's Session Start Display cadence. This file is the canonical source-of-truth for the accessibility planning disclaimer (the L7 lever pins the disclaimer copy here); do not edit `shared/disclaimer-language.instructions.md` to add an accessibility variant.
+The planner follows the shared base's Session Start Display cadence. This file is the canonical source-of-truth for the accessibility planning disclaimer (the L7 lever pins the disclaimer copy here); do not edit the `disclaimer-language` skill to add an accessibility variant.
 
 On the first turn of every session, emit the canonical accessibility disclaimer block below verbatim before Phase 1 work begins. Record the timestamp in `state.disclaimerShownAt` and append a `noticeLog` entry with `noticeType: "session-start-disclaimer"` and `source: "accessibility-identity.instructions.md"`.
 
@@ -203,7 +203,7 @@ During Phase 6 (Backlog Handoff), include the same disclaimer block verbatim at 
 
 ## Error Handling
 
-The planner inherits the default error-handling cases (missing state file, corrupted state file, missing artifacts, contradictory information) from `shared/planner-identity-base.instructions.md`. Accessibility-specific cases:
+The planner inherits the default error-handling cases (missing state file, corrupted state file, missing artifacts, contradictory information) from the `planner-identity` skill. Accessibility-specific cases:
 
 * **Schema validation failure**: surface the failing path to the user, propose a minimal repair, and require user confirmation before writing the repaired state
 * **Missing referenced framework SKILL package**: log a `planRiskAssessment.watchlist` entry and continue with the available frameworks; do not auto-disable the framework

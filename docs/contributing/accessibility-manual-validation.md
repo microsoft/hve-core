@@ -2,7 +2,7 @@
 title: HVE Core docs accessibility manual validation
 description: Per-behavior manual validation steps for the HVE Core documentation site accessibility fixes, paired with the shared real screen reader testing procedure.
 author: Microsoft
-ms.date: 2026-08-09
+ms.date: 2026-11-06
 ms.topic: how-to
 sidebar_position: 2
 keywords:

@@ -4,7 +4,7 @@
 #
 # pester.config.ps1
 #
-# Purpose: Pester 5.x configuration for HVE-Core PowerShell testing
+# Purpose: Pester 6.x configuration for HVE-Core PowerShell testing
 # Author: HVE Core Team
 #
 

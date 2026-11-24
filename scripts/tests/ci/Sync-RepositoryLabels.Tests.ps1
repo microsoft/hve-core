@@ -516,7 +516,7 @@ Describe 'Label workflow and fixture contracts' -Tag 'Unit' {
         $Sync.env.GH_TOKEN | Should -Be '${{ secrets.GITHUB_TOKEN }}'
         @($Job.steps | Where-Object { $_.uses -like 'EndBug/*' }).Count | Should -Be 0
         ($Job.steps | Where-Object { $_.uses -like 'actions/checkout@*' }).with.'persist-credentials' | Should -BeFalse
-        @($Job.steps | Where-Object uses -eq './.github/actions/setup-ps-modules').Count | Should -Be 1
+        @($Job.steps | Where-Object uses -eq '$/.github/actions/setup-ps-modules').Count | Should -Be 1
     }
 
     It 'Exposes the script through the package entrypoint without dependency changes' {

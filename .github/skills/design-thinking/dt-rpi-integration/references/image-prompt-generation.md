@@ -26,10 +26,11 @@ Prompts are authored as part of YAML concept cards and optionally used with M365
 Transform concept into visualization prompt using this sequence:
 
 1. **Identify Core Interaction**: What single action or outcome does this concept test?
-2. **Extract Visual Elements**: Who (stakeholder archetype), what (tool/object), where (environmental context from Methods 3-4)
-3. **Constrain Text**: Use only short, quoted labels when text is essential
-4. **Apply Lo-Fi Enforcement**: Add all 5 required style directive layers
-5. **Validate 15-Second Test**: Could this be sketched on a napkin in 15 seconds?
+2. **Extract Visual Elements**: Who (stakeholder archetype by role), what (tool/object), where (environmental context from Methods 3-4)
+3. **Remove Personal Traits**: Apply the representation safeguards below before writing the prompt
+4. **Constrain Text**: Use only short, quoted labels when text is essential
+5. **Apply Lo-Fi Enforcement**: Add all 5 required style directive layers
+6. **Validate 15-Second Test**: Could this be sketched on a napkin in 15 seconds?
 
 **Concept → Prompt Workflow:**
 
@@ -48,6 +49,16 @@ Prompt: "Create a simple stick-figure scene of a factory worker pointing
         Black-and-white line art, stick figures, minimal lines, no shading,
         plain white background."
 ```
+
+## Representation and Stereotype Safeguards
+
+Concept prompts depict a role performing one interaction, never a specific person. Interview notes, personas, and customer cards often carry a participant's name, age, gender, ethnicity, or appearance; none of that belongs in a prompt by default.
+
+* Describe the person by role and action: "an office manager reviewing a dashboard", "a technician scanning a machine".
+* Leave out names, age, gender, ethnicity, body type, clothing, and other appearance details drawn from interviews or personas.
+* Include a personal characteristic only when `Observed` or `Reported` evidence from Methods 2-3 shows it matters to the concept. Then describe the need or constraint rather than the trait: "a person holding a phone at arm's length to read small text", not "an elderly person".
+* Do not infer a trait from a name, a role, or an age. An interview with a 50-year-old participant named Ashley becomes "a stick-figure office manager reviewing a dashboard", not "an older woman at a desk".
+* Image models can fill in stereotyped defaults even for role-only prompts, such as drawing every nurse as a woman. After generation, review each image for stereotyped or one-sided depictions. Regenerate, changing one prompt constraint at a time, until the image reads as a neutral role sketch.
 
 ## Image Prompt Structure
 
@@ -69,7 +80,7 @@ Minimal lines, plain white background, black-and-white line art, no shading.
 
 **Subject, Context, Style, Focus, Exclusions:**
 
-* **Subject**: Stakeholder archetype (worker, nurse, manager) + tool/object
+* **Subject**: Stakeholder archetype by role (worker, nurse, manager) + tool/object, with no personal traits unless evidence requires them
 * **Context**: Environmental constraints (factory floor, hospital bed, office desk) only when relevant
 * **Style**: Always "stick-figure" or "simple line drawing" with "black-and-white line art"
 * **Focus**: Single core interaction validating one key assumption
@@ -113,7 +124,7 @@ Minimal lines, plain white background, black-and-white line art, no shading.
 **Between Methods 5 and 6** — Images Generated (Optional):
 
 * Optional generation: Use M365 Copilot or a modern image model to generate images from `concepts.yml` prompts
-* Review generated PNGs and regenerate if outputs violate lo-fi standards, changing one prompt constraint at a time
+* Review generated PNGs and regenerate if outputs violate lo-fi standards or show stereotyped depictions of people, changing one prompt constraint at a time
 
 **Method 5c (Concept Evaluation)** — Images Used for Alignment:
 

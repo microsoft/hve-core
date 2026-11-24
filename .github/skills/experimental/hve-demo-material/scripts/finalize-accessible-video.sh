@@ -30,7 +30,7 @@ Usage: $(basename "$0") --level <L100|L200|L300|L400> --level-dir <dir>
 Options:
   --level <level>      Level label from the curriculum
   --level-dir <dir>    Authored level directory containing content/ and output/
-  --narration <azure|piper|none>  Audio mode (default: azure; none removes all audio)
+  --narration <azure|none>  Audio mode (default: azure; none removes all audio)
   --check-prerequisites
                        Resolve and print compatible FFmpeg executables, then exit
   -h, --help           Show this help message
@@ -196,13 +196,23 @@ validate_tools() {
 }
 
 validate_args() {
-  [[ "${NARRATION}" =~ ^(azure|piper|none)$ ]] || err "Invalid narration mode."
+  [[ "${NARRATION}" =~ ^(azure|none)$ ]] || err "Invalid narration mode."
   [[ "${LEVEL}" =~ ^L[1-4]00$ ]] || err "--level must be L100 to L400."
   [[ -d "${LEVEL_DIR}/content" ]] || err "No content/ under ${LEVEL_DIR}."
   [[ -d "${LEVEL_DIR}/output" ]] || err "No output/ under ${LEVEL_DIR}."
   LEVEL_DIR="$(cd "${LEVEL_DIR}" && pwd)"
+  case "${LEVEL_DIR}/" in
+    "${SKILL_ROOT}/"*) err "Level outputs must not be inside the skill installation." ;;
+  esac
+  local current="${LEVEL_DIR}/.venv/hve-demo-material"
+  while [[ "${current}" != "/" && "${current}" != "." ]]; do
+    [[ ! -L "${current}" ]] || err "Refusing a symlink in the caller environment path."
+    current="$(dirname "${current}")"
+  done
   [[ -f "${LEVEL_DIR}/output/hve-demo-${LEVEL}.raw.mp4" ]] \
     || err "Clean raw assembly missing; reassemble hve-demo-${LEVEL}.raw.mp4 before finalizing."
+  export UV_PROJECT_ENVIRONMENT="${LEVEL_DIR}/.venv/hve-demo-material"
+  export UV_FROZEN=true
 }
 
 finalize_video() {

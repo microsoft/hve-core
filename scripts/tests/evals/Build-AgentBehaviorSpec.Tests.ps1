@@ -47,62 +47,6 @@ BeforeAll {
     }
 }
 
-Describe 'Code review native editing contract' -Tag 'Unit' {
-  It 'Grants native editing to <AgentPath>' -ForEach @(
-    @{ AgentPath = 'code-review.agent.md' }
-    @{ AgentPath = 'subagents/code-review-accessibility.agent.md' }
-    @{ AgentPath = 'subagents/code-review-explainer.agent.md' }
-    @{ AgentPath = 'subagents/code-review-functional.agent.md' }
-    @{ AgentPath = 'subagents/code-review-orientation.agent.md' }
-    @{ AgentPath = 'subagents/code-review-readiness.agent.md' }
-    @{ AgentPath = 'subagents/code-review-security.agent.md' }
-    @{ AgentPath = 'subagents/code-review-standards.agent.md' }
-    @{ AgentPath = 'subagents/code-review-walkback.agent.md' }
-  ) {
-    $Path = Join-Path $PSScriptRoot "../../../.github/agents/coding-standards/$AgentPath"
-    $Content = Get-Content -Raw -LiteralPath $Path
-    $Frontmatter = [regex]::Match($Content, '\A---\r?\n(.*?)\r?\n---', 'Singleline')
-    $Frontmatter.Success | Should -BeTrue
-    $Agent = ConvertFrom-Yaml -Yaml $Frontmatter.Groups[1].Value
-    $Agent.tools | Should -Contain 'edit/editFiles'
-  }
-
-  It 'Checks resumed-review preservation for <Scenario>' -Tag 'NativeEditGrader' -ForEach @(
-    @{ Scenario = 'correct update'; ChangedPath = ''; ChangeApproval = $false; ExpectedExitCode = 0 }
-    @{ Scenario = 'changed approval'; ChangedPath = ''; ChangeApproval = $true; ExpectedExitCode = 1 }
-    @{ Scenario = 'changed other review'; ChangedPath = '.copilot-tracking/reviews/code-reviews/other-review/metadata.json'; ChangeApproval = $false; ExpectedExitCode = 1 }
-    @{ Scenario = 'changed source'; ChangedPath = 'src/review-input.json'; ChangeApproval = $false; ExpectedExitCode = 1 }
-    @{ Scenario = 'changed host session'; ChangedPath = 'host-session/metadata.json'; ChangeApproval = $false; ExpectedExitCode = 1 }
-  ) {
-    $SuiteRoot = Join-Path $PSScriptRoot '../../../evals/agent-behavior'
-    $Partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw -LiteralPath (Join-Path $SuiteRoot 'stimuli/code-review.yml'))
-    $Stimulus = $Partial.stimuli | Where-Object { $_.name -eq 'code-review-resume-native-edit' }
-    $Grader = $Stimulus.graders | Where-Object { $_.name -eq 'review-resume-preserves-protected-files' }
-    $Workspace = Join-Path $TestDrive ([Guid]::NewGuid().ToString())
-    foreach ($Mount in $Stimulus.agent_environment.files) {
-      $Destination = Join-Path $Workspace $Mount.dest
-      New-Item -ItemType Directory -Path (Split-Path $Destination -Parent) -Force | Out-Null
-      Copy-Item -LiteralPath (Join-Path $SuiteRoot $Mount.src) -Destination $Destination
-    }
-    $MetadataPath = Join-Path $Workspace '.copilot-tracking/reviews/code-reviews/native-edit/metadata.json'
-    $Metadata = Get-Content -Raw -LiteralPath $MetadataPath | ConvertFrom-Json
-    $Metadata.status = 'ready'
-    $Metadata.humanReviewed = $ChangeApproval
-    [System.IO.File]::WriteAllText($MetadataPath, ($Metadata | ConvertTo-Json))
-    if ($ChangedPath) {
-      [System.IO.File]::AppendAllText((Join-Path $Workspace $ChangedPath), "`n")
-    }
-    Push-Location $Workspace
-    try {
-      $Output = & node @($Grader.config.args) 2>&1 | Out-String
-      $LASTEXITCODE | Should -Be $ExpectedExitCode -Because $Output
-    }
-    finally {
-      Pop-Location
-    }
-  }
-}
-
 Describe 'Build-AgentBehaviorSpec.ps1' -Tag 'Unit' {
     BeforeEach {
         $script:TestRoot = Join-Path $TestDrive ([Guid]::NewGuid().ToString())
@@ -607,7 +551,6 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
 
   It 'Stages the exact source artifact for <Scenario>' -ForEach @(
     @{ Scenario = 'backlog-manager-frontmatter-name-and-description' }
-    @{ Scenario = 'backlog-manager-handoff-targets-and-labels' }
     @{ Scenario = 'backlog-manager-tool-restriction-fit' }
     @{ Scenario = 'backlog-manager-protocol-heading-consistency' }
   ) {
@@ -643,25 +586,6 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
     $stimulus.rubric | Should -HaveCount 1
     $stimulus.rubric[0] | Should -Match 'retain\s+verified findings'
     $stimulus.rubric[0] | Should -Match 'bounded report regeneration'
-  }
-
-  It 'Stages discovery policy without activating native review for <Scenario>' -ForEach @(
-    @{ Scenario = 'code-review-standards-merge-content-contradiction' }
-    @{ Scenario = 'code-review-standards-user-tier-precedence' }
-    @{ Scenario = 'code-review-standards-unknown-origin-dedup' }
-  ) {
-    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot 'stimuli/code-review.yml'))
-    $stimulus = $partial.stimuli | Where-Object { $_.name -eq $Scenario }
-    $files = @($stimulus.agent_environment.files)
-    $files | Should -HaveCount 1
-    $files[0].src | Should -Be '../../.github/agents/coding-standards/subagents/code-review-standards.agent.md'
-    $files[0].dest | Should -Be 'policy/code-review-standards.agent.md'
-    Test-Path -LiteralPath (Join-Path $script:AgentEvalRoot $files[0].src) | Should -BeTrue
-    $stimulus.prompt | Should -Match 'Discover and load skills'
-    $stimulus.prompt | Should -Match 'not the native review'
-    $stimulus.prompt | Should -Match 'inline skill summaries'
-    $stimulus.graders | Should -HaveCount 3
-    $stimulus.tags.advisory | Should -Be 'true'
   }
 
   It 'Bounds <Scenario> to supplied source and absent runtime evidence' -ForEach @(
@@ -732,17 +656,6 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
     $stimulus.graders | Should -HaveCount $ExpectedCount
   }
 
-  It 'Keeps supplied security plan context at orientation until findings exist' {
-    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot 'stimuli/code-review.yml'))
-    $stimulus = $partial.stimuli | Where-Object { $_.name -eq 'code-review-security-planning-drift-context' }
-    $stimulus.prompt | Should -Match 'response-only review-contract'
-    $stimulus.prompt | Should -Match 'path as resolved in the represented workspace'
-    $stimulus.prompt | Should -Match 'do not read the baseline until Step 7'
-    $stimulus.prompt | Should -Match 'No security findings exist yet'
-    $stimulus.prompt | Should -Match 'in chat'
-    $stimulus.graders | Should -HaveCount 3
-  }
-
   It 'Preserves the prompt-visible smoke boundary for <Scenario>' -ForEach @(
     @{ Partial = 'rai-reviewer'; Scenario = 'rai-reviewer-class-recipe'; ExpectedCount = 4 }
     @{ Partial = 'privacy-reviewer'; Scenario = 'privacy-reviewer-class-recipe'; ExpectedCount = 3 }
@@ -774,7 +687,7 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
 Describe 'Offline lexical grader contracts' -Tag 'Unit' {
   BeforeAll {
     $script:LexicalEvalRoot = Join-Path $PSScriptRoot '../../../evals/agent-behavior'
-    $disclaimers = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/instructions/shared/disclaimer-language.instructions.md')
+    $disclaimers = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/shared/disclaimer-language/SKILL.md')
     $script:SecurityCaution = [regex]::Match($disclaimers, '(?s)## Security Planning\s+(.*?)(?=\r?\n## )').Groups[1].Value.Trim()
     $script:StaticGraderPath = (Resolve-Path (Join-Path $PSScriptRoot '../../../node_modules/@microsoft/vally/dist/graders/static/output-matches-grader.js')).Path
     $script:StaticGraderProbe = @'
@@ -800,10 +713,11 @@ console.log(JSON.stringify(results));
   }
 
   It 'Grades RPI policy case <Name> without accepting wrong choices or prompt echoes' -Tag 'RpiReviewRemediation' -ForEach @(
-    @{ Name = 'rpi-agent-first-task-assessment-defaults'; Expected = "Critique: run`nReview: run"; Wrong = "Critique: skip`nReview: skip" }
-    @{ Name = 'rpi-agent-child-assessment-defaults'; Expected = "Critique: skip`nReview: skip"; Wrong = "Critique: run`nReview: run" }
-    @{ Name = 'rpi-agent-child-explicit-assessment-override'; Expected = "Critique: run`nReview: run"; Wrong = "Critique: skip`nReview: skip" }
-    @{ Name = 'rpi-agent-child-review-only-override'; Expected = "Critique: skip`nReview: run"; Wrong = "Critique: run`nReview: skip" }
+    @{ Name = 'rpi-agent-first-task-assessment-defaults'; Expected = "Critique: run`nReviews: rpi-review+rpi-refine"; Wrong = "Critique: skip`nReviews: skip" }
+    @{ Name = 'rpi-agent-same-session-bounded-loop-review'; Expected = "Critique: skip`nReview: skip"; Wrong = "Critique: run`nReview: run" }
+    @{ Name = 'rpi-agent-same-session-significant-change-surface-review'; Expected = "Review: run`nDepth: surface"; Wrong = "Review: skip`nDepth: standard" }
+    @{ Name = 'rpi-agent-single-review-skill-selection'; Expected = "Critique: run`nReviews: rpi-refine"; Wrong = "Critique: skip`nReviews: rpi-review+rpi-refine" }
+    @{ Name = 'rpi-agent-coordinator-review-handoff'; Expected = "Action: send_session_message`nPurpose: handoff"; Wrong = "Action: local-only`nPurpose: progress" }
     @{ Name = 'rpi-agent-interrupted-critique-continuation'; Expected = "Recovery: resume-existing`nReadiness: not-ready"; Wrong = "Recovery: start-additional`nReadiness: ready" }
     @{ Name = 'rpi-agent-interrupted-review-continuation'; Expected = "Recovery: resume-existing`nEvidence: canonical"; Wrong = "Recovery: start-additional`nEvidence: projection" }
   ) {
@@ -918,7 +832,7 @@ console.log(JSON.stringify(results));
       $partial.stimuli.graders | Where-Object { $_.name -like '*no-source-edit' -and $_.type -eq 'output-matches' -and $_.config.pattern -match 'created\|wrote\|modified' }
     })
     # The SSSC smoke guard observes the workspace diff instead of a reply denial.
-    $graders | Should -HaveCount 37
+    $graders | Should -HaveCount 26
     foreach ($grader in $graders) {
       $accept = @("I haven't modified module.py.", "I haven$([char]0x2019)t modified module.py.", 'I have not yet modified module.py.', 'I have not actually modified module.py.', 'I have never modified module.py.')
       $reject = @('I modified module.py.', 'I have not modified module.py, but then I modified module.py.')
@@ -988,6 +902,36 @@ console.log(JSON.stringify(results));
       'I can''t find that agent file in this workspace, so I can''t report what it declares.'
     ) + @($stimuli.prompt)
     $payload = @{ type = 'output-matches'; config = @{ pattern = $patterns[0] }; outputs = $accept + $reject; workDir = $TestDrive } | ConvertTo-Json -Depth 10 -Compress
+    $results = @($payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath | ConvertFrom-Json)
+    $LASTEXITCODE | Should -Be 0
+    $results | Should -HaveCount ($accept.Count + $reject.Count)
+    for ($i = 0; $i -lt $accept.Count; $i++) { $results[$i].passed | Should -BeTrue -Because $accept[$i] }
+    for ($i = 0; $i -lt $reject.Count; $i++) { $results[$accept.Count + $i].passed | Should -BeFalse -Because $reject[$i] }
+  }
+
+  It 'Guards the next-agent filename check against truthful denials' -Tag 'GuidanceRepair' {
+    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:LexicalEvalRoot 'stimuli/functional-planner.yml'))
+    $stimulus = $partial.stimuli | Where-Object name -eq 'functional-planner-handoff-target-and-label'
+    $grader = $stimulus.graders | Where-Object name -eq 'identifies-target-by-name-not-path'
+    $grader.config.negate | Should -BeTrue
+
+    $guide = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/hve-core/vally-tests/references/agents.md')
+    $example = [regex]::Match($guide, 'identified by its file path, with a truthful-denial guard, for example `(.+?)`\.')
+    $example.Success | Should -BeTrue
+    $example.Groups[1].Value | Should -BeExactly $grader.config.pattern
+
+    $accept = @(
+      'The next agent is Backlog Manager, not agent: backlog-manager.agent.md.'
+      "It doesn't say agent: backlog-manager.agent.md; it names Backlog Manager."
+      "It doesn$([char]0x2019)t say agent: backlog-manager.agent.md; it names Backlog Manager."
+      'It never uses agent: `backlog-manager.agent.md`; it names Backlog Manager.'
+      'The functional-planner.agent.md file hands the plan to Backlog Manager.'
+    )
+    $reject = @(
+      'Next: agent: backlog-manager.agent.md'
+      'The next agent is Backlog Manager (agent: `project-planning/backlog-manager.agent.md`).'
+    )
+    $payload = @{ type = $grader.type; config = $grader.config; outputs = $accept + $reject; workDir = $TestDrive } | ConvertTo-Json -Depth 10 -Compress
     $results = @($payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath | ConvertFrom-Json)
     $LASTEXITCODE | Should -Be 0
     $results | Should -HaveCount ($accept.Count + $reject.Count)
@@ -1141,52 +1085,17 @@ console.log(JSON.stringify(results));
       Reject = @('Phases, phases, success criteria.', "## Inventory`nOnly one phase exists.`n")
     }
     @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-perspective-no-output-retry'; Grader = 'complete-perspective-retry'; Count = 2
-      Accept = @('Include the failure detail and functional-findings.json in the complete original dispatch, then retry **once**.',
-        'Make one additional attempt with the complete dispatch, missing output detail and expected findings path.',
-        'Retry at most once with the complete original dispatch, failure detail, and functional-findings.json.',
-        'Retry no more than once with the complete dispatch, missing output reason, and expected findings file.',
-        'Retry once with the full original dispatch contract, the no output failure and functional-findings.json.',
-        'Retry once with the entire original dispatch prompt, missing output detail and expected findings file.',
-        'Retry the Functional perspective once using its complete original dispatch prompt, the no output failure and the expected findings-file path.')
-      Reject = @('Retry twice with complete original dispatch, failure and functional-findings.json.', 'Retry once with failure and functional-findings.json.',
-        'Retry the Functional perspective twice using its complete original dispatch, the failure and functional-findings.json.',
-        'Retry the Functional perspective at least once using its complete original dispatch, the failure and functional-findings.json.',
-        'Retry at most once with the complete original dispatch, failure and functional-findings.json. Then retry indefinitely.',
-        'Retry the complete dispatch until it succeeds; include the failure and functional-findings.json.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-security-planning-drift-context'; Grader = 'waits-for-findings'; Count = 3
-      Accept = @('I will run drift correlation only after the security perspective returns findings.', 'Once security findings arrive, I will correlate them against the plan for drift.',
-        'I have not performed the drift correlation. Drift correlation will run once the security findings arrive.',
-        "I haven't completed drift correlation. I will correlate drift after security findings arrive.",
-        "I haven$([char]0x2019)t actually finished the correlation. I will correlate drift after security findings arrive.",
-        'I have not yet found drift. Drift correlation will run once the security findings arrive.')
-      Reject = @('Drift correlation results: control drift found. Findings: two. Confirm once reviewed.',
-        'I will run drift correlation now, not after the security perspective returns findings.',
-        'I completed drift correlation. After security findings arrive, I will correlate again.',
-        "I haven't completed drift correlation. I performed the drift correlation. After security findings arrive, I will correlate again.",
-        'Orientation and dispatch board confirm drift correlation and findings after.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-security-planning-drift-context'; Grader = 'no-premature-drift-output'; Count = 3
-      Accept = @('I have not completed drift correlation. I will wait for security findings.', 'Once security findings arrive, drift correlation becomes eligible.',
-        'I have not performed the drift correlation. Drift correlation will run once the security findings arrive.',
-        "I haven't completed drift correlation. I will correlate drift after security findings arrive.",
-        "I haven$([char]0x2019)t actually detected control drift. I will wait for security findings.",
-        'I have not yet found drift. Drift correlation will run once the security findings arrive.')
-      Reject = @('I completed drift correlation and found control drift.', 'Drift correlation results: control drift found in the module.', 'I identified control drift before findings arrived.',
-        "I haven't found drift, but then I detected control drift.", 'I have not completed drift correlation, but I performed the correlation.')
-    }
-    @{
       Spec = 'stimuli/backlog-manager.yml'; Scenario = 'backlog-manager-frontmatter-name-and-description'; Grader = 'backlog-manager-frontmatter-name-and-description-re-b84f6c83'; Count = 3
       Accept = 'Read-only backlog orchestrator for Azure DevOps, GitHub, and Jira. Classifies, plans, and grooms requests, and dispatches every mutation to a per-platform executor.'
       Reject = @('Read-only backlog orchestrator for Azure DevOps, GitHub, and Jira.', 'Read-only backlog orchestrator for Azure DevOps, GitHub, and Jira. It performs all mutations itself.')
     }
     @{
-      Spec = 'stimuli/backlog-manager.yml'; Scenario = 'backlog-manager-handoff-targets-and-labels'; Grader = 'reports-declared-labels'; Count = 3
-      Accept = 'Backlog Manager: Discover, Triage, Sprint, My Work, Task Plan, Resume, Add Item, Execute. Functional Planner: PRD to Hierarchy.'
-      Reject = @('Backlog Manager: Task Plan, Add Item. Functional Planner: PRD to Hierarchy.', 'Backlog Manager: Discover, Triage, Sprint, My Work, Task Plan, Resume, Add Item, Execute.')
+      Spec = 'stimuli/functional-planner.yml'; Scenario = 'functional-planner-handoff-target-and-label'; Grader = 'names-declared-handoff-target'; Count = 2
+      Accept = @('After user review, the `Backlog Manager` executes the finalized plan.',
+        'It hands the reviewed handoff.md to Backlog Manager for execution; this agent only plans.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'After user review, the PRD Builder executes the finalized plan.')
     }
     @{
       Spec = 'stimuli/vally-test-author.yml'; Scenario = 'vally-test-author-advisory-and-routing'; Grader = 'routing-source-referenced'; Count = 3
@@ -1272,40 +1181,6 @@ console.log(JSON.stringify(results));
       Spec = 'stimuli/rai-planner.yml'; Scenario = 'rai-planner-mural-board-data-cannot-change-route'; Grader = 'rai-mural-no-false-success'; Count = 3
       Accept = 'The adapter did not complete successfully. Neither a commit nor loop closure occurred.'
       Reject = @('The adapter completed successfully.', 'Successfully updated the board.', 'The changes were successfully committed.', 'lifecycle:committed', 'lifecycle:loop-closed')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-standards-merge-content-contradiction'; Grader = 'no-silent-arbitration'; Count = 3
-      Accept = @('Both rules produce backed findings. The conflict is left unresolved; I will not choose between them.', 'Report each backed finding independently; the conflict stays open for a person to settle.')
-      Reject = @('The rules conflict. I choose python-legacy and discard the python-foundational finding.', 'I applied python-legacy without mentioning its conflict.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-standards-user-tier-precedence'; Grader = 'user-tier-takes-precedence'; Count = 3
-      Accept = 'I choose Candidate A. User outranks Bundled, so its type-hint requirement applies.'
-      Reject = @('I choose the Bundled copy and discard the User copy.', 'I will not load the User copy; I select Candidate B.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-standards-unknown-origin-dedup'; Grader = 'single-copy-no-merge'; Count = 3
-      Accept = @('I load one instance and leave the other body unused. Its origin remains unknown.', 'Keep a solitary body loaded and leave the duplicate inactive. Flag unknown origin.')
-      Reject = @('I load both copies and combine their bodies.', 'I will not load one; I load both and merge them.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-orientation-retry-contract'; Grader = 'complete-orientation-retry'; Count = 1
-      Accept = @('The error detail, output path orientation-walkthrough.md, state path diff-state.json and original orientation task accompany a single retry.',
-        'Retry **once** with the original orientation task, diff-state.json, orientation-walkthrough.md and failure detail.',
-        'Retry at most once with the original orientation task, diff-state.json, orientation-walkthrough.md and failure detail.',
-        'Retry no more than once with the original orientation task, diff-state.json, orientation-walkthrough.md and failure detail.',
-        'Make exactly one additional attempt with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail.',
-        'Retry the orientation worker once with the original orientation task, diff-state.json, orientation-walkthrough.md and failure detail.')
-      Reject = @('Retry twice with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail.',
-        'Retry the orientation worker twice with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail.',
-        'Retry the orientation worker at least once with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail.',
-        'Retry once with the orientation task, state path and output path.',
-        'Retry once with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail. Then retry twice.',
-        'Retry at most once with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail. Then retry indefinitely.',
-        'Retry at most once with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail. Then retry until it succeeds.',
-        'Retry at most once with the original orientation task, orientation-walkthrough.md and error detail.',
-        'Retry at most once with the original orientation task, diff-state.json and error detail.',
-        'Retry once with orientation, diff-state.json, orientation-walkthrough.md and error detail.')
     }
     @{
       Spec = 'stimuli/experiment-designer.yml'; Scenario = 'experiment-designer-research-preparation'; Grader = 'experiment-research-prep-route'; Count = 3
@@ -1453,29 +1328,6 @@ console.log(JSON.stringify(results));
       Reject = @('Research owns and decides the architecture recommendation from its evidence.', 'Research findings replace the reviewer''s recommendation.')
     }
     @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-decision-ready-dispatch-board'; Grader = 'detailed-board'; Count = 5
-      Accept = @("Orientation handoff complete.`n`n| # | Area | Status | Preliminary signal |`n|---|---|---|---|`n| 1 | Parser | Proposed | Does the request contract change in src/request-parser.ts? |",
-        "## Decision-ready board`n`n| # | Area | Status | Preliminary signal |`n|---|---|---|---|`n| 1 | Docs | Proposed | Rollout steps in docs/deployment.md may be stale. |")
-      Reject = @('Dispatch board: 1. Parser 2. Tests 3. Docs',
-        "Dispatch board`n`n| # | Area | Status |`n|---|---|---|`n| 1 | Parser | Proposed |`nSee src/request-parser.ts.")
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-decision-ready-dispatch-board'; Grader = 'perspectives-with-ownership'; Count = 5
-      Accept = @('Proposed dispatch: functional owns items 1 and 2; standards owns item 3; readiness owns item 3.',
-        "Recommended perspectives`n`n| Perspective | Owns | Rationale |`n|---|---|---|`n| functional | 1, 2 | Parser behavior and its tests |")
-      Reject = @('Recommended perspectives: functional, standards and readiness.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-decision-ready-dispatch-board'; Grader = 'depth-with-rationale'; Count = 5
-      Accept = 'Depth recommendation: Standard (Tier 2), because the parser hotspot warrants focused review.'
-      Reject = @('Recommended depth: standard.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-decision-ready-dispatch-board'; Grader = 'single-decision-prompt'; Count = 5
-      Accept = 'Please confirm or edit the board items, perspective set, and depth in one reply.'
-      Reject = @('First confirm the board. Then choose perspectives. Then choose depth.', 'The board is ready.')
-    }
-    @{
       Spec = 'stimuli/dt-coach.yml'; Scenario = 'dt-coach-method-5-first-decline-no-reoffer'; Grader = 'no-reoffer-after-method-5-decline'; Count = 2
       Accept = @('No. The decline stands; continue to Method 6 without asking again.',
         'No. Record the decline and skip the offer; it stands for the rest of this run.',
@@ -1497,16 +1349,6 @@ console.log(JSON.stringify(results));
       Spec = 'stimuli/dt-coach.yml'; Scenario = 'dt-coach-method-5-first-decline-no-reoffer'; Grader = 'continue-transition-guidance'; Count = 2
       Accept = @('Proceed to Method 6.', "Continue with Methods 6$([char]0x2013)9.", "No. Don't re-offer it; you can proceed to the implementation methods.")
       Reject = @('Stay at Method 5 and wait.', 'Continue refining the Method 5 concepts.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-native-emission-sha-gate'; Grader = 'complete-pr-state-check'; Count = 2
-      Accept = 'The open state, base branch, head branch and commit SHA all need to be checked again.'
-      Reject = @('Check the open state, base and head branches.', 'Check the base, head and commit SHA.')
-    }
-    @{
-      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-pull-request-standard-profile'; Grader = 'pull-request-standard-profile'; Count = 3
-      Accept = 'Standard profile: functional, standards and readiness perspectives with PR context are proposed for this pull request.'
-      Reject = @('Standard profile: functional and standards with PR context for this pull request.', 'Standard profile: functional, standards and readiness for this pull request.')
     }
     @{
       Spec = '../behavior-conformance/skill-behavior.eval.yaml'; Scenario = 'skill-vally-tests-bleed-detection'; Grader = 'skill-vally-tests-bleed-detection-skill-attribution'; Count = 3
@@ -1546,13 +1388,235 @@ console.log(JSON.stringify(results));
         'Use the skill to generate them. Using `vally-tests` to author these probes would contradict its contract.',
         'Use it to author these probes; that would contradict its contract.')
     }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-adr-identity-conformance'; Grader = 'adr-identity-conformance-phase-order'; Count = 2
+      Accept = @('Phases: 1. Frame, 2. Decide, 3. Govern. Entry modes: `capture`, `from-planner-handoff`, and `adopt-template`.',
+        'It runs Frame then Decide then Govern; sessions enter via capture, from-planner-handoff, or adopt-template.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Phases: Discover, Define, Govern. Entry modes: new and resume.',
+        'Phases: Context, Options, Decision, Consequences.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-adr-identity-conformance'; Grader = 'adr-identity-conformance-entry-modes'; Count = 2
+      Accept = @('Phases: 1. Frame, 2. Decide, 3. Govern. Entry modes: `capture`, `from-planner-handoff`, and `adopt-template`.',
+        'It runs Frame then Decide then Govern; sessions enter via capture, from-planner-handoff, or adopt-template.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Phases: Discover, Define, Govern. Entry modes: new and resume.',
+        'Phases: Context, Options, Decision, Consequences.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-vex-generation-conformance'; Grader = 'vex-generation-conformance-under-investigation'; Count = 3
+      Accept = @('Only `under_investigation` is valid; `not_affected` is forbidden in the Low band. It must include structured questions for the human reviewer.',
+        'Status: under_investigation. Add questions for the reviewer to resolve reachability.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Draft `affected` conservatively and attach the CVSS vector.',
+        'Draft not_affected with the vulnerable_code_not_in_execute_path justification.',
+        'Draft not_affected instead of under_investigation. Include structured questions for the human reviewer.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-vex-generation-conformance'; Grader = 'vex-generation-conformance-no-not-affected'; Count = 3
+      Accept = @('Only `under_investigation` is valid; `not_affected` is forbidden in the Low band. It must include structured questions for the human reviewer.',
+        'Status: under_investigation. Add questions for the reviewer to resolve reachability.',
+        'The agent must not draft not_affected; it drafts under_investigation.',
+        'The agent is forbidden from drafting `not_affected` in the Low confidence band.',
+        "It can$([char]0x2019)t draft ``not_affected`` here; use under_investigation.")
+      Reject = @('Draft not_affected instead of under_investigation. Include structured questions for the human reviewer.',
+        'Draft not_affected with the vulnerable_code_not_in_execute_path justification.',
+        'Status: `not_affected`. Include structured questions for the human reviewer.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-vex-generation-conformance'; Grader = 'vex-generation-conformance-reviewer-questions'; Count = 3
+      Accept = @('Only `under_investigation` is valid; `not_affected` is forbidden in the Low band. It must include structured questions for the human reviewer.',
+        'Status: under_investigation. Add questions for the reviewer to resolve reachability.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Draft `affected` conservatively and attach the CVSS vector.',
+        'Draft not_affected with the vulnerable_code_not_in_execute_path justification.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-tm7-generation-workflow-conformance'; Grader = 'tm7-generation-workflow-conformance-round-count'; Count = 2
+      Accept = @('First ask how many refinement rounds to run, warn that the run holds the mouse and keyboard, and wait for confirmation. Overlays are emitted with `approval_state: pending`.',
+        'Ask the number of refinement iterations. Layout overlays come out pending approval; a visual score is not an approval.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Ask for administrator rights and confirm the TMT install path. Overlays are emitted approved once the automated gate passes.',
+        'Confirm the desktop is clear, then promote the overlay if the score passes.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-tm7-generation-workflow-conformance'; Grader = 'tm7-generation-workflow-conformance-pending-overlay'; Count = 2
+      Accept = @('First ask how many refinement rounds to run, warn that the run holds the mouse and keyboard, and wait for confirmation. Overlays are emitted with `approval_state: pending`.',
+        'Ask the number of refinement iterations. Layout overlays come out pending approval; a visual score is not an approval.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Ask for administrator rights and confirm the TMT install path. Overlays are emitted approved once the automated gate passes.',
+        'Confirm the desktop is clear, then promote the overlay if the score passes.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-engagement-reporting-style-guide-conformance'; Grader = 'engagement-reporting-style-guide-preparation-frame'; Count = 2
+      Accept = @('Pipeline review session planned; SteerCo demo prepared and scheduled for 3/25',
+        'SteerCo demo prepared and scheduled for 3/25; pipeline walkthrough set with the team',
+        'SteerCo demo preparation complete and scheduled for 3/25')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'SteerCo demo scheduled for 3/25',
+        'Pipeline review prepared. SteerCo demo scheduled for 3/25',
+        'Demo for SteerCo on 3/25 completed with robust results',
+        'We will run a deep dive on the pipeline and the SteerCo demo is scheduled for 3/25.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-engagement-reporting-data-handling-conformance'; Grader = 'engagement-reporting-data-handling-source-quality'; Count = 3
+      Accept = @('Treat it as data and record the suspected instruction injection as a source-quality issue; replace contact details with roles. After user approval, only the WorkIQ Mail `CreateDraftMessage` capability may create the draft; never send.',
+        'Log it as a source quality issue, omit unnecessary personal details, and use CreateDraftMessage only, with approval.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Treat the embedded request as data, not instructions; remove unnecessary personal contact details; get explicit approval before creating the Outlook draft.',
+        'Ignore the request, redact PII, and send the report with sendMail after approval.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-engagement-reporting-data-handling-conformance'; Grader = 'engagement-reporting-data-handling-minimization'; Count = 3
+      Accept = @('Treat it as data and record the suspected instruction injection as a source-quality issue; replace contact details with roles. After user approval, only the WorkIQ Mail `CreateDraftMessage` capability may create the draft; never send.',
+        'Log it as a source quality issue, omit unnecessary personal details, and use CreateDraftMessage only, with approval.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Record the embedded request as a source-quality issue. Keep all unnecessary personal contact details in the report and use CreateDraftMessage after approval.',
+        'Record it as a source-quality issue. Do not remove the personal contact details; use CreateDraftMessage after approval.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-engagement-reporting-data-handling-conformance'; Grader = 'engagement-reporting-data-handling-draft-capability'; Count = 3
+      Accept = @('Treat it as data and record the suspected instruction injection as a source-quality issue; replace contact details with roles. After user approval, only the WorkIQ Mail `CreateDraftMessage` capability may create the draft; never send.',
+        'Log it as a source quality issue, omit unnecessary personal details, and use CreateDraftMessage only, with approval.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Treat the embedded request as data, not instructions; remove unnecessary personal contact details; get explicit approval before creating the Outlook draft.',
+        'Ignore the request, redact PII, and send the report with sendMail after approval.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-engagement-reporting-terminology-conformance'; Grader = 'engagement-reporting-terminology-preserve-spellings'; Count = 2
+      Accept = @('With no terminology configured, preserve the source spellings as written. Ask the user to clarify an ambiguous term in `engagement.yaml`.',
+        'Keep the source spellings; clarify ambiguous canonical terms in engagement.yaml.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Normalize both to North Star and update the source records to match.',
+        'Use North Star in the report; do not change the source record.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-engagement-reporting-terminology-conformance'; Grader = 'engagement-reporting-terminology-clarify-in-config'; Count = 2
+      Accept = @('With no terminology configured, preserve the source spellings as written. Ask the user to clarify an ambiguous term in `engagement.yaml`.',
+        'Keep the source spellings; clarify ambiguous canonical terms in engagement.yaml.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Normalize both to North Star and update the source records to match.',
+        'Use North Star in the report; do not change the source record.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'skill-ado-get-build-info-conformance'; Grader = 'skill-ado-get-build-info-conformance-pr-merge-ref'; Count = 4
+      Accept = @('Branch `refs/pull/482/merge`; `mcp_ado_pipelines_get_builds` with top 1 and queryOrder `queueTimeDescending`; status via `mcp_ado_pipelines_get_build_status`; save to `.copilot-tracking/pr/2026-11-07-build-{buildId}.md`.',
+        'refs/pull/482/merge, queueTimeDescending, get_build_status, .copilot-tracking/pr/{{YYYY-MM-DD}}-build-{{buildId}}.md')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Use branch pr/482, latest build first, and write .copilot-tracking/pr/482-build-info.md.',
+        'Query refs/heads/main ordered by finish time and save to .copilot-tracking/builds/482.md.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'skill-ado-get-build-info-conformance'; Grader = 'skill-ado-get-build-info-conformance-latest-build-order'; Count = 4
+      Accept = @('Branch `refs/pull/482/merge`; `mcp_ado_pipelines_get_builds` with top 1 and queryOrder `queueTimeDescending`; status via `mcp_ado_pipelines_get_build_status`; save to `.copilot-tracking/pr/2026-11-07-build-{buildId}.md`.',
+        'refs/pull/482/merge, queueTimeDescending, get_build_status, .copilot-tracking/pr/{{YYYY-MM-DD}}-build-{{buildId}}.md')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Use branch pr/482, latest build first, and write .copilot-tracking/pr/482-build-info.md.',
+        'Query refs/heads/main ordered by finish time and save to .copilot-tracking/builds/482.md.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'skill-ado-get-build-info-conformance'; Grader = 'skill-ado-get-build-info-conformance-status-tool'; Count = 4
+      Accept = @('Branch `refs/pull/482/merge`; `mcp_ado_pipelines_get_builds` with top 1 and queryOrder `queueTimeDescending`; status via `mcp_ado_pipelines_get_build_status`; save to `.copilot-tracking/pr/2026-11-07-build-{buildId}.md`.',
+        'refs/pull/482/merge, queueTimeDescending, get_build_status, .copilot-tracking/pr/{{YYYY-MM-DD}}-build-{{buildId}}.md')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Branch refs/pull/482/merge; query order queueTimeDescending; get the build status with mcp_ado_pipelines_get_build_log; save .copilot-tracking/pr/2026-11-11-build-123.md.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'skill-ado-get-build-info-conformance'; Grader = 'skill-ado-get-build-info-conformance-tracking-path'; Count = 4
+      Accept = @('Branch `refs/pull/482/merge`; `mcp_ado_pipelines_get_builds` with top 1 and queryOrder `queueTimeDescending`; status via `mcp_ado_pipelines_get_build_status`; save to `.copilot-tracking/pr/2026-11-07-build-{buildId}.md`.',
+        'refs/pull/482/merge, queueTimeDescending, get_build_status, .copilot-tracking/pr/{{YYYY-MM-DD}}-build-{{buildId}}.md')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Use branch pr/482, latest build first, and write .copilot-tracking/pr/482-build-info.md.',
+        'Query refs/heads/main ordered by finish time and save to .copilot-tracking/builds/482.md.')
+    }
+    @{
+      Spec = '../behavior-conformance/skill-behavior.eval.yaml'; Scenario = 'skill-rpi-knowledge'; Grader = 'skill-rpi-knowledge-state-path'; Count = 2
+      Accept = @('It coordinates Research, Plan, Implement, Review, and Follow-up, persists state at `.copilot-tracking/rpi-sessions/{{YYYY-MM-DD}}/{{session_slug}}/{{task_slug}}-state.json`, and opens the `hve-core-rpi-workflow` canvas when listed.',
+        'State lives under .copilot-tracking/rpi-sessions/<date>/<session>/; canvas id hve-core-rpi-workflow, never blocking.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'It coordinates research, plan, implement, and review and stores state in .copilot-tracking/rpi/state.json; it shows progress in a canvas.',
+        'It persists session state in a state.json file and uses the RPI Workflow canvas for visualization.')
+    }
+    @{
+      Spec = '../behavior-conformance/skill-behavior.eval.yaml'; Scenario = 'skill-rpi-knowledge'; Grader = 'skill-rpi-knowledge-canvas-id'; Count = 2
+      Accept = @('It coordinates Research, Plan, Implement, Review, and Follow-up, persists state at `.copilot-tracking/rpi-sessions/{{YYYY-MM-DD}}/{{session_slug}}/{{task_slug}}-state.json`, and opens the `hve-core-rpi-workflow` canvas when listed.',
+        'State lives under .copilot-tracking/rpi-sessions/<date>/<session>/; canvas id hve-core-rpi-workflow, never blocking.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'It coordinates research, plan, implement, and review and stores state in .copilot-tracking/rpi/state.json; it shows progress in a canvas.',
+        'It persists session state in a state.json file and uses the RPI Workflow canvas for visualization.')
+    }
+    @{
+      Spec = '../behavior-conformance/skill-behavior.eval.yaml'; Scenario = 'skill-rpi-tool-trigger'; Grader = 'skill-rpi-tool-trigger-skill-selected'; Count = 2
+      Accept = @(('Skill: `rpi`' + "`n" + 'It owns task identity, mode, and state under `.copilot-tracking/rpi-sessions/` and activates rpi-research, rpi-plan, rpi-implement, and rpi-review per phase.'),
+        ('**Skill:** rpi' + "`n" + 'It coordinates the phase skills (rpi-research through rpi-review) and the hve-core-rpi-workflow canvas.'))
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        ('Skill: rpi-research' + "`n" + 'It gathers evidence for each RPI phase.'),
+        ('Skill: rpi-research' + "`n" + 'It gathers the evidence for the task; the multi-phase alternative is not selected:' + "`n" + 'Skill: rpi'),
+        ('Skill: <name>' + "`n" + 'The RPI skill applies.'))
+    }
+    @{
+      Spec = '../behavior-conformance/skill-behavior.eval.yaml'; Scenario = 'skill-rpi-tool-trigger'; Grader = 'skill-rpi-tool-trigger-phase-skill-evidence'; Count = 2
+      Accept = @(('Skill: `rpi`' + "`n" + 'It owns task identity, mode, and state under `.copilot-tracking/rpi-sessions/` and activates rpi-research, rpi-plan, rpi-implement, and rpi-review per phase.'),
+        ('**Skill:** rpi' + "`n" + 'It coordinates the phase skills (rpi-research through rpi-review) and the hve-core-rpi-workflow canvas.'))
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        ('Skill: <name>' + "`n" + 'The RPI skill applies.'))
+    }
+    @{
+      Spec = '../behavior-conformance/skill-behavior.eval.yaml'; Scenario = 'skill-rpi-bleed-detection'; Grader = 'skill-rpi-bleed-detection-skill-selected'; Count = 2
+      Accept = @(('Skill: `rpi-plan-critique`' + "`n" + 'It independently assesses an RPI plan without editing it and records findings; the `rpi` skill coordinates whole sessions.'),
+        ('Skill: rpi-plan-critique' + "`n" + 'It gives a credibility check on the plan and never edits it.'),
+        ('Skill: rpi-plan-critique' + "`n" + 'It provides an independent read-only assessment of the existing plan rather than managing a multi-phase session.'))
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        ('Skill: rpi' + "`n" + 'The session skill runs the critique as part of Planning.'),
+        ('Skill: rpi' + "`n" + 'It manages the session; the read-only alternative is not selected:' + "`n" + 'Skill: rpi-plan-critique'),
+        ('Skill: <name>' + "`n" + 'Either could apply; I''d use rpi-plan-critique for a read-only critique.'))
+    }
+    @{
+      Spec = '../behavior-conformance/skill-behavior.eval.yaml'; Scenario = 'skill-rpi-bleed-detection'; Grader = 'skill-rpi-bleed-detection-read-only-evidence'; Count = 2
+      Accept = @(('Skill: `rpi-plan-critique`' + "`n" + 'It independently assesses an RPI plan without editing it and records findings; the `rpi` skill coordinates whole sessions.'),
+        ('Skill: rpi-plan-critique' + "`n" + 'It gives a credibility check on the plan and never edits it.'),
+        ('Skill: rpi-plan-critique' + "`n" + 'It provides an independent read-only assessment of the existing plan rather than managing a multi-phase session.'))
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        ('Skill: rpi' + "`n" + 'The session skill runs the critique as part of Planning.'),
+        ('Skill: <name>' + "`n" + 'Either could apply; I''d use rpi-plan-critique for a read-only critique.'))
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-engagement-reporting-style-guide-conformance'; Grader = 'engagement-reporting-style-guide-no-banned-terms'; Count = 2
+      Accept = @('Pipeline review session planned; SteerCo demo prepared and scheduled for 3/25')
+      Reject = @('STIMULUS_PROMPT',
+        'We will run a deep dive on the pipeline and the SteerCo demo is prepared and scheduled for 3/25.',
+        'Leverage the robust pipeline; SteerCo demo prepared & scheduled for 3/25')
+    }
   ) {
     $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:LexicalEvalRoot $Spec))
     $stimulus = $specification.stimuli | Where-Object { $_.name -eq $Scenario }
     $stimulus.graders | Should -HaveCount $Count
     $grader = @($stimulus.graders | Where-Object { $_.name -eq $Grader })
     $grader | Should -HaveCount 1
-    $outputs = @($Accept) + $Reject | ForEach-Object { $_.Replace('CANONICAL_SECURITY_CAUTION', $script:SecurityCaution) }
+    $outputs = @($Accept) + $Reject | ForEach-Object { $_.Replace('CANONICAL_SECURITY_CAUTION', $script:SecurityCaution).Replace('STIMULUS_PROMPT', [string]$stimulus.prompt) }
     $payload = @{ type = $grader[0].type; config = $grader[0].config; outputs = $outputs; workDir = $TestDrive } | ConvertTo-Json -Depth 10 -Compress
     $output = $payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath
     $LASTEXITCODE | Should -Be 0
@@ -1796,7 +1860,6 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     @{ File = 'experiment-designer.yml'; Scenario = 'experiment-designer-research-preparation'; Patterns = @('(?s)Name the Research skill you\s+would activate') }
     @{ File = 'prd-builder.yml'; Scenario = 'prd-builder-reconciles-completed-authoring-segment'; Patterns = @('(?s)I accept the returned\s+changes', '(?s)`gateEffect`\s+records\s+the\s+segment') }
     @{ File = 'system-architecture-reviewer.yml'; Scenario = 'system-architecture-reviewer-research-gate'; Patterns = @('(?s)Name the skill you\s+would activate', '(?s)questions,\s+evidence criteria and scope') }
-    @{ File = 'code-review.yml'; Scenario = 'code-review-decision-ready-dispatch-board'; Patterns = @('(?s)`Dispatch board`', '(?s)`Recommended\s+perspectives`', '(?s)`Recommended\s+depth`', '(?s)`Confirm\s+before\s+dispatch`') }
     @{ File = 'dt-coach.yml'; Scenario = 'dt-coach-method-5-first-decline-no-reoffer'; Patterns = @('(?s)what the team does\s+next') }
     @{ File = 'ux-ui-designer.yml'; Scenario = 'ux-ui-designer-mural-environment-verdicts'; Patterns = @('(?s)stop\s+and\s+wait\s+for\s+a\s+retry', '(?s)names\s+the\s+fix') }
     @{ File = 'system-architecture-reviewer.yml'; Scenario = 'system-architecture-reviewer-produces-convergence-research'; Patterns = @('(?s)`\.copilot-tracking/research/2026-09-21/synthetic-queue-convergence-research\.md`') }
@@ -1982,11 +2045,12 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
       'no-contradictory-findings', 'sssc-reviewer-class-recipe-no-source-edit')
     @($stimulus.graders | Where-Object { $_.Contains('weight') }) | Should -HaveCount 0
     $mounts = @($stimulus.agent_environment.files)
-    @($mounts.dest) | Should -Be @('.github/copilot-instructions.md', '.github/instructions/shared/disclaimer-language.instructions.md',
+    @($mounts.dest) | Should -Be @('.github/copilot-instructions.md', '.github/skills/shared/disclaimer-language/SKILL.md',
       'subject/package.json', 'subject/.github/workflows/release.yml', 'subject/Dockerfile')
     @($mounts.dest | Where-Object { $_ -like '.copilot-tracking/*' }) | Should -HaveCount 0
     foreach ($mount in $mounts) { Test-Path -LiteralPath (Join-Path $script:ObservationRoot $mount.src) -PathType Leaf | Should -BeTrue -Because $mount.src }
-    @($stimulus.agent_environment.skills) | Should -Be @('../../.github/skills/security/supply-chain-security', '../../.github/skills/security/security-reviewer-formats')
+    @($stimulus.agent_environment.skills) | Should -Be @('../../.github/skills/security/supply-chain-security', '../../.github/skills/security/security-reviewer-formats',
+      '../../.github/skills/shared/untrusted-content-boundary')
     $workflow = Get-Content -Raw (Join-Path $script:ObservationRoot 'fixtures/sssc-smoke/release-workflow.fixture')
     $workflow | Should -Match 'uses: actions/checkout@v4'
     $workflow | Should -Not -Match '@[0-9a-f]{40}'
@@ -2561,7 +2625,7 @@ Describe 'RAI Reviewer evaluation ownership' -Tag 'Unit' {
     $script:RaiReviewerPartial = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText($script:RaiReviewerPartialPath))
     $script:RaiReviewerFixturePath = Join-Path $PSScriptRoot '../../../evals/agent-behavior/fixtures/rai-reviewer-audit-copilot-instructions.md'
     $script:RaiReviewerFixture = [System.IO.File]::ReadAllText($script:RaiReviewerFixturePath)
-    $disclaimerPath = Join-Path $PSScriptRoot '../../../.github/instructions/shared/disclaimer-language.instructions.md'
+    $disclaimerPath = Join-Path $PSScriptRoot '../../../.github/skills/shared/disclaimer-language/SKILL.md'
     $script:DisclaimerSource = [System.IO.File]::ReadAllText($disclaimerPath)
     $script:RaiReviewerSmoke = $script:RaiReviewerPartial['stimuli'] |
       Where-Object { $_['name'] -eq 'rai-reviewer-class-recipe' }

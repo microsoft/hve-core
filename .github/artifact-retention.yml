@@ -106,11 +106,11 @@ github_actions:
 action_mappings:
   security_reports:
     - name: "github/codeql-action/analyze"
-      version: "v3.27.0"
-      sha: "ce729e4d353d580e6cacd6a8cf2921b72e5e310a"
+      version: "v4.38.2"
+      sha: "2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2"
     - name: "github/codeql-action/upload-sarif"
-      version: "v3.27.0"
-      sha: "ce729e4d353d580e6cacd6a8cf2921b72e5e310a"
+      version: "v4.38.2"
+      sha: "2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2"
     - name: "ossf/scorecard-action"
       version: "v2.4.3"
       sha: "4eaacf0543bb3f2c246792bd56e8cdeffafb205a"

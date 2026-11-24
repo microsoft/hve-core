@@ -7,8 +7,8 @@
     Pester tests for the tts-voiceover generation wrappers.
 .DESCRIPTION
     Covers the argument list forwarded to generate_voiceover.py, parameter
-    validation, and wrapper documentation, without invoking uv, Python, or a
-    speech engine.
+    validation, and wrapper documentation, without invoking uv, Python, or
+    Azure AI Speech.
 #>
 
 BeforeAll {
@@ -19,16 +19,9 @@ BeforeAll {
 }
 
 Describe 'Get-VoiceoverArgument' -Tag 'Unit' {
-    It 'Forwards -Engine piper as the discrete pair --engine, piper' {
-        $arguments = Get-VoiceoverArgument -Engine piper
-
-        $arguments | Should -Be @('--engine', 'piper')
-    }
-
-    It 'Adds no engine argument when -Engine is omitted' {
+    It 'Forwards only the parameters that are set' {
         $arguments = Get-VoiceoverArgument -ContentDir content
 
-        $arguments | Should -Not -Contain '--engine'
         $arguments | Should -Be @('--content-dir', 'content')
     }
 
@@ -45,12 +38,11 @@ Describe 'Get-VoiceoverArgument' -Tag 'Unit' {
     }
 
     It 'Keeps each value as one argument even when it contains spaces' {
-        $arguments = Get-VoiceoverArgument -Engine azure -Voice 'en-US-Jenny:DragonHDLatestNeural' `
+        $arguments = Get-VoiceoverArgument -Voice 'en-US-Jenny:DragonHDLatestNeural' `
             -ContentDir 'my slides/content' -DryRun -CollapseNewlines -VerboseOutput
 
         $arguments | Should -Be @(
             '--dry-run',
-            '--engine', 'azure',
             '--voice', 'en-US-Jenny:DragonHDLatestNeural',
             '--content-dir', 'my slides/content',
             '--collapse-newlines',
@@ -63,11 +55,6 @@ Describe 'Invoke-GenerateVoiceover.ps1 parameters' -Tag 'Unit' {
     It 'Declares a CollapseNewlines switch' {
         $command = Get-Command -Name $script:WrapperPath
         $command.Parameters['CollapseNewlines'].ParameterType | Should -Be ([switch])
-    }
-
-    It 'Rejects an unsupported engine before any setup runs' {
-        { & $script:WrapperPath -Engine espeak } |
-            Should -Throw -ErrorId 'ParameterArgumentValidationError,Invoke-GenerateVoiceover.ps1'
     }
 }
 

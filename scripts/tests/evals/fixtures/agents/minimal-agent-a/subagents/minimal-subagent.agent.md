@@ -1,4 +1,5 @@
 ---
+name: Minimal Subagent
 description: Minimal subagent fixture for dep-map subagent resolution.
 model: claude-opus-4.7
 ---

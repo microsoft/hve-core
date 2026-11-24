@@ -3,7 +3,7 @@ title: 'Contributing Instructions to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot instruction files to hve-core'
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-31
 ms.topic: how-to
 keywords:
   - contributing
@@ -614,7 +614,7 @@ All checks **MUST** pass before merge.
 
 * [AI Artifacts Common Standards](ai-artifacts-common.md) - Shared standards for all contributions
 * [Contributing Custom Agents](custom-agents.md) - AI agent configuration files
-* [Contributing Prompts](prompts.md) - Workflow-specific guidance
+* [Contributing Slash Commands](prompts.md) - Why reusable slash commands are contributed as skills
 * [Pull Request Template](https://github.com/microsoft/hve-core/blob/main/.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
 
 ## Getting Help

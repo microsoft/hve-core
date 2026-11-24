@@ -3,7 +3,7 @@ title: Dangerous Workflow Detection
 description: How the hybrid dangerous-workflow control combines a homegrown template-injection gate with the Poutine supply-chain scanner for GitHub Actions workflows
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-10-05
+ms.date: 2026-11-09
 ms.topic: reference
 keywords:
   - security
@@ -181,6 +181,12 @@ Review expectations:
   and has only `contents: read`, with no protected environment or marketplace credential.
   Publication happens in a separate protected job. Re-review or remove if the protected-main
   trust assumption, checkout source, digest checks, permissions, or credential separation changes.
+* gh-aw activation: rule `untrusted_checkout_exec`, selectors `job: activation` and
+  `path: .github/workflows/backlog-groom.lock.yml` or `.github/workflows/pr-review.lock.yml`.
+  The activation job's sparse `.github` checkout pins the base or default-branch SHA, and
+  its shell steps run only compiler-installed scripts from `RUNNER_TEMP`, as tracked in
+  [upstream issue 457](https://github.com/boostsecurityio/poutine/issues/457). Remove when
+  a pinned scanner upgrade stops reporting these scripts, or re-review if the checkout ref changes.
 * PR review: rule `default_permissions_on_risky_events`, selector
   `path: .github/workflows/pr-review.lock.yml`. The generated workflow declares
   `permissions: {}`, which grants no scopes to jobs without overrides, but Poutine treats

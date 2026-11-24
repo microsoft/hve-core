@@ -33,8 +33,8 @@ Generate realistic, comprehensive synthetic data for `subject` in a Jupyter note
 ### Step 1: Perform mandatory project setup
 
 * After validated preflight, create the project folder and notebook using the [file naming convention](#file-naming-convention).
-* Use `create_directory` to make the project folder.
-* Use `create_new_jupyter_notebook` to create the notebook file.
+* Create the project folder.
+* Create the notebook file with the host's notebook tool, such as `createJupyterNotebook` in VS Code.
 * Stop and confirm both are created before proceeding.
 
 ### Step 2: Validate data source
@@ -190,22 +190,21 @@ Use the domain-specific requirements in [data-domain-patterns.md](references/dat
 
 ### Environment setup
 
-1. Use `configure_python_environment` to automatically set up the Python environment.
-2. Use `configure_notebook` to prepare the notebook environment.
-3. Use `notebook_install_packages` to install `pandas`, `numpy`, `matplotlib`, `seaborn`, and `scipy`.
+1. Set up the Python environment and the notebook kernel with the host's Python tools, such as `configurePythonEnvironment` in VS Code.
+2. Install `pandas`, `numpy`, `matplotlib`, `seaborn`, and `scipy` into that environment, with a package tool such as `installPythonPackage`.
 
 ### Project creation
 
 1. Validate the `dataops` preflight before any project creation.
 2. Parse `subject` to extract key concepts for naming.
-3. Create a descriptive project folder using `create_directory`.
-4. Create the notebook using `create_new_jupyter_notebook` with the query `Generate synthetic data for {subject} with realistic patterns and comprehensive analysis`.
+3. Create a descriptive project folder.
+4. Create the notebook with the host's notebook tool, such as `createJupyterNotebook`. When the tool takes a description, use `Generate synthetic data for {subject} with realistic patterns and comprehensive analysis`.
 
 ### Notebook development
 
-1. Use `edit_notebook_file` to create structured cells as outlined above.
-2. When creating code cells, specify `language="python"` in the `edit_notebook_file` tool call so the cell type is correct.
-3. Use `run_notebook_cell` immediately after creating each cell. Do not ask the user to run code manually.
+1. Add the structured cells outlined above with the host's notebook editing tool, such as `editNotebook`.
+2. Set each code cell's language to Python so the cell type is correct.
+3. Run each cell right after creating it, with a tool such as `runNotebookCell`. Do not ask the user to run code manually.
 4. Do not provide code in Markdown format or chat messages. Create executable notebook cells through tools.
 5. Never provide code blocks for the user to copy and paste. Create and execute cells directly in the notebook.
 6. Do not display terminal commands in chat. Execute them directly using the terminal tool.

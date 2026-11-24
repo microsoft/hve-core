@@ -384,6 +384,13 @@ function ConvertTo-DangerousWorkflowSarif {
             fullDescription      = @{ text = 'Caller-controlled workflow_call or workflow_dispatch inputs should reach run or script blocks through a step-level env mapping rather than through expression interpolation. Only inputs declared with type boolean are exempt.' }
             defaultConfiguration = @{ level = 'error' }
         }
+        @{
+            id                   = 'dangerous-workflow/unparsed-file'
+            name                 = 'DangerousWorkflowUnparsedFile'
+            shortDescription     = @{ text = 'A workflow or composite action could not be parsed and was not evaluated' }
+            fullDescription      = @{ text = 'The dangerous workflow gate fails closed: a file it cannot parse, whether from malformed YAML or a missing YAML module, is reported instead of skipped.' }
+            defaultConfiguration = @{ level = 'error' }
+        }
     )
 
     $results = @()
@@ -527,9 +534,13 @@ function Invoke-DangerousWorkflowCheck {
             $yaml = $workflowContent | ConvertFrom-Yaml
         }
         catch {
-            $parseErrorMessage = "Skipping workflow file '$relativePath' because YAML parsing failed: $($_.Exception.Message)"
-            Write-SecurityLog $parseErrorMessage -Level Warning -CIAnnotation
-            Write-CIAnnotation -Message $parseErrorMessage -Level 'Warning' -File $relativePath -Line 1
+            # A file the gate cannot read is a finding, not a skip, so a missing YAML
+            # module or a malformed file fails the scan instead of passing it unchecked.
+            $parseErrorMessage = "Workflow file '$relativePath' could not be parsed as YAML and was not evaluated: $($_.Exception.Message)"
+            Write-SecurityLog $parseErrorMessage -Level Error -CIAnnotation
+            Write-CIAnnotation -Message $parseErrorMessage -Level 'Error' -File $relativePath -Line 1
+            $violations += New-DangerousWorkflowViolation -File $relativePath -Line 1 -RuleId 'dangerous-workflow/unparsed-file' -Description $parseErrorMessage `
+                -Remediation 'Fix the YAML syntax, or install the powershell-yaml module, so the dangerous workflow gate can evaluate this file'
             continue
         }
 

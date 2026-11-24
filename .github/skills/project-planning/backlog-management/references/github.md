@@ -224,9 +224,9 @@ Confirm a label exists with `mcp_github_get_label` before applying it. A reposit
 
 GitHub backlog output is often visible to external contributors, so outbound comments carry extra guardrails beyond the core sanitization guards.
 
-`community-interaction.instructions.md` and `content-policy-citation.instructions.md` are applied automatically through their own `applyTo` attachments and must be honored. The filenames below are provenance, not the enforcement mechanism; this reference is a bundled skill resource and does not path-reference a separately packaged instruction.
+Honor [community-interaction.md](community-interaction.md) in this skill and `content-policy-citation.instructions.md`. Read community-interaction before composing a comment visible to external contributors. `content-policy-citation.instructions.md` is a separately packaged instruction that the agent running this skill reads by name. When a subagent writes the comment, the parent passes its rules in the dispatch prompt, because subagents receive no instructions. Its filename here is provenance, not a path reference.
 
-* When an operation produces a comment visible to external contributors (closure, information request, acknowledgment, redirect), the comment body follows the scenario templates in `community-interaction.instructions.md`.
+* When an operation produces a comment visible to external contributors (closure, information request, acknowledgment, redirect), the comment body follows the scenario templates in [community-interaction.md](community-interaction.md).
 * When GitHub-visible text references a suspected content-policy or terms-of-service concern, apply `content-policy-citation.instructions.md` before the API call. Public comments and issue bodies use neutral wording and must not include classification labels, rationale, quoted snippets, paraphrases, or payload examples.
 * Apply the comment-before-closure pattern: call `mcp_github_add_issue_comment` with the appropriate scenario template before any state-changing call such as `mcp_github_issue_write` with a closure.
 * Internal-only operations (label changes, milestone assignment, sub-issue linking) that produce no visible comment do not require community-interaction templates.
@@ -374,6 +374,6 @@ A milestone has no start date. Derive the window from the previous milestone's c
 
 ## Human Review Triggers (GitHub additions)
 
-Alongside the core triggers, pause when: the target `owner/repo` is unknown; org issue-type support is unclear after `mcp_github_list_issue_types`; a required label or milestone is not confirmed to exist; a close would use a `state_reason` that is not clearly supported; or a community-visible comment would post without a matching `community-interaction.instructions.md` scenario template.
+Alongside the core triggers, pause when: the target `owner/repo` is unknown; org issue-type support is unclear after `mcp_github_list_issue_types`; a required label or milestone is not confirmed to exist; a close would use a `state_reason` that is not clearly supported; or a community-visible comment would post without a matching [community-interaction.md](community-interaction.md) scenario template.
 
 Also pause when an issue already carries a security or vulnerability label, or when triage would add either label. Request user guidance before applying any mutation to that issue, including a label, milestone, comment, or close. Expedited processing is not approval: a priority or milestone rule never authorizes acting on a security issue on its own.

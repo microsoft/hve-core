@@ -24,7 +24,7 @@ Callers:
 * Security Planner (`Security Planner` agent; security-specific handoff details in the `security-planning` skill's `references/backlog-formats.md`)
 * SSSC Planner (`SSSC Planner` agent, governed by `sssc-planner.instructions.md`)
 * Accessibility Planner (`accessibility/accessibility` skill `references/phases/backlog-handoff.md`)
-* Privacy Planner (`Privacy Planner` agent, governed by `privacy-identity.instructions.md`)
+* Privacy Planner (`Privacy Planner` agent, governed by the `privacy-standards` skill's `references/privacy-identity.md`)
 
 What stays per-planner (NOT in this skill):
 
@@ -197,9 +197,9 @@ Every backlog handoff artifact (handoff summary, ADO output file, GitHub output 
 
 Source-of-truth split for the disclaimer text:
 
-* RAI, Security, SSSC — Read the disclaimer text from the automatically applied `disclaimer-language.instructions.md` under the corresponding planner section.
-* Privacy — Read the disclaimer text from the automatically applied `disclaimer-language.instructions.md` under the Privacy Planning section.
-* Accessibility — Read the disclaimer text from the automatically applied `accessibility-identity.instructions.md` under the `Disclaimer Handling` heading. The L7 disclaimer lever pins the accessibility disclaimer to that file. Do not move it to `disclaimer-language.instructions.md`.
+* RAI, Security, SSSC — Read the disclaimer text from the `disclaimer-language` skill under the corresponding planner section.
+* Privacy — Read the disclaimer text from the `disclaimer-language` skill under the Privacy Planning section.
+* Accessibility — Read the disclaimer text from the automatically applied `accessibility-identity.instructions.md` under the `Disclaimer Handling` heading. The L7 disclaimer lever pins the accessibility disclaimer to that file. Do not move it to the `disclaimer-language` skill.
 
 Placement rules:
 

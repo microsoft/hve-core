@@ -2,12 +2,14 @@
 name: Report Generator
 description: "Collates verified security or accessibility skill assessment findings and generates a comprehensive report written to the domain-appropriate reports directory"
 tools:
-  - edit/createDirectory
-  - edit/createFile
-  - search/fileSearch
-  - read/readFile
+  - edit
+  - search
+  - read
+  - skill
 user-invocable: false
 model: GPT-6 Sol (copilot)
+skills:
+  - disclaimer-language
 ---
 
 # Report Generator
@@ -37,7 +39,7 @@ Collate verified findings from all skill assessments into a single vulnerability
 * (Optional) Changed files list with change types (added, modified, renamed) for diff mode reporting. Included as an appendix in the generated report.
 * (Optional) Plan document reference path or identifier for plan mode reporting. Recorded in the report header.
 * (Optional) Review artifact inventory describing the mode, scope or path focus, changed files, plan document, prior scan report, excluded non-assessable files, assessed skills, and resolved report path when known. Required when Domain is `accessibility`.
-* (Optional) Accessibility disclaimer source. Defaults to `## Disclaimer Handling` in the auto-applied `accessibility-identity.instructions.md` when Domain is `accessibility`.
+* (Optional) Accessibility disclaimer text: the verbatim CAUTION block the parent copies from `## Disclaimer Handling` in `accessibility-identity.instructions.md`. Required when Domain is `accessibility`. Subagents do not receive instruction files, so do not look the text up yourself; when it is missing, stop and report it as a missing input.
 
 ## Constants
 
@@ -94,9 +96,9 @@ Read the `security-reviewer-formats` skill for full format specifications before
 
 1. Validate Domain before resolving or creating a report directory. Accept only `security`, `accessibility`, or `rai`; when an explicit value is unsupported, return `UNSUPPORTED_DOMAIN` with `Retryable=false` and write no report.
 2. Resolve the report directory based on Domain: `.copilot-tracking/security` when Domain is `security`, `.copilot-tracking/accessibility` when Domain is `accessibility`, or `.copilot-tracking/rai-reviews` when Domain is `rai`. Create the directory if it does not exist.
-3. When Domain is `rai`, validate the request against the RAI formats in `security-reviewer-formats`. Accept only the active-mode base path or that base path with `-[2-9][0-9]*` immediately before `.md`, as defined by the Report Formats collision rule. The caution must be the RAI Planning caution from `disclaimer-language.instructions.md`, and human acceptance must be `PENDING`. Return the terminal error envelope and write no report on failure. Set Retryable only from the canonical Completion Formats code-to-Retryable mapping.
+3. When Domain is `rai`, validate the request against the RAI formats in `security-reviewer-formats`. Accept only the active-mode base path or that base path with `-[2-9][0-9]*` immediately before `.md`, as defined by the Report Formats collision rule. The caution must be the RAI Planning caution from the `disclaimer-language` skill, and human acceptance must be `PENDING`. Return the terminal error envelope and write no report on failure. Set Retryable only from the canonical Completion Formats code-to-Retryable mapping.
 4. Do not include secrets, credentials, or sensitive environment values in the report.
-5. When Domain is `accessibility`, read the accessibility disclaimer source and extract the canonical CAUTION block verbatim before assembling the report. Do not substitute the shared planning disclaimer.
+5. When Domain is `accessibility`, take the canonical CAUTION block verbatim from the accessibility disclaimer text the parent supplied, before assembling the report. When that input is missing, write no report, return generation status `incomplete`, and name the accessibility disclaimer text as a missing input. Do not look the text up yourself or substitute the shared planning disclaimer.
 6. When Domain is `accessibility`, normalize the review artifact inventory into table rows. Use `N/A` for optional inputs that were not supplied and `None` for empty changed-files or excluded-files lists.
 
 ### Step 1: Determine Sequence Number
