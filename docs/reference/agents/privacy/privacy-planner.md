@@ -3,7 +3,7 @@ title: Privacy Planner
 description: "Phase-based privacy planner producing data maps, DPIA assessments, controls, and backlog handoffs for processing activities"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-21
 ms.topic: reference
 keywords:
   - agent

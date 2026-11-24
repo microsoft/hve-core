@@ -34,9 +34,9 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 ### Check 1: Required Frontmatter Fields
 
 * Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
-* Testable behavior: prompt frontmatter MUST include a non-empty `description:` field under 120 characters; OPTIONAL fields `agent:`, `argument-hint:`, and a `---` activation line MAY be present when the prompt delegates or accepts arguments.
+* Testable behavior: prompt frontmatter MUST include a non-empty `description:` field written as concise trigger metadata; OPTIONAL fields `agent:`, `argument-hint:`, and a `---` activation line MAY be present when the prompt delegates or accepts arguments.
 * Suggested stimulus: ask the assistant to summarize the frontmatter of a named prompt under `.github/prompts/`, then assert that the description value is surfaced in the response.
-* Grader recommendation: `regex` with pattern `(?m)^description:\s*['"]?.{1,120}['"]?`.
+* Grader recommendation: `regex` with pattern `(?m)^description:\s*\S`.
 * Evidence: a delegating prompt typically declares `description:`, `agent:`, and `argument-hint:` together.
 
 ### Check 2: Agent Delegation Without Duplication

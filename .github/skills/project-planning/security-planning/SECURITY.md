@@ -3,7 +3,7 @@ title: Security Planning Skill Security Model
 description: STRIDE threat model for the TM7 generation and native feedback runtime that parses untrusted specs, template XML, local screenshots, UI Automation traces, and overlay evidence with human-review gates
 author: microsoft/hve-core
 ms.topic: reference
-ms.date: 2026-08-05
+ms.date: 2026-11-21
 estimated_reading_time: 8
 keywords:
   - security

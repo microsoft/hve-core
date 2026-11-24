@@ -1,13 +1,17 @@
 # cspell:ignore duplicat occlu bprepar minimi exclud
 name: behavior-conformance-instructions
 description: >
-  Advisory-tier behavior conformance evals for high-signal
-  instructions in `.github/instructions/**` (covers ADO, coding-standards,
-  engagement reporting, experimental, GitHub, hve-core, Jira, privacy, RAI
-  planning, security, and shared scopes). Most stimuli identify the applicable
-  instruction and check scope vocabulary. Plain-language stimuli also assess
-  generated replies, returned prose, and exact technical output through
-  semantic and deterministic graders. Per DD-05, failures remain advisory.
+  Advisory-tier behavior conformance evals for instructions in
+  `.github/instructions/**` and for rules that moved from instructions into
+  skills (covers ADO, coding-standards, engagement reporting, experimental,
+  GitHub, hve-core, Jira, privacy, RAI planning, security, and shared
+  scopes). Context stimuli ask which instruction or skill applies in a given
+  working context and assert path evidence, scope vocabulary, or specific
+  rules. Re-anchored stimuli stage their source through `agent_environment`
+  and assert facts that only the staged source supplies. Plain-language
+  stimuli also assess generated replies, returned prose, and exact technical
+  output through semantic and deterministic graders. Per DD-05, this is an
+  advisory tier and grader false-positives are absorbed by design.
 type: capability
 defaults:
   runs: 3

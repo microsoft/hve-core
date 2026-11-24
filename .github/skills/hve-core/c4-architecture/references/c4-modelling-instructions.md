@@ -2,7 +2,7 @@
 title: C4 Modelling instructions
 description: C4 Modelling instructions
 author: Microsoft
-ms.date: 2026-08-14
+ms.date: 2026-11-21
 ms.topic: reference
 ---
 

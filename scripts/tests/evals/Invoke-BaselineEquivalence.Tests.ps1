@@ -849,7 +849,7 @@ Describe 'Invoke-BaselineEquivalence.ps1 (stubbed nightly run)' -Tag 'Unit' {
         New-Item -ItemType Directory -Path $stubAgentsDir -Force | Out-Null
         Set-Content -LiteralPath (Join-Path $stubAgentsDir 'rpi-agent.agent.md') -Encoding UTF8 -Value "---`nname: RPI Agent`n---`n`nStub agent for driver tests."
 
-        # vally copies this fixture into each trial via environment.files, and the
+        # vally copies this fixture into each trial via agent_environment.files, and the
         # driver folds its content into the baseline cache key. The stub repo carries
         # one so that key is computed over the same shape as a real run.
         $script:StubSeedDir = Join-Path $baselineRoot 'seed-workspace'
