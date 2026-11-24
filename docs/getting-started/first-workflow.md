@@ -3,7 +3,7 @@ title: Your First Full Workflow
 description: Hands-on tutorial using Research, Plan, Implement, and Review to create a validation script
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-10-20
+ms.date: 2026-11-24
 ms.topic: tutorial
 keywords:
   - getting started
@@ -117,7 +117,7 @@ From the research output, identify:
 
 ### Clear and Invoke rpi-plan
 
-1. Type `/clear` in the chat to reset context
+1. Type `/clear` if the research conversation has accumulated unrelated context
 1. Type `/rpi-plan` to activate the Plan phase skill
 
 ### Your Planning Prompt
@@ -162,7 +162,7 @@ Requirements:
 
 ### Clear and Invoke rpi-implement
 
-1. Type `/clear` in the chat to reset context
+1. Type `/clear` if the planning conversation has accumulated unrelated context
 1. Type `/rpi-implement` to activate the Implement phase skill
 
 ### Your Implementation Prompt

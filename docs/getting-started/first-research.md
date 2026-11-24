@@ -3,7 +3,7 @@ title: Your First Research
 description: Use the rpi-research skill to investigate your own codebase
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-10-20
+ms.date: 2026-11-24
 ms.topic: tutorial
 keywords:
   - getting started
@@ -18,7 +18,7 @@ estimated_reading_time: 5
 > Step 2 of 4 in the [Getting Started Journey](./).
 
 The RPI framework separates research from implementation. Before writing code,
-you find verified facts about the codebase. This exercise introduces the
+you gather evidence about the codebase. This exercise introduces the
 Research phase by itself, without the planning or implementation phases.
 
 ## Pick a Research Question
@@ -64,7 +64,7 @@ should trace to sources, while incomplete findings remain explicit.
 
 * Researching before implementation reduces guesswork and rework.
 * RPI skills produce artifacts like research documents, not chat messages alone.
-* Artifacts carry context so the next phase builds on verified facts rather
+* Artifacts carry context so the next phase builds on recorded evidence rather
   than starting from scratch.
 
 ## Next Step
