@@ -93,7 +93,7 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 
 | Field                            | Record                                                                                          |
 |----------------------------------|-------------------------------------------------------------------------------------------------|
-| Research disposition             | {{executed/reused/satisfied-and-skipped}}                                                       |
+| Research disposition             | {{executed/reused/satisfied-and-skipped/provided}}                                              |
 | Decision participation           | {{user-owned/agent-owned/user-retained with mode and provenance}}                               |
 | Planning Readiness               | {{Ready/Not ready/Not applicable/Blocked with evidence IDs and plain-language reason}}          |
 | Research depth and helpers       | {{completed waves and any helper use with what was verified}}                                   |

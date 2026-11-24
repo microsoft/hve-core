@@ -3,7 +3,7 @@
 
 import { md } from './components.mjs';
 import { changeWords, progressOf } from './diagram.mjs';
-import { badge, confidenceMeta, DECISION_STATUS, DISCOVERY_KIND, EVIDENCE_STATE, FEEDBACK_KIND, FEEDBACK_STATE, h, icon, idChip, known, SEVERITY, sr, TASK_STATUS } from './dom.mjs';
+import { badge, confidenceMeta, DECISION_STATUS, DISCOVERY_KIND, EVIDENCE_STATE, FEEDBACK_KIND, FEEDBACK_STATE, FINDING_DECISION, h, icon, idChip, known, SEVERITY, sr, TASK_STATUS } from './dom.mjs';
 import { taskMarkers } from './board.mjs';
 import { kindOf } from './ids.mjs';
 import { evidenceSource } from './source-view.mjs';
@@ -100,8 +100,11 @@ function partsFor(ctx, key, item) {
         case 'AL':
             return { title: item.requirement ?? item.change, badges: [plainStatus(words(item.alignment))], fields: [['Change', item.change], ['Why', item.why], ['Source', item.document ?? item.source]], related: [chips('Plan marker', [item.marker])] };
         case 'RV':
-            return { title: item.title, badges: [known(SEVERITY, item.severity), plainStatus(words(item.resolution))], fields: [['Summary', item.summary], ['Route', item.route]], related: [chips('Related', item.related)] };
+            return { title: item.title, badges: [known(SEVERITY, item.severity), known(FINDING_DECISION, item.decision)], fields: [['Summary', item.summary], ['Resolved when', item.resolution], ['Route', item.route]], related: [chips('Related', item.related)] };
+        case 'RF':
+            return { title: item.title, badges: [known(SEVERITY, item.severity), plainStatus(item.dimension), known(FINDING_DECISION, item.decision)], fields: [['Remove or rework', item.observed || item.summary], ['Resolved when', item.resolution], ['Route', item.route]], related: [chips('Related', item.related)] };
         case 'RD':
+        case 'FD':
             return { title: item.subject, badges: [plainStatus(words(item.status)), plainStatus(item.owner && `Owner: ${item.owner}`)], fields: [['Why', item.rationale]] };
         case 'FU':
             return { title: item.title, badges: [plainStatus(item.required ? 'Required' : 'Optional'), plainStatus(words(item.status))], fields: [['Why', item.rationale], ['Evidence', item.evidence]] };

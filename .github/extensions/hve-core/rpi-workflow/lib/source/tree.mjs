@@ -58,6 +58,7 @@ export function buildTree({ members, shownPath, outside = new Map() }) {
     }
     const label = (member) => member.state.taskId ?? member.path;
     const find = (link) => (link.statePath ? byPath.get(link.statePath) : undefined) ?? (link.taskId ? byTask.get(link.taskId) : undefined);
+    const unreached = (link, resolved) => `${link.taskId ?? link.statePath}, which ${resolved?.error ? `could not be read: ${resolved.error.replace(/\.$/, '')}` : 'is not in this session'}`;
 
     /** @type {Map<string, string>} child path to parent path */
     const parentOf = new Map();
@@ -75,7 +76,7 @@ export function buildTree({ members, shownPath, outside = new Map() }) {
         if (parent && parent.path !== member.path) {
             parentOf.set(member.path, parent.path);
         } else {
-            warnings.push(`${label(member)} continues ${link.taskId ?? link.statePath}, which ${resolved?.error ? `could not be read: ${resolved.error.replace(/\.$/, '')}` : 'is not in this session'}.`);
+            warnings.push(`${label(member)} continues ${unreached(link, resolved)}.`);
         }
     }
 

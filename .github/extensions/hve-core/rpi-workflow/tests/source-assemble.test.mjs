@@ -21,9 +21,9 @@ import {
     routeOf,
     validationOf,
 } from '../lib/source/assemble.mjs';
-import { parseChanges, parseCritique, parsePlan, parseResearch, parseReview, parseState } from '../lib/source/parse.mjs';
+import { parseChanges, parseCritique, parsePlan, parseRefinement, parseResearch, parseReview, parseState } from '../lib/source/parse.mjs';
 import { installFakeDom } from './helpers/fake-dom.mjs';
-import { CHANGES, childSession, CRITIQUE, PATHS, PLAN, RESEARCH, REVIEW, ROOT_STATE, rootSession } from './helpers/rpi-fixture.mjs';
+import { cameWithPlanEvidence, CHANGES, childSession, copiedEvidence, CRITIQUE, PATHS, PLAN, REFINEMENT, RESEARCH, REVIEW, ROOT_STATE, rootSession, SOURCE_SESSION, suppliedEvidence } from './helpers/rpi-fixture.mjs';
 
 const NOW = '2026-01-15T12:00:00.000Z';
 
@@ -146,6 +146,179 @@ describe('assembled document', () => {
         const unfinished = { ...artifacts, changes: { ...artifacts.changes, status: { ...artifacts.changes.status, status: 'In progress' } }, review: { ...artifacts.review, execution: 'started' } };
         assert.deepEqual(statuses('Research', unfinished), ['active', 'done', 'active', 'active', 'done'], 'unfinished documents read in progress');
         assert.deepEqual(statuses('Plan', { research: artifacts.research, plan: artifacts.plan }), ['done', 'active', 'upcoming', 'upcoming', 'upcoming'], 'a later phase with no document has not started');
+    });
+
+    it('unifies acceptance and refinement reviews together and works when refinement runs alone', () => {
+        const state = parseState({
+            ...ROOT_STATE,
+            artifact_paths: { ...ROOT_STATE.artifact_paths, refinement: PATHS.refinement },
+            documents: { research: [PATHS.research], plan: [PATHS.plan], critique: [PATHS.critique], changes: [PATHS.changes], review: [PATHS.review], refinement: [PATHS.refinement] },
+        });
+        assert.deepEqual(state.warnings, []);
+        const combined = assembleSession({
+            id: 'rpi-trail-maps',
+            state,
+            artifacts: { research: parseResearch(RESEARCH), plan: parsePlan(PLAN), critique: parseCritique(CRITIQUE), changes: parseChanges(CHANGES), review: parseReview(REVIEW), refinement: parseRefinement(REFINEMENT) },
+            statePath: PATHS.rootState,
+            now: NOW,
+        }).session;
+        assert.ok(combined.sections['review-summary'] && combined.sections['refinement-summary']);
+        assert.equal(combined.review.passes.acceptance.findings, 2);
+        assert.equal(combined.review.passes.refinement.findings, 1);
+        assert.deepEqual(combined.review.findings.map((f) => [f.id, f.kind, f.decision, f.route]), [
+            ['RV-001', 'acceptance', 'resolved', 'rpi-implement'],
+            ['RV-002', 'acceptance', 'resolved', 'rpi-implement'],
+            ['RF-001', 'refinement', 'accepted', 'rpi-plan'],
+        ]);
+        assert.equal(combined.review.findings[2].dimension, 'Dependencies and SDKs');
+        assert.ok(combined.review.history.some((e) => e.id === 'FD-002'));
+        assert.ok(combined.records.review.some((r) => r.heading === 'Refinement: Refinement Record'));
+
+        const surfaceRefinement = parseRefinement(REFINEMENT.replace('* Review depth: standard', '* Review depth: surface'));
+        const refinementOnly = assembleSession({
+            id: 'rpi-trail-maps-refinement-only',
+            state: parseState({ ...ROOT_STATE, artifact_paths: { ...ROOT_STATE.artifact_paths, review: null, refinement: PATHS.refinement } }),
+            artifacts: { plan: parsePlan(PLAN), changes: parseChanges(CHANGES), refinement: surfaceRefinement },
+            statePath: PATHS.rootState,
+            now: NOW,
+        }).session;
+        assert.equal(refinementOnly.phases.review.status, 'done');
+        assert.equal(refinementOnly.phases.review.artifact, PATHS.refinement);
+        assert.equal(refinementOnly.review.passes.acceptance, null);
+        assert.equal(refinementOnly.review.passes.refinement.depth, 'surface');
+        assert.ok(refinementOnly.sections['review-summary']?.markdown);
+    });
+});
+
+describe('provided research and plans', () => {
+    // The evidence the rpi skill records; the tolerance test holds the other shapes the canvas reads.
+    const COPIED = copiedEvidence(PATHS.research);
+    const SUPPLIED = suppliedEvidence('offline trail plan in chat.');
+    const copied = { status: 'provided', evidence: COPIED };
+    const supplied = { status: 'provided', evidence: SUPPLIED };
+    const artifacts = () => ({ research: parseResearch(RESEARCH), plan: parsePlan(PLAN), changes: parseChanges(CHANGES) });
+    /** The root task's state at an active phase, with the given research and plan dispositions when set, and any other state fields. */
+    const stateWith = (activePhase, research, plan, fields = {}) => parseState({
+        ...ROOT_STATE,
+        active_phase: activePhase,
+        status: 'active',
+        session_status: 'running',
+        confirmed_decisions: [
+            { decision: 'Automatic session scope', status: 'current', evidence: 'User request: offline trail maps.' },
+            ...(research ? [{ decision: 'Research disposition', ...research }] : []),
+            ...(plan ? [{ decision: 'Plan disposition', ...plan }] : []),
+        ],
+        ...fields,
+    });
+    const assembled = (state, files = artifacts(), extra = {}) => assembleSession({ id: 'x', state, artifacts: files, statePath: PATHS.rootState, now: NOW, ...extra }).session;
+    const statuses = (session) => Object.values(session.phases).map((phase) => phase.status);
+    /** A session whose research came with its plan: no research document, so the state keeps no research path. */
+    const withPlan = (activePhase, evidence, fields = {}) => stateWith(activePhase, { status: 'provided', evidence }, supplied, { artifact_paths: { plan: PATHS.plan }, ...fields });
+    const planOnly = { plan: parsePlan(PLAN) };
+
+    it('shows research and plan as Provided once the agent is past them', () => {
+        assert.deepEqual(statuses(assembled(stateWith('Implement', copied, supplied))), ['provided', 'provided', 'active', 'upcoming', 'upcoming']);
+    });
+
+    it('keeps an active provided phase In progress while the session runs in it', () => {
+        assert.equal(assembled(stateWith('Research', copied, null), { research: parseResearch(RESEARCH) }).phases.research.status, 'active');
+        assert.equal(assembled(stateWith('Plan', null, supplied)).phases.plan.status, 'active');
+    });
+
+    it('shows an active provided phase as Provided once the session stops or pauses in it', () => {
+        for (const sessionStatus of ['stopped', 'paused']) {
+            assert.equal(assembled(stateWith('Research', copied, null, { session_status: sessionStatus }), { research: parseResearch(RESEARCH) }).phases.research.status, 'provided', sessionStatus);
+            assert.equal(assembled(stateWith('Plan', null, supplied, { session_status: sessionStatus })).phases.plan.status, 'provided', sessionStatus);
+        }
+    });
+
+    it('shows blocked ahead of Provided, whether the session runs or stopped', () => {
+        assert.equal(assembled(stateWith('Plan', null, supplied, { status: 'blocked', session_status: 'stopped' })).phases.plan.status, 'blocked');
+        assert.equal(assembled(stateWith('Research', copied, null, { status: 'blocked' }), { research: parseResearch(RESEARCH) }).phases.research.status, 'blocked');
+    });
+
+    it('keeps a provided phase active while the agent turns it into its own artifact', () => {
+        assert.deepEqual(statuses(assembled(stateWith('Research', copied, supplied), { research: parseResearch(RESEARCH) })), ['active', 'provided', 'upcoming', 'upcoming', 'upcoming']);
+        assert.deepEqual(statuses(assembled(stateWith('Plan', copied, supplied))).slice(0, 2), ['provided', 'active']);
+    });
+
+    it('keeps reused and satisfied research Skipped, and a planned plan on its own status', () => {
+        const files = { plan: parsePlan(PLAN) };
+        assert.equal(assembled(stateWith('Plan', { status: 'reused', evidence: 'The review record' }), files).phases.research.status, 'skipped');
+        assert.equal(assembled(stateWith('Plan', { status: 'satisfied-and-skipped', evidence: 'Existing research' }), files).phases.research.status, 'skipped');
+        assert.deepEqual(statuses(assembled(stateWith('Implement', null, { status: 'planned', evidence: 'Planned here' }))), statuses(assembled(stateWith('Implement', null, null))), 'a planned plan changes nothing');
+    });
+
+    it('names where provided work came from in a Source section, with the evidence as recorded', () => {
+        const { sections, phases } = assembled(stateWith('Implement', copied, supplied));
+        assert.equal(sections['research-source'].markdown, `Research came from session 3fa85f64.\n\n${COPIED}`);
+        assert.equal(sections['research-source'].doc, 'research');
+        assert.equal(sections['research-source'].title, 'Source');
+        assert.equal(sections['plan-source'].markdown, `The plan came from the user.\n\n${SUPPLIED}`);
+        assert.ok(sections['research-summary'], 'a provided research document renders as today');
+        assert.equal(phases.research.artifact, PATHS.research);
+    });
+
+    it('keeps evidence that holds markup as text, without changing it', () => {
+        const markup = suppliedEvidence('<img src=x onerror="alert(1)"> notes in chat');
+        assert.equal(assembled(stateWith('Implement', null, { status: 'provided', evidence: markup })).sections['plan-source'].markdown, `The plan came from the user.\n\n${markup}`);
+    });
+
+    it('tolerates evidence in other shapes than the skill records: other separators, free text, any letter case, or none', () => {
+        const researchSource = (evidence) => assembled(stateWith('Implement', { status: 'provided', evidence }, supplied)).sections['research-source'].markdown;
+        const planSource = (evidence) => assembled(stateWith('Implement', null, { status: 'provided', evidence })).sections['plan-source'].markdown;
+        const cameWith = (evidence) => assembled(withPlan('Implement', evidence), planOnly).sections['research-source'].markdown;
+        const separators = `Copied from session ${SOURCE_SESSION}; path ${PATHS.research}; content hash 9f2c4e1a`;
+        assert.equal(researchSource(separators), `Research came from session 3fa85f64.\n\n${separators}`, 'semicolons and a short hash still name the session');
+        assert.equal(planSource('User supplied the plan in chat.'), 'The plan came from the user.\n\nUser supplied the plan in chat.', 'free text that names the user');
+        assert.equal(planSource(''), 'The plan came from the user or another session.', 'no evidence');
+        assert.match(cameWith(`came WITH the provided PLAN: Copied from session ${SOURCE_SESSION}; path ${PATHS.plan}`), /^Research came with the plan from session 3fa85f64\./, 'any letter case');
+        assert.match(cameWith('Came with the provided plan: plan notes from chat.'), /^Research came with the plan\.\n\n/, 'a note that names neither a session nor the user');
+    });
+
+    it('does not read a provided research as reused, even when its state path names another kind', () => {
+        const session = assembled(stateWith('Plan', copied, null), { plan: parsePlan(PLAN) }, { mismatched: [{ key: 'research', path: PATHS.review, kind: 'review' }] });
+        assert.equal(session.phases.research.status, 'provided');
+        assert.doesNotMatch(session.sections['research-summary']?.markdown ?? '', /reused existing evidence/, 'no reused-evidence summary');
+        assert.match(session.sections['research-source'].markdown, /^Research came from session 3fa85f64\./);
+    });
+
+    describe('research that came with a provided plan', () => {
+        const WITH_PLAN_SESSION = cameWithPlanEvidence(copiedEvidence(PATHS.plan));
+        const WITH_PLAN_USER = cameWithPlanEvidence(SUPPLIED);
+
+        it('names the session the plan came from, with the evidence as recorded', () => {
+            const session = assembled(withPlan('Implement', WITH_PLAN_SESSION), planOnly);
+            assert.equal(session.sections['research-source'].markdown, `Research came with the plan from session 3fa85f64.\n\n${WITH_PLAN_SESSION}`);
+            assert.match(session.sections['research-summary'].markdown, /no research document of its own; its research came with the provided plan/, 'the Summary says why there is no research document');
+            assert.equal(session.sections['research-source'].title, 'Source');
+            assert.equal(session.phases.research.status, 'provided');
+            assert.equal(session.phases.research.artifact, null);
+        });
+
+        it('names the user when the plan was supplied by the user', () => {
+            const session = assembled(withPlan('Implement', WITH_PLAN_USER), planOnly);
+            assert.equal(session.sections['research-source'].markdown, `Research came with the plan the user supplied.\n\n${WITH_PLAN_USER}`);
+            assert.equal(session.phases.research.status, 'provided');
+        });
+
+        it('keeps research that came with the plan In progress while the session runs in Research', () => {
+            const session = assembled(withPlan('Research', WITH_PLAN_SESSION), planOnly);
+            assert.equal(session.phases.research.status, 'active');
+            assert.ok(session.sections['research-source'], 'the Source section is still present');
+        });
+
+        it('shows research that came with the plan as Provided once the session stops in Research', () => {
+            assert.equal(assembled(withPlan('Research', WITH_PLAN_USER, { session_status: 'stopped' }), planOnly).phases.research.status, 'provided');
+        });
+
+        it('keeps reused and satisfied-and-skipped research Skipped, with no Source section', () => {
+            for (const [status, evidence] of [['reused', 'The review record'], ['satisfied-and-skipped', 'Existing research']]) {
+                const session = assembled(stateWith('Implement', { status, evidence }, supplied), planOnly);
+                assert.equal(session.phases.research.status, 'skipped', status);
+                assert.equal(session.sections['research-source'], undefined, status);
+            }
+        });
     });
 });
 

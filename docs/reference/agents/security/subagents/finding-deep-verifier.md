@@ -3,7 +3,7 @@ title: Finding Deep Verifier
 description: Deep adversarial verification of FAIL and PARTIAL findings for a single security skill
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-21
 ms.topic: reference
 keywords:
   - agent

@@ -1,9 +1,9 @@
-# cspell:ignore reconcil appl assum declin fabricat saturat flexib modif ying rewrit overwrit rederive narrat pathspecs reinitializ ETSI summarise ttest falsif independen brai authoriz
+# cspell:ignore reconcil appl assum declin fabricat saturat flexib modif ying rewrit overwrit rederive narrat pathspecs reinitializ ETSI summarise ttest falsif independen brai brpi bhve authoriz
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 391
-  stimuli, including engagement-reporting coverage, Outlook HTML guards, the
+  knowledge, tool-trigger, and bleed-detection stimulus shapes, including
+  engagement-reporting coverage, Outlook HTML guards, the
   conformance stimuli migrated from retired prompts, and complete branch
   coverage for the RPI, proposal-response, outcome-hypothesis, and
   root-cause-analysis skill updates. Each tool-trigger stimulus uses at least
@@ -1913,7 +1913,7 @@ stimuli:
       Summarize the `rpi` skill. Include what phases it coordinates, where it
       persists session state, and how it uses the RPI Workflow canvas when
       available.
-    environment:
+    agent_environment:
       skills:
         - ../../.github/skills/rpi/rpi
     tags:
@@ -1923,22 +1923,24 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-rpi-knowledge-skill-attribution
+        name: skill-rpi-knowledge-state-path
         config:
-          pattern: '(?i)(rpi|research|plan|implement|review|follow-up)'
+          pattern: '(?i)\.copilot-tracking/rpi-sessions/'
       - type: output-matches
-        name: skill-rpi-knowledge-scope-language
+        name: skill-rpi-knowledge-canvas-id
         config:
-          pattern: '(?i)(\.copilot-tracking/rpi-sessions|hve-core-rpi-workflow|canvas|state\.json)'
+          pattern: '\bhve-core-rpi-workflow\b'
   - name: skill-rpi-tool-trigger
     prompt: |
       I need to coordinate a resumable multi-phase RPI session through
       Research, Plan, Implement, Review, and Follow-up with durable session
       state and the RPI Workflow canvas. Which skill under
-      `.github/skills/**/SKILL.md` applies?
-    environment:
+      `.github/skills/**/SKILL.md` applies? Return `Skill: <name>` on the first
+      line, then one sentence on why.
+    agent_environment:
       skills:
         - ../../.github/skills/rpi/rpi
+        - ../../.github/skills/rpi/rpi-research
     tags:
       category: behavior-conformance
       skill: rpi
@@ -1946,21 +1948,23 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-rpi-tool-trigger-skill-domain-attribution
+        name: skill-rpi-tool-trigger-skill-selected
         config:
-          pattern: '(?i)(rpi|rpi-sessions|hve-core-rpi-workflow|session)'
+          pattern: '^\s*[*_\x60#>\- \t]*Skill[*_\x60]*:[*_\x60 \t]*rpi[*_\x60 \t.]*(?:\r?\n|$)'
       - type: output-matches
-        name: skill-rpi-tool-trigger-scope-language
+        name: skill-rpi-tool-trigger-phase-skill-evidence
         config:
-          pattern: '(?i)(research|plan|implement|review|follow-up|canvas)'
+          pattern: '(?i)rpi-sessions|hve-core-rpi-workflow|\brpi-(?:research|plan|implement|review)\b'
   - name: skill-rpi-bleed-detection
     prompt: |
       I only want a read-only independent critique of an existing RPI plan
       without starting or managing a multi-phase RPI session. Does the `rpi`
-      session skill or `rpi-plan-critique` apply directly? Justify briefly.
-    environment:
+      session skill or `rpi-plan-critique` apply directly? Return
+      `Skill: <name>` on the first line, then justify briefly.
+    agent_environment:
       skills:
         - ../../.github/skills/rpi/rpi
+        - ../../.github/skills/rpi/rpi-plan-critique
     tags:
       category: behavior-conformance
       skill: rpi
@@ -1968,13 +1972,13 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-rpi-bleed-detection-skill-attribution
+        name: skill-rpi-bleed-detection-skill-selected
         config:
-          pattern: '(?i)(rpi-plan-critique|critique|read-only)'
+          pattern: '^\s*[*_\x60#>\- \t]*Skill[*_\x60]*:[*_\x60 \t]*rpi-plan-critique[*_\x60 \t.]*(?:\r?\n|$)'
       - type: output-matches
-        name: skill-rpi-bleed-detection-scope-language
+        name: skill-rpi-bleed-detection-read-only-evidence
         config:
-          pattern: '(?i)(plan|critique|session|lifecycle)'
+          pattern: '(?i)\bwithout\s+editing\b|\bdoes\s+not\s+edit\b|\bnot\s+edit\b|\bnever\s+edits?\b|\bcredibility\b|\bfindings?\b|\b(?:provides?|gives?|performs?|offers?|runs?|delivers?|does|is|it[\x27\u2019]s|stays?|remains?)\s+(?:an?\s+)?(?:\w+\s+){0,2}?read[-\s]only\b'
   - name: skill-rpi-canvas-provider-ambiguity
     prompt: |
       Using the `rpi` skill in a contained, response-only canvas-policy check:
@@ -2322,31 +2326,6 @@ stimuli:
         name: skill-rpi-review-bleed-detection-scope-language
         config:
           pattern: '(?i)(evaluate\s+completed|review|implement|code\s+edit|phase)'
-  - name: skill-code-review-knowledge
-    prompt: |
-      Summarize the review workflow defined by the `code-review` skill,
-      including its perspectives, depth tiers, severity taxonomy, structured
-      output contract, and change-risk evidence checklist. Explain all six
-      checklist categories and the observed, unavailable, and qualitative
-      evidence states. Cover complete evidence, unavailable history or
-      coverage, conflicting evidence, the standard fallback for incomplete or
-      inconclusive evidence, comprehensive recommendations for material
-      observed concerns, and a human-selected depth that overrides the
-      recommendation with a persisted rationale.
-    tags:
-      category: behavior-conformance
-      skill: code-review
-      shape: knowledge
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: skill-code-review-knowledge-skill-domain-attribution
-        config:
-          pattern: '(?is)(?=.*(?:code-review|code review))(?=.*perspective)(?=.*depth)(?=.*severity)(?=.*(?:output|finding|verdict))(?=.*(?:change[- ]risk|evidence checklist))(?=.*change[- ]scope)(?=.*path[- ]criticality)(?=.*history)(?=.*test[- ]presence)(?=.*coverage)(?=.*rollback).+'
-      - type: output-matches
-        name: skill-code-review-knowledge-scope-language
-        config:
-          pattern: '(?is)(?=.*observed)(?=.*unavailable)(?=.*qualitative)(?=.*standard)(?=.*(?:incomplete|inconclusive))(?=.*comprehensive)(?=.*(?:conflict|advisory))(?=.*human)(?=.*(?:override|selected))(?=.*rationale).+'
   - name: skill-privacy-standards-knowledge
     prompt: |
       Summarize the privacy frameworks the `privacy-standards` skill provides
@@ -10413,3 +10392,207 @@ stimuli:
         config:
           program: node
           args: [.eval-assets/rca-mcp/check.mjs, boundary]
+
+  - name: skill-rpi-refine-knowledge
+    prompt: |
+      Using the `rpi-refine` skill, name the canonical file suffix under
+      `.copilot-tracking/reviews/logs/<YYYY-MM-DD>/` that holds its record, the
+      finding ID prefix, and the Parent Decision Record event ID prefix.
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-refine
+      files:
+        - src: ../../.github/skills/rpi/rpi-refine
+          dest: .github/skills/rpi/rpi-refine
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: rpi-refine
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 4b65e98c8ab81d3b3da8c92879b1eb35ce9145b69007264ba44ffa9fca664b33
+    graders:
+      - type: output-matches
+        name: skill-rpi-refine-knowledge-artifact-and-ids
+        config:
+          pattern: '(?is)(?=[\s\S]*-refinement\.md)(?=[\s\S]*\bRF-)(?=[\s\S]*\bFD-)'
+      - type: output-matches
+        name: skill-rpi-refine-knowledge-scope-language
+        config:
+          pattern: '(?i)(subtractive|refinement|remove|simplify|rpi-refine)'
+
+  - name: skill-rpi-refine-tool-trigger
+    prompt: |
+      Implementation on our RPI task just finished. Beyond acceptance
+      conformance, we want a review focused on what can be removed, simplified,
+      or reworked across code, docs, domain language, tests, dependencies, error
+      boundaries, and configuration. Which skill under
+      `.github/skills/rpi/**/SKILL.md` applies, and how does it divide work
+      between the main agent and regular subagents when subagent dispatch is
+      available?
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-refine
+        - ../../.github/skills/rpi/rpi-review
+      files:
+        - src: ../../.github/skills/rpi/rpi-refine
+          dest: .github/skills/rpi/rpi-refine
+        - src: ../../.github/skills/rpi/rpi-review
+          dest: .github/skills/rpi/rpi-review
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: rpi-refine
+      shape: tool-trigger
+      advisory: "true"
+      prompt_sha256: 0033b0e255ac2a7a6fb16e9efd94c3e6e12f9087f69917c7a6972d7a0749a944
+    graders:
+      - type: output-matches
+        name: skill-rpi-refine-tool-trigger-skill-and-main-agent
+        config:
+          pattern: '(?is)(?=[\s\S]*(?:^|\W)rpi-refine(?:\W|$))(?=[\s\S]*\bmain\s+agent\b)(?=[\s\S]*\b(?:targeted|narrow|bounded|lookup|specific)\b)'
+      - type: output-matches
+        name: skill-rpi-refine-tool-trigger-scope-language
+        config:
+          pattern: '(?i)(remove|simplify|subtractive|refinement|subagents?)'
+
+  - name: skill-rpi-refine-bleed-detection
+    prompt: |
+      We need to verify whether delivered behavior divergences from cited BRD
+      MUST constraints require a copy-ready Stakeholder Note Draft. Does
+      `rpi-refine` own that business-alignment comparison, or does another RPI
+      skill own it? Justify briefly.
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-refine
+        - ../../.github/skills/rpi/rpi-review
+      files:
+        - src: ../../.github/skills/rpi/rpi-refine
+          dest: .github/skills/rpi/rpi-refine
+        - src: ../../.github/skills/rpi/rpi-review
+          dest: .github/skills/rpi/rpi-review
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: rpi-refine
+      shape: bleed-detection
+      advisory: "true"
+      prompt_sha256: 0c306ef9a3c1d4692018123c779387313423e9ecd88de2b363ecee18769549f6
+    graders:
+      - type: output-matches
+        name: skill-rpi-refine-bleed-detection-skill-attribution
+        config:
+          pattern: '(?i)(?:^|\W)rpi-review(?:\W|$)'
+      - type: output-matches
+        name: skill-rpi-refine-bleed-detection-scope-language
+        config:
+          pattern: '(?i)(does\s+not|not\s+own|acceptance|business[-\s]alignment|stakeholder)'
+
+  - name: skill-rpi-refine-subagents-none-fallback
+    prompt: |
+      Using `rpi-refine` with `subagents=none`, does the review fail, skip its
+      four subtractive lenses, or assess all four lenses directly in the parent
+      context? Explain concisely.
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-refine
+      files:
+        - src: ../../.github/skills/rpi/rpi-refine
+          dest: .github/skills/rpi/rpi-refine
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: rpi-refine
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 3291de33aebf51c738f3e60da84522421994a077e05d2b2d0c57c1a8daec45c0
+    graders:
+      - type: output-matches
+        name: skill-rpi-refine-subagents-none-direct-parent-lenses
+        config:
+          pattern: '(?is)(?=[\s\S]*\b(?:direct|directly|main\s+agent|parent|this\s+context|in[-\s]context)\b)(?=[\s\S]*\b(?:four|4|all)\b[\s\S]*\blenses\b)'
+      - type: output-matches
+        name: skill-rpi-refine-subagents-none-no-failure-or-skip
+        config:
+          pattern: '(?i)(does\s+not\s+fail|without\s+failing|not\s+skip|never\s+mandatory|optional)'
+
+  - name: skill-code-review-knowledge
+    prompt: |
+      Using the `code-review` skill, name the tracking directory prefix where each review folder is created, the Node helper script relative to the skill root, and the six core review vector pills (excluding phase helpers and accessibility). If the skill cannot be read, report the task as blocked.
+    agent_environment:
+      skills:
+        - ../../.github/skills/coding-standards/code-review
+      files:
+        - src: ../../.github/skills/coding-standards/code-review
+          dest: .github/skills/coding-standards/code-review
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: code-review
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 769e218ce09c5617d0654bef4015c23cf053563157d6505c8ad6ba55b9a3b452
+    graders:
+      - type: output-matches
+        name: skill-code-review-knowledge-paths
+        config:
+          pattern: '(?is)(?=[\s\S]*\.copilot-tracking/reviews/code-reviews)(?=[\s\S]*scripts/review\.mjs)'
+      - type: output-matches
+        name: skill-code-review-knowledge-vectors
+        config:
+          pattern: '(?is)(?=[\s\S]*\bfunctional\b)(?=[\s\S]*\bsecurity\b)(?=[\s\S]*\brai\b)(?=[\s\S]*\bsssc\b)(?=[\s\S]*\bperformance\b)(?=[\s\S]*\bprivacy\b)'
+
+  - name: skill-code-review-tool-trigger
+    prompt: |
+      A contributor wants a pre-PR check of their staged git changes focused on behavioral bugs, missed codebase SDKs or abstractions, and unneeded internal edge-case branches, while keeping specialist checks off unless asked. Which skill under `.github/skills/coding-standards/**/SKILL.md` owns this workflow, and which subagent type does it dispatch for parallel area tasks? If the skills cannot be read, report the task as blocked.
+    agent_environment:
+      skills:
+        - ../../.github/skills/coding-standards/code-review
+        - ../../.github/skills/coding-standards/python-foundational
+      files:
+        - src: ../../.github/skills/coding-standards/code-review
+          dest: .github/skills/coding-standards/code-review
+        - src: ../../.github/skills/coding-standards/python-foundational
+          dest: .github/skills/coding-standards/python-foundational
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: code-review
+      shape: tool-trigger
+      advisory: "true"
+      prompt_sha256: 72aa53ba5dcdc6f8d1d4e31373c1eae165b5ff6b3ed16b31cf3de3979cdb3416
+    graders:
+      - type: output-matches
+        name: skill-code-review-tool-trigger-skill-name
+        config:
+          pattern: '(?i)(?:^|\W)code-review(?:\W|$)'
+      - type: output-matches
+        name: skill-code-review-tool-trigger-subagent-type
+        config:
+          pattern: '(?i)\bgeneral[-\s]purpose\b'
+
+  - name: skill-code-review-bleed-detection
+    prompt: |
+      During an ordinary `/code-review` run where the user did not ask for extra vectors or plan comparisons, should the orchestrating agent read `references/specialist.md` and `references/integrations.md` to scan the workspace for BRDs, PRDs, ADRs, `rai-standards`, or `supply-chain-security`? Explain briefly from the `code-review` skill. If the skill cannot be read, report the task as blocked.
+    agent_environment:
+      skills:
+        - ../../.github/skills/coding-standards/code-review
+      files:
+        - src: ../../.github/skills/coding-standards/code-review
+          dest: .github/skills/coding-standards/code-review
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: code-review
+      shape: bleed-detection
+      advisory: "true"
+      prompt_sha256: e943535aa245ae6e48c3f0f7cefa26b7932e5530bc98e382d0216a546664b69a
+    graders:
+      - type: output-matches
+        name: skill-code-review-bleed-detection-opt-in-gate
+        config:
+          pattern: '(?i)\b(no\b|never|do\s+not|must\s+not|should\s+not|unloaded|opt[-\s]in|explicitly\s+request(?:ed|s)?)\b'
+      - type: output-matches
+        name: skill-code-review-bleed-detection-functional-default
+        config:
+          pattern: '(?i)((?<!non[-\s])\bfunctional\b|opt[-\s]in|explicitly\s+request(?:ed|s)?|unloaded)'

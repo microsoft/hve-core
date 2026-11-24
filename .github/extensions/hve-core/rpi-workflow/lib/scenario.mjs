@@ -19,8 +19,8 @@ const NEXT_ACTION = Object.freeze({
     research: 'Waiting for your answer to D2 before planning',
     plan: 'Waiting for your answer to D5; implementation starts after it',
     implement: 'Implementing P02-T02; P03-T01 waits for your answer to D6',
-    review: 'Routing accepted findings RV-001 to RV-004 to a child loop',
-    followup: 'Child loop field-inspections-offline-sync-review-fixes is fixing RV-001 to RV-004',
+    review: 'Routing accepted findings RV-001 to RV-004 and RF-001 to RF-002 into P05 planning',
+    followup: 'Follow-up loop is implementing RV-001 to RV-004 and RF-001 to RF-002',
 });
 
 // Trace connections that no reference field records. Every other trace link derives from the
@@ -86,7 +86,7 @@ export function buildScenario(stage = 'implement', nowMs = Date.now()) {
     addSections(research.sections, 'research', 150);
     if (reached('plan')) addSections(plan.sections, 'plan', 110);
     if (reached('implement')) addSections(implement.sections, 'implement', 4);
-    if (reached('review')) addSections({ 'review-summary': review.sections['review-summary'] }, 'review', 12);
+    if (reached('review')) addSections({ 'review-summary': review.sections['review-summary'], 'refinement-summary': review.sections['refinement-summary'] }, 'review', 12);
     if (reached('followup')) addSections({ 'followup-summary': review.sections['followup-summary'] }, 'followup', 2);
 
     const lanes = copy(research.lanes).map((lane) => ({ ...lane, createdAt: time(170), updatedAt: time(lane.status === 'done' ? 165 : 4) }));
@@ -193,7 +193,7 @@ export function buildScenario(stage = 'implement', nowMs = Date.now()) {
     }
 
     const reviewDoc = reached('review')
-        ? { execution: review.review.execution, outcome: review.review.outcome, depth: review.review.depth, findings: copy(review.review.findings), history: stamp(copy(review.review.history)), validation: copy(review.review.validation) }
+        ? { execution: review.review.execution, outcome: review.review.outcome, depth: review.review.depth, passes: copy(review.review.passes), findings: copy(review.review.findings), history: stamp(copy(review.review.history)), validation: copy(review.review.validation) }
         : { execution: null, outcome: null, depth: null, findings: [], history: [], validation: [] };
     // Before Follow-up, the session holds only this task, still running.
     const followUps = reached('followup')

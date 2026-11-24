@@ -4,18 +4,22 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
 
+import { assembleSession } from '../lib/source/assemble.mjs';
+import { parsePlan, parseResearch, parseState } from '../lib/source/parse.mjs';
 import { installFakeDom, serialize } from './helpers/fake-dom.mjs';
-import { rootSession } from './helpers/rpi-fixture.mjs';
+import { copiedEvidence, FIXTURE_NOW, PATHS, PLAN, RESEARCH, ROOT_STATE, rootSession, suppliedEvidence } from './helpers/rpi-fixture.mjs';
 
 const html = (nodes) => (Array.isArray(nodes) ? nodes : [nodes]).flat(Infinity).filter(Boolean).map(serialize).join('');
 const textOf = (markup) => markup.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
 
 let restore;
 let planView;
+let researchView;
 let makeContext;
 before(async () => {
     restore = installFakeDom();
     planView = await import('../ui/view-plan.mjs');
+    researchView = await import('../ui/view-research.mjs');
     ({ makeContext } = await import('./helpers/render-views.mjs'));
 });
 after(() => restore());
@@ -137,5 +141,41 @@ describe('updated marks', () => {
         session.sections['plan-unknowns'] = { ...session.sections['plan-unknowns'], revision: 2, updatedAt: new Date(now - 11 * 60 * 1000).toISOString() };
         const marks = html(planView.renderView(makeContext(session, 'plan'))).match(/updated-mark/g) ?? [];
         assert.equal(marks.length, 2, 'the summary and the task, but not text changed more than ten minutes ago');
+    });
+});
+
+describe('provided sources', () => {
+    const MARKUP = suppliedEvidence('<img src=x onerror="alert(1)"> notes in chat');
+    /** A task whose Research and Plan were provided with this evidence, assembled as the canvas reads them. */
+    const providedWith = (evidence) => assembleSession({
+        id: 'rpi-trail-maps',
+        state: parseState({ ...ROOT_STATE, active_phase: 'Implement', status: 'active', session_status: 'running', confirmed_decisions: [{ decision: 'Research disposition', status: 'provided', evidence }, { decision: 'Plan disposition', status: 'provided', evidence }] }),
+        artifacts: { research: parseResearch(RESEARCH), plan: parsePlan(PLAN) },
+        statePath: PATHS.rootState,
+        now: FIXTURE_NOW,
+    }).session;
+
+    it('shows a provided plan\'s Source row first, with its evidence as text and no markup', () => {
+        const session = providedWith(MARKUP);
+        const markup = html(planView.renderView(makeContext(session, 'plan')));
+        assert.ok(markup.indexOf('id="row-plan-source"') < markup.indexOf('id="row-plan-summary"'), 'the source comes before the summary');
+        assert.match(textOf(markup), /The plan came from the user\. Supplied by the user on 2026-01-15: &lt;img src=x onerror=&quot;alert\(1\)&quot;&gt; notes in chat/);
+        assert.doesNotMatch(markup, /<img/, 'the evidence renders as text, never as an element');
+        assert.deepEqual(planView.outline(makeContext(session, 'plan')).slice(0, 2).map((item) => item.label), ['Source', 'Summary']);
+    });
+
+    it('shows a provided research\'s Source row first, naming the session by its short ID', () => {
+        const session = providedWith(copiedEvidence(PATHS.research));
+        const markup = html(researchView.renderView(makeContext(session, 'research')));
+        assert.ok(markup.indexOf('id="row-research-source"') < markup.indexOf('id="row-research-summary"'));
+        assert.ok(textOf(markup).includes(`Research came from session 3fa85f64. ${copiedEvidence(PATHS.research)}`), 'the short ID, then the evidence as recorded');
+        assert.equal(researchView.outline(makeContext(session, 'research'))[0].label, 'Source');
+    });
+
+    it('has no Source row in a task whose phases were not provided', () => {
+        const { session } = rootSession();
+        assert.doesNotMatch(html(planView.renderView(makeContext(session, 'plan'))), /row-plan-source/);
+        assert.doesNotMatch(html(researchView.renderView(makeContext(session, 'research'))), /row-research-source/);
+        assert.ok(!planView.outline(makeContext(session, 'plan')).some((item) => item.id === 'plan-source'));
     });
 });
