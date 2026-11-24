@@ -3,7 +3,7 @@ title: BRD Builder
 description: "Business Requirements Document builder with guided Q&A and references"
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-21
 ms.topic: reference
 keywords:
   - agent

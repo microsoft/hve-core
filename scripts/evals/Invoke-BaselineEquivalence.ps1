@@ -1167,7 +1167,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         }
         # The surface is staged outside the workspace because vally owns the workspace
         # tree and recreates it per trial. The customized spec copies this directory
-        # into each trial through environment.files.
+        # into each trial through agent_environment.files.
         $surfaceRoot = Join-Path $resolvedRoot 'evals/baseline-equivalence/customized/surface'
         $surfacePlaceholderText = 'Placeholder so this directory exists in a clean checkout; the driver rewrites the surface on every run.'
         $variantB.applied = @(Get-AppliedArtifacts -WorkspaceRoot $surfaceRoot)
@@ -1367,7 +1367,7 @@ if ($MyInvocation.InvocationName -ne '.') {
                 Set-Content -LiteralPath (Join-Path $surfaceGitHub '.gitkeep') -Value $surfacePlaceholderText -Encoding utf8NoBOM
             }
 
-            # Both specs seed their trials from this fixture through environment.files.
+            # Both specs seed their trials from this fixture through agent_environment.files.
             # The hash keys the baseline cache, so a baseline captured before a seed
             # change is not reused against a customized run that saw the new content.
             $seedPath = Join-Path $resolvedRoot 'evals/baseline-equivalence/seed-workspace'

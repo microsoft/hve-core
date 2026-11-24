@@ -3,7 +3,7 @@ title: Supply Chain Skill Assessor
 description: Assesses supply-chain posture against the supply-chain skill and returns structured findings
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-21
 ms.topic: reference
 keywords:
   - agent

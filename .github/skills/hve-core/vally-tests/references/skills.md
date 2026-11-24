@@ -30,7 +30,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 ### Check 1: Required Frontmatter Fields
 
 * Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
-* Testable behavior: SKILL.md frontmatter MUST include a `name:` field in lowercase kebab-case AND a concise, non-empty `description:` field (aim near 120 characters; modest overage is acceptable when it improves routing clarity).
+* Testable behavior: SKILL.md frontmatter MUST include a `name:` field in lowercase kebab-case AND a non-empty `description:` field written as concise trigger metadata (the frontmatter schema caps it at 1,024 characters).
 * Suggested stimulus: ask the assistant to identify a named skill by its frontmatter `name:` and `description:` values.
 * Grader recommendation: `regex` with pattern `(?m)^name:\s*['"]?[a-z0-9][a-z0-9-]*['"]?` combined with `(?m)^description:\s*['"].{1,200}`.
 * Evidence: `.github/skills/experimental/vscode-playwright/SKILL.md` L1-L7 demonstrates the required metadata pair.

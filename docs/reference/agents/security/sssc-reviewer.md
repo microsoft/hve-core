@@ -3,7 +3,7 @@ title: SSSC Reviewer
 description: "Evidence-based reviewer for repository supply-chain security posture with audit, diff, and plan review modes"
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-21
 ms.topic: reference
 keywords:
   - agent
