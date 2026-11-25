@@ -1367,11 +1367,15 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
             FAILING_COUNT       = ''
             EXCEPTED_COUNT      = ''
             EXCEPTION_ERROR_COUNT = ''
-            GATE_ERROR          = 'true'
-            STALE_COUNT         = '0'
-            CODEQL_RESULT       = 'success'
-            WORKFLOW_SCAN_RESULT = 'success'
-            EVENT_NAME          = 'schedule'
+            GATE_ERROR              = 'true'
+            STALE_COUNT             = '0'
+            CODEQL_RESULT           = 'success'
+            WORKFLOW_SCAN_RESULT    = 'success'
+            ACTION_VERSION_RESULT   = 'success'
+            ACTION_VERSION_COMPLIANT = 'true'
+            GITLEAKS_RESULT         = 'success'
+            GITLEAKS_LEAKS_FOUND    = 'false'
+            EVENT_NAME              = 'schedule'
             SERVER_URL          = 'https://github.com'
             REPO                = 'example/repository'
             RUN_ID              = '1'
@@ -1421,6 +1425,10 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
             STALE_COUNT = '0'
             CODEQL_RESULT = $CodeqlResult
             WORKFLOW_SCAN_RESULT = $ScanResult
+            ACTION_VERSION_RESULT = 'success'
+            ACTION_VERSION_COMPLIANT = 'true'
+            GITLEAKS_RESULT = 'success'
+            GITLEAKS_LEAKS_FOUND = 'false'
             EVENT_NAME = 'schedule'
             SERVER_URL = 'https://github.com'
             REPO = 'example/repository'
@@ -1457,6 +1465,95 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
             else {
                 $summary | Should -Match ([regex]::Escape("Dangerous workflow scan result was $ScanResult; review the dangerous-workflow-scan job's scanner step logs and confirm the poutine-results artifact exists"))
             }
+        }
+        finally {
+            foreach ($key in $savedEnvironment.Keys) {
+                [Environment]::SetEnvironmentVariable($key, $savedEnvironment[$key])
+            }
+        }
+    }
+
+    It 'Reuses gitleaks and action-version-consistency weekly with minimum permissions and hardened SARIF uploads' {
+        $document = Get-WorkflowDocument -Name 'weekly-security-maintenance.yml'
+
+        $gitleaksJob = $document['jobs']['gitleaks-scan']
+        $gitleaksJob['uses'] | Should -BeExactly '$/.github/workflows/gitleaks-scan.yml'
+        @($gitleaksJob['permissions'].Keys | Sort-Object) | Should -Be @('contents', 'security-events')
+        $gitleaksJob['permissions']['contents'] | Should -BeExactly 'read'
+        $gitleaksJob['permissions']['security-events'] | Should -BeExactly 'write'
+        $gitleaksJob['with']['change-mode'] | Should -BeExactly 'full'
+        foreach ($inputName in @('soft-fail', 'upload-sarif', 'upload-artifact')) {
+            $gitleaksJob['with'][$inputName] | Should -BeTrue
+        }
+        $gitleaksJob.Contains('secrets') | Should -BeFalse
+        @($document['jobs']['summary']['needs']) | Should -Contain 'gitleaks-scan'
+
+        $avcJob = $document['jobs']['action-version-consistency-scan']
+        $avcJob['uses'] | Should -BeExactly '$/.github/workflows/action-version-consistency-scan.yml'
+        @($avcJob['permissions'].Keys | Sort-Object) | Should -Be @('contents', 'security-events')
+        $avcJob['permissions']['contents'] | Should -BeExactly 'read'
+        $avcJob['permissions']['security-events'] | Should -BeExactly 'write'
+        foreach ($inputName in @('soft-fail', 'upload-sarif', 'upload-artifact')) {
+            $avcJob['with'][$inputName] | Should -BeTrue
+        }
+        $avcJob.Contains('secrets') | Should -BeFalse
+        @($document['jobs']['summary']['needs']) | Should -Contain 'action-version-consistency-scan'
+
+        $gitleaksDoc = Get-WorkflowDocument -Name 'gitleaks-scan.yml'
+        $gitleaksDoc['on']['workflow_call']['outputs']['leaks-found']['value'] |
+            Should -BeExactly '${{ jobs.scan.outputs.leaks-found }}'
+        $gitleaksDoc['jobs']['scan']['outputs']['leaks-found'] |
+            Should -BeExactly '${{ steps.gitleaks.outputs.leaks-found }}'
+        $downloadStep = Get-NamedJobStep -Document $gitleaksDoc -JobName 'scan' -StepName 'Download and verify gitleaks'
+        [string]$downloadStep['run'] | Should -Match 'RUNNER_TEMP'
+        [string]$downloadStep['run'] | Should -Match 'rm -f "\$\{GITLEAKS_TARBALL\}"'
+
+        $avcDoc = Get-WorkflowDocument -Name 'action-version-consistency-scan.yml'
+        $avcUpload = Get-NamedJobStep -Document $avcDoc -JobName 'scan' -StepName 'Upload SARIF to Security tab'
+        [string]$avcUpload['if'] | Should -Match ([regex]::Escape("hashFiles('logs/action-version-consistency-results.sarif') != ''"))
+        [string]$avcUpload['if'] | Should -Match ([regex]::Escape("(github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)"))
+        $avcUpload.Contains('continue-on-error') | Should -BeFalse
+    }
+
+    It 'Escalates weekly summary issues for Gitleaks and Action Version Consistency findings or failures: <Name>' -ForEach @(
+        @{ Name = 'Gitleaks leaks detected'; GitleaksResult = 'success'; LeaksFound = 'true'; AvcResult = 'success'; AvcCompliant = 'true'; ExpectedPattern = 'Secrets detected.*Gitleaks secret scan result was success \(leaks found: true\)' }
+        @{ Name = 'Gitleaks job failed'; GitleaksResult = 'failure'; LeaksFound = ''; AvcResult = 'success'; AvcCompliant = 'true'; ExpectedPattern = 'Gitleaks secret scan result was failure' }
+        @{ Name = 'Action Version Consistency non-compliant'; GitleaksResult = 'success'; LeaksFound = 'false'; AvcResult = 'success'; AvcCompliant = 'false'; ExpectedPattern = '2 mismatch\(es\), 1 missing comment\(s\).*Action version consistency result was success \(compliant: false\)' }
+        @{ Name = 'Action Version Consistency job failed'; GitleaksResult = 'success'; LeaksFound = 'false'; AvcResult = 'failure'; AvcCompliant = ''; ExpectedPattern = 'Action version consistency result was failure' }
+    ) {
+        $document = Get-WorkflowDocument -Name 'weekly-security-maintenance.yml'
+        $step = Get-NamedJobStep -Document $document -JobName 'summary' -StepName 'Generate summary'
+        $environment = @{
+            THRESHOLD_DAYS                  = '30'
+            PINNING_SCORE                   = '100'
+            UNPINNED_COUNT                  = '0'
+            GATE_ERROR                      = ''
+            STALE_COUNT                     = '0'
+            CODEQL_RESULT                   = 'success'
+            WORKFLOW_SCAN_RESULT            = 'success'
+            ACTION_VERSION_RESULT           = $AvcResult
+            ACTION_VERSION_COMPLIANT        = $AvcCompliant
+            ACTION_VERSION_MISMATCH_COUNT   = '2'
+            ACTION_VERSION_MISSING_COMMENTS = '1'
+            GITLEAKS_RESULT                 = $GitleaksResult
+            GITLEAKS_LEAKS_FOUND            = $LeaksFound
+            EVENT_NAME                      = 'schedule'
+            SERVER_URL                      = 'https://github.com'
+            REPO                            = 'example/repository'
+            RUN_ID                          = '1'
+            GITHUB_STEP_SUMMARY             = (Join-Path $TestDrive "weekly-$($Name -replace '[^A-Za-z0-9]', '-').md")
+        }
+        $savedEnvironment = @{}
+        try {
+            foreach ($key in $environment.Keys) {
+                $savedEnvironment[$key] = [Environment]::GetEnvironmentVariable($key)
+                [Environment]::SetEnvironmentVariable($key, $environment[$key])
+            }
+            & ([scriptblock]::Create($step['run']))
+            $summary = Get-Content -LiteralPath $environment['GITHUB_STEP_SUMMARY'] -Raw
+            $summary | Should -Not -Match 'Dependency Checks Clear'
+            $summary | Should -Match 'Next Steps'
+            $summary | Should -Match "(?s)$ExpectedPattern"
         }
         finally {
             foreach ($key in $savedEnvironment.Keys) {

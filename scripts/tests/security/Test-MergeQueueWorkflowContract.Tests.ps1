@@ -837,7 +837,10 @@ jobs:
         $WorkflowPath = Join-Path $PSScriptRoot '../../../.github/workflows/gitleaks-scan.yml'
         $WorkflowText = Get-Content -Raw -Path $WorkflowPath
         $Workflow = $WorkflowText | ConvertFrom-Yaml
-        $ScanStep = @($Workflow['jobs']['scan']['steps']) | Where-Object { $_['id'] -eq 'gitleaks' }
+        $AllSteps = @($Workflow['jobs']['scan']['steps'])
+        $ScanStep = $AllSteps | Where-Object { $_['id'] -eq 'gitleaks' }
+        $UploadStep = @($AllSteps | Where-Object { $_['name'] -eq 'Upload SARIF to Security tab' })
+        $NonUploadSteps = @($AllSteps | Where-Object { $_['name'] -ne 'Upload SARIF to Security tab' })
         $Inputs = $Workflow['on']['workflow_call']['inputs']
 
         $Inputs['change-mode']['default'] | Should -BeExactly 'full'
@@ -846,7 +849,15 @@ jobs:
         $ScanStep['run'] | Should -Match "INPUT_CHANGE_MODE.*= 'full'"
         $ScanStep['run'] | Should -Match ([regex]::Escape('"--log-opts=--full-history --diff-filter=tuxdb --diff-merges=first-parent HEAD"'))
         $ScanStep['run'] | Should -Not -Match '--all'
-        $WorkflowText | Should -Not -Match 'github\.event\.pull_request'
+
+        @($NonUploadSteps | ForEach-Object { $_['name'] }) | Should -Contain 'Verify resolved head commit'
+        @($NonUploadSteps | ForEach-Object { $_['name'] }) | Should -Contain 'Run gitleaks scan'
+        ($NonUploadSteps | ConvertTo-Json -Depth 10) | Should -Not -Match 'github\.event\.pull_request'
+
+        $UploadStep | Should -HaveCount 1
+        [string]$UploadStep[0]['if'] | Should -Match ([regex]::Escape("hashFiles('logs/gitleaks-results.sarif') != ''"))
+        [string]$UploadStep[0]['if'] | Should -Match ([regex]::Escape("(github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)"))
+        $UploadStep[0].Contains('continue-on-error') | Should -BeFalse
     }
 }
 
