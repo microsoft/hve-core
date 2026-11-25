@@ -2816,6 +2816,14 @@ Describe 'Data Science Coach RPI evaluation contracts' -Tag 'Unit' {
         @{ Name = 'metric selection before Research'; Grader = 'evaluation-research-authority'; Text = 'evaluation-design chooses the metrics. rpi-research returns verified facts.' }
         @{ Name = 'ASCII contraction'; Grader = 'evaluation-research-no-invention'; Text = "I won't guess evaluator availability." }
         @{ Name = 'typographic contraction'; Grader = 'evaluation-research-no-invention'; Text = "I won$([char]0x2019)t guess evaluator availability." }
+        @{ Name = 'subject before refusal'; Grader = 'evaluation-research-no-invention'; Text = "Evaluator availability is unknown because the lookup is blocked; I won$([char]0x2019)t invent it." }
+        @{ Name = 'refusal before job switch'; Grader = 'evaluation-research-no-switch'; Text = "I also won$([char]0x2019)t switch jobs without a named destination and confirmed transition." }
+        @{ Name = 'past-tense no job switch'; Grader = 'evaluation-research-no-switch'; Text = "I haven$([char]0x2019)t switched jobs or changed persistent state." }
+        @{ Name = 'job not switched wording'; Grader = 'evaluation-research-no-switch'; Text = 'The evaluation job itself is not switched.' }
+        @{ Name = 'blocked lookup stops claims'; Grader = 'evaluation-research-blocked-stop'; Text = 'The blocked lookup stops current-availability claims and recommendations that depend on them.' }
+        @{ Name = 'what stops heading wording'; Grader = 'evaluation-research-blocked-stop'; Text = '**What stops:** claims about live evaluator availability and any recommendations that depend on that lookup.' }
+        @{ Name = 'lookup stops wording'; Grader = 'evaluation-research-blocked-stop'; Text = 'The lookup stops until it can be grounded in evidence.' }
+        @{ Name = 'evaluator availability claim detected'; Grader = 'evaluation-research-blocked-no-availability-claim'; Text = 'The groundedness evaluator is currently available.' }
         @{ Name = 'negation before planner state'; Grader = 'data-science-rpi-control-returns-to-same-job'; Text = 'pipeline remains active and episodic; no planner state or job change was applied.' }
         @{ Name = 'negation after planner state'; Grader = 'data-science-rpi-control-returns-to-same-job'; Text = 'pipeline is episodic and unchanged. Planner state was not adopted.' }
         @{ Name = 'blocked Implement with unchanged output'; Grader = 'data-science-rpi-reports-no-write'; Text = 'scanner-unavailable. The blocked Implement segment is recorded; the customer output is unchanged.' }
@@ -2843,7 +2851,10 @@ Describe 'Data Science Coach RPI evaluation contracts' -Tag 'Unit' {
         @{ Name = 'preservation omitted'; Grader = 'data-science-rpi-reports-no-write'; Text = 'scanner-unavailable. The Implement segment is blocked and no write occurred.' }
         @{ Name = 'recommendations continue'; Grader = 'evaluation-research-blocked-stop'; Text = 'The evaluation job is active and evaluator recommendations continue as usual.' }
         @{ Name = 'negated recommendation stop'; Grader = 'evaluation-research-blocked-stop'; Text = 'Evaluator recommendations are not stopped.' }
+        @{ Name = 'negated blocked lookup stop'; Grader = 'evaluation-research-blocked-stop'; Text = 'The blocked lookup does not stop evaluator recommendations.' }
         @{ Name = 'negated metric selection ownership'; Grader = 'evaluation-research-authority'; Text = 'Research returns facts. Metric selection is not within evaluation-design authority.' }
+        @{ Name = 'missing session file wording not availability claim'; Grader = 'evaluation-research-blocked-no-availability-claim'; Text = 'No project slug or session-state file is available here.' }
+        @{ Name = 'switch to another job'; Grader = 'evaluation-research-no-switch'; Text = 'I will switch to the analysis job now.' }
     ) {
         $Text | Should -Not -Match $script:DsPatterns[$Grader]
     }
@@ -2869,6 +2880,7 @@ Describe 'Data Science Coach RPI evaluation contracts' -Tag 'Unit' {
     It 'Keeps delivery authoritative with a bounded full-workflow budget and original obligations' {
         $stimulus = $script:DsStimuli['data-science-engineering-coach-produces-rpi-pipeline-delivery']
         $stimulus.tags.Contains('advisory') | Should -BeFalse
+        $stimulus.Contains('simulation') | Should -BeFalse
         $stimulus.constraints.max_agent_duration | Should -Be '900s'
         $stimulus.constraints.max_duration | Should -Be '960s'
         $stimulus.agent_environment.skills | Should -Contain '../../.github/plugins/base/skills/rpi/rpi-plan-critique'
@@ -2935,8 +2947,8 @@ Describe 'Data Science Coach scanner evaluation setup' -Tag 'Unit' {
         $stimulus = $partial.stimuli | Where-Object { $_.name -eq $Stimulus }
         $grader = $stimulus.graders | Where-Object { $_.name -eq $Grader }
         $grader.type | Should -Be 'tool-calls'
-        $simulated = if ($stimulus.Contains('simulation')) {
-            $stimulus.simulation.tool_overrides.powershell.patterns[0].output
+        $simulated = if ($grader.name -eq 'data-science-rpi-clean-scan-observed') {
+            '{"schema_version":"scan-sensitive-content-v1","status":"completed","modes":{"public":false,"data":true,"denylist":false},"denylist_rule_count":0,"findings":[],"summary":{"high":0,"warn":0,"total":0}}'
         }
         else {
             '{"schema_version":"scan-sensitive-content-v1","status":"error","error":{"code":"scanner-unavailable","message":"data-mode scanning is unavailable in this environment"}}'
