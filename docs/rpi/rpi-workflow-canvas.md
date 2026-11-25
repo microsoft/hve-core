@@ -3,7 +3,7 @@ title: RPI Workflow Canvas
 description: Follow an RPI session phase by phase in a canvas beside the chat, answer the agent's decisions, send it your input, and show other local sessions' RPI work from the session picker
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-11-17
+ms.date: 2026-11-24
 ms.topic: how-to
 keywords:
   - rpi workflow canvas
@@ -220,7 +220,7 @@ While the agent works in that phase, it shows **In progress**; once the session 
 * Sessions that share a checkout share its RPI tasks, so the picker lists that checkout once.
 * Relayed items need a chat whose agent can message other sessions, such as a GitHub Copilot app Project.
 
-The [canvas README](https://github.com/microsoft/hve-core/blob/main/.github/extensions/hve-core/rpi-workflow/README.md) gives the exact limits, timers, and messages behind these features, with their storage and security rules.
+The [canvas README](https://github.com/microsoft/hve-core/blob/main/.github/plugins/base/extensions/hve-core/rpi-workflow/README.md) gives the exact limits, timers, and messages behind these features, with their storage and security rules.
 
 ## Themes, Accessibility, and Keyboard
 
@@ -230,7 +230,7 @@ The **Appearance** menu in the header offers **System**, **Light**, and **Dark**
 
 The canvas targets WCAG 2.2 AA in every theme and contrast setting. Status always pairs an icon and a word with its color, so nothing depends on color alone.
 Forced colors keep every border and edge, and reduced motion turns off animation except the small ring that shows a preview locking.
-Everything works from the keyboard. The [style guide](https://github.com/microsoft/hve-core/blob/main/.github/extensions/hve-core/rpi-workflow/STYLE-GUIDE.md) records the palette, measured contrast, and keyboard model.
+Everything works from the keyboard. The [style guide](https://github.com/microsoft/hve-core/blob/main/.github/plugins/base/extensions/hve-core/rpi-workflow/STYLE-GUIDE.md) records the palette, measured contrast, and keyboard model.
 
 <details>
 <summary>Keyboard shortcuts</summary>
@@ -271,7 +271,7 @@ Single-key shortcuts pause while you type, and the shortcut list has a switch th
 
 The repository project entry and an installed plugin can both provide the canvas. The agent keeps a saved provider if still available; otherwise it prefers an offered workspace/project provider. If that attempt fails, it reports the reason and recovery action and continues the RPI session without a canvas.
 
-The [canvas README](https://github.com/microsoft/hve-core/blob/main/.github/extensions/hve-core/rpi-workflow/README.md) covers the agent actions, storage, security, and known limitations.
+The [canvas README](https://github.com/microsoft/hve-core/blob/main/.github/plugins/base/extensions/hve-core/rpi-workflow/README.md) covers the agent actions, storage, security, and known limitations.
 
 ## Related Guides
 

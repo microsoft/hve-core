@@ -2,6 +2,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+  margin-left: auto;
   padding: 0.125rem 0.5rem;
   border-radius: 2px;
   font-size: 0.75rem;
@@ -34,8 +35,9 @@
 .tooltip {
   position: absolute;
   top: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(0.5rem);
+  right: 0;
+  left: auto;
+  transform: translateY(0.5rem);
   background: var(--ifm-color-emphasis-800, #333);
   color: var(--ifm-color-emphasis-100, #fff);
   padding: 0.5rem 0.75rem;
@@ -45,7 +47,7 @@
   text-transform: none;
   white-space: normal;
   width: max-content;
-  max-width: min(15rem, calc(100vw - 2.5rem));
+  max-width: min(15rem, 220px, calc(100vw - 2.5rem));
   z-index: 10;
   pointer-events: auto;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -58,7 +60,7 @@
 .badgeWrapper:focus-within .tooltip {
   opacity: 1;
   visibility: visible;
-  transform: translateX(-50%) translateY(0.25rem);
+  transform: translateY(0.25rem);
 }
 
 .tooltipDismissed,
@@ -66,42 +68,17 @@
 .badgeWrapper:focus-within .tooltipDismissed {
   opacity: 0;
   visibility: hidden;
-  transform: translateX(-50%) translateY(0.5rem);
+  transform: translateY(0.5rem);
 }
 
 .tooltip::after {
   content: '';
   position: absolute;
   bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 1rem;
+  left: auto;
   border: 6px solid transparent;
   border-bottom-color: var(--ifm-color-emphasis-800, #333);
-}
-
-@media (max-width: 768px) {
-  .tooltip {
-    right: 0;
-    left: auto;
-    transform: translateY(0.5rem);
-  }
-
-  .badgeWrapper:hover .tooltip,
-  .badgeWrapper:focus-within .tooltip {
-    transform: translateY(0.25rem);
-  }
-
-  .tooltipDismissed,
-  .badgeWrapper:hover .tooltipDismissed,
-  .badgeWrapper:focus-within .tooltipDismissed {
-    transform: translateY(0.5rem);
-  }
-
-  .tooltip::after {
-    right: 1rem;
-    left: auto;
-    transform: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

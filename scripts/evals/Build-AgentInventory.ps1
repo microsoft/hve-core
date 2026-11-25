@@ -171,13 +171,14 @@ function Get-ParentAgentInventory {
     [OutputType([System.Collections.Generic.List[hashtable]])]
     param([Parameter(Mandatory)] [string]$RepoRoot)
 
-    $agentsDir = Join-Path $RepoRoot '.github/agents'
-    if (-not (Test-Path -LiteralPath $agentsDir -PathType Container)) {
-        throw "Agents directory not found at '$agentsDir'."
+    $agentsDirs = @(Get-Item -Path (Join-Path $RepoRoot '.github/agents'), (Join-Path $RepoRoot '.github/plugins/*/agents') -ErrorAction SilentlyContinue |
+        Where-Object { $_.PSIsContainer })
+    if ($agentsDirs.Count -eq 0) {
+        throw "Agents directory not found at '$(Join-Path $RepoRoot '.github/agents')'."
     }
 
     $entries = [System.Collections.Generic.List[hashtable]]::new()
-    $files = @(Get-ChildItem -Path $agentsDir -Recurse -Filter '*.agent.md' -File -ErrorAction Stop)
+    $files = @($agentsDirs | ForEach-Object { Get-ChildItem -Path $_.FullName -Recurse -Filter '*.agent.md' -File -ErrorAction Stop })
 
     foreach ($file in $files) {
         $rel = ConvertTo-RelativePath -RepoRoot $RepoRoot -Path $file.FullName

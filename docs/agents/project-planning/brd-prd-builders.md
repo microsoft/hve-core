@@ -3,7 +3,7 @@ title: BRD & PRD Builders
 description: Twin agents for creating business and product requirements documents through guided Q&A
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-18
+ms.date: 2026-11-18
 ms.topic: tutorial
 keywords:
   - brd builder
@@ -66,7 +66,7 @@ Both agents support output modes for reviewing document content:
 
 ### Template-Driven Generation
 
-Both agents use templates to structure their output, ensuring consistent section coverage across documents. Both load their canonical templates from the `requirements-author` skill: the BRD Builder uses `.github/skills/project-planning/requirements-author/templates/brd/brd-full.md`, and the PRD Builder uses `.github/skills/project-planning/requirements-author/templates/prd/prd-full.md`.
+Both agents use templates to structure their output, ensuring consistent section coverage across documents. Both load their canonical templates from the `requirements-author` skill: the BRD Builder uses `.github/plugins/project-planning/skills/project-planning/requirements-author/templates/brd/brd-full.md`, and the PRD Builder uses `.github/plugins/project-planning/skills/project-planning/requirements-author/templates/prd/prd-full.md`.
 
 ### Quality Controls
 
@@ -76,13 +76,13 @@ Both agents use templates to structure their output, ensuring consistent section
 
 ## Key Differences
 
-| Aspect            | BRD Builder                                               | PRD Builder                                               |
-|-------------------|-----------------------------------------------------------|-----------------------------------------------------------|
-| Agent file        | `.github/agents/project-planning/brd-builder.agent.md`    | `.github/agents/project-planning/prd-builder.agent.md`    |
-| Lifecycle         | Three-phase (Discover, Define, Govern)                    | Seven-phase (Assess through Finalize)                     |
-| Template strategy | `requirements-author` skill (`templates/brd/brd-full.md`) | `requirements-author` skill (`templates/prd/prd-full.md`) |
-| Focus             | Business justification and stakeholder scope              | Product specifications with measurable requirements       |
-| Session directory | `.copilot-tracking/brd-sessions/`                         | `.copilot-tracking/prd-sessions/`                         |
+| Aspect            | BRD Builder                                                                     | PRD Builder                                                                     |
+|-------------------|---------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| Agent file        | `.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md` | `.github/plugins/project-planning/agents/project-planning/prd-builder.agent.md` |
+| Lifecycle         | Three-phase (Discover, Define, Govern)                                          | Seven-phase (Assess through Finalize)                                           |
+| Template strategy | `requirements-author` skill (`templates/brd/brd-full.md`)                       | `requirements-author` skill (`templates/prd/prd-full.md`)                       |
+| Focus             | Business justification and stakeholder scope                                    | Product specifications with measurable requirements                             |
+| Session directory | `.copilot-tracking/brd-sessions/`                                               | `.copilot-tracking/prd-sessions/`                                               |
 
 The PRD Builder's longer lifecycle reflects its deeper requirement-building, integration, and validation phases for handling detailed product specifications.
 
@@ -105,7 +105,7 @@ Scope:
 - Cost analysis: migration effort vs ongoing vulnerability risk
 - Compliance requirements (SOC 2, FedRAMP) affected by the transition
 - Success metrics: zero-downtime migration, no auth regression in any app
-Output using the canonical BRD template from `.github/skills/project-planning/requirements-author/templates/brd/brd-full.md`.
+Output using the canonical BRD template from `.github/plugins/project-planning/skills/project-planning/requirements-author/templates/brd/brd-full.md`.
 Save session state to .copilot-tracking/brd-sessions/ for multi-session work.
 ```
 

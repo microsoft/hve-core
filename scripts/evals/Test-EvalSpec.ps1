@@ -914,11 +914,20 @@ function Get-ParentAgentInventoryForCoverage {
     }
 
     $inventory = [System.Collections.Generic.List[hashtable]]::new()
-    if (-not (Test-Path -LiteralPath $rootFull -PathType Container)) {
+    $scanRoots = [System.Collections.Generic.List[string]]::new()
+    if (Test-Path -LiteralPath $rootFull -PathType Container) {
+        $scanRoots.Add($rootFull)
+    }
+    if ($AgentsRoot -eq '.github/agents') {
+        foreach ($pluginAgents in @(Get-Item -Path (Join-Path $RepoRoot '.github/plugins/*/agents') -ErrorAction SilentlyContinue | Where-Object { $_.PSIsContainer })) {
+            $scanRoots.Add($pluginAgents.FullName)
+        }
+    }
+    if ($scanRoots.Count -eq 0) {
         return $inventory
     }
 
-    $files = Get-ChildItem -LiteralPath $rootFull -Recurse -File -Filter '*.agent.md' -ErrorAction SilentlyContinue
+    $files = @($scanRoots | ForEach-Object { Get-ChildItem -LiteralPath $_ -Recurse -File -Filter '*.agent.md' -ErrorAction SilentlyContinue })
     foreach ($file in $files) {
         $relPath = ($file.FullName.Substring($RepoRoot.Length)).TrimStart('\', '/').Replace('\', '/')
 
@@ -984,9 +993,14 @@ function Get-NewParentAgentSlugFromGit {
     }
     $gitAgentsPath = [System.IO.Path]::GetRelativePath($RepoRoot, $agentsFull).Replace('\', '/')
 
+    $gitPaths = @($gitAgentsPath)
+    if ($AgentsRoot -eq '.github/agents') {
+        $gitPaths += '.github/plugins'
+    }
+
     Push-Location -LiteralPath $RepoRoot
     try {
-        $output = git diff --name-only --diff-filter=A $BaseRef -- $gitAgentsPath 2>$null
+        $output = git diff --name-only --diff-filter=A $BaseRef -- @gitPaths 2>$null
         $gitExit = $LASTEXITCODE
     }
     finally {

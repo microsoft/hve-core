@@ -3,7 +3,7 @@ title: backlog-management
 description: "Shared backlog conventions for Azure DevOps, GitHub, and Jira. Use for tracker resolution, planning and execution lifecycles, authorization, sanitization, and story quality."
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                |
-|-------------|------------------------------------------------------|
-| Kind        | skill                                                |
-| Source      | `.github/skills/project-planning/backlog-management` |
-| Invocation  | Loaded on demand by referencing agents               |
-| Interactive | No                                                   |
+| Field       | Value                                                                         |
+|-------------|-------------------------------------------------------------------------------|
+| Kind        | skill                                                                         |
+| Source      | `.github/plugins/project-planning/skills/project-planning/backlog-management` |
+| Invocation  | Loaded on demand by referencing agents                                        |
+| Interactive | No                                                                            |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

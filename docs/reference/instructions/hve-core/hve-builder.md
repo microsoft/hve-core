@@ -3,7 +3,7 @@ title: Hve Core/Hve Builder
 description: "Core authoring conventions for prompts, agents, subagents, instructions, and skills"
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - instruction
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                       |
 |-------------|---------------------------------------------------------------------------------------------|
 | Kind        | instruction                                                                                 |
-| Source      | `.github/instructions/hve-core/hve-builder.instructions.md`                                 |
+| Source      | `.github/plugins/base/instructions/hve-core/hve-builder.instructions.md`                    |
 | Invocation  | Applied automatically to `**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md` |
 | Interactive | No                                                                                          |
 <!-- END AUTO-GENERATED: metadata -->

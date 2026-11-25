@@ -13,7 +13,7 @@ disable-model-invocation: true
 
 Keep the Session Log canvas accurate when a new Copilot version changes what a session records. Find what changed between the schema the canvas was built against and the current one, then update the canvas so new and changed data renders correctly while sessions recorded by earlier versions stay readable.
 
-This skill belongs to the HVE Core repository. Keep it directly under `.github/skills/session-log-canvas-update/`, outside package directories and plugin or VSIX membership. The canvas it maintains lives at `.github/extensions/hve-core/session-log/`.
+This skill belongs to the HVE Core repository. Keep it directly under `.github/skills/session-log-canvas-update/`, outside package directories and plugin or VSIX membership. The canvas it maintains lives at `.github/plugins/base/extensions/hve-core/session-log/`.
 
 ## Inputs
 

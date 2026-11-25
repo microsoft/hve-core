@@ -56,11 +56,11 @@ param(
     [Parameter(Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
     [string[]]$DisclaimerSourcePath = @(
-        '.github/skills/project-planning/security-disclaimers/SKILL.md'
-        '.github/skills/privacy/privacy-disclaimers/SKILL.md'
-        '.github/skills/rai/rai-disclaimers/SKILL.md'
-        '.github/skills/project-planning/project-planning-disclaimers/SKILL.md'
-        '.github/skills/coding-standards/code-review/references/code-review-disclaimer.md'
+        '.github/plugins/sdlc-security/skills/project-planning/security-disclaimers/SKILL.md'
+        '.github/plugins/sdlc-security/skills/privacy/privacy-disclaimers/SKILL.md'
+        '.github/plugins/sdlc-security/skills/rai/rai-disclaimers/SKILL.md'
+        '.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md'
+        '.github/plugins/base/skills/coding-standards/code-review/references/code-review-disclaimer.md'
         '.github/skills/shared/disclaimer-language/SKILL.md'
     ),
 

@@ -223,7 +223,7 @@ test("raw verification and input fingerprints survive run directory relocation",
   context.after(() => rm(source.repositoryRoot, { recursive: true, force: true }));
   const result = await prepareRawCases({ ...source, runId: "raw-relocated", indexRows: source.rows });
   await mkdir(join(source.repositoryRoot, "scripts", "evals", "rca-real-world"), { recursive: true });
-  await mkdir(join(source.repositoryRoot, ".github", "skills", "root-cause-analysis"), { recursive: true });
+  await mkdir(join(source.repositoryRoot, ".github", "plugins", "sdlc", "skills", "root-cause-analysis"), { recursive: true });
   await writeFile(join(source.repositoryRoot, "package-lock.json"), "{}");
   const previousRoot = join(source.repositoryRoot, "previous-run-location");
   await rename(result.runRoot, previousRoot);
@@ -241,7 +241,7 @@ test("raw input fingerprints include every converted file, not just metadata", a
   try {
     const result = await prepareRawCases({ ...source, runId: "raw-fingerprint", indexRows: source.rows });
     await mkdir(join(source.repositoryRoot, "scripts", "evals", "rca-real-world"), { recursive: true });
-    await mkdir(join(source.repositoryRoot, ".github", "skills", "root-cause-analysis"), { recursive: true });
+    await mkdir(join(source.repositoryRoot, ".github", "plugins", "sdlc", "skills", "root-cause-analysis"), { recursive: true });
     await writeFile(join(source.repositoryRoot, "package-lock.json"), "{}");
     const before = await createInputFingerprint(source.repositoryRoot, result.runRoot, "raw");
     await writeFile(join(result.modelVisibleRoot, "case-01", "metrics.jsonl"), "changed row");

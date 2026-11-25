@@ -58,14 +58,17 @@ function Get-SkillDirectoryIndex {
     )
 
     $Index = @{}
-    $SkillsRoot = Join-Path $RepoRoot '.github/skills'
-    if (-not (Test-Path -LiteralPath $SkillsRoot -PathType Container)) { return $Index }
+    $SkillsRoots = @(Get-Item -Path (Join-Path $RepoRoot '.github/skills'), (Join-Path $RepoRoot '.github/plugins/*/skills') -ErrorAction SilentlyContinue |
+        Where-Object { $_.PSIsContainer })
+    if ($SkillsRoots.Count -eq 0) { return $Index }
 
-    foreach ($SkillFile in (Get-ChildItem -LiteralPath $SkillsRoot -Recurse -File -Filter 'SKILL.md' -ErrorAction SilentlyContinue)) {
-        $SkillDir = Split-Path -Parent $SkillFile.FullName
-        $SkillName = Split-Path -Leaf $SkillDir
-        if (-not $Index.ContainsKey($SkillName)) {
-            $Index[$SkillName] = $SkillDir.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
+    foreach ($SkillsRoot in $SkillsRoots) {
+        foreach ($SkillFile in (Get-ChildItem -LiteralPath $SkillsRoot.FullName -Recurse -File -Filter 'SKILL.md' -ErrorAction SilentlyContinue)) {
+            $SkillDir = Split-Path -Parent $SkillFile.FullName
+            $SkillName = Split-Path -Leaf $SkillDir
+            if (-not $Index.ContainsKey($SkillName)) {
+                $Index[$SkillName] = $SkillDir.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
+            }
         }
     }
     return $Index
@@ -195,7 +198,7 @@ function Get-AgentSkillReference {
     $Available = Get-SkillDirectoryIndex -RepoRoot $RepoRoot
     if ($Available.Count -eq 0) { return @() }
 
-    $FullPath = if ([System.IO.Path]::IsPathRooted($AgentFilePath)) { $AgentFilePath } else { Join-Path $RepoRoot $AgentFilePath }
+    $FullPath = if ([System.IO.Path]::IsPathRooted($AgentFilePath)) { $AgentFilePath } else { Resolve-CanonicalArtifactPath -RepoRoot $RepoRoot -Path $AgentFilePath }
     if (-not (Test-Path -LiteralPath $FullPath -PathType Leaf)) { return @() }
     $Body = Get-Content -LiteralPath $FullPath -Raw
 
@@ -210,10 +213,12 @@ function Get-AgentSkillReference {
     }
 
     foreach ($Document in $Documents) {
-        foreach ($PathMatch in [regex]::Matches($Document, '\.github/skills/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)')) {
-            $Candidate = ".github/skills/$($PathMatch.Groups[1].Value)/$($PathMatch.Groups[2].Value)"
-            if (Test-Path -LiteralPath (Join-Path $RepoRoot (Join-Path $Candidate 'SKILL.md')) -PathType Leaf) {
-                [void]$Resolved.Add($Candidate)
+        foreach ($PathMatch in [regex]::Matches($Document, '\.github/(?:plugins/[^/]+/)?skills/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)')) {
+            $Candidate = $PathMatch.Value
+            $ResolvedCandidate = Resolve-CanonicalArtifactPath -RepoRoot $RepoRoot -Path (Join-Path $Candidate 'SKILL.md')
+            if (Test-Path -LiteralPath $ResolvedCandidate -PathType Leaf) {
+                $CandidateDir = (Split-Path -Parent $ResolvedCandidate).Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
+                [void]$Resolved.Add($CandidateDir)
             }
         }
 
@@ -266,10 +271,11 @@ function Resolve-AgentScopePattern {
 
     $Exempt = @{ Scope = $null; Pattern = '.*'; Exempt = $true }
 
-    $AgentsRoot = Join-Path $RepoRoot '.github/agents'
-    if (-not (Test-Path -LiteralPath $AgentsRoot -PathType Container)) { return $Exempt }
+    $AgentsRoots = @(Get-Item -Path (Join-Path $RepoRoot '.github/agents'), (Join-Path $RepoRoot '.github/plugins/*/agents') -ErrorAction SilentlyContinue |
+        Where-Object { $_.PSIsContainer })
+    if ($AgentsRoots.Count -eq 0) { return $Exempt }
 
-    $AgentFile = Get-ChildItem -LiteralPath $AgentsRoot -Recurse -File -Filter "$Agent.agent.md" -ErrorAction SilentlyContinue |
+    $AgentFile = $AgentsRoots | ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -Recurse -File -Filter "$Agent.agent.md" -ErrorAction SilentlyContinue } |
         Select-Object -First 1
     if (-not $AgentFile) { return $Exempt }
 
@@ -407,27 +413,34 @@ function Get-AgentDeclaredDependency {
     $Instructions = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     $Subagents = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 
-    $FullPath = Join-Path $RepoRoot $AgentRelativePath
+    $FullPath = Resolve-CanonicalArtifactPath -RepoRoot $RepoRoot -Path $AgentRelativePath
     if (-not (Test-Path -LiteralPath $FullPath -PathType Leaf)) {
         throw "Agent file '$AgentRelativePath' does not exist. Refusing to materialize an incomplete customization surface."
     }
+    $AgentRelativePath = $FullPath.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
     $Body = Get-Content -LiteralPath $FullPath -Raw
 
     # Agent and skill bodies name subagents by display name, such as Report Generator,
     # because the Copilot subagent tool selects agents by name.
-    $AgentsRoot = Join-Path $RepoRoot '.github/agents'
+    $AgentsRoots = @(Get-Item -Path (Join-Path $RepoRoot '.github/agents'), (Join-Path $RepoRoot '.github/plugins/*/agents') -ErrorAction SilentlyContinue |
+        Where-Object { $_.PSIsContainer })
     $NameIndex = @{}
     $SubagentPaths = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    foreach ($AgentFile in (Get-ChildItem -LiteralPath $AgentsRoot -Recurse -File -Filter '*.agent.md' -ErrorAction SilentlyContinue)) {
-        $AgentText = [System.IO.File]::ReadAllText($AgentFile.FullName)
-        $AgentFileRelative = $AgentFile.FullName.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
-        $NameMatch = [regex]::Match($AgentText, '(?ms)\A---\r?\n.*?^name:\s*["'']?(.+?)["'']?\s*$')
-        if ($NameMatch.Success -and -not $NameIndex.ContainsKey($NameMatch.Groups[1].Value)) {
-            $NameIndex[$NameMatch.Groups[1].Value] = $AgentFileRelative
+    foreach ($AgentsRoot in $AgentsRoots) {
+        foreach ($AgentFile in (Get-ChildItem -LiteralPath $AgentsRoot.FullName -Recurse -File -Filter '*.agent.md' -ErrorAction SilentlyContinue)) {
+            $AgentText = [System.IO.File]::ReadAllText($AgentFile.FullName)
+            $AgentFileRelative = $AgentFile.FullName.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
+            $NameMatch = [regex]::Match($AgentText, '(?ms)\A---\r?\n.*?^name:\s*["'']?(.+?)["'']?\s*$')
+            if ($NameMatch.Success -and -not $NameIndex.ContainsKey($NameMatch.Groups[1].Value)) {
+                $NameIndex[$NameMatch.Groups[1].Value] = $AgentFileRelative
+            }
+            if (Test-SubagentFrontmatter -Text $AgentText) { [void]$SubagentPaths.Add($AgentFileRelative) }
         }
-        if (Test-SubagentFrontmatter -Text $AgentText) { [void]$SubagentPaths.Add($AgentFileRelative) }
     }
     $NamesLongestFirst = @($NameIndex.Keys | Sort-Object { $_.Length } -Descending)
+
+    $InstructionsRoots = @(Get-Item -Path (Join-Path $RepoRoot '.github/instructions'), (Join-Path $RepoRoot '.github/plugins/*/instructions') -ErrorAction SilentlyContinue |
+        Where-Object { $_.PSIsContainer })
 
     # Cross-kind references resolve relative to the containing file, so a relative path
     # such as `../../instructions/<name>.instructions.md` is normalized against that
@@ -447,10 +460,13 @@ function Get-AgentDeclaredDependency {
         }
 
         foreach ($Candidate in $Candidates) {
-            if (Test-Path -LiteralPath (Join-Path $RepoRoot $Candidate) -PathType Leaf) { return $Candidate }
+            $ResolvedCandidate = Resolve-CanonicalArtifactPath -RepoRoot $RepoRoot -Path $Candidate
+            if (Test-Path -LiteralPath $ResolvedCandidate -PathType Leaf) {
+                return $ResolvedCandidate.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
+            }
         }
         if ($Reference -notmatch '/') {
-            $ByLeaf = Get-ChildItem -LiteralPath (Join-Path $RepoRoot '.github/instructions') -Recurse -File -Filter $Reference -ErrorAction SilentlyContinue |
+            $ByLeaf = $InstructionsRoots | ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -Recurse -File -Filter $Reference -ErrorAction SilentlyContinue } |
                 Select-Object -First 1
             if ($ByLeaf) { return $ByLeaf.FullName.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/') }
         }
@@ -481,7 +497,7 @@ function Get-AgentDeclaredDependency {
             if ($AgentMatch.Value -match '\*') {
                 $Leaf = Split-Path -Leaf ($AgentMatch.Value -replace '\*+/?', '')
                 if (-not [string]::IsNullOrWhiteSpace($Leaf)) {
-                    $File = Get-ChildItem -LiteralPath $AgentsRoot -Recurse -File -Filter $Leaf -ErrorAction SilentlyContinue |
+                    $File = $AgentsRoots | ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -Recurse -File -Filter $Leaf -ErrorAction SilentlyContinue } |
                         Select-Object -First 1
                     if ($File) {
                         & $AddSubagent $File.FullName.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
@@ -600,7 +616,8 @@ function Copy-VerifiedRepositoryFile {
 
     $null = Assert-ContainedRepositoryPath -Path $Source -ApprovedRoot $RepoRoot -Because 'customization artifact'
 
-    $Target = Join-Path $WorkspacePath $RelativePath
+    $MaterializedPath = ($RelativePath -replace '\\', '/') -replace '^\.github/plugins/[^/]+/', '.github/'
+    $Target = Join-Path $WorkspacePath $MaterializedPath
     $TargetDir = Split-Path -Parent $Target
     if (-not (Test-Path -LiteralPath $TargetDir)) {
         New-Item -ItemType Directory -Path $TargetDir -Force -WhatIf:$false -Confirm:$false | Out-Null
@@ -665,10 +682,12 @@ function New-CustomizedEnvironment {
 
     $Applied = [System.Collections.Generic.List[string]]::new()
 
-    $AgentFile = Get-ChildItem -LiteralPath (Join-Path $RepoRoot '.github/agents') -Recurse -File -Filter "$Agent.agent.md" -ErrorAction SilentlyContinue |
+    $AgentsRoots = @(Get-Item -Path (Join-Path $RepoRoot '.github/agents'), (Join-Path $RepoRoot '.github/plugins/*/agents') -ErrorAction SilentlyContinue |
+        Where-Object { $_.PSIsContainer })
+    $AgentFile = $AgentsRoots | ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -Recurse -File -Filter "$Agent.agent.md" -ErrorAction SilentlyContinue } |
         Select-Object -First 1
     if (-not $AgentFile) {
-        throw "Agent '$Agent' not found under .github/agents. Cannot materialize a customized environment for an agent that does not exist."
+        throw "Agent '$Agent' not found under .github/agents or .github/plugins/*/agents. Cannot materialize a customized environment for an agent that does not exist."
     }
     $AgentRelative = $AgentFile.FullName.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
 

@@ -15,10 +15,10 @@ stimuli:
       ```
     agent_environment:
       files:
-        - src: ../../.github/agents/coding-standards/code-review.agent.md
+        - src: ../../.github/plugins/base/agents/coding-standards/code-review.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/coding-standards/code-review
+        - ../../.github/plugins/base/skills/coding-standards/code-review
     tags:
       category: agent-behavior
     graders:
@@ -44,12 +44,12 @@ stimuli:
       If the staged files cannot be read, report the task as blocked without inventing their rules.
     agent_environment:
       files:
-        - src: ../../.github/agents/coding-standards/code-review.agent.md
+        - src: ../../.github/plugins/base/agents/coding-standards/code-review.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/skills/coding-standards/code-review
+        - src: ../../.github/plugins/base/skills/coding-standards/code-review
           dest: .github/skills/coding-standards/code-review
       skills:
-        - ../../.github/skills/coding-standards/code-review
+        - ../../.github/plugins/base/skills/coding-standards/code-review
     tags:
       category: agent-behavior
       advisory: "true"

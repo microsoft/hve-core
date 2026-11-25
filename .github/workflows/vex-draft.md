@@ -49,7 +49,7 @@ on:
 
         gate_script="$(mktemp)"
         if ! gh api -H "Accept: application/vnd.github.raw" \
-             "repos/${REPO_SLUG}/contents/.github/skills/security/vex/scripts/vex_gate.py" \
+             "repos/${REPO_SLUG}/contents/.github/plugins/sdlc-security/skills/security/vex/scripts/vex_gate.py" \
              > "$gate_script" 2>/dev/null || [ ! -s "$gate_script" ]; then
           echo "VEX gate module unavailable; proceeding."
           exit 0
@@ -76,15 +76,15 @@ if: >-
   needs.pre_activation.outputs.vex_gate_result == 'success'
 
 imports:
-  - ../agents/security/sssc-reviewer.agent.md
+  - ../plugins/sdlc-security/agents/security/sssc-reviewer.agent.md
 
 checkout:
   sparse-checkout: |
     .github/copilot-instructions.md
-    .github/agents/security/
-    .github/instructions/security/
+    .github/plugins/sdlc-security/agents/security/
+    .github/plugins/sdlc-security/instructions/security/
     .github/instructions/shared/
-    .github/skills/security/vex/
+    .github/plugins/sdlc-security/skills/security/vex/
     security/vex/
     scripts/
     extension/
@@ -216,7 +216,7 @@ existing finding set non-interactively.
 
 9. **Open one pull request.** Emit a single `create-pull-request` safe output.
    Populate the PR body from the scaffold at
-   `.github/skills/security/vex/assets/pr-body-scaffold.yml`: render the
+   `.github/plugins/sdlc-security/skills/security/vex/assets/pr-body-scaffold.yml`: render the
    summary, the evidence checklist, and one CVE assessment block per finding
    (from `cve_assessment_template`) recording the drafted status, confidence
    band, code-citation evidence, upstream-bump issue link or reviewer filing

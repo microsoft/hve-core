@@ -3,7 +3,7 @@ title: Coding Standards/Powershell/Powershell
 description: PowerShell scripting conventions
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                         |
-|-------------|-------------------------------------------------------------------------------|
-| Kind        | instruction                                                                   |
-| Source      | `.github/instructions/coding-standards/powershell/powershell.instructions.md` |
-| Invocation  | Applied automatically to `**/*.ps1, **/*.psm1, **/*.psd1`                     |
-| Interactive | No                                                                            |
+| Field       | Value                                                                                      |
+|-------------|--------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                |
+| Source      | `.github/plugins/sdlc/instructions/coding-standards/powershell/powershell.instructions.md` |
+| Invocation  | Applied automatically to `**/*.ps1, **/*.psm1, **/*.psd1`                                  |
+| Interactive | No                                                                                         |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

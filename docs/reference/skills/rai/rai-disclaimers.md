@@ -3,7 +3,7 @@ title: rai-disclaimers
 description: "Verbatim RAI Planning CAUTION for Responsible AI planner sessions, reviewer output, and report requests."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                  |
-|-------------|----------------------------------------|
-| Kind        | skill                                  |
-| Source      | `.github/skills/rai/rai-disclaimers`   |
-| Invocation  | Loaded on demand by referencing agents |
-| Interactive | No                                     |
+| Field       | Value                                                      |
+|-------------|------------------------------------------------------------|
+| Kind        | skill                                                      |
+| Source      | `.github/plugins/sdlc-security/skills/rai/rai-disclaimers` |
+| Invocation  | Loaded on demand by referencing agents                     |
+| Interactive | No                                                         |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

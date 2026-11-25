@@ -3,8 +3,9 @@
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
+    Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force
     $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
-    $script:templatePath = Join-Path $script:repoRoot '.github/skills/accessibility/accessibility/references/ci/accessibility-coverage.workflow-template.yml'
+    $script:templatePath = Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/skills/accessibility/accessibility/references/ci/accessibility-coverage.workflow-template.yml'
     $script:template = Get-Content -LiteralPath $script:templatePath -Raw
     $script:workflow = ConvertFrom-Yaml -Yaml $script:template
     $script:steps = @($script:workflow.jobs['runtime-accessibility'].steps)

@@ -20,7 +20,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const SKILL_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const BASELINE_PATH = path.join(SKILL_ROOT, 'assets', 'event-shapes.json');
-export const DEFAULT_INDEXER_PATH = path.resolve(SKILL_ROOT, '..', '..', 'extensions', 'hve-core', 'session-log', 'lib', 'indexer.mjs');
+export const DEFAULT_INDEXER_PATH = path.resolve(SKILL_ROOT, '..', '..', 'plugins', 'base', 'extensions', 'hve-core', 'session-log', 'lib', 'indexer.mjs');
 const SCHEMA_FILE = path.join('schemas', 'session-events.schema.json');
 const MAX_SCHEMA_BYTES = 16 * 1024 * 1024;
 const MAX_MANIFEST_BYTES = 1024 * 1024;

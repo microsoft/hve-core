@@ -25,7 +25,7 @@ footers:
 # planning sessions (e.g., control-surface-catalog.md, evidence-register.md),
 # and to generated backlog handoffs produced under the ADO, GitHub, and Jira
 # tracking roots (handoff.md).
-# They do NOT match the .github/instructions/rai-planning/*.instructions.md
+# They do NOT match the .github/plugins/sdlc-security/instructions/rai-planning/*.instructions.md
 # basenames. To enforce footers in CI against generated artifacts, invoke
 # Validate-PlannerArtifacts.ps1 with -Paths '.copilot-tracking/rai-plans/<slug>'
 # or -Paths '.copilot-tracking/github-issues/<scope>'.
@@ -35,8 +35,8 @@ artifact-classification:
   # Agentic artifacts: Tier 1 note only (no human review required)
   agentic:
     scope:
-      - .github/instructions/rai-planning/**
-      - .github/instructions/security/sssc-*.instructions.md
+      - .github/plugins/sdlc-security/instructions/rai-planning/**
+      - .github/plugins/sdlc-security/instructions/security/sssc-*.instructions.md
     required-footers:
       - ai-content-note
     artifacts:
@@ -48,8 +48,8 @@ artifact-classification:
   # Human-facing artifacts: Tier 1 note + human review checkbox
   human-facing:
     scope:
-      - .github/instructions/rai-planning/**
-      - .github/instructions/security/sssc-*.instructions.md
+      - .github/plugins/sdlc-security/instructions/rai-planning/**
+      - .github/plugins/sdlc-security/instructions/security/sssc-*.instructions.md
       - .copilot-tracking/workitems/**
       - .copilot-tracking/github-issues/**
       - .copilot-tracking/jira-issues/**
@@ -70,7 +70,7 @@ artifact-classification:
   # RAI handoff with disclaimer: Tier 1 + checkbox + Tier 2 RAI disclaimer
   rai-handoff-with-disclaimer:
     scope:
-      - .github/instructions/rai-planning/**
+      - .github/plugins/sdlc-security/instructions/rai-planning/**
     required-footers:
       - ai-content-note
       - human-review-checkbox
@@ -83,7 +83,7 @@ artifact-classification:
   # SSSC handoff with disclaimer: Tier 1 + checkbox + Tier 2 SSSC disclaimer
   sssc-handoff-with-disclaimer:
     scope:
-      - .github/instructions/security/sssc-*.instructions.md
+      - .github/plugins/sdlc-security/instructions/security/sssc-*.instructions.md
     required-footers:
       - ai-content-note
       - human-review-checkbox

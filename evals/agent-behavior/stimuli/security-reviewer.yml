@@ -42,13 +42,13 @@ stimuli:
       Current VULN_REPORT_V1 audit findings: WEB-INPUT PASS with Severity, Location, Finding, and Recommendation set to N/A; AUTHZ-OBJECT FAIL HIGH at src/auth/policy.ts; ERROR-DETAIL PARTIAL MEDIUM at src/api/gateway.ts; SESSION-ROTATE FAIL HIGH at src/auth/session.ts with no plan match; LEGACY-REMOVED PASS with Severity, Location, Finding, and Recommendation set to N/A.
     agent_environment:
       files:
-        - src: ../../.github/agents/security/security-reviewer.agent.md
+        - src: ../../.github/plugins/sdlc-security/agents/security/security-reviewer.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+        - src: ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers/SKILL.md
           dest: .github/skills/project-planning/security-disclaimers/SKILL.md
       skills:
-        - ../../.github/skills/project-planning/security-disclaimers
-        - ../../.github/skills/project-planning/security-planning
+        - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
+        - ../../.github/plugins/sdlc-security/skills/project-planning/security-planning
     tags:
       category: agent-behavior
     graders:
@@ -79,9 +79,9 @@ stimuli:
       A user asks you for an LLM and agentic security review of this repository in audit mode. Do not start the review and do not run any tool or command. Answer in chat: which security skills you will assess, whether codebase profiling still runs, and how the findings from each skill are combined into the final report.
     agent_environment:
       skills:
-        - ../../.github/skills/project-planning/security-disclaimers
+        - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
       files:
-        - src: ../../.github/agents/security/security-reviewer.agent.md
+        - src: ../../.github/plugins/sdlc-security/agents/security/security-reviewer.agent.md
           dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior
@@ -106,9 +106,9 @@ stimuli:
       A user asks you for a web application vulnerability review of this repository without codebase profiling. Do not start the review and do not run any tool or command. Answer in chat: which single security skill you will assess, which pipeline stage you skip, and which scan mode (audit, diff, or plan) you will use.
     agent_environment:
       skills:
-        - ../../.github/skills/project-planning/security-disclaimers
+        - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
       files:
-        - src: ../../.github/agents/security/security-reviewer.agent.md
+        - src: ../../.github/plugins/sdlc-security/agents/security/security-reviewer.agent.md
           dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior

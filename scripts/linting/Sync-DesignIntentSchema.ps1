@@ -33,7 +33,7 @@ $ErrorActionPreference = 'Stop'
 
 if ($MyInvocation.InvocationName -ne '.') {
     $SourcePath = Join-Path $RepoRoot 'scripts/linting/schemas/design-intent.schema.json'
-    $DestinationPath = Join-Path $RepoRoot '.github/skills/accessibility/accessibility/scripts/runtime_a11y/design-intent.schema.json'
+    $DestinationPath = Join-Path $RepoRoot '.github/plugins/sdlc-security/skills/accessibility/accessibility/scripts/runtime_a11y/design-intent.schema.json'
 
     Copy-Item -LiteralPath $SourcePath -Destination $DestinationPath -Force
     Write-Host "Synchronized Design Intent schema to '$DestinationPath'."

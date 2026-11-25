@@ -3,7 +3,7 @@ title: documentation
 description: "Canonical documentation capability for audit, drift, validate, and author modes in hve-core."
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                           |
 |-------------|---------------------------------------------------------------------------------|
 | Kind        | skill                                                                           |
-| Source      | `.github/skills/hve-core/documentation`                                         |
+| Source      | `.github/plugins/sdlc/skills/hve-core/documentation`                            |
 | Invocation  | Invoked directly as `/documentation`, or loaded on demand by referencing agents |
 | Interactive | No                                                                              |
 <!-- END AUTO-GENERATED: metadata -->

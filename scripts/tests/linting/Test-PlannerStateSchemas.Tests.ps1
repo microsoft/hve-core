@@ -25,11 +25,12 @@ BeforeAll {
         return $Matches[1] | ConvertFrom-Json
     }
 
-    $script:secIdentity = Join-Path $script:repoRoot '.github/instructions/security/identity.instructions.md'
-    $script:ssscIdentity = Join-Path $script:repoRoot '.github/instructions/security/sssc-planner.instructions.md'
-    $script:secSchema = Join-Path $script:repoRoot 'scripts/linting/schemas/security-state.schema.json'
-    $script:raiSchema = Join-Path $script:repoRoot 'scripts/linting/schemas/rai-state.schema.json'
-    $script:ssscSchema = Join-Path $script:repoRoot 'scripts/linting/schemas/sssc-state.schema.json'
+    Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force
+    $script:secIdentity = Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/instructions/security/identity.instructions.md'
+    $script:ssscIdentity = Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/instructions/security/sssc-planner.instructions.md'
+    $script:secSchema = Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/skills/project-planning/security-planning/assets/schemas/security-state.schema.json'
+    $script:raiSchema = Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/skills/project-planning/rai-planner/assets/schemas/rai-state.schema.json'
+    $script:ssscSchema = Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/skills/security/supply-chain-security/assets/schemas/sssc-state.schema.json'
     $script:accessibilitySchema = Join-Path $script:repoRoot 'scripts/linting/schemas/accessibility-state.schema.json'
     $script:cadenceFixtures = @(
         (Join-Path $script:repoRoot 'evals/agent-behavior/fixtures/security-planner-disclaimer-null-state.json')

@@ -10,11 +10,12 @@
 #>
 
 BeforeDiscovery {
+    Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force
     $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 
     $script:scanRoots = @(
-        (Join-Path $script:repoRoot '.github/instructions/security'),
-        (Join-Path $script:repoRoot '.github/instructions/rai-planning')
+        (Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/instructions/security'),
+        (Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/instructions/rai-planning')
     )
 
     $script:cases = foreach ($root in $script:scanRoots) {

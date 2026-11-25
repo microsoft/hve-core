@@ -20,15 +20,15 @@ scoring:
 # Paths resolve from this spec's directory, three levels below the repository root.
 agent_environment:
   skills:
-  - ../../../.github/skills/project-planning/security-disclaimers
+  - ../../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
   - ../../../.github/skills/shared/untrusted-content-boundary
   - ../../../.github/skills/shared/planner-identity
-  - ../../../.github/skills/security/supply-chain-security
+  - ../../../.github/plugins/sdlc-security/skills/security/supply-chain-security
   - ../../../.github/skills/shared/backlog-templates
   files:
-  - src: ../../../.github/agents/security/sssc-planner.agent.md
+  - src: ../../../.github/plugins/sdlc-security/agents/security/sssc-planner.agent.md
     dest: .github/agents/security/sssc-planner.agent.md
-  - src: ../../../.github/instructions/security/sssc-planner.instructions.md
+  - src: ../../../.github/plugins/sdlc-security/instructions/security/sssc-planner.instructions.md
     dest: .github/instructions/security/sssc-planner.instructions.md
   - src: ../../../.github/instructions/shared/coaching-patterns.instructions.md
     dest: .github/instructions/shared/coaching-patterns.instructions.md

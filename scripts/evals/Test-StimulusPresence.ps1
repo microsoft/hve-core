@@ -157,18 +157,20 @@ function Get-EnforcedArtifact {
     foreach ($kind in $Kinds) {
         if (-not $kindMap.ContainsKey($kind)) { continue }
         $meta = $kindMap[$kind]
-        $rootDir = Join-Path -Path $RepoRoot -ChildPath $meta.Dir
-        if (-not (Test-Path -LiteralPath $rootDir -PathType Container)) { continue }
-
-        $rootDirResolved = (Resolve-Path -LiteralPath $rootDir).ProviderPath
-        $files = Get-ChildItem -LiteralPath $rootDirResolved -Recurse -File -Filter $meta.Filter -ErrorAction SilentlyContinue
-        foreach ($file in $files) {
-            $parent = Split-Path -Path $file.FullName -Parent
-            if ($parent -eq $rootDirResolved) { continue }
-            $rel = ([System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName)) -replace '\\', '/'
-            $slug = $file.BaseName
-            if ($meta.Suffix) { $slug = $slug -replace ([regex]::Escape($meta.Suffix) + '$'), '' }
-            $results.Add(@{ kind = $kind; path = $rel; artifactId = $slug; status = 'F' })
+        $kindSubdir = ($meta.Dir -replace '^\.github/', '')
+        $rootDirs = @(Get-Item -Path (Join-Path $RepoRoot $meta.Dir), (Join-Path $RepoRoot ".github/plugins/*/$kindSubdir") -ErrorAction SilentlyContinue |
+            Where-Object { $_.PSIsContainer })
+        foreach ($rootDirObj in $rootDirs) {
+            $rootDirResolved = (Resolve-Path -LiteralPath $rootDirObj.FullName).ProviderPath
+            $files = Get-ChildItem -LiteralPath $rootDirResolved -Recurse -File -Filter $meta.Filter -ErrorAction SilentlyContinue
+            foreach ($file in $files) {
+                $parent = Split-Path -Path $file.FullName -Parent
+                if ($parent -eq $rootDirResolved) { continue }
+                $rel = ([System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName)) -replace '\\', '/'
+                $slug = $file.BaseName
+                if ($meta.Suffix) { $slug = $slug -replace ([regex]::Escape($meta.Suffix) + '$'), '' }
+                $results.Add(@{ kind = $kind; path = $rel; artifactId = $slug; status = 'F' })
+            }
         }
     }
 

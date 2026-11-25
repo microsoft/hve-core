@@ -11,7 +11,7 @@
     {
       "name": "hve-core",
       "source": ".",
-      "description": "Opinionated, rapidly evolving HVE Core agentic SDLC patterns and tools",
+      "description": "All HVE Core workflows, agents, skills, rules, and canvases. Choose this plugin instead of combining it with focused HVE plugins.",
       "version": "3.2.2",
       "author": {
         "name": "Microsoft",
@@ -27,6 +27,135 @@
         "prompts",
         "instructions",
         "skills"
+      ]
+    },
+    {
+      "name": "hve-base",
+      "source": "./.github/plugins/base",
+      "description": "Research, plan, implement, and review with RPI; build Copilot customizations with HVE Builder; review code with the RPI Workflow, Session Log, and Code Review canvases.",
+      "version": "3.2.2",
+      "author": {
+        "name": "Microsoft",
+        "url": "https://www.microsoft.com"
+      },
+      "homepage": "https://github.com/microsoft/hve-core",
+      "repository": "https://github.com/microsoft/hve-core",
+      "license": "MIT",
+      "keywords": [
+        "hve",
+        "hve-base",
+        "rpi",
+        "hve-builder",
+        "code-review",
+        "canvases"
+      ]
+    },
+    {
+      "name": "hve-sdlc",
+      "source": "./.github/plugins/sdlc",
+      "description": "Language coding standards, documentation authoring, root cause analysis, and Vally conformance testing. Pair with hve-base for RPI workflows and code review.",
+      "version": "3.2.2",
+      "author": {
+        "name": "Microsoft",
+        "url": "https://www.microsoft.com"
+      },
+      "homepage": "https://github.com/microsoft/hve-core",
+      "repository": "https://github.com/microsoft/hve-core",
+      "license": "MIT",
+      "keywords": [
+        "hve",
+        "sdlc",
+        "coding-standards",
+        "documentation",
+        "root-cause-analysis",
+        "vally"
+      ]
+    },
+    {
+      "name": "hve-project-planning",
+      "source": "./.github/plugins/project-planning",
+      "description": "Author and review ADRs, BRDs, PRDs, architecture diagrams, backlogs, SLOs, UX plans, and experiments, with Jira and GitLab workflows. Pair with hve-base for deeper research.",
+      "version": "3.2.2",
+      "author": {
+        "name": "Microsoft",
+        "url": "https://www.microsoft.com"
+      },
+      "homepage": "https://github.com/microsoft/hve-core",
+      "repository": "https://github.com/microsoft/hve-core",
+      "license": "MIT",
+      "keywords": [
+        "hve",
+        "project-planning",
+        "adr",
+        "brd",
+        "prd",
+        "architecture",
+        "backlog",
+        "jira",
+        "gitlab"
+      ]
+    },
+    {
+      "name": "hve-sdlc-git",
+      "source": "./.github/plugins/sdlc-git",
+      "description": "Set up Git, commit, merge, prepare GitHub pull requests, and manage GitHub backlog operations. Pair with hve-base for code review and RPI workflows.",
+      "version": "3.2.2",
+      "author": {
+        "name": "Microsoft",
+        "url": "https://www.microsoft.com"
+      },
+      "homepage": "https://github.com/microsoft/hve-core",
+      "repository": "https://github.com/microsoft/hve-core",
+      "license": "MIT",
+      "keywords": [
+        "hve",
+        "git",
+        "github",
+        "pull-requests",
+        "backlog"
+      ]
+    },
+    {
+      "name": "hve-sdlc-azure-devops",
+      "source": "./.github/plugins/sdlc-azure-devops",
+      "description": "Plan and apply Azure Boards backlog changes, inspect Azure Pipelines builds, and prepare Azure Repos pull requests. Pair with hve-project-planning for requirements authoring.",
+      "version": "3.2.2",
+      "author": {
+        "name": "Microsoft",
+        "url": "https://www.microsoft.com"
+      },
+      "homepage": "https://github.com/microsoft/hve-core",
+      "repository": "https://github.com/microsoft/hve-core",
+      "license": "MIT",
+      "keywords": [
+        "hve",
+        "azure-devops",
+        "boards",
+        "pipelines",
+        "repos"
+      ]
+    },
+    {
+      "name": "hve-sdlc-security",
+      "source": "./.github/plugins/sdlc-security",
+      "description": "Plan and review application security, software supply chain security (SSSC), privacy, Responsible AI, and accessibility. Pair with hve-base for code review.",
+      "version": "3.2.2",
+      "author": {
+        "name": "Microsoft",
+        "url": "https://www.microsoft.com"
+      },
+      "homepage": "https://github.com/microsoft/hve-core",
+      "repository": "https://github.com/microsoft/hve-core",
+      "license": "MIT",
+      "keywords": [
+        "hve",
+        "security",
+        "security-review",
+        "sssc",
+        "supply-chain",
+        "privacy",
+        "responsible-ai",
+        "accessibility"
       ]
     }
   ]

@@ -3,7 +3,7 @@ title: Coding Standards/Python Script
 description: Python scripting conventions
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                 |
-|-------------|-----------------------------------------------------------------------|
-| Kind        | instruction                                                           |
-| Source      | `.github/instructions/coding-standards/python-script.instructions.md` |
-| Invocation  | Applied automatically to `**/*.py`                                    |
-| Interactive | No                                                                    |
+| Field       | Value                                                                              |
+|-------------|------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                        |
+| Source      | `.github/plugins/sdlc/instructions/coding-standards/python-script.instructions.md` |
+| Invocation  | Applied automatically to `**/*.py`                                                 |
+| Interactive | No                                                                                 |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

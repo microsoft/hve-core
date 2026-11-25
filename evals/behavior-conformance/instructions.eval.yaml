@@ -1,4 +1,4 @@
-# cspell:ignore duplicat occlu bprepar minimi exclud
+# cspell:ignore duplicat occlu bprepar minimi exclud ETSI
 name: behavior-conformance-instructions
 description: >
   Advisory-tier behavior conformance evals for instructions in
@@ -47,7 +47,7 @@ stimuli:
       value, build query ordering, status tool, and tracking-file path apply?
     agent_environment:
       files:
-        - src: ../../.github/skills/azure-devops/ado-build-info/SKILL.md
+        - src: ../../.github/plugins/sdlc-azure-devops/skills/azure-devops/ado-build-info/SKILL.md
           dest: .github/skills/azure-devops/ado-build-info/SKILL.md
     tags:
       category: behavior-conformance
@@ -980,7 +980,7 @@ stimuli:
       parameters and required parameter defaults?
     agent_environment:
       files:
-        - src: ../../.github/instructions/coding-standards/bicep/bicep.instructions.md
+        - src: ../../.github/plugins/sdlc/instructions/coding-standards/bicep/bicep.instructions.md
           dest: .github/instructions/coding-standards/bicep/bicep.instructions.md
     tags:
       category: behavior-conformance
@@ -1133,7 +1133,7 @@ stimuli:
       supports.
     agent_environment:
       files:
-        - src: ../../.github/skills/project-planning/adr-author/references/adr-identity.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/adr-author/references/adr-identity.md
           dest: .github/skills/project-planning/adr-author/references/adr-identity.md
     tags:
       category: behavior-conformance
@@ -1175,7 +1175,7 @@ stimuli:
       include for the human reviewer?
     agent_environment:
       files:
-        - src: ../../.github/skills/security/vex/references/vex-generation.md
+        - src: ../../.github/plugins/sdlc-security/skills/security/vex/references/vex-generation.md
           dest: .github/skills/security/vex/references/vex-generation.md
     tags:
       category: behavior-conformance
@@ -1276,7 +1276,7 @@ stimuli:
       Read policy files only; do not inspect repository state or execute commands.
     agent_environment: &git-merge-instruction-environment
       files:
-        - src: ../../.github/skills/hve-core/git-merge/references/merge-conventions.md
+        - src: ../../.github/plugins/sdlc-git/skills/hve-core/git-merge/references/merge-conventions.md
           dest: .github/skills/hve-core/git-merge/references/merge-conventions.md
     simulation: &git-merge-instruction-no-shell
       tool_overrides:
@@ -1605,7 +1605,7 @@ stimuli:
       overlays emitted?
     agent_environment:
       files:
-        - src: ../../.github/skills/project-planning/security-planning/references/tm7-generation-workflow.md
+        - src: ../../.github/plugins/sdlc-security/skills/project-planning/security-planning/references/tm7-generation-workflow.md
           dest: .github/skills/project-planning/security-planning/references/tm7-generation-workflow.md
     tags:
       category: behavior-conformance
@@ -1748,7 +1748,7 @@ stimuli:
       ```
     agent_environment:
       files:
-        - src: ../../.github/instructions/coding-standards/typescript/typescript-doc-comments.instructions.md
+        - src: ../../.github/plugins/sdlc/instructions/coding-standards/typescript/typescript-doc-comments.instructions.md
           dest: .github/instructions/coding-standards/typescript/typescript-doc-comments.instructions.md
     tags:
       category: behavior-conformance
@@ -1798,7 +1798,7 @@ stimuli:
          on every build.
     agent_environment:
       files:
-        - src: ../../.github/instructions/coding-standards/typescript/typescript-doc-comments.instructions.md
+        - src: ../../.github/plugins/sdlc/instructions/coding-standards/typescript/typescript-doc-comments.instructions.md
           dest: .github/instructions/coding-standards/typescript/typescript-doc-comments.instructions.md
     tags:
       category: behavior-conformance
@@ -1821,7 +1821,7 @@ stimuli:
       flagging in code-review reports?
     agent_environment:
       files:
-        - src: ../../.github/instructions/git/code-review-telemetry.instructions.md
+        - src: ../../.github/plugins/base/instructions/git/code-review-telemetry.instructions.md
           dest: .github/instructions/git/code-review-telemetry.instructions.md
     tags:
       category: behavior-conformance
@@ -1844,7 +1844,7 @@ stimuli:
       record, what must privacy reviews flag, and which skill supplies PII conventions?
     agent_environment:
       files:
-        - src: ../../.github/instructions/privacy/privacy-telemetry.instructions.md
+        - src: ../../.github/plugins/sdlc-security/instructions/privacy/privacy-telemetry.instructions.md
           dest: .github/instructions/privacy/privacy-telemetry.instructions.md
     tags:
       category: behavior-conformance
@@ -1868,7 +1868,7 @@ stimuli:
       telemetry acceptance criteria?
     agent_environment:
       files:
-        - src: ../../.github/instructions/project-planning/planning-telemetry.instructions.md
+        - src: ../../.github/plugins/project-planning/instructions/project-planning/planning-telemetry.instructions.md
           dest: .github/instructions/project-planning/planning-telemetry.instructions.md
     tags:
       category: behavior-conformance
@@ -1892,7 +1892,7 @@ stimuli:
       PII conventions?
     agent_environment:
       files:
-        - src: ../../.github/instructions/rai/rai-telemetry.instructions.md
+        - src: ../../.github/plugins/sdlc-security/instructions/rai/rai-telemetry.instructions.md
           dest: .github/instructions/rai/rai-telemetry.instructions.md
     tags:
       category: behavior-conformance
@@ -1915,7 +1915,7 @@ stimuli:
       marking an implementation step complete?
     agent_environment:
       files:
-        - src: ../../.github/instructions/rpi/implementation-telemetry.instructions.md
+        - src: ../../.github/plugins/base/instructions/rpi/implementation-telemetry.instructions.md
           dest: .github/instructions/rpi/implementation-telemetry.instructions.md
     tags:
       category: behavior-conformance
@@ -1938,7 +1938,7 @@ stimuli:
       reviews, including the resource attribute prefixes and vocabulary skill?
     agent_environment:
       files:
-        - src: ../../.github/instructions/security/security-telemetry.instructions.md
+        - src: ../../.github/plugins/sdlc-security/instructions/security/security-telemetry.instructions.md
           dest: .github/instructions/security/security-telemetry.instructions.md
     tags:
       category: behavior-conformance
@@ -1953,3 +1953,72 @@ stimuli:
         name: instruction-security-telemetry-supply-chain
         config:
           pattern: '(?is)(?=.*vcs\.\*)(?=.*ci\.\*)'
+
+  - name: instruction-accessibility-license-posture-conformance
+    prompt: |
+      Read the staged `.github/instructions/accessibility/accessibility-license-posture.instructions.md`.
+      Which source class and reproduction rule apply to EN 301 549, and how does the
+      accessibility assessor treat verbatim EN 301 549 text?
+    agent_environment:
+      files:
+        - src: ../../.github/plugins/sdlc-security/instructions/accessibility/accessibility-license-posture.instructions.md
+          dest: .github/instructions/accessibility/accessibility-license-posture.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: accessibility-license-posture
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-accessibility-license-posture-en301549
+        config:
+          pattern: '(?is)(?=.*EN\s+301\s+549)(?=.*cite-only|never\s+reproduced)(?=.*ETSI)'
+      - type: output-matches
+        name: instruction-accessibility-license-posture-gating
+        config:
+          pattern: '(?is)(?=.*license\s+violation)(?=.*gating\s+finding)'
+
+  - name: instruction-csharp-conformance
+    prompt: |
+      Read the staged `.github/instructions/coding-standards/csharp/csharp.instructions.md`.
+      Which target framework and language version apply by default, what folder structure
+      is used for projects and tests, and what should authors omit in `.csproj`?
+    agent_environment:
+      files:
+        - src: ../../.github/plugins/sdlc/instructions/coding-standards/csharp/csharp.instructions.md
+          dest: .github/instructions/coding-standards/csharp/csharp.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: csharp
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-csharp-framework-and-language-version
+        config:
+          pattern: '(?is)(?=.*net10\.0)(?=.*C#\s*14)(?=.*LangVersion)'
+      - type: output-matches
+        name: instruction-csharp-project-structure
+        config:
+          pattern: '(?is)(?=.*src/)(?=.*\.Tests)'
+
+  - name: instruction-csharp-tests-conformance
+    prompt: |
+      Read the staged `.github/instructions/coding-standards/csharp/csharp-tests.instructions.md`.
+      Which test and mocking frameworks are preferred, what naming pattern applies to test
+      methods, and what name is used for the service under test field?
+    agent_environment:
+      files:
+        - src: ../../.github/plugins/sdlc/instructions/coding-standards/csharp/csharp-tests.instructions.md
+          dest: .github/instructions/coding-standards/csharp/csharp-tests.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: csharp-tests
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-csharp-tests-frameworks
+        config:
+          pattern: '(?is)(?=.*xUnit)(?=.*NSubstitute)'
+      - type: output-matches
+        name: instruction-csharp-tests-naming-and-sut
+        config:
+          pattern: '(?is)(?=.*GivenContext_WhenAction_ExpectedResult)(?=.*_sut)'

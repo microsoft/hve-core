@@ -2,7 +2,7 @@
 title: HVE Core
 description: Agentic SDLC framework for context management, governance, shift-left engineering, reusable organizational knowledge, and consistent practices across teams
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-18
 ms.topic: overview
 keywords:
   - hypervelocity engineering
@@ -47,7 +47,7 @@ HVE Core provides structured workflow building blocks:
 
 ## Where to Start
 
-1. Install the `hve-core` plugin. In VS Code, run **Chat: Open Customizations**, select **Browse**, add the `microsoft/hve-core` marketplace through **Configure Marketplaces**, and install `hve-core`. In GitHub Copilot CLI, run:
+1. Choose [All or a focused plugin](docs/plugins/hve-core.md#choose-a-plugin). For the complete set, keep the existing `hve-core` install. In VS Code, open **Chat: Open Customizations**, select **Browse**, add `microsoft/hve-core` through **Configure Marketplaces**, and install your choice. In Copilot CLI, install All with:
 
    ```bash
    copilot plugin marketplace add microsoft/hve-core
@@ -94,7 +94,7 @@ Full documentation is available at **<https://microsoft.github.io/hve-core/>**.
 |------------------------------------------------------------------|--------------------------------------------------|
 | [Getting Started](docs/getting-started/README.md)                | Setup and first workflow tutorial                |
 | [HVE Core Identity](docs/getting-started/packages.md)            | Distribution channels and lifecycle disclosure   |
-| [Plugin Inventory](docs/plugins/hve-core.md)                     | One-plugin identity and included capabilities    |
+| [Plugin Inventory](docs/plugins/hve-core.md)                     | Install names and capabilities by topic          |
 | [Package Migration](docs/getting-started/package-migration.md)   | Move from retired distribution identities        |
 | [RPI Workflow](docs/rpi/README.md)                               | Deep dive into Research, Plan, Implement, Review |
 | [RPI Workflow Canvas](docs/rpi/rpi-workflow-canvas.md)           | Follow and steer an RPI session beside the chat  |

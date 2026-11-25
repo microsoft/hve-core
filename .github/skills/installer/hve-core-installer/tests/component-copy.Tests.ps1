@@ -26,25 +26,28 @@ BeforeAll {
         $root = Join-Path $TestDrive "component-copy-$($script:FixtureCounter)"
         $source = Join-Path $root 'source'
         $target = Join-Path $root 'target'
+        $topic = '.github/plugins/base'
+        $skill = "$topic/skills/rpi/rpi-plan"
 
         $sourceFiles = @{
-            '.github/agents/hve-core/rpi-agent.agent.md'                  = '# RPI Agent'
-            '.github/agents/hve-core/subagents/rpi-planner.agent.md'      = '# RPI Planner'
-            '.github/agents/experimental/pptx.agent.md'                   = '# PPTX'
-            '.github/prompts/hve-core/rpi.prompt.md'                      = '# RPI Prompt'
-            '.github/instructions/hve-core/copilot-tracking.instructions.md' = '# Tracking'
-            '.github/skills/rpi/rpi-plan/SKILL.md'                        = '# RPI Plan Skill'
-            '.github/skills/rpi/rpi-plan/references/notes.md'             = '# Notes'
-            '.github/skills/rpi/rpi-plan/.venv/lib/site.py'               = 'sentinel_venv'
-            '.github/skills/rpi/rpi-plan/.VENV/lib/upper.py'              = 'sentinel_upper_venv'
-            '.github/skills/rpi/rpi-plan/tests/test_plan.py'              = 'sentinel_tests'
-            '.github/skills/rpi/rpi-plan/.PyTest_Cache/result.txt'        = 'sentinel_upper_cache'
-            '.github/skills/rpi/rpi-plan/.git/config'                     = 'sentinel_git'
-            '.github/skills/rpi/rpi-plan/.env'                            = 'sentinel_env'
-            '.github/skills/rpi/rpi-plan/.env.local'                      = 'sentinel_env_local'
-            '.github/skills/rpi/rpi-plan/.DS_Store'                       = 'sentinel_ds_store'
-            '.github/skills/rpi/rpi-plan/Thumbs.db'                       = 'sentinel_thumbs_db'
-            '.github/hooks/shared/telemetry.json'                         = '{}'
+            '.github/agents/hve-core/rpi-agent.agent.md'                = '# RPI Agent'
+            "$topic/agents/hve-core/subagents/rpi-planner.agent.md"     = '# RPI Planner'
+            '.github/agents/hve-core/subagents/rpi-planner.agent.md'    = '# Not the declared source'
+            '.github/agents/experimental/pptx.agent.md'                 = '# PPTX'
+            "$topic/prompts/hve-core/rpi.prompt.md"                     = '# RPI Prompt'
+            "$topic/instructions/hve-core/copilot-tracking.instructions.md" = '# Tracking'
+            "$skill/SKILL.md"                                           = '# RPI Plan Skill'
+            "$skill/references/notes.md"                                = '# Notes'
+            "$skill/.venv/lib/site.py"                                  = 'sentinel_venv'
+            "$skill/.VENV/lib/upper.py"                                 = 'sentinel_upper_venv'
+            "$skill/tests/test_plan.py"                                 = 'sentinel_tests'
+            "$skill/.PyTest_Cache/result.txt"                           = 'sentinel_upper_cache'
+            "$skill/.git/config"                                        = 'sentinel_git'
+            "$skill/.env"                                               = 'sentinel_env'
+            "$skill/.env.local"                                         = 'sentinel_env_local'
+            "$skill/.DS_Store"                                          = 'sentinel_ds_store'
+            "$skill/Thumbs.db"                                          = 'sentinel_thumbs_db'
+            '.github/hooks/shared/telemetry.json'                       = '{}'
         }
         foreach ($relative in $sourceFiles.Keys) {
             $full = Join-Path $source $relative
@@ -55,12 +58,12 @@ BeforeAll {
         $symlinkAvailable = $true
         try {
             New-Item -ItemType SymbolicLink `
-                -Path (Join-Path $source '.github/skills/rpi/rpi-plan/linked-notes.md') `
-                -Target (Join-Path $source '.github/skills/rpi/rpi-plan/references/notes.md') `
+                -Path (Join-Path $source "$skill/linked-notes.md") `
+                -Target (Join-Path $source "$skill/references/notes.md") `
                 -ErrorAction Stop | Out-Null
             New-Item -ItemType SymbolicLink `
-                -Path (Join-Path $source '.github/skills/rpi/rpi-plan/linked-references') `
-                -Target (Join-Path $source '.github/skills/rpi/rpi-plan/references') `
+                -Path (Join-Path $source "$skill/linked-references") `
+                -Target (Join-Path $source "$skill/references") `
                 -ErrorAction Stop | Out-Null
         }
         catch {
@@ -72,12 +75,12 @@ BeforeAll {
             version  = $Version
             agents   = @(
                 '.github/agents/hve-core/rpi-agent.agent.md'
-                '.github/agents/hve-core/subagents/rpi-planner.agent.md'
+                "$topic/agents/hve-core/subagents/rpi-planner.agent.md"
                 '.github/agents/experimental/pptx.agent.md'
             )
-            commands = @('.github/prompts/hve-core/rpi.prompt.md')
-            rules    = @('.github/instructions/hve-core/copilot-tracking.instructions.md')
-            skills   = @('.github/skills/rpi/rpi-plan')
+            commands = @("$topic/prompts/hve-core/rpi.prompt.md")
+            rules    = @("$topic/instructions/hve-core/copilot-tracking.instructions.md")
+            skills   = @($skill)
         }
         $pluginManifestPath = Join-Path $source 'plugin.json'
         $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $pluginManifestPath -NoNewline
@@ -85,7 +88,11 @@ BeforeAll {
         Set-Content -LiteralPath (Join-Path $source 'package.json') -Value "{ `"version`": `"$Version`" }" -NoNewline
         New-Item -ItemType Directory -Path $target -Force | Out-Null
 
-        return [pscustomobject]@{ Root = $root; Source = $source; Target = $target; SymlinkAvailable = $symlinkAvailable }
+        return [pscustomobject]@{
+            Root = $root; Source = $source; Target = $target
+            SkillSource = Join-Path $source $skill
+            SymlinkAvailable = $symlinkAvailable
+        }
     }
 
     function script:Invoke-ComponentCopy {
@@ -189,7 +196,7 @@ Describe 'component-copy parameter contract' -Tag 'Unit' {
 Describe 'component-copy path mapping' -Tag 'Unit' {
     BeforeEach { $script:fixture = New-ComponentCopyFixture }
 
-    It 'Maps every kind to its canonical target root without flattening paths' {
+    It 'Copies the declared topic files into their conventional target roots without flattening paths' {
         Invoke-ComponentCopy -Fixture $script:fixture -Component @(
             'agents/hve-core/subagents/rpi-planner.md'
             'commands/hve-core/rpi.md'
@@ -202,6 +209,8 @@ Describe 'component-copy path mapping' -Tag 'Unit' {
             '.github/prompts/hve-core/rpi.prompt.md'
             '.hve-tracking.json'
         )
+        Get-Content -LiteralPath (Join-Path $script:fixture.Target '.github/agents/hve-core/subagents/rpi-planner.agent.md') -Raw |
+            Should -Be '# RPI Planner'
     }
 
     It 'Copies source content verbatim' {
@@ -238,7 +247,7 @@ Describe 'component-copy path mapping' -Tag 'Unit' {
 
     It 'Copies and tracks a skill filename containing a newline through the Bash implementation' -Skip:($IsWindows -or -not $script:BashAvailable) {
         $relative = ".github/skills/rpi/rpi-plan/line`nbreak.md"
-        $sourceFile = Join-Path $script:fixture.Source $relative
+        $sourceFile = Join-Path $script:fixture.SkillSource "line`nbreak.md"
         Set-Content -LiteralPath $sourceFile -Value '# Newline name' -NoNewline
 
         Invoke-BashComponentCopy -Fixture $script:fixture -Component @('skills/rpi/rpi-plan') | Out-Null
@@ -442,6 +451,20 @@ Describe 'component-copy preflight rejection' -Tag 'Unit' {
 
         $LASTEXITCODE | Should -Not -Be 0
         $bashOutput | Should -Match "must start with '\.github/'"
+    }
+
+    It 'Rejects <Case> before writing any selected component' -ForEach @(
+        @{ Case = 'a relative segment in the topic prefix'; Declaration = '.github/plugins/../agents/hve-core/other.agent.md'; ErrorText = 'Unsafe plugin manifest path' }
+        @{ Case = 'another declared source for the same selection'; Declaration = '.github/agents/hve-core/subagents/rpi-planner.agent.md'; ErrorText = 'multiple source paths' }
+    ) {
+        $manifestPath = Join-Path $script:fixture.Source 'plugin.json'
+        $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+        $manifest.agents += $Declaration
+        $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath
+
+        { Invoke-ComponentCopy -Fixture $script:fixture -Component 'agents/hve-core/rpi-agent.md' } |
+            Should -Throw -ExpectedMessage "*$ErrorText*"
+        Get-TargetFile -Fixture $script:fixture | Should -BeNullOrEmpty
     }
 }
 
@@ -890,7 +913,7 @@ Describe 'component-copy source and manifest link refusal' -Tag 'Unit' {
             return
         }
 
-        $skillPath = Join-Path $script:linkFixture.Source '.github/skills/rpi/rpi-plan'
+        $skillPath = $script:linkFixture.SkillSource
         Remove-Item -LiteralPath $skillPath -Recurse -Force
         Set-Content -LiteralPath (Join-Path $script:linkOutside 'SKILL.md') -Value '# Outside' -NoNewline
         New-Item -ItemType SymbolicLink -Path $skillPath -Target $script:linkOutside -ErrorAction Stop | Out-Null
@@ -1021,7 +1044,7 @@ Describe 'component-copy containment parity' -Tag 'Unit' -Skip:(-not $script:Bas
             return
         }
 
-        $skillPath = Join-Path $script:parityFixture.Source '.github/skills/rpi/rpi-plan'
+        $skillPath = $script:parityFixture.SkillSource
         Remove-Item -LiteralPath $skillPath -Recurse -Force
         Set-Content -LiteralPath (Join-Path $script:parityOutside 'SKILL.md') -Value '# Outside' -NoNewline
         New-Item -ItemType SymbolicLink -Path $skillPath -Target $script:parityOutside -ErrorAction Stop | Out-Null

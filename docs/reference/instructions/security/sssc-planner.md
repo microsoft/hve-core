@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                         |
-|-------------|---------------------------------------------------------------|
-| Kind        | instruction                                                   |
-| Source      | `.github/instructions/security/sssc-planner.instructions.md`  |
-| Invocation  | Applied automatically to `**/.copilot-tracking/sssc-plans/**` |
-| Interactive | No                                                            |
+| Field       | Value                                                                              |
+|-------------|------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                        |
+| Source      | `.github/plugins/sdlc-security/instructions/security/sssc-planner.instructions.md` |
+| Invocation  | Applied automatically to `**/.copilot-tracking/sssc-plans/**`                      |
+| Interactive | No                                                                                 |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

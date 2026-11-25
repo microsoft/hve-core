@@ -3,7 +3,7 @@ title: Functional Planner
 description: "Read-only Product Manager agent that analyzes PRDs and plans Azure DevOps, GitHub, or Jira work-item hierarchies without mutating a tracker"
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-11-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                         |
-|-------------|---------------------------------------------------------------|
-| Kind        | agent                                                         |
-| Source      | `.github/agents/project-planning/functional-planner.agent.md` |
-| Invocation  | Selected from the chat agent picker as `Functional Planner`   |
-| Interactive | Yes                                                           |
+| Field       | Value                                                                                  |
+|-------------|----------------------------------------------------------------------------------------|
+| Kind        | agent                                                                                  |
+| Source      | `.github/plugins/project-planning/agents/project-planning/functional-planner.agent.md` |
+| Invocation  | Selected from the chat agent picker as `Functional Planner`                            |
+| Interactive | Yes                                                                                    |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

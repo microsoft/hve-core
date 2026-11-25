@@ -3,7 +3,7 @@ title: Experimental/Experiment Designer
 description: "MVE tracking-artifact conventions for session directories, artifact names, and file hygiene; routes MVE methodology to the experiment-design skill"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                   |
-|-------------|-------------------------------------------------------------------------|
-| Kind        | instruction                                                             |
-| Source      | `.github/instructions/experimental/experiment-designer.instructions.md` |
-| Invocation  | Applied automatically to `**/.copilot-tracking/mve/**`                  |
-| Interactive | No                                                                      |
+| Field       | Value                                                                                            |
+|-------------|--------------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                      |
+| Source      | `.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md` |
+| Invocation  | Applied automatically to `**/.copilot-tracking/mve/**`                                           |
+| Interactive | No                                                                                               |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

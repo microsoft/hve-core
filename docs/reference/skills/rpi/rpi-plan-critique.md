@@ -3,7 +3,7 @@ title: rpi-plan-critique
 description: Independently assess an RPI plan without editing it. Use when an implementation-ready plan needs a credibility check or a revised plan needs its earlier findings reconciled.
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-14
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                               |
 |-------------|-------------------------------------------------------------------------------------|
 | Kind        | skill                                                                               |
-| Source      | `.github/skills/rpi/rpi-plan-critique`                                              |
+| Source      | `.github/plugins/base/skills/rpi/rpi-plan-critique`                                 |
 | Invocation  | Invoked directly as `/rpi-plan-critique`, or loaded on demand by referencing agents |
 | Interactive | No                                                                                  |
 <!-- END AUTO-GENERATED: metadata -->

@@ -18,7 +18,7 @@ tags:
   - skills
   - coding-standards
 author: Microsoft
-ms.date: 2026-11-17
+ms.date: 2026-11-24
 ms.topic: how-to
 estimated_reading_time: 8
 ---
@@ -243,9 +243,9 @@ A frontend team authors `.github/skills/coding-standards/northwind/react-standar
 
 | Resource                        | Path                                                                                     |
 |---------------------------------|------------------------------------------------------------------------------------------|
-| python-foundational skill       | `.github/skills/coding-standards/python-foundational/SKILL.md`                           |
-| Standards perspective reference | `.github/skills/coding-standards/code-review/references/standards.md`                    |
-| Review contract                 | `.github/skills/coding-standards/code-review/references/review-contract.md`              |
+| python-foundational skill       | `.github/plugins/sdlc/skills/coding-standards/python-foundational/SKILL.md`              |
+| Standards perspective reference | `.github/plugins/base/skills/coding-standards/code-review/references/standards.md`       |
+| Review contract                 | `.github/plugins/base/skills/coding-standards/code-review/references/review-contract.md` |
 | Standards output guidance       | [Code Review Standards Output Format](../../templates/standards-review-output-format.md) |
 | Code Review output guidance     | [Code Review Output Format](../../templates/full-review-output-format.md)                |
 | Engineering fundamentals        | `docs/templates/engineering-fundamentals.md`                                             |

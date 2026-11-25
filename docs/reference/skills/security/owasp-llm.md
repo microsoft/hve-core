@@ -3,7 +3,7 @@ title: owasp-llm
 description: "OWASP Top 10 for LLM Applications (2025) knowledge base for identifying, assessing, and remediating large language model security risks."
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                  |
-|-------------|----------------------------------------|
-| Kind        | skill                                  |
-| Source      | `.github/skills/security/owasp-llm`    |
-| Invocation  | Loaded on demand by referencing agents |
-| Interactive | No                                     |
+| Field       | Value                                                     |
+|-------------|-----------------------------------------------------------|
+| Kind        | skill                                                     |
+| Source      | `.github/plugins/sdlc-security/skills/security/owasp-llm` |
+| Invocation  | Loaded on demand by referencing agents                    |
+| Interactive | No                                                        |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

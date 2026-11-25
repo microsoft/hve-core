@@ -3,7 +3,7 @@ title: Privacy/Privacy Telemetry
 description: Auditable processing and consent signals in privacy plans and reviews
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - instruction
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                                     |
 |-------------|-----------------------------------------------------------------------------------------------------------|
 | Kind        | instruction                                                                                               |
-| Source      | `.github/instructions/privacy/privacy-telemetry.instructions.md`                                          |
+| Source      | `.github/plugins/sdlc-security/instructions/privacy/privacy-telemetry.instructions.md`                    |
 | Invocation  | Applied automatically to `**/.copilot-tracking/privacy-plans/**, **/.copilot-tracking/privacy-reviews/**` |
 | Interactive | No                                                                                                        |
 <!-- END AUTO-GENERATED: metadata -->

@@ -3,7 +3,7 @@ title: UX UI Designer
 description: "Route UX practitioners between focused coaching, evidence-labelled asset production, inclusion decisions, design intent, and external design surfaces"
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-11-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                     |
-|-------------|-----------------------------------------------------------|
-| Kind        | agent                                                     |
-| Source      | `.github/agents/project-planning/ux-ui-designer.agent.md` |
-| Invocation  | Selected from the chat agent picker as `UX UI Designer`   |
-| Interactive | Yes                                                       |
+| Field       | Value                                                                              |
+|-------------|------------------------------------------------------------------------------------|
+| Kind        | agent                                                                              |
+| Source      | `.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md` |
+| Invocation  | Selected from the chat agent picker as `UX UI Designer`                            |
+| Interactive | Yes                                                                                |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

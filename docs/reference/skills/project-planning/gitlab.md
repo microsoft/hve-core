@@ -3,7 +3,7 @@ title: gitlab
 description: Manage GitLab merge requests and pipelines with a Python CLI
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-09-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                    |
 |-------------|--------------------------------------------------------------------------|
 | Kind        | skill                                                                    |
-| Source      | `.github/skills/project-planning/gitlab`                                 |
+| Source      | `.github/plugins/project-planning/skills/project-planning/gitlab`        |
 | Invocation  | Invoked directly as `/gitlab`, or loaded on demand by referencing agents |
 | Interactive | No                                                                       |
 <!-- END AUTO-GENERATED: metadata -->

@@ -3,7 +3,7 @@ title: architecture-review
 description: "Create a durable Architecture Review Record from a confirmed System Architecture Reviewer scope, evidence, pillar analysis, trade-offs, and dispositions"
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-21
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                 |
-|-------------|-------------------------------------------------------|
-| Kind        | skill                                                 |
-| Source      | `.github/skills/project-planning/architecture-review` |
-| Invocation  | Loaded on demand by referencing agents                |
-| Interactive | No                                                    |
+| Field       | Value                                                                          |
+|-------------|--------------------------------------------------------------------------------|
+| Kind        | skill                                                                          |
+| Source      | `.github/plugins/project-planning/skills/project-planning/architecture-review` |
+| Invocation  | Loaded on demand by referencing agents                                         |
+| Interactive | No                                                                             |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

@@ -3,7 +3,7 @@ title: RPI Researcher
 description: "Gathers candidate sources for one bounded research question and returns source pointers, exact locations, contract excerpts, and brief relevance notes as suggestions for the calling agent to verify. Use during research when isolating source gathering would help."
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-11-13
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                    |
 |-------------|--------------------------------------------------------------------------|
 | Kind        | agent                                                                    |
-| Source      | `.github/agents/hve-core/subagents/rpi-researcher.agent.md`              |
+| Source      | `.github/plugins/base/agents/hve-core/subagents/rpi-researcher.agent.md` |
 | Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly) |
 | Interactive | No                                                                       |
 <!-- END AUTO-GENERATED: metadata -->

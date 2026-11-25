@@ -13,9 +13,9 @@ defaults:
 # so they ascend to the repo root before descending into .github/skills.
 agent_environment:
   skills:
-    - ../../.github/skills/security/owasp-top-10
-    - ../../.github/skills/security/owasp-cicd
-    - ../../.github/skills/project-planning/architecture-review
+    - ../../.github/plugins/sdlc-security/skills/security/owasp-top-10
+    - ../../.github/plugins/sdlc-security/skills/security/owasp-cicd
+    - ../../.github/plugins/project-planning/skills/project-planning/architecture-review
 
 scoring:
   threshold: 0.7

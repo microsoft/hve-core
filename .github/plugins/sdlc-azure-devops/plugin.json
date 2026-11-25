@@ -1,0 +1,27 @@
+{
+  "name": "hve-sdlc-azure-devops",
+  "description": "Plan and apply Azure Boards backlog changes, inspect Azure Pipelines builds, and prepare Azure Repos pull requests. Pair with hve-project-planning for requirements authoring.",
+  "version": "3.2.2",
+  "author": {
+    "name": "Microsoft",
+    "url": "https://www.microsoft.com"
+  },
+  "homepage": "https://github.com/microsoft/hve-core",
+  "repository": "https://github.com/microsoft/hve-core",
+  "license": "MIT",
+  "keywords": [
+    "hve",
+    "azure-devops",
+    "boards",
+    "pipelines",
+    "repos"
+  ],
+  "agents": [
+    "agents/project-planning/subagents/ado-backlog-executor.agent.md"
+  ],
+  "skills": [
+    "skills/azure-devops/ado-backlog",
+    "skills/azure-devops/ado-build-info",
+    "skills/azure-devops/ado-pull-request"
+  ]
+}

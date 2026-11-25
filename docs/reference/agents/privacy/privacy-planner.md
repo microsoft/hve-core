@@ -3,7 +3,7 @@ title: Privacy Planner
 description: "Phase-based privacy planner producing data maps, DPIA assessments, controls, and backlog handoffs for processing activities"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                    |
-|-------------|----------------------------------------------------------|
-| Kind        | agent                                                    |
-| Source      | `.github/agents/privacy/privacy-planner.agent.md`        |
-| Invocation  | Selected from the chat agent picker as `Privacy Planner` |
-| Interactive | Yes                                                      |
+| Field       | Value                                                                   |
+|-------------|-------------------------------------------------------------------------|
+| Kind        | agent                                                                   |
+| Source      | `.github/plugins/sdlc-security/agents/privacy/privacy-planner.agent.md` |
+| Invocation  | Selected from the chat agent picker as `Privacy Planner`                |
+| Interactive | Yes                                                                     |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

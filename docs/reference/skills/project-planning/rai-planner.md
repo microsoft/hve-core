@@ -3,7 +3,7 @@ title: rai-planner
 description: "RAI Planner identity protocol and on-demand reference pack covering Phase 1 capture, Phase 2 risk classification and the optional Mural board bootstrap, Phase 5 impact assessment, and Phase 6 review and backlog handoff."
 sidebar_position: 16
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                         |
-|-------------|-----------------------------------------------|
-| Kind        | skill                                         |
-| Source      | `.github/skills/project-planning/rai-planner` |
-| Invocation  | Loaded on demand by referencing agents        |
-| Interactive | No                                            |
+| Field       | Value                                                               |
+|-------------|---------------------------------------------------------------------|
+| Kind        | skill                                                               |
+| Source      | `.github/plugins/sdlc-security/skills/project-planning/rai-planner` |
+| Invocation  | Loaded on demand by referencing agents                              |
+| Interactive | No                                                                  |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

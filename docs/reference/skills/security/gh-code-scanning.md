@@ -3,7 +3,7 @@ title: gh-code-scanning
 description: Retrieves GitHub code scanning alerts and groups them by tool and rule ID using the gh CLI
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-07
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                              |
 |-------------|------------------------------------------------------------------------------------|
 | Kind        | skill                                                                              |
-| Source      | `.github/skills/security/gh-code-scanning`                                         |
+| Source      | `.github/plugins/sdlc-security/skills/security/gh-code-scanning`                   |
 | Invocation  | Invoked directly as `/gh-code-scanning`, or loaded on demand by referencing agents |
 | Interactive | No                                                                                 |
 <!-- END AUTO-GENERATED: metadata -->

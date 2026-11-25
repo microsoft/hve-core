@@ -105,7 +105,7 @@ Describe 'Invoke-AgentMatrix.ps1 (dry-run)' -Tag 'Unit' {
     Context 'Changed mode with a subagent path' {
         BeforeEach {
             & $script:ScriptPath `
-                -Changed @('.github/agents/hve-core/subagents/rpi-plan-critic.agent.md') `
+                -Changed @('.github/plugins/base/agents/hve-core/subagents/rpi-plan-critic.agent.md') `
                 -Tier pr `
                 -RepoRoot $script:RepoRoot `
                 -OutputDir $script:OutputDir `

@@ -3,7 +3,7 @@ id: "0012"
 title: "Close the business-alignment loop between requirements and RPI implementations"
 description: "Extend the existing RPI plan, implement, and review skills so planning finds and cites BRD, PRD, and ADR sources and checks their status, implementation records alignment-affecting changes and compares completed work against them, and review rates drift by business stake and owner awareness, routes source updates and architecture review follow-ups, and offers a copy-ready note to the source owner; Code Review applies the same shared procedure to pull requests, with no automatic outbound action."
 author: "HVE Core Maintainers"
-ms.date: "2026-11-17"
+ms.date: "2026-11-24"
 ms.topic: "reference"
 status: "proposed"
 proposed_date: "2026-10-09"
@@ -23,19 +23,19 @@ tags:
   - "adr"
   - "review"
 affected_components:
-  - ".github/skills/rpi/rpi-plan/SKILL.md"
-  - ".github/skills/rpi/rpi-plan/references/planning.md"
-  - ".github/skills/rpi/rpi-implement/SKILL.md"
-  - ".github/skills/rpi/rpi-implement/references/implementation.md"
-  - ".github/skills/rpi/rpi-implement/templates/changes-log.md"
-  - ".github/skills/rpi/rpi-review/SKILL.md"
-  - ".github/skills/rpi/rpi-review/references/review.md"
-  - ".github/skills/rpi/rpi-review/references/business-alignment.md"
-  - ".github/skills/rpi/rpi-review/templates/review-log.md"
-  - ".github/agents/coding-standards/code-review.agent.md"
-  - ".github/skills/coding-standards/code-review/references/integrations.md"
-  - ".github/skills/coding-standards/code-review/references/review-contract.md"
-  - ".github/skills/coding-standards/code-review/templates/review.md"
+  - ".github/plugins/base/skills/rpi/rpi-plan/SKILL.md"
+  - ".github/plugins/base/skills/rpi/rpi-plan/references/planning.md"
+  - ".github/plugins/base/skills/rpi/rpi-implement/SKILL.md"
+  - ".github/plugins/base/skills/rpi/rpi-implement/references/implementation.md"
+  - ".github/plugins/base/skills/rpi/rpi-implement/templates/changes-log.md"
+  - ".github/plugins/base/skills/rpi/rpi-review/SKILL.md"
+  - ".github/plugins/base/skills/rpi/rpi-review/references/review.md"
+  - ".github/plugins/base/skills/rpi/rpi-review/references/business-alignment.md"
+  - ".github/plugins/base/skills/rpi/rpi-review/templates/review-log.md"
+  - ".github/plugins/base/agents/coding-standards/code-review.agent.md"
+  - ".github/plugins/base/skills/coding-standards/code-review/references/integrations.md"
+  - ".github/plugins/base/skills/coding-standards/code-review/references/review-contract.md"
+  - ".github/plugins/base/skills/coding-standards/code-review/templates/review.md"
 supersedes: null
 superseded-by: null
 related:
@@ -53,11 +53,11 @@ success_criteria:
   - metric: "alignment-capture"
     target: "a plan update that touches a cited business source produces a Business Alignment entry naming the source, owner, change, and decision"
     measurement_window: "first RPI implementations after merge whose plans cite business sources"
-    source: ".github/skills/rpi/rpi-implement/templates/changes-log.md"
+    source: ".github/plugins/base/skills/rpi/rpi-implement/templates/changes-log.md"
   - metric: "review-alignment-routing"
     target: "review records divergence from a cited source as a routed finding and offers a copy-ready owner note without any outbound action"
     measurement_window: "first RPI reviews after merge whose plans cite business sources"
-    source: ".github/skills/rpi/rpi-review/references/business-alignment.md"
+    source: ".github/plugins/base/skills/rpi/rpi-review/references/business-alignment.md"
   - metric: "knowledge-conformance"
     target: "advisory knowledge stimuli for the changed RPI skills pass"
     measurement_window: "every behavior-conformance eval run"
@@ -255,19 +255,19 @@ No data migration is required. Existing plans, changes records, and review recor
 
 ## Affected Components
 
-* .github/skills/rpi/rpi-plan/SKILL.md
-* .github/skills/rpi/rpi-plan/references/planning.md
-* .github/skills/rpi/rpi-implement/SKILL.md
-* .github/skills/rpi/rpi-implement/references/implementation.md
-* .github/skills/rpi/rpi-implement/templates/changes-log.md
-* .github/skills/rpi/rpi-review/SKILL.md
-* .github/skills/rpi/rpi-review/references/review.md
-* .github/skills/rpi/rpi-review/references/business-alignment.md
-* .github/skills/rpi/rpi-review/templates/review-log.md
-* .github/agents/coding-standards/code-review.agent.md
-* .github/skills/coding-standards/code-review/references/integrations.md
-* .github/skills/coding-standards/code-review/references/review-contract.md
-* .github/skills/coding-standards/code-review/templates/review.md
+* .github/plugins/base/skills/rpi/rpi-plan/SKILL.md
+* .github/plugins/base/skills/rpi/rpi-plan/references/planning.md
+* .github/plugins/base/skills/rpi/rpi-implement/SKILL.md
+* .github/plugins/base/skills/rpi/rpi-implement/references/implementation.md
+* .github/plugins/base/skills/rpi/rpi-implement/templates/changes-log.md
+* .github/plugins/base/skills/rpi/rpi-review/SKILL.md
+* .github/plugins/base/skills/rpi/rpi-review/references/review.md
+* .github/plugins/base/skills/rpi/rpi-review/references/business-alignment.md
+* .github/plugins/base/skills/rpi/rpi-review/templates/review-log.md
+* .github/plugins/base/agents/coding-standards/code-review.agent.md
+* .github/plugins/base/skills/coding-standards/code-review/references/integrations.md
+* .github/plugins/base/skills/coding-standards/code-review/references/review-contract.md
+* .github/plugins/base/skills/coding-standards/code-review/templates/review.md
 
 ## More Information
 

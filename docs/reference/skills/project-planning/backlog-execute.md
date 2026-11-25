@@ -3,7 +3,7 @@ title: backlog-execute
 description: "Mutating backlog execution for Azure DevOps, GitHub, and Jira. Use to create one item or apply a reviewed handoff to a confirmed tracker."
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-09-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                             |
 |-------------|-----------------------------------------------------------------------------------|
 | Kind        | skill                                                                             |
-| Source      | `.github/skills/project-planning/backlog-execute`                                 |
+| Source      | `.github/plugins/project-planning/skills/project-planning/backlog-execute`        |
 | Invocation  | Invoked directly as `/backlog-execute`, or loaded on demand by referencing agents |
 | Interactive | No                                                                                |
 <!-- END AUTO-GENERATED: metadata -->

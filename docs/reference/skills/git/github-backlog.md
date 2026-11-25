@@ -3,7 +3,7 @@ title: github-backlog
 description: "Plan and apply GitHub issue, sub-issue, milestone, label, and pull request field operations in one repository. Use for backlog discovery, triage, grooming, PRD hierarchies, and reviewed handoffs."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                            |
 |-------------|----------------------------------------------------------------------------------|
 | Kind        | skill                                                                            |
-| Source      | `.github/skills/git/github-backlog`                                              |
+| Source      | `.github/plugins/sdlc-git/skills/git/github-backlog`                             |
 | Invocation  | Invoked directly as `/github-backlog`, or loaded on demand by referencing agents |
 | Interactive | No                                                                               |
 <!-- END AUTO-GENERATED: metadata -->

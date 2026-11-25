@@ -20,17 +20,18 @@ $script:plannerAgents = @(
 
 Describe 'Planner startup disclosures' -Tag 'Unit' {
     BeforeAll {
+        Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force
         $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
-        $script:accessibilityIdentityPath = Join-Path $script:repoRoot '.github/instructions/accessibility/accessibility-identity.instructions.md'
-        $script:securityAgentPath = Join-Path $script:repoRoot '.github/agents/security/security-planner.agent.md'
-        $script:securityIdentityPath = Join-Path $script:repoRoot '.github/instructions/security/identity.instructions.md'
-        $script:sharedBasePath = Join-Path $script:repoRoot '.github/skills/shared/planner-identity/SKILL.md'
-        $script:disclaimerSourcePath = Join-Path $script:repoRoot '.github/skills/shared/disclaimer-language/SKILL.md'
+        $script:accessibilityIdentityPath = Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/instructions/accessibility/accessibility-identity.instructions.md'
+        $script:securityAgentPath = Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/agents/security/security-planner.agent.md'
+        $script:securityIdentityPath = Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/instructions/security/identity.instructions.md'
+        $script:sharedBasePath = Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/skills/shared/planner-identity/SKILL.md'
+        $script:disclaimerSourcePath = Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/skills/shared/disclaimer-language/SKILL.md'
     }
 
     Context 'Security and SSSC planner startup attribution' {
         It 'Agent <Name> displays its framework attribution in the Startup Announcement' -ForEach $script:plannerAgents {
-            $path = Join-Path $script:repoRoot ".github/agents/security/$Name.agent.md"
+            $path = Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path ".github/agents/security/$Name.agent.md"
             Test-Path $path | Should -BeTrue -Because "$Name.agent.md must exist"
             $content = Get-Content -Path $path -Raw
             $content | Should -Match '(?m)^##\s+Startup Announcement\s*$' -Because "$Name must have a ## Startup Announcement heading"
@@ -75,7 +76,8 @@ Describe 'Planner startup disclosures' -Tag 'Unit' {
             $sharedBase | Should -Match 'RAI, SSSC, Security, Accessibility, and Privacy planners do'
             $sharedBase | Should -Not -Match 'Security Planner does not'
             $sharedBase | Should -Match 'details\.reason: "user-requested-redisplay"'
-            $securityIdentity | Should -Match 'adopts the shared Disclaimer Cadence'
+            $securityIdentity | Should -Match 'details\.reason: "user-requested-redisplay"'
+            $securityIdentity | Should -Match 'update `state\.disclaimerShownAt` to the current timestamp'
             $disclaimerSource | Should -Match 'most recent time the full disclaimer was shown'
             $disclaimerSource | Should -Not -Match 'never overwritten'
         }

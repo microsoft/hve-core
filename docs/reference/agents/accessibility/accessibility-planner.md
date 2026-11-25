@@ -3,7 +3,7 @@ title: Accessibility Planner
 description: "Phase-based accessibility planner that guides users through structured planning for WCAG 2.2, ARIA APG, Cognitive Accessibility, Section 508, and EN 301 549, producing framework selections, control mappings, evidence-register entries, plan-risk classifications, and dual-format backlog handoff."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                          |
-|-------------|----------------------------------------------------------------|
-| Kind        | agent                                                          |
-| Source      | `.github/agents/accessibility/accessibility-planner.agent.md`  |
-| Invocation  | Selected from the chat agent picker as `Accessibility Planner` |
-| Interactive | Yes                                                            |
+| Field       | Value                                                                               |
+|-------------|-------------------------------------------------------------------------------------|
+| Kind        | agent                                                                               |
+| Source      | `.github/plugins/sdlc-security/agents/accessibility/accessibility-planner.agent.md` |
+| Invocation  | Selected from the chat agent picker as `Accessibility Planner`                      |
+| Interactive | Yes                                                                                 |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

@@ -3,7 +3,7 @@ title: Git Submodule Installation
 description: Set up HVE Core as a git submodule for version-controlled team consumption
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-11-10
+ms.date: 2026-11-24
 ms.topic: how-to
 keywords:
   - git submodule
@@ -80,11 +80,13 @@ Create `.github/copilot/settings.json` at your project root and list the submodu
 
 ```json
 {
-  "agentDirectories": ["lib/hve-core/.github/agents"],
-  "skillDirectories": ["lib/hve-core/.github/skills"],
-  "instructionDirectories": ["lib/hve-core/.github/instructions"]
+  "agentDirectories": ["lib/hve-core/.github/plugins/base/agents"],
+  "skillDirectories": ["lib/hve-core/.github/plugins/base/skills"],
+  "instructionDirectories": ["lib/hve-core/.github/plugins/base/instructions"]
 }
 ```
+
+This example selects RPI and HVE Builder. For all topics, load the root plugin instead of listing the conventional directories: those directories alone no longer contain every workflow. A declared instruction folder does not prove that the client automatically applies its scoped rules.
 
 Commit the file so the settings apply to everyone who opens the repository. Your project's own `.github/agents`, `.github/skills`, and `.github/instructions` folders need no entries, because Copilot discovers them without settings.
 

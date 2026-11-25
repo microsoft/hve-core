@@ -14,7 +14,7 @@ defaults:
 # so they ascend to the repo root before descending into .github/skills.
 agent_environment:
   skills:
-    - ../../.github/skills/coding-standards/python-foundational
+    - ../../.github/plugins/sdlc/skills/coding-standards/python-foundational
 
 scoring:
   threshold: 0.7

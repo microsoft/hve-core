@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                 |
-|-------------|-------------------------------------------------------|
-| Kind        | agent                                                 |
-| Source      | `.github/agents/security/sssc-planner.agent.md`       |
-| Invocation  | Selected from the chat agent picker as `SSSC Planner` |
-| Interactive | Yes                                                   |
+| Field       | Value                                                                 |
+|-------------|-----------------------------------------------------------------------|
+| Kind        | agent                                                                 |
+| Source      | `.github/plugins/sdlc-security/agents/security/sssc-planner.agent.md` |
+| Invocation  | Selected from the chat agent picker as `SSSC Planner`                 |
+| Interactive | Yes                                                                   |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

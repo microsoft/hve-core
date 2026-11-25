@@ -3,7 +3,7 @@ title: c4-architecture
 description: "Model and document existing or planned software architectures with the C4 model across System Context, Container, and Component levels plus deployment diagrams, then emit diagrams through a selected renderer. Use when an architect needs audience-appropriate software architecture documentation; use the 'architecture-diagrams' skill for infrastructure topology."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                             |
 |-------------|-----------------------------------------------------------------------------------|
 | Kind        | skill                                                                             |
-| Source      | `.github/skills/hve-core/c4-architecture`                                         |
+| Source      | `.github/plugins/project-planning/skills/hve-core/c4-architecture`                |
 | Invocation  | Invoked directly as `/c4-architecture`, or loaded on demand by referencing agents |
 | Interactive | No                                                                                |
 <!-- END AUTO-GENERATED: metadata -->

@@ -3,7 +3,7 @@ title: Git-Ignored Folder Installation
 description: Install HVE Core in a git-ignored folder for devcontainer environments
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-11-10
+ms.date: 2026-11-24
 ms.topic: how-to
 keywords:
   - git-ignored
@@ -114,11 +114,13 @@ Create `.github/copilot/settings.json` at your project root:
 
 ```json
 {
-  "agentDirectories": [".hve-core/.github/agents"],
-  "skillDirectories": [".hve-core/.github/skills"],
-  "instructionDirectories": [".hve-core/.github/instructions"]
+  "agentDirectories": [".hve-core/.github/plugins/base/agents"],
+  "skillDirectories": [".hve-core/.github/plugins/base/skills"],
+  "instructionDirectories": [".hve-core/.github/plugins/base/instructions"]
 }
 ```
+
+This example selects RPI and HVE Builder. For all topics, load the root plugin instead of listing the conventional directories: those directories alone no longer contain every workflow. A declared instruction folder does not prove that the client automatically applies its scoped rules.
 
 These limits apply:
 

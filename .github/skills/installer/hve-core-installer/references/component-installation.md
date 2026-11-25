@@ -7,7 +7,7 @@ description: Phase 7 component installation and the Phase 7 upgrade mode for the
 ## Phase 7: Component Installation
 
 > [!IMPORTANT]
-> Generated scripts in this phase require PowerShell 7+ (`pwsh`). Windows PowerShell 5.1 is not supported. The Bash scripts require `jq`.
+> Use PowerShell 7+ (`pwsh`) or Bash 5 with `jq`. Windows PowerShell 5.1 and the Bash 3.2 shipped with macOS do not support the component-copy scripts.
 
 Phase 7 carries out native repository adoption. After Phase 5 validates the source clone, copy every HVE-Core component into the project's `.github/agents`, `.github/skills`, and `.github/instructions` folders. Phase 7 copies the full set because agents load skills and instructions by name, and a partial set can leave an agent without what it needs to start. Copilot discovers the copies natively, and the repository owns them. The source clone stays unconnected to Copilot. When this phase finishes, proceed to Phase 6.
 
@@ -59,7 +59,7 @@ User input handling:
 
 ### Selection Resolution
 
-Resolve the component list before any confirmation or write. For a new install, and for an upgrade of the `all` profile, read root `plugin.json` from the HVE-Core source at `$hveCoreBasePath` and take every declared component, so an upgrade also copies components added since the recorded install. Upgrade Detection covers other recorded profiles. Convert canonical repository-relative manifest paths to installer paths with these deterministic conversions before collision detection or component copy:
+For a new install or an upgrade of the `all` profile, read the source clone's root `plugin.json`. Use its `agents`, `commands`, `rules`, and `skills` entries, including any components added since the last install. Keep each declared path as the copy source. To get its selection name, remove `.github/` or `.github/plugins/<topic>/`, then apply the table below. The collection and any nested directories remain part of the name.
 
 | Manifest declaration                                          | Installer component path                 |
 |---------------------------------------------------------------|------------------------------------------|
@@ -68,7 +68,7 @@ Resolve the component list before any confirmation or write. For a new install, 
 | `rules` entry `instructions/<subpath>/<name>.instructions.md` | `rules/<subpath>/<name>.instructions.md` |
 | `skills/<subpath>/<name>`                                     | `skills/<subpath>/<name>`                |
 
-Reject a component that is absent from the converted manifest membership before collision detection and before the first write. The copy scripts repeat the same membership check during preflight.
+For example, `.github/plugins/base/agents/hve-core/rpi-agent.agent.md` is selected as `agents/hve-core/rpi-agent.md` and copied to `.github/agents/hve-core/rpi-agent.agent.md`. The destination and tracking key do not change when the source moves into a topic. Reject an undeclared selection or one that maps to two different sources before any write.
 
 ### Upstream Source Verification
 

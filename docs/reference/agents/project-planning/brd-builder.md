@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                  |
-|-------------|--------------------------------------------------------|
-| Kind        | agent                                                  |
-| Source      | `.github/agents/project-planning/brd-builder.agent.md` |
-| Invocation  | Selected from the chat agent picker as `BRD Builder`   |
-| Interactive | Yes                                                    |
+| Field       | Value                                                                           |
+|-------------|---------------------------------------------------------------------------------|
+| Kind        | agent                                                                           |
+| Source      | `.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md` |
+| Invocation  | Selected from the chat agent picker as `BRD Builder`                            |
+| Interactive | Yes                                                                             |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

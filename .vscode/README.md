@@ -2,7 +2,7 @@
 title: VS Code Workspace Settings and MCP Servers
 description: What the repository's VS Code settings configure and how to enable the sample MCP servers for Copilot sessions
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - mcp
@@ -14,13 +14,13 @@ estimated_reading_time: 3
 
 ## Workspace settings
 
-`settings.json` sets formatting, the YAML and JSON schemas that validate frontmatter and planner state files, and commit message generation. Generated commit messages follow `.github/skills/hve-core/git-commit/references/commit-message.md`, the same conventions the `/git-commit` skill uses.
+`settings.json` sets formatting, the YAML and JSON schemas that validate frontmatter and planner state files, and commit message generation. Generated commit messages follow `.github/plugins/sdlc-git/skills/hve-core/git-commit/references/commit-message.md`, the same conventions the `/git-commit` skill uses.
 
-Copilot sessions find agents, skills, and instructions in the nested folders under `.github/agents`, `.github/skills`, and `.github/instructions` on their own. VS Code's Local harness may not find agents and skills in nested package folders without help, so `settings.json` lists this repository's package folders in `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, and `chat.agentSkillsLocations` for contributors who still use Local.
+For work in this checkout, VS Code uses `chat.agentFilesLocations` for agent folders (including subagents), `chat.agentSkillsLocations` for the folders containing skill directories, and `chat.instructionsFilesLocations` for rules. The settings include the conventional directories and the neutral topic roots under `.github/plugins/`.
 
-HVE Core supports only the Copilot harness, as [Use the Copilot Harness](../docs/getting-started/install.md#use-the-copilot-harness) explains, so treat these settings as a bridge while you switch. VS Code also forwards files from these folders to Copilot sessions.
+These are VS Code settings, not Copilot CLI settings. From outside the checkout, use `copilot --plugin-dir /absolute/path/to/hve-core/.github/plugins/base skill list --json` to check a local topic without installing it. A mounted rule file does not establish automatic policy application. Native desktop discovery of neutral roots without an install is unverified.
 
-When you add or rename a package folder under `.github/agents`, `.github/instructions`, or `.github/skills`, add it to the matching setting, and list an agent package's `subagents` folder as its own entry too. The install guide's advice to remove HVE Core location settings covers other projects whose entries point at an HVE Core clone, not these entries.
+When adding or renaming a collection, update its matching setting. In another workspace choose one discovery route rather than loading both a clone and an installed plugin.
 
 ## MCP servers
 

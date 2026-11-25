@@ -3,7 +3,7 @@ title: statistical-hypothesis-testing
 description: Compare binary rates or average values across affected and unaffected cohorts during root cause analysis. Use when root-cause-analysis selects an applicable affected-versus-unaffected cohort comparison.
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-19
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                               |
-|-------------|---------------------------------------------------------------------|
-| Kind        | skill                                                               |
-| Source      | `.github/skills/root-cause-analysis/statistical-hypothesis-testing` |
-| Invocation  | Loaded on demand by referencing agents                              |
-| Interactive | No                                                                  |
+| Field       | Value                                                                            |
+|-------------|----------------------------------------------------------------------------------|
+| Kind        | skill                                                                            |
+| Source      | `.github/plugins/sdlc/skills/root-cause-analysis/statistical-hypothesis-testing` |
+| Invocation  | Loaded on demand by referencing agents                                           |
+| Interactive | No                                                                               |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

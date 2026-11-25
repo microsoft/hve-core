@@ -3,7 +3,7 @@ title: causal-evidence-likelihood
 description: "Assess how one evidence item changes an RCA hypothesis using an uncalibrated, model-elicited likelihood-ratio band. Use when root-cause-analysis selects an eligible hypothesis-evidence pair."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-19
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                           |
-|-------------|-----------------------------------------------------------------|
-| Kind        | skill                                                           |
-| Source      | `.github/skills/root-cause-analysis/causal-evidence-likelihood` |
-| Invocation  | Loaded on demand by referencing agents                          |
-| Interactive | No                                                              |
+| Field       | Value                                                                        |
+|-------------|------------------------------------------------------------------------------|
+| Kind        | skill                                                                        |
+| Source      | `.github/plugins/sdlc/skills/root-cause-analysis/causal-evidence-likelihood` |
+| Invocation  | Loaded on demand by referencing agents                                       |
+| Interactive | No                                                                           |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

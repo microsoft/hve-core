@@ -3,7 +3,7 @@ title: rpi-implement
 description: "Follow an approved RPI plan, keep it current as new information comes to light, check off completed work, and keep a condensed changes log. Use when implementation is ready to begin or resume."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-14
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                           |
 |-------------|---------------------------------------------------------------------------------|
 | Kind        | skill                                                                           |
-| Source      | `.github/skills/rpi/rpi-implement`                                              |
+| Source      | `.github/plugins/base/skills/rpi/rpi-implement`                                 |
 | Invocation  | Invoked directly as `/rpi-implement`, or loaded on demand by referencing agents |
 | Interactive | No                                                                              |
 <!-- END AUTO-GENERATED: metadata -->

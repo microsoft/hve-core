@@ -3,7 +3,7 @@ title: architecture-diagrams
 description: Architecture diagram authoring for cloud infrastructure and declared data catalogs. Use when rendering Azure IaC or DS_CATALOG_V1 relationships as caller-selected ASCII or Mermaid diagrams.
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                   |
 |-------------|-----------------------------------------------------------------------------------------|
 | Kind        | skill                                                                                   |
-| Source      | `.github/skills/hve-core/architecture-diagrams`                                         |
+| Source      | `.github/plugins/project-planning/skills/hve-core/architecture-diagrams`                |
 | Invocation  | Invoked directly as `/architecture-diagrams`, or loaded on demand by referencing agents |
 | Interactive | No                                                                                      |
 <!-- END AUTO-GENERATED: metadata -->

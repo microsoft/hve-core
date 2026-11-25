@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                               |
 |-------------|-------------------------------------------------------------------------------------|
 | Kind        | skill                                                                               |
-| Source      | `.github/skills/project-planning/proposal-response`                                 |
+| Source      | `.github/plugins/project-planning/skills/project-planning/proposal-response`        |
 | Invocation  | Invoked directly as `/proposal-response`, or loaded on demand by referencing agents |
 | Interactive | No                                                                                  |
 <!-- END AUTO-GENERATED: metadata -->

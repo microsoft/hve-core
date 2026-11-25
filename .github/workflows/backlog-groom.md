@@ -121,7 +121,7 @@ concurrency:
 
 imports:
   - ../agents/backlog-grooming.agent.md
-  - ../instructions/project-planning/github-backlog-grooming.instructions.md
+  - ../plugins/sdlc-git/instructions/project-planning/github-backlog-grooming.instructions.md
 
 checkout: false
 

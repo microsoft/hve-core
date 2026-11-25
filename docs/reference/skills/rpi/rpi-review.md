@@ -3,7 +3,7 @@ title: rpi-review
 description: "Compare RPI planning and implementation evidence, record review findings, and route follow-up work. Use when an implementation needs acceptance review."
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-11-12
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                        |
 |-------------|------------------------------------------------------------------------------|
 | Kind        | skill                                                                        |
-| Source      | `.github/skills/rpi/rpi-review`                                              |
+| Source      | `.github/plugins/base/skills/rpi/rpi-review`                                 |
 | Invocation  | Invoked directly as `/rpi-review`, or loaded on demand by referencing agents |
 | Interactive | No                                                                           |
 <!-- END AUTO-GENERATED: metadata -->

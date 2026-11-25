@@ -22,7 +22,7 @@ tags:
   - code-review
   - coding-standards
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: concept
 estimated_reading_time: 10
 ---
@@ -117,7 +117,7 @@ Code Review uses `standard` unless you pick another depth or concrete risk in th
 
 ## Vectors, references, and parallel task orchestration
 
-All review guidance lives inside `.github/skills/coding-standards/code-review/` and its on-demand `references/` directory:
+All review guidance lives inside `.github/plugins/base/skills/coding-standards/code-review/` and its on-demand `references/` directory:
 
 :::table{caption="Review phases, perspectives, vector pills, and on-demand references"}
 
@@ -193,7 +193,7 @@ Every review gets its own folder:
 └── review.md
 ```
 
-The `code-review` skill's [review contract](https://github.com/microsoft/hve-core/blob/main/.github/skills/coding-standards/code-review/references/review-contract.md) defines each record:
+The `code-review` skill's [review contract](https://github.com/microsoft/hve-core/blob/main/.github/plugins/base/skills/coding-standards/code-review/references/review-contract.md) defines each record:
 
 | Record                                 | Owner              | Contents                                                                                        |
 |----------------------------------------|--------------------|-------------------------------------------------------------------------------------------------|

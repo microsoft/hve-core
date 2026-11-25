@@ -30,10 +30,10 @@ stimuli:
       disposition and next evidence step. The probe error is simulated input.
     agent_environment:
       files:
-        - src: ../../.github/agents/accessibility/accessibility-reviewer.agent.md
+        - src: ../../.github/plugins/sdlc-security/agents/accessibility/accessibility-reviewer.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/accessibility/accessibility
+        - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
     tags:
       category: agent-behavior
       advisory: "true"
@@ -67,10 +67,10 @@ stimuli:
       recorded. These verifier responses are simulated inputs.
     agent_environment:
       files:
-        - src: ../../.github/agents/accessibility/accessibility-reviewer.agent.md
+        - src: ../../.github/plugins/sdlc-security/agents/accessibility/accessibility-reviewer.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/accessibility/accessibility
+        - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
     tags:
       category: agent-behavior
       advisory: "true"
@@ -105,10 +105,10 @@ stimuli:
       performing recovery. The generator result is simulated input.
     agent_environment:
       files:
-        - src: ../../.github/agents/accessibility/accessibility-reviewer.agent.md
+        - src: ../../.github/plugins/sdlc-security/agents/accessibility/accessibility-reviewer.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/accessibility/accessibility
+        - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
     tags:
       category: agent-behavior
       advisory: "true"

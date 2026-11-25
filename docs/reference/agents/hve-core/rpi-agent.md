@@ -3,7 +3,7 @@ title: RPI Agent
 description: "User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-04
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                              |
-|-------------|----------------------------------------------------|
-| Kind        | agent                                              |
-| Source      | `.github/agents/hve-core/rpi-agent.agent.md`       |
-| Invocation  | Selected from the chat agent picker as `RPI Agent` |
-| Interactive | Yes                                                |
+| Field       | Value                                                     |
+|-------------|-----------------------------------------------------------|
+| Kind        | agent                                                     |
+| Source      | `.github/plugins/base/agents/hve-core/rpi-agent.agent.md` |
+| Invocation  | Selected from the chat agent picker as `RPI Agent`        |
+| Interactive | Yes                                                       |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

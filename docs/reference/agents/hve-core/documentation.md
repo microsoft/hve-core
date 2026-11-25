@@ -3,7 +3,7 @@ title: Documentation
 description: "Orchestrates documentation audit, drift, authoring, and validation work through the documentation skill"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                  |
-|-------------|--------------------------------------------------------|
-| Kind        | agent                                                  |
-| Source      | `.github/agents/hve-core/documentation.agent.md`       |
-| Invocation  | Selected from the chat agent picker as `Documentation` |
-| Interactive | Yes                                                    |
+| Field       | Value                                                         |
+|-------------|---------------------------------------------------------------|
+| Kind        | agent                                                         |
+| Source      | `.github/plugins/sdlc/agents/hve-core/documentation.agent.md` |
+| Invocation  | Selected from the chat agent picker as `Documentation`        |
+| Interactive | Yes                                                           |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

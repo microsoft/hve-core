@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-11-17
+ms.date: 2026-11-18
 ms.topic: how-to
 keywords:
   - evals
@@ -322,7 +322,7 @@ When you add or modify an AI artifact under `.github/agents/`, `.github/instruct
 Steps to add coverage:
 
 1. Create an eval spec under `evals/` that follows the structure documented in `evals/README.md`.
-2. Add a `stimuli[].tags.<kind>` backlink whose value is the artifact slug, where `<kind>` is `agent`, `instruction`, or `skill`. The slug is the file name minus its `.agent.md` or `.instructions.md` suffix, or the skill's folder name (for example, `tags: {agent: codebase-profiler}` for `.github/agents/security/subagents/codebase-profiler.agent.md`).
+2. Add a `stimuli[].tags.<kind>` backlink whose value is the artifact slug, where `<kind>` is `agent`, `instruction`, or `skill`. The slug is the file name minus its `.agent.md` or `.instructions.md` suffix, or the skill's folder name (for example, `tags: {agent: codebase-profiler}` for `.github/plugins/sdlc-security/agents/security/subagents/codebase-profiler.agent.md`).
 3. Ensure the spec declares an executor compatible with the `vally` CLI (typically the `CopilotSdkExecutor` with a `model:` hint).
 4. Run the presence check locally to confirm the artifact is covered:
 

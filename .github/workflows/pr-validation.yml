@@ -205,12 +205,12 @@ jobs:
           # .github/extensions containing extension.mjs), or the workflow
           # validator that ships at least one *.test.* / *.spec.* (mjs/cjs/js).
           # The project root is the node --test working dir.
-          $candidates = @(Get-ChildItem -Path .github/skills -Recurse -Force -Filter SKILL.md -ErrorAction SilentlyContinue |
+          $candidates = @(Get-Item -Path .github/skills, .github/plugins/*/skills | Get-ChildItem -Recurse -Force -Filter SKILL.md -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -notmatch 'node_modules' } |
             ForEach-Object { $_.DirectoryName }) +
             @(Get-ChildItem -Path slides -Directory -Force -ErrorAction SilentlyContinue |
             ForEach-Object { $_.FullName }) +
-            @(Get-ChildItem -Path .github/extensions -Recurse -Force -Filter extension.mjs -ErrorAction SilentlyContinue |
+            @(Get-Item -Path .github/extensions, .github/plugins/*/extensions | Get-ChildItem -Recurse -Force -Filter extension.mjs -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -notmatch 'node_modules' } |
             ForEach-Object { $_.DirectoryName }) +
             @(Get-Item -Path scripts/linting/workflow-validator -Force -ErrorAction SilentlyContinue |
@@ -352,7 +352,7 @@ jobs:
       # tests its schema baseline against the canvas indexer, so it runs on
       # changes in its directory or under .github/extensions/. Other projects
       # receive '' and keep node-tests.yml's JS-family default.
-      changed-paths-pattern: ${{ (startsWith(matrix.directory, 'slides/') || matrix.directory == '.github/skills/experimental/hve-slides') && format('^{0}/|^\.github/skills/experimental/hve-slides/', matrix.directory) || startsWith(matrix.directory, '.github/extensions/') && '^\.github/extensions/' || matrix.directory == '.github/skills/session-log-canvas-update' && '^\.github/(skills/session-log-canvas-update|extensions)/' || '' }}
+      changed-paths-pattern: ${{ (startsWith(matrix.directory, 'slides/') || matrix.directory == '.github/skills/experimental/hve-slides') && format('^{0}/|^\.github/skills/experimental/hve-slides/', matrix.directory) || (startsWith(matrix.directory, '.github/extensions/') || contains(matrix.directory, '/extensions/')) && '^\.github/(extensions|plugins/[^/]+/extensions)/' || matrix.directory == '.github/skills/session-log-canvas-update' && '^\.github/(skills/session-log-canvas-update|extensions|plugins/[^/]+/extensions)/' || '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -397,7 +397,7 @@ jobs:
       - name: Install accessibility skill Node dependencies
         shell: bash
         env:
-          SEARCH_ROOT: .github/skills/accessibility/accessibility
+          SEARCH_ROOT: .github/plugins/sdlc-security/skills/accessibility/accessibility
         run: ./scripts/ci/install-skill-node-deps.sh
 
       - name: Verify system Chrome

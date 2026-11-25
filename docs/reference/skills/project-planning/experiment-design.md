@@ -3,7 +3,7 @@ title: experiment-design
 description: "Experiment design reference for problem-class framing, Minimum Viable Experiment coaching, hypothesis formation, vetting and red flags, and experiment readiness. Use when translating a stated business outcome into candidate data-science problem classes, or when framing, vetting, scoping, or evaluating an experiment of any kind, including data feasibility, architecture, LLM, performance, use-case, UX, prototyping, and hardware experiments."
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-09-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                               |
-|-------------|-----------------------------------------------------|
-| Kind        | skill                                               |
-| Source      | `.github/skills/project-planning/experiment-design` |
-| Invocation  | Loaded on demand by referencing agents              |
-| Interactive | No                                                  |
+| Field       | Value                                                                        |
+|-------------|------------------------------------------------------------------------------|
+| Kind        | skill                                                                        |
+| Source      | `.github/plugins/project-planning/skills/project-planning/experiment-design` |
+| Invocation  | Loaded on demand by referencing agents                                       |
+| Interactive | No                                                                           |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

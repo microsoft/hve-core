@@ -147,6 +147,7 @@
 
 .cardGridItem {
   display: flex;
+  min-width: 0;
   height: 100%;
   width: 100%;
 }

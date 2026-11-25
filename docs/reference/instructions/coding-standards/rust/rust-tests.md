@@ -3,7 +3,7 @@ title: Coding Standards/Rust/Rust Tests
 description: Rust test code authoring conventions
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-09-05
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                   |
-|-------------|-------------------------------------------------------------------------|
-| Kind        | instruction                                                             |
-| Source      | `.github/instructions/coding-standards/rust/rust-tests.instructions.md` |
-| Invocation  | Applied automatically to `**/*.rs`                                      |
-| Interactive | No                                                                      |
+| Field       | Value                                                                                |
+|-------------|--------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                          |
+| Source      | `.github/plugins/sdlc/instructions/coding-standards/rust/rust-tests.instructions.md` |
+| Invocation  | Applied automatically to `**/*.rs`                                                   |
+| Interactive | No                                                                                   |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

@@ -9,11 +9,12 @@
     Effective case count: 10 (5 `It` blocks x `-ForEach $script:identityFiles` arity 2).
 #>
 
+Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force
 $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 
 $script:identityFiles = @(
-    (Join-Path $script:repoRoot '.github/instructions/security/identity.instructions.md'),
-    (Join-Path $script:repoRoot '.github/instructions/security/sssc-planner.instructions.md')
+    (Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/instructions/security/identity.instructions.md'),
+    (Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/instructions/security/sssc-planner.instructions.md')
 )
 
 Describe 'Inline planner state schema defaults' -Tag 'Unit' {

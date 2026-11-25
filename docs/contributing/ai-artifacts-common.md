@@ -144,13 +144,13 @@ npm run lint:models:refresh
 
 ## Plugin Membership
 
-Root `plugin.json` is the distribution authority for the single `hve-core` plugin and VSIX. `npm run plugin:sync` derives repository-relative membership from tracked package-scoped artifacts under `.github`:
+Root `plugin.json` is the distribution authority for All and the single VSIX. `npm run plugin:sync` derives repository-relative membership from tracked files under `.github/` and `.github/plugins/<topic>/`:
 
-* Agents under `.github/agents/<package>/**/*.agent.md`
-* Instructions under `.github/instructions/<package>/**/*.instructions.md`
-* Skills with `.github/skills/<package>/<skill>/SKILL.md` unless the skill's top-level license has a noncommercial qualifier
+* Agents under `agents/<collection>/**/*.agent.md`
+* Instructions under `instructions/<collection>/**/*.instructions.md`
+* Skills with `skills/<collection>/<skill>/SKILL.md` unless the skill's top-level license has a noncommercial qualifier
 
-The sync still maps prompt files under `.github/prompts/<package>/` to the manifest's `commands` array, which stays empty because HVE Core no longer accepts prompt files. Root-level repository-only artifacts are excluded. The manifest declares no hooks. `.github/plugin/marketplace.json` contains one `hve-core` entry with the relative source `.` and no component recipe.
+The sync still maps prompt files under `.github/prompts/<package>/` to the manifest's `commands` array, which stays empty because HVE Core no longer accepts prompt files. Root-level repository-only artifacts are excluded. The manifest declares no hooks. `.github/plugin/marketplace.json` contains an `hve-core` locator for `.` and one locator for each focused root. Each focused manifest selects descendants of that root; the catalog never repeats component recipes.
 
 ## Extension Packaging
 
@@ -545,7 +545,7 @@ When filing issues against hve-core, use Conventional Commit-style title prefixe
 
 ### Reference
 
-See the [commit message conventions in the `git-commit` skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/git-commit/references/commit-message.md) for the complete list of types and scopes.
+See the [commit message conventions in the `git-commit` skill](https://github.com/microsoft/hve-core/blob/main/.github/plugins/sdlc-git/skills/hve-core/git-commit/references/commit-message.md) for the complete list of types and scopes.
 
 ## Getting Help
 

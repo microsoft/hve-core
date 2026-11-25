@@ -11,7 +11,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-11-10
+ms.date: 2026-11-18
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -125,11 +125,11 @@ A five-step post-summarization recovery handles cases where conversation context
 
 ## Related Files
 
-| File type    | Location                                                     |
-|--------------|--------------------------------------------------------------|
-| Agent        | `.github/agents/security/security-planner.agent.md`          |
-| Instructions | `.github/instructions/security/`                             |
-| State        | `.copilot-tracking/security-plans/{project-slug}/state.json` |
+| File type    | Location                                                                  |
+|--------------|---------------------------------------------------------------------------|
+| Agent        | `.github/plugins/sdlc-security/agents/security/security-planner.agent.md` |
+| Instructions | `.github/plugins/sdlc-security/instructions/security/`                    |
+| State        | `.copilot-tracking/security-plans/{project-slug}/state.json`              |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

@@ -3,7 +3,7 @@ title: Jira Backlog Executor
 description: Runs the Jira skill CLI in one confirmed project. Applies a dispatched Jira operation set and returns Jira reads the caller cannot perform.
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-11-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                      |
-|-------------|----------------------------------------------------------------------------|
-| Kind        | agent                                                                      |
-| Source      | `.github/agents/project-planning/subagents/jira-backlog-executor.agent.md` |
-| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)   |
-| Interactive | No                                                                         |
+| Field       | Value                                                                                               |
+|-------------|-----------------------------------------------------------------------------------------------------|
+| Kind        | agent                                                                                               |
+| Source      | `.github/plugins/project-planning/agents/project-planning/subagents/jira-backlog-executor.agent.md` |
+| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)                            |
+| Interactive | No                                                                                                  |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

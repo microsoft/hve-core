@@ -3,8 +3,9 @@
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
+    Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force
     $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
-    $script:SkillPath = Join-Path $script:RepoRoot '.github/skills/hve-core/git-commit/SKILL.md'
+    $script:SkillPath = Resolve-CanonicalArtifactPath -RepoRoot $script:RepoRoot -Path '.github/skills/hve-core/git-commit/SKILL.md'
     $script:EvalSpecPath = Join-Path $script:RepoRoot 'evals/behavior-conformance/skill-behavior.eval.yaml'
     Import-Module powershell-yaml -ErrorAction Stop
 

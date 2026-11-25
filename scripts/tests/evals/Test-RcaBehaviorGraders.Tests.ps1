@@ -316,7 +316,7 @@ process.stdin.on("end", () => {
             $Stimulus | Should -Not -BeNullOrEmpty
             $Stimulus.environment | Should -BeNullOrEmpty
             $Stimulus.agent_environment.skills | Should -HaveCount 1
-            $Stimulus.agent_environment.skills[0] | Should -Be '../../.github/skills/root-cause-analysis/root-cause-analysis'
+            $Stimulus.agent_environment.skills[0] | Should -Be '../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis'
             $Stimulus.agent_environment.files | Should -HaveCount 1
             $Stimulus.agent_environment.files[0].src | Should -Be "fixtures/rca-evidence-record-$Variant.json"
             $Stimulus.agent_environment.files[0].dest | Should -Be "rca-evidence-record-$Variant.json"

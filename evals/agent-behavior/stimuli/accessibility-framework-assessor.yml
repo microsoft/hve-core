@@ -26,10 +26,10 @@ stimuli:
       invoke tools beyond reference reads, write files, or claim a runtime pass.
     agent_environment:
       files:
-        - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+        - src: ../../.github/plugins/sdlc-security/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
           dest: policy/accessibility-framework-assessor.agent.md
       skills:
-        - ../../.github/skills/accessibility/accessibility
+        - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
     tags:
       category: agent-behavior
       advisory: "true"
@@ -67,10 +67,10 @@ stimuli:
       reads, write files, or claim runtime verification.
     agent_environment:
       files:
-        - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+        - src: ../../.github/plugins/sdlc-security/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
           dest: policy/accessibility-framework-assessor.agent.md
       skills:
-        - ../../.github/skills/accessibility/accessibility
+        - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
     tags:
       category: agent-behavior
       advisory: "true"
@@ -115,7 +115,7 @@ stimuli:
       a scan, emit another caution block or modify files.
     agent_environment:
       files:
-        - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+        - src: ../../.github/plugins/sdlc-security/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
           dest: policy/accessibility-framework-assessor.agent.md
     tags:
       category: agent-behavior
@@ -139,10 +139,10 @@ stimuli:
       simulated input.
     agent_environment:
       files:
-        - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+        - src: ../../.github/plugins/sdlc-security/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/accessibility/accessibility
+        - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
     tags:
       category: agent-behavior
       advisory: "true"
@@ -174,10 +174,10 @@ stimuli:
       payload is simulated input.
     agent_environment:
       files:
-        - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+        - src: ../../.github/plugins/sdlc-security/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/accessibility/accessibility
+        - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
     tags:
       category: agent-behavior
       advisory: "true"
@@ -210,10 +210,10 @@ stimuli:
       each status without making a conformance claim. The evidence is synthetic.
     agent_environment:
       files:
-        - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+        - src: ../../.github/plugins/sdlc-security/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/accessibility/accessibility
+        - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
     tags:
       category: agent-behavior
       advisory: "true"

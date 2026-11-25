@@ -3,7 +3,7 @@ title: performance-slo-planner
 description: "Performance, load, and reliability (SLO/SRE) planning for production readiness. Use when defining service level objectives, load characterization, capacity, latency budgets, stress/soak/spike test plans, false-positive baselines, and reliability targets. USE FOR: SLO/SLA definition, load testing plan, performance budget, capacity planning, reliability/SRE backlog, latency targets, error-budget policy. DO NOT USE FOR: executing load tests (use Azure Load Testing tooling), security threat modeling, RAI assessment, privacy/compliance planning, or authoring/restating PRD requirements (cite the PRD's existing NFR/FR ids instead)."
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-09-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                     |
 |-------------|-------------------------------------------------------------------------------------------|
 | Kind        | skill                                                                                     |
-| Source      | `.github/skills/project-planning/performance-slo-planner`                                 |
+| Source      | `.github/plugins/project-planning/skills/project-planning/performance-slo-planner`        |
 | Invocation  | Invoked directly as `/performance-slo-planner`, or loaded on demand by referencing agents |
 | Interactive | No                                                                                        |
 <!-- END AUTO-GENERATED: metadata -->

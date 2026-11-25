@@ -186,7 +186,7 @@ function Get-AgentColdStartSet {
     $members = [System.Collections.Generic.List[string]]::new()
     $members.Add($agentFullPath)
 
-    $skillRoot = Join-Path $RepoRoot '.github/skills'
+    $skillRoots = @(Get-Item -Path (Join-Path $RepoRoot '.github/skills'), (Join-Path $RepoRoot '.github/plugins/*/skills') -ErrorAction SilentlyContinue)
     $preloaded = @()
     try {
         $preloaded = @(Get-PreloadedSkillName -Content ([System.IO.File]::ReadAllText($agentFullPath)))
@@ -196,8 +196,8 @@ function Get-AgentColdStartSet {
     }
     foreach ($name in $preloaded) {
         $skillFile = $null
-        if (Test-Path -Path $skillRoot -PathType Container) {
-            $skillFile = Get-ChildItem -Path $skillRoot -Recurse -File -Filter 'SKILL.md' |
+        if ($skillRoots.Count -gt 0) {
+            $skillFile = Get-ChildItem -LiteralPath $skillRoots.FullName -Recurse -File -Filter 'SKILL.md' |
                 Where-Object { $_.Directory.Name -eq $name } |
                 Select-Object -First 1
         }

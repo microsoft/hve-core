@@ -338,10 +338,10 @@ BeforeAll {
     $script:WorkflowReadme = Read-RepoFile '.github/workflows/README.md'
     $script:CorePublisher = Get-WorkflowJobSection -WorkflowSource $script:Publisher -JobName 'publish'
     $script:HistoryPublisher = Get-WorkflowJobSection -WorkflowSource $script:Publisher -JobName 'publish-history'
-    $script:Policy = Read-RepoFile '.github/instructions/project-planning/github-backlog-grooming.instructions.md'
+    $script:Policy = Read-RepoFile '.github/plugins/sdlc-git/instructions/project-planning/github-backlog-grooming.instructions.md'
     $script:Agent = Read-RepoFile '.github/agents/backlog-grooming.agent.md'
-    $script:Manager = Read-RepoFile '.github/agents/project-planning/backlog-manager.agent.md'
-    $script:Executor = Read-RepoFile '.github/agents/project-planning/subagents/github-backlog-executor.agent.md'
+    $script:Manager = Read-RepoFile '.github/plugins/project-planning/agents/project-planning/backlog-manager.agent.md'
+    $script:Executor = Read-RepoFile '.github/plugins/sdlc-git/agents/project-planning/subagents/github-backlog-executor.agent.md'
 }
 
 Describe 'Backlog grooming workflow source' -Tag 'Unit' {
@@ -356,7 +356,7 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         $script:Source | Should -Not -Match '(?m)^  workflow_dispatch:$'
         $script:Orchestrator | Should -Match '(?m)^  workflow_dispatch:$'
         $script:Source | Should -Match '(?m)^  - \.\./agents/backlog-grooming\.agent\.md$'
-        $script:Source | Should -Match '(?m)^  - \.\./instructions/project-planning/github-backlog-grooming\.instructions\.md$'
+        $script:Source | Should -Match '(?m)^  - \.\./plugins/sdlc-git/instructions/project-planning/github-backlog-grooming\.instructions\.md$'
     }
 
     It 'keeps model permissions read-only and safe outputs bounded' {
@@ -1037,7 +1037,7 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
         $script:Lock | Should -Not -Match '(?m)^  schedule:$'
         $script:Lock | Should -Not -Match '(?m)^  workflow_dispatch:$'
         $script:Lock | Should -Match '(?m)^      issues: read$'
-        $script:Lock | Should -Match 'runtime-import \.github/instructions/project-planning/github-backlog-grooming\.instructions\.md'
+        $script:Lock | Should -Match 'runtime-import \.github/plugins/sdlc-git/instructions/project-planning/github-backlog-grooming\.instructions\.md'
     }
 
     It 'allows only the artifact-bound result job plus compiler-owned noop handling' {

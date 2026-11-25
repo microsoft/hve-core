@@ -19,7 +19,7 @@
     "./scripts/linting/schemas/docs-frontmatter.schema.json": [
       "docs/**/*.md"
     ],
-    "./scripts/linting/schemas/adr-config.schema.json": [
+    "./.github/plugins/project-planning/skills/project-planning/adr-author/assets/schemas/adr-config.schema.json": [
       "**/.adr-config.yml",
       "**/.adr-config.yaml"
     ]
@@ -27,73 +27,95 @@
   "json.schemas": [
     {
       "fileMatch": [".copilot-tracking/rai-plans/*/state.json"],
-      "url": "./scripts/linting/schemas/rai-state.schema.json"
+      "url": "./.github/plugins/sdlc-security/skills/project-planning/rai-planner/assets/schemas/rai-state.schema.json"
     },
     {
       "fileMatch": [".copilot-tracking/accessibility/*/state.json"],
       "url": "./scripts/linting/schemas/accessibility-state.schema.json"
     }
   ],
-  // Lists HVE Core's nested package folders for VS Code's Local harness.
-  // Copilot sessions find these folders without these settings.
+  // VS Code workspace discovery; these locations do not configure the standalone CLI.
   "chat.agentFilesLocations": {
-    ".github/agents/accessibility": true,
-    ".github/agents/accessibility/subagents": true,
-    ".github/agents/coding-standards": true,
-    ".github/agents/coding-standards/subagents": true,
+    ".github/agents": true,
     ".github/agents/data-science-engineering": true,
     ".github/agents/design-thinking": true,
     ".github/agents/engagement-reporting": true,
     ".github/agents/engagement-reporting/subagents": true,
     ".github/agents/experimental": true,
-    ".github/agents/experimental/subagents": true,
-    ".github/agents/hve-core": true,
-    ".github/agents/hve-core/subagents": true,
-    ".github/agents/privacy": true,
-    ".github/agents/project-planning": true,
-    ".github/agents/project-planning/subagents": true,
-    ".github/agents/rai-planning": true,
-    ".github/agents/rai-planning/subagents": true,
-    ".github/agents/security": true,
-    ".github/agents/security/subagents": true
+    ".github/plugins/base/agents/coding-standards": true,
+    ".github/plugins/base/agents/hve-core": true,
+    ".github/plugins/base/agents/hve-core/subagents": true,
+    ".github/plugins/project-planning/agents/experimental": true,
+    ".github/plugins/project-planning/agents/project-planning": true,
+    ".github/plugins/project-planning/agents/project-planning/subagents": true,
+    ".github/plugins/sdlc-azure-devops/agents/project-planning/subagents": true,
+    ".github/plugins/sdlc-git/agents/project-planning/subagents": true,
+    ".github/plugins/sdlc-security/agents/accessibility": true,
+    ".github/plugins/sdlc-security/agents/accessibility/subagents": true,
+    ".github/plugins/sdlc-security/agents/privacy": true,
+    ".github/plugins/sdlc-security/agents/rai-planning": true,
+    ".github/plugins/sdlc-security/agents/rai-planning/subagents": true,
+    ".github/plugins/sdlc-security/agents/security": true,
+    ".github/plugins/sdlc-security/agents/security/subagents": true,
+    ".github/plugins/sdlc/agents/hve-core": true,
+    ".github/plugins/sdlc/agents/hve-core/subagents": true
   },
   "chat.instructionsFilesLocations": {
-    ".github/instructions/accessibility": true,
-    ".github/instructions/coding-standards": true,
+    ".github/instructions": true,
     ".github/instructions/design-thinking": true,
-    ".github/instructions/experimental": true,
-    ".github/instructions/git": true,
     ".github/instructions/hve-core": true,
-    ".github/instructions/privacy": true,
-    ".github/instructions/project-planning": true,
-    ".github/instructions/rai": true,
-    ".github/instructions/rai-planning": true,
-    ".github/instructions/rpi": true,
-    ".github/instructions/security": true,
-    ".github/instructions/shared": true
+    ".github/instructions/shared": true,
+    ".github/plugins/base/instructions/git": true,
+    ".github/plugins/base/instructions/hve-core": true,
+    ".github/plugins/base/instructions/rpi": true,
+    ".github/plugins/project-planning/instructions/experimental": true,
+    ".github/plugins/project-planning/instructions/project-planning": true,
+    ".github/plugins/sdlc-git/instructions/project-planning": true,
+    ".github/plugins/sdlc-security/instructions/accessibility": true,
+    ".github/plugins/sdlc-security/instructions/privacy": true,
+    ".github/plugins/sdlc-security/instructions/rai": true,
+    ".github/plugins/sdlc-security/instructions/rai-planning": true,
+    ".github/plugins/sdlc-security/instructions/security": true,
+    ".github/plugins/sdlc/instructions/coding-standards": true,
+    ".github/plugins/sdlc/instructions/coding-standards/bash": true,
+    ".github/plugins/sdlc/instructions/coding-standards/bicep": true,
+    ".github/plugins/sdlc/instructions/coding-standards/csharp": true,
+    ".github/plugins/sdlc/instructions/coding-standards/powershell": true,
+    ".github/plugins/sdlc/instructions/coding-standards/rust": true,
+    ".github/plugins/sdlc/instructions/coding-standards/terraform": true,
+    ".github/plugins/sdlc/instructions/coding-standards/typescript": true,
+    ".github/plugins/sdlc/instructions/hve-core": true
   },
   "chat.agentSkillsLocations": {
+    ".github/plugins/base/skills/coding-standards": true,
+    ".github/plugins/base/skills/hve-core": true,
+    ".github/plugins/base/skills/rpi": true,
+    ".github/plugins/project-planning/skills/hve-core": true,
+    ".github/plugins/project-planning/skills/project-planning": true,
+    ".github/plugins/sdlc-azure-devops/skills/azure-devops": true,
+    ".github/plugins/sdlc-git/skills/git": true,
+    ".github/plugins/sdlc-git/skills/hve-core": true,
+    ".github/plugins/sdlc-git/skills/shared": true,
+    ".github/plugins/sdlc-security/skills/accessibility": true,
+    ".github/plugins/sdlc-security/skills/privacy": true,
+    ".github/plugins/sdlc-security/skills/project-planning": true,
+    ".github/plugins/sdlc-security/skills/rai": true,
+    ".github/plugins/sdlc-security/skills/security": true,
+    ".github/plugins/sdlc/skills/coding-standards": true,
+    ".github/plugins/sdlc/skills/hve-core": true,
+    ".github/plugins/sdlc/skills/root-cause-analysis": true,
     ".github/skills": true,
-    ".github/skills/accessibility": true,
-    ".github/skills/azure-devops": true,
-    ".github/skills/coding-standards": true,
     ".github/skills/data-science-engineering": true,
     ".github/skills/design-thinking": true,
     ".github/skills/engagement-reporting": true,
     ".github/skills/experimental": true,
-    ".github/skills/git": true,
-    ".github/skills/hve-core": true,
     ".github/skills/installer": true,
-    ".github/skills/privacy": true,
-    ".github/skills/project-planning": true,
-    ".github/skills/rai": true,
-    ".github/skills/rpi": true,
     ".github/skills/security": true,
     ".github/skills/shared": true
   },
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {
-      "file": ".github/skills/hve-core/git-commit/references/commit-message.md"
+      "file": ".github/plugins/sdlc-git/skills/hve-core/git-commit/references/commit-message.md"
     }
   ],
 }

@@ -14,10 +14,11 @@
 #>
 
 BeforeDiscovery {
+    Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force
     $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
     $script:stateSchemaFiles = @(
-        @{ Name = 'sssc-planner.instructions.md'; Path = (Join-Path $repoRoot '.github/instructions/security/sssc-planner.instructions.md') }
-        @{ Name = 'sssc-planner.agent.md'; Path = (Join-Path $repoRoot '.github/agents/security/sssc-planner.agent.md') }
+        @{ Name = 'sssc-planner.instructions.md'; Path = (Resolve-CanonicalArtifactPath -RepoRoot $repoRoot -Path '.github/instructions/security/sssc-planner.instructions.md') }
+        @{ Name = 'sssc-planner.agent.md'; Path = (Resolve-CanonicalArtifactPath -RepoRoot $repoRoot -Path '.github/agents/security/sssc-planner.agent.md') }
     )
 }
 

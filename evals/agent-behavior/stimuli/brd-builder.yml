@@ -8,12 +8,12 @@ stimuli:
       where the BRD and its session state would be written.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
-        - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
     tags:
       category: agent-behavior
     graders:
@@ -57,13 +57,13 @@ stimuli:
       the BRD extension state, and do not replace the invalid artifact.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
         - src: ../behavior-conformance/fixtures/proposal-response-atlas-rfp-invalid-evidence.txt
           dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
       skills:
-        - ../../.github/skills/project-planning/proposal-response
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -98,7 +98,7 @@ stimuli:
       authority boundary.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/brd-state.json
           dest: .copilot-tracking/brd-sessions/atlas.state.json
@@ -107,9 +107,9 @@ stimuli:
         - src: fixtures/rpi-depth/brd-discover-01-research.md
           dest: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
       skills:
-        - ../../.github/skills/project-planning/requirements-author
-        - ../../.github/skills/rpi/rpi-research
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+        - ../../.github/plugins/base/skills/rpi/rpi-research
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -135,12 +135,12 @@ stimuli:
       state and the smallest work that stops.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/project-planning/requirements-author
-        - ../../.github/skills/rpi/rpi-research
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+        - ../../.github/plugins/base/skills/rpi/rpi-research
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -173,7 +173,7 @@ stimuli:
       explicit limit: one research cycle.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/brd-state.json
           dest: .copilot-tracking/brd-sessions/atlas.state.json
@@ -182,9 +182,9 @@ stimuli:
         - src: fixtures/rpi-depth/requirements-evidence.md
           dest: evidence/requirements-evidence.md
       skills:
-        - ../../.github/skills/project-planning/requirements-author
-        - ../../.github/skills/rpi/rpi-research
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+        - ../../.github/plugins/base/skills/rpi/rpi-research
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -214,7 +214,7 @@ stimuli:
       returned work. Do not rerun Research.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/brd-state.json
           dest: .copilot-tracking/brd-sessions/atlas.state.json
@@ -225,8 +225,8 @@ stimuli:
         - src: fixtures/rpi-depth/brd-discover-01-research.md
           dest: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
       skills:
-        - ../../.github/skills/project-planning/requirements-author
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -322,15 +322,15 @@ stimuli:
       The blocked segment must not satisfy or clear Discover.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/brd-state.json
           dest: .copilot-tracking/brd-sessions/atlas.state.json
         - src: fixtures/rpi-depth/atlas-brd.md
           dest: docs/project-planning/atlas-brd.md
       skills:
-        - ../../.github/skills/project-planning/requirements-author
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -361,7 +361,7 @@ stimuli:
       `2026-09-21` in paths.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/brd-state.json
           dest: .copilot-tracking/brd-sessions/atlas.state.json
@@ -370,8 +370,8 @@ stimuli:
         - src: fixtures/rpi-depth/requirements-evidence.md
           dest: evidence/requirements-evidence.md
       skills:
-        - ../../.github/skills/project-planning/requirements-author
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -395,15 +395,15 @@ stimuli:
       other state. Do not initialize optional RPI invocation state.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/brd-state.json
           dest: .copilot-tracking/brd-sessions/atlas.state.json
         - src: fixtures/rpi-depth/requirements-evidence.md
           dest: evidence/requirements-evidence.md
       skills:
-        - ../../.github/skills/project-planning/requirements-author
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
