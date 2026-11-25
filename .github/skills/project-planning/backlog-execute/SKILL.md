@@ -40,9 +40,9 @@ Four things must hold before the first mutating call. Everything else can be dis
 
 ### Supported direct-invocation contexts
 
-| Context                                                          | Write surface                | Notes                                                                                                                                                                                   |
-|------------------------------------------------------------------|------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| A platform executor subagent dispatched by `Backlog Manager`     | That platform's write family | Preferred path; the orchestrator resolves and confirms, the executor runs this flow with its platform delta                                                                             |
+| Context                                                          | Write surface                | Notes                                                                                                                                                          |
+|------------------------------------------------------------------|------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| A platform executor subagent dispatched by `Backlog Manager`     | That platform's write family | Preferred path; the orchestrator resolves and confirms, the executor runs this flow with its platform delta                                                    |
 | An agent or host session carrying the platform's own write tools | Those tools directly         | Requires the ADO or GitHub write family, terminal access for the Jira CLI, or a GitHub executor contract that grants the `gh` CLI fallback in `github-backlog` |
 | A read-only session                                              | None                         | Plan the operations, write the handoff, and stop before mutating                                                                                               |
 

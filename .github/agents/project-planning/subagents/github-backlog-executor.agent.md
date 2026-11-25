@@ -83,13 +83,13 @@ Apply `backlog-execute` to the dispatched set with `github-backlog` as the provi
 
 ## GitHub Fallback Deltas
 
-| Delta          | GitHub `gh` fallback rule                                                                                       |
-|----------------|-----------------------------------------------------------------------------------------------------------------|
-| `gh` fallback  | Used per operation only when its MCP tool is absent; `github-backlog` maps each operation and limits its flags  |
+| Delta          | GitHub `gh` fallback rule                                                                                              |
+|----------------|------------------------------------------------------------------------------------------------------------------------|
+| `gh` fallback  | Used per operation only when its MCP tool is absent; `github-backlog` maps each operation and limits its flags         |
 | `gh` labels    | Compute the full target set with the replacement rule, then pass the differences as `--add-label` and `--remove-label` |
-| `gh` body text | Write the sanitized text to a file in the tracking directory and pass it with `--body-file`; never pass it inline |
-| `gh` close     | The explanatory `gh issue comment` must succeed before `gh issue close` runs; a failed comment stops the close  |
-| Log surface    | Each `handoff-logs.md` entry records whether the operation ran through `mcp` or `gh`                            |
+| `gh` body text | Write the sanitized text to a file in the tracking directory and pass it with `--body-file`; never pass it inline      |
+| `gh` close     | The explanatory `gh issue comment` must succeed before `gh issue close` runs; a failed comment stops the close         |
+| Log surface    | Each `handoff-logs.md` entry records whether the operation ran through `mcp` or `gh`                                   |
 
 ## Constraints
 

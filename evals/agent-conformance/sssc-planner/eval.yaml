@@ -20,7 +20,7 @@ scoring:
 # Paths resolve from this spec's directory, three levels below the repository root.
 agent_environment:
   skills:
-  - ../../../.github/skills/shared/disclaimer-language
+  - ../../../.github/skills/project-planning/security-disclaimers
   - ../../../.github/skills/shared/untrusted-content-boundary
   - ../../../.github/skills/shared/planner-identity
   - ../../../.github/skills/security/supply-chain-security

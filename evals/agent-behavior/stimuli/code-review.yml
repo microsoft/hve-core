@@ -18,7 +18,6 @@ stimuli:
         - src: ../../.github/agents/coding-standards/code-review.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/shared/disclaimer-language
         - ../../.github/skills/coding-standards/code-review
     tags:
       category: agent-behavior
@@ -50,7 +49,6 @@ stimuli:
         - src: ../../.github/skills/coding-standards/code-review
           dest: .github/skills/coding-standards/code-review
       skills:
-        - ../../.github/skills/shared/disclaimer-language
         - ../../.github/skills/coding-standards/code-review
     tags:
       category: agent-behavior

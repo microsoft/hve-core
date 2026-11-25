@@ -4870,9 +4870,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -4897,9 +4898,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -4932,9 +4934,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -4960,9 +4963,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -4991,9 +4995,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5013,9 +5018,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5040,9 +5046,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5069,9 +5076,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5104,9 +5112,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5134,9 +5143,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5162,9 +5172,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5188,9 +5199,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5209,9 +5221,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5231,9 +5244,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5252,7 +5266,7 @@ stimuli:
           negate: true
   - name: skill-outcome-hypothesis-caution-reference-unavailable
     prompt: |
-      The shared `disclaimer-language` skill, including its
+      The `project-planning-disclaimers` skill, including its
       `Outcome-Hypothesis` section, cannot be read. What may the
       `outcome-hypothesis` skill deliver in create or assess mode?
     environment:
@@ -5279,9 +5293,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5306,9 +5321,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5336,9 +5352,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5362,9 +5379,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5503,9 +5521,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5533,9 +5552,10 @@ stimuli:
     environment:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -10704,7 +10724,7 @@ stimuli:
       - type: output-matches
         name: skill-privacy-disclaimers-knowledge-caution
         config:
-          pattern: '(?is)(?=.*assistive)(?=.*qualified\s+(?:human|privacy)\s+reviewers?)'
+          pattern: '(?is)(?=.*(?:assistive|does\s+not\s+(?:provide|replace|constitute)))(?=.*(?:qualified|independently\s+reviewed|privacy\s+counsel))'
 
   - name: skill-project-planning-disclaimers-knowledge
     prompt: |
@@ -10758,7 +10778,7 @@ stimuli:
       - type: output-matches
         name: skill-security-disclaimers-knowledge-caution
         config:
-          pattern: '(?is)(?=.*assistive)(?=.*qualified\s+(?:human|security)\s+reviewers?)'
+          pattern: '(?is)(?=.*(?:assistive|does\s+not\s+(?:provide|replace|constitute)))(?=.*(?:qualified|independently\s+reviewed|security\s+review\s+boards?))'
 
   - name: skill-rai-disclaimers-knowledge
     prompt: |
@@ -10785,4 +10805,4 @@ stimuli:
       - type: output-matches
         name: skill-rai-disclaimers-knowledge-caution
         config:
-          pattern: '(?is)(?=.*assistive)(?=.*qualified\s+human\s+reviewers)'
+          pattern: '(?is)(?=.*(?:assistive|does\s+not\s+(?:provide|replace|constitute)))(?=.*(?:qualified|independently\s+reviewed|review\s+boards?))'

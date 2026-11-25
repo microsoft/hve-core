@@ -2045,11 +2045,11 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
       'no-contradictory-findings', 'sssc-reviewer-class-recipe-no-source-edit')
     @($stimulus.graders | Where-Object { $_.Contains('weight') }) | Should -HaveCount 0
     $mounts = @($stimulus.agent_environment.files)
-    @($mounts.dest) | Should -Be @('.github/copilot-instructions.md', '.github/skills/shared/disclaimer-language/SKILL.md',
+    @($mounts.dest) | Should -Be @('.github/copilot-instructions.md', '.github/skills/project-planning/security-disclaimers/SKILL.md',
       'subject/package.json', 'subject/.github/workflows/release.yml', 'subject/Dockerfile')
     @($mounts.dest | Where-Object { $_ -like '.copilot-tracking/*' }) | Should -HaveCount 0
     foreach ($mount in $mounts) { Test-Path -LiteralPath (Join-Path $script:ObservationRoot $mount.src) -PathType Leaf | Should -BeTrue -Because $mount.src }
-    @($stimulus.agent_environment.skills) | Should -Be @('../../.github/skills/security/supply-chain-security', '../../.github/skills/security/security-reviewer-formats',
+    @($stimulus.agent_environment.skills) | Should -Be @('../../.github/skills/project-planning/security-disclaimers', '../../.github/skills/security/supply-chain-security', '../../.github/skills/security/security-reviewer-formats',
       '../../.github/skills/shared/untrusted-content-boundary')
     $workflow = Get-Content -Raw (Join-Path $script:ObservationRoot 'fixtures/sssc-smoke/release-workflow.fixture')
     $workflow | Should -Match 'uses: actions/checkout@v4'

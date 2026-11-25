@@ -1154,7 +1154,7 @@ stimuli:
     - src: ../../.github/agents/project-planning/brd-builder.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     - ../../.github/skills/project-planning/requirements-author
   tags:
@@ -1207,7 +1207,7 @@ stimuli:
       dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
     skills:
     - ../../.github/skills/project-planning/proposal-response
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -1253,7 +1253,7 @@ stimuli:
     skills:
     - ../../.github/skills/project-planning/requirements-author
     - ../../.github/skills/rpi/rpi-research
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -1284,7 +1284,7 @@ stimuli:
     skills:
     - ../../.github/skills/project-planning/requirements-author
     - ../../.github/skills/rpi/rpi-research
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -1328,7 +1328,7 @@ stimuli:
     skills:
     - ../../.github/skills/project-planning/requirements-author
     - ../../.github/skills/rpi/rpi-research
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -1370,7 +1370,7 @@ stimuli:
       dest: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
     skills:
     - ../../.github/skills/project-planning/requirements-author
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -1474,7 +1474,7 @@ stimuli:
       dest: docs/project-planning/atlas-brd.md
     skills:
     - ../../.github/skills/project-planning/requirements-author
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -1515,7 +1515,7 @@ stimuli:
       dest: evidence/requirements-evidence.md
     skills:
     - ../../.github/skills/project-planning/requirements-author
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -1547,7 +1547,7 @@ stimuli:
       dest: evidence/requirements-evidence.md
     skills:
     - ../../.github/skills/project-planning/requirements-author
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -1599,7 +1599,6 @@ stimuli:
     - src: ../../.github/agents/coding-standards/code-review.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/shared/disclaimer-language
     - ../../.github/skills/coding-standards/code-review
   tags:
     category: agent-behavior
@@ -1631,7 +1630,6 @@ stimuli:
     - src: ../../.github/skills/coding-standards/code-review
       dest: .github/skills/coding-standards/code-review
     skills:
-    - ../../.github/skills/shared/disclaimer-language
     - ../../.github/skills/coding-standards/code-review
   tags:
     category: agent-behavior
@@ -5093,7 +5091,7 @@ stimuli:
     - src: ../../.github/agents/project-planning/prd-builder.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     - ../../.github/skills/project-planning/requirements-author
   tags:
@@ -5147,7 +5145,7 @@ stimuli:
       dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
     skills:
     - ../../.github/skills/project-planning/proposal-response
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -5193,7 +5191,7 @@ stimuli:
     skills:
     - ../../.github/skills/project-planning/requirements-author
     - ../../.github/skills/rpi/rpi-research
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -5224,7 +5222,7 @@ stimuli:
     skills:
     - ../../.github/skills/project-planning/requirements-author
     - ../../.github/skills/rpi/rpi-research
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -5270,7 +5268,7 @@ stimuli:
     - ../../.github/skills/project-planning/requirements-author
     - ../../.github/skills/rpi/rpi-plan
     - ../../.github/skills/rpi/rpi-implement
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -5325,7 +5323,7 @@ stimuli:
       dest: .copilot-tracking/changes/2026-09-21/atlas-product-prd-build-02-changes.md
     skills:
     - ../../.github/skills/project-planning/requirements-author
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -5490,6 +5488,7 @@ stimuli:
     skills:
     - ../../.github/skills/experimental/mural
     - ../../.github/skills/project-planning/rai-planner
+    - ../../.github/skills/rai/rai-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
@@ -5498,8 +5497,8 @@ stimuli:
       dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
     - src: ../../.github/skills/shared/planner-identity/SKILL.md
       dest: .github/skills/shared/planner-identity/SKILL.md
-    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-      dest: .github/skills/shared/disclaimer-language/SKILL.md
+    - src: ../../.github/skills/rai/rai-disclaimers/SKILL.md
+      dest: .github/skills/rai/rai-disclaimers/SKILL.md
     - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
@@ -5555,6 +5554,7 @@ stimuli:
     skills:
     - ../../.github/skills/experimental/mural
     - ../../.github/skills/project-planning/rai-planner
+    - ../../.github/skills/rai/rai-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
@@ -5563,8 +5563,8 @@ stimuli:
       dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
     - src: ../../.github/skills/shared/planner-identity/SKILL.md
       dest: .github/skills/shared/planner-identity/SKILL.md
-    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-      dest: .github/skills/shared/disclaimer-language/SKILL.md
+    - src: ../../.github/skills/rai/rai-disclaimers/SKILL.md
+      dest: .github/skills/rai/rai-disclaimers/SKILL.md
     - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
@@ -5592,12 +5592,13 @@ stimuli:
     Start a Responsible AI assessment from our completed security plan. No security plan path was supplied, and this workspace has no `.copilot-tracking/security-plans/` directory. Follow the startup contract, then explain how you looked for a security plan and what happens next. Reply in chat only.
   agent_environment:
     skills:
+    - ../../.github/skills/rai/rai-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-      dest: .github/skills/shared/disclaimer-language/SKILL.md
+    - src: ../../.github/skills/rai/rai-disclaimers/SKILL.md
+      dest: .github/skills/rai/rai-disclaimers/SKILL.md
     - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
       dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
   tags:
@@ -5624,6 +5625,7 @@ stimuli:
     skills:
     - ../../.github/skills/project-planning/rai-planner
     - ../../.github/skills/rai/rai-standards
+    - ../../.github/skills/rai/rai-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
@@ -5632,8 +5634,8 @@ stimuli:
       dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
     - src: ../../.github/skills/shared/planner-identity/SKILL.md
       dest: .github/skills/shared/planner-identity/SKILL.md
-    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-      dest: .github/skills/shared/disclaimer-language/SKILL.md
+    - src: ../../.github/skills/rai/rai-disclaimers/SKILL.md
+      dest: .github/skills/rai/rai-disclaimers/SKILL.md
     - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
@@ -5683,6 +5685,7 @@ stimuli:
     skills:
     - ../../.github/skills/project-planning/rai-planner
     - ../../.github/skills/rai/rai-standards
+    - ../../.github/skills/rai/rai-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
@@ -5691,8 +5694,8 @@ stimuli:
       dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
     - src: ../../.github/skills/shared/planner-identity/SKILL.md
       dest: .github/skills/shared/planner-identity/SKILL.md
-    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-      dest: .github/skills/shared/disclaimer-language/SKILL.md
+    - src: ../../.github/skills/rai/rai-disclaimers/SKILL.md
+      dest: .github/skills/rai/rai-disclaimers/SKILL.md
     - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
@@ -5781,6 +5784,7 @@ stimuli:
     - ../../.github/skills/project-planning/rai-planner
     - ../../.github/skills/rai/rai-standards
     - ../../.github/skills/experimental/mural
+    - ../../.github/skills/rai/rai-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
@@ -5789,8 +5793,8 @@ stimuli:
       dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
     - src: ../../.github/skills/shared/planner-identity/SKILL.md
       dest: .github/skills/shared/planner-identity/SKILL.md
-    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-      dest: .github/skills/shared/disclaimer-language/SKILL.md
+    - src: ../../.github/skills/rai/rai-disclaimers/SKILL.md
+      dest: .github/skills/rai/rai-disclaimers/SKILL.md
     - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
@@ -5853,6 +5857,7 @@ stimuli:
     - ../../.github/skills/project-planning/rai-planner
     - ../../.github/skills/rai/rai-standards
     - ../../.github/skills/experimental/mural
+    - ../../.github/skills/rai/rai-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
@@ -5861,8 +5866,8 @@ stimuli:
       dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
     - src: ../../.github/skills/shared/planner-identity/SKILL.md
       dest: .github/skills/shared/planner-identity/SKILL.md
-    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-      dest: .github/skills/shared/disclaimer-language/SKILL.md
+    - src: ../../.github/skills/rai/rai-disclaimers/SKILL.md
+      dest: .github/skills/rai/rai-disclaimers/SKILL.md
     - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
@@ -6875,12 +6880,13 @@ stimuli:
     Resume the Security Planner project whose state is at `.copilot-tracking/security-plans/cadence-null/state.json`. Follow the startup contract and persist the required state change. In the final reply, print the complete canonical Security Planning CAUTION block, then explicitly report the persisted `disclaimerShownAt` ISO timestamp and the appended `session-start-disclaimer` notice before asking any Phase 1 question.
   agent_environment:
     skills:
+    - ../../.github/skills/project-planning/security-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-      dest: .github/skills/shared/disclaimer-language/SKILL.md
+    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+      dest: .github/skills/project-planning/security-disclaimers/SKILL.md
     - src: fixtures/security-planner-disclaimer-null-state.json
       dest: .copilot-tracking/security-plans/cadence-null/state.json
   tags:
@@ -6901,12 +6907,13 @@ stimuli:
     Resume the Security Planner project whose state is at `.copilot-tracking/security-plans/cadence-shown/state.json`. The full disclaimer was already shown. Continue normal Phase 1 work and report whether the timestamp or session-start notice count changed.
   agent_environment:
     skills:
+    - ../../.github/skills/project-planning/security-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-      dest: .github/skills/shared/disclaimer-language/SKILL.md
+    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+      dest: .github/skills/project-planning/security-disclaimers/SKILL.md
     - src: fixtures/security-planner-disclaimer-shown-state.json
       dest: .copilot-tracking/security-plans/cadence-shown/state.json
   tags:
@@ -6936,12 +6943,13 @@ stimuli:
     Resume the Security Planner project whose state is at `.copilot-tracking/security-plans/cadence-shown/state.json`. I explicitly ask to see the full Security Planning disclaimer again. In the final reply, print the complete canonical Security Planning CAUTION block before reporting state effects. Then persist the required state and notice history and report the replay discriminator. A state-only summary does not satisfy this request.
   agent_environment:
     skills:
+    - ../../.github/skills/project-planning/security-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-      dest: .github/skills/shared/disclaimer-language/SKILL.md
+    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+      dest: .github/skills/project-planning/security-disclaimers/SKILL.md
     - src: fixtures/security-planner-disclaimer-shown-state.json
       dest: .copilot-tracking/security-plans/cadence-shown/state.json
   tags:
@@ -6978,7 +6986,7 @@ stimuli:
         } catch { process.exit(1); }
 - name: security-planner-disclaimer-source-missing
   prompt: |
-    Start a new Security Planner project named `cadence-missing-source`. The required `disclaimer-language` skill is unavailable. Follow the declared missing-source behavior and report what is blocked.
+    Start a new Security Planner project named `cadence-missing-source`. The required `security-disclaimers` skill is unavailable. Follow the declared missing-source behavior and report what is blocked.
 
     Name the specific skill you could not load, then say what this does to the session before any Phase 1 work.
   agent_environment:
@@ -6993,7 +7001,7 @@ stimuli:
   - type: output-matches
     name: missing-source-halts
     config:
-      pattern: (?is)(?=[\s\S]*disclaimer-language)(?=[\s\S]*(?:cannot|unable|unavailable|missing|could not|not found))(?=[\s\S]*(?:halt|stop|blocked))
+      pattern: (?is)(?=[\s\S]*security-disclaimers)(?=[\s\S]*(?:cannot|unable|unavailable|missing|could not|not found))(?=[\s\S]*(?:halt|stop|blocked))
   - type: output-matches
     name: no-phase-work
     config:
@@ -7012,13 +7020,14 @@ stimuli:
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-      dest: .github/skills/shared/disclaimer-language/SKILL.md
+    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+      dest: .github/skills/project-planning/security-disclaimers/SKILL.md
     - src: fixtures/security-phase6/sample-service-state.json
       dest: .copilot-tracking/security-plans/sample-service/state.json
     - src: fixtures/security-phase6/sample-service-security-plan.md
       dest: .copilot-tracking/security-plans/sample-service/security-plan.md
     skills:
+    - ../../.github/skills/project-planning/security-disclaimers
     - ../../.github/skills/project-planning/security-planning
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
@@ -7056,8 +7065,8 @@ stimuli:
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-      dest: .github/skills/shared/disclaimer-language/SKILL.md
+    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+      dest: .github/skills/project-planning/security-disclaimers/SKILL.md
     - src: fixtures/security-phase6/sample-service-state.json
       dest: .copilot-tracking/security-plans/sample-service/state.json
     - src: fixtures/security-phase6/sample-service-security-plan.md
@@ -7065,6 +7074,7 @@ stimuli:
     - src: fixtures/security-phase6/security-report-001.md
       dest: .copilot-tracking/security/2026-08-31/security-report-001.md
     skills:
+    - ../../.github/skills/project-planning/security-disclaimers
     - ../../.github/skills/project-planning/security-planning
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
@@ -7121,12 +7131,13 @@ stimuli:
     Start security planning from our existing product requirements. No PRD or BRD path was supplied, and this workspace has no `.copilot-tracking/prd-sessions/` or `.copilot-tracking/brd-sessions/` directories. Follow the startup contract, then explain how you looked for requirements artifacts and what happens next. Reply in chat only.
   agent_environment:
     skills:
+    - ../../.github/skills/project-planning/security-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-      dest: .github/skills/shared/disclaimer-language/SKILL.md
+    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+      dest: .github/skills/project-planning/security-disclaimers/SKILL.md
     - src: ../../.github/instructions/security/identity.instructions.md
       dest: .github/instructions/security/identity.instructions.md
   tags:
@@ -7188,9 +7199,10 @@ stimuli:
     files:
     - src: ../../.github/agents/security/security-reviewer.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-      dest: .github/skills/shared/disclaimer-language/SKILL.md
+    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+      dest: .github/skills/project-planning/security-disclaimers/SKILL.md
     skills:
+    - ../../.github/skills/project-planning/security-disclaimers
     - ../../.github/skills/project-planning/security-planning
   tags:
     category: agent-behavior
@@ -7222,7 +7234,7 @@ stimuli:
     A user asks you for an LLM and agentic security review of this repository in audit mode. Do not start the review and do not run any tool or command. Answer in chat: which security skills you will assess, whether codebase profiling still runs, and how the findings from each skill are combined into the final report.
   agent_environment:
     skills:
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/security-disclaimers
     files:
     - src: ../../.github/agents/security/security-reviewer.agent.md
       dest: .github/copilot-instructions.md
@@ -7249,7 +7261,7 @@ stimuli:
     A user asks you for a web application vulnerability review of this repository without codebase profiling. Do not start the review and do not run any tool or command. Answer in chat: which single security skill you will assess, which pipeline stage you skip, and which scan mode (audit, diff, or plan) you will use.
   agent_environment:
     skills:
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/security-disclaimers
     files:
     - src: ../../.github/agents/security/security-reviewer.agent.md
       dest: .github/copilot-instructions.md
@@ -7373,12 +7385,13 @@ stimuli:
     Extend our completed security plans with supply chain coverage. Two Security Planner projects exist, at `.copilot-tracking/security-plans/payments-api/state.json` and `.copilot-tracking/security-plans/ledger-service/state.json`. Follow the startup contract, then explain which entry mode you are using and how you will choose the source security plan before scoping. Reply in chat only.
   agent_environment:
     skills:
+    - ../../.github/skills/project-planning/security-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/security/sssc-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-      dest: .github/skills/shared/disclaimer-language/SKILL.md
+    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+      dest: .github/skills/project-planning/security-disclaimers/SKILL.md
     - src: ../../.github/instructions/security/sssc-planner.instructions.md
       dest: .github/instructions/security/sssc-planner.instructions.md
     - src: fixtures/security-planner-disclaimer-shown-state.json
@@ -7416,8 +7429,8 @@ stimuli:
     inline as your instructions describe and record the reduced rigor. No
     SBOM, provenance, signing, release, registry, or remote repository
     settings evidence is supplied. Do not run network, install, build,
-    publish, or scanner commands. The shared disclaimer skill is staged at
-    `.github/skills/shared/disclaimer-language/SKILL.md`.
+    publish, or scanner commands. The security disclaimers skill is staged at
+    `.github/skills/project-planning/security-disclaimers/SKILL.md`.
 
     Write the report under `.copilot-tracking/sssc-reviews/`, do not modify
     any other file, and report the report path.
@@ -7425,8 +7438,8 @@ stimuli:
     files:
     - src: ../../.github/agents/security/sssc-reviewer.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-      dest: .github/skills/shared/disclaimer-language/SKILL.md
+    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+      dest: .github/skills/project-planning/security-disclaimers/SKILL.md
     - src: fixtures/sssc-smoke/package.fixture.json
       dest: subject/package.json
     - src: fixtures/sssc-smoke/release-workflow.fixture
@@ -7434,6 +7447,7 @@ stimuli:
     - src: fixtures/sssc-smoke/Dockerfile.fixture
       dest: subject/Dockerfile
     skills:
+    - ../../.github/skills/project-planning/security-disclaimers
     - ../../.github/skills/security/supply-chain-security
     - ../../.github/skills/security/security-reviewer-formats
     - ../../.github/skills/shared/untrusted-content-boundary
@@ -7623,7 +7637,7 @@ stimuli:
     skills:
     - ../../.github/skills/security/supply-chain-security
     - ../../.github/skills/security/security-reviewer-formats
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/security-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -7661,7 +7675,7 @@ stimuli:
       dest: .github/skills/security/vex/references/vex-generation.md
     skills:
     - ../../.github/skills/security/vex
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/security-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -7692,7 +7706,7 @@ stimuli:
       dest: .github/skills/security/vex/references/vex-generation.md
     skills:
     - ../../.github/skills/security/vex
-    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/project-planning/security-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
