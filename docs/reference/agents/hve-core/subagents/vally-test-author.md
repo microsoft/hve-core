@@ -3,7 +3,7 @@ title: Vally Test Author
 description: "Authors Vally conformance test stimuli in two modes: from-artifact (read a prompt, instructions, agent, or skill file and draft a stimulus block) and corpus-import (turn a CSV or XLSX corpus into stimulus blocks), with safety-lint refusal enforcement and SHA-256 dedupe before append-only writes to the routed eval file"
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-11-13
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                    |
-|-------------|--------------------------------------------------------------------------|
-| Kind        | agent                                                                    |
-| Source      | `.github/agents/hve-core/subagents/vally-test-author.agent.md`           |
-| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly) |
-| Interactive | No                                                                       |
+| Field       | Value                                                                       |
+|-------------|-----------------------------------------------------------------------------|
+| Kind        | agent                                                                       |
+| Source      | `.github/plugins/sdlc/agents/hve-core/subagents/vally-test-author.agent.md` |
+| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)    |
+| Interactive | No                                                                          |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

@@ -2,7 +2,7 @@
 title: VS Code Workspace Settings and MCP Servers
 description: What the repository's VS Code settings configure and how to enable the sample MCP servers for Copilot sessions
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - mcp
@@ -18,7 +18,7 @@ estimated_reading_time: 3
 
 For work in this checkout, VS Code uses `chat.agentFilesLocations` for agent folders (including subagents), `chat.agentSkillsLocations` for the folders containing skill directories, and `chat.instructionsFilesLocations` for rules. The settings include the conventional directories and the neutral topic roots under `.github/plugins/`.
 
-These are VS Code settings, not Copilot CLI settings. From outside the checkout, use `copilot --plugin-dir /absolute/path/to/hve-core/.github/plugins/rpi-builder skill list --json` to check a local topic without installing it. A mounted rule file does not establish automatic policy application. Native desktop discovery of neutral roots without an install is unverified.
+These are VS Code settings, not Copilot CLI settings. From outside the checkout, use `copilot --plugin-dir /absolute/path/to/hve-core/.github/plugins/base skill list --json` to check a local topic without installing it. A mounted rule file does not establish automatic policy application. Native desktop discovery of neutral roots without an install is unverified.
 
 When adding or renaming a collection, update its matching setting. In another workspace choose one discovery route rather than loading both a clone and an installed plugin.
 

@@ -58,7 +58,7 @@ param(
     [string]$OutputPath = 'logs/vally-test-safety.json',
 
     [Parameter(Mandatory = $false)]
-    [string]$TaxonomyPath = '.github/skills/hve-core/vally-tests/references/refusal-taxonomy.md',
+    [string]$TaxonomyPath = '.github/plugins/sdlc/skills/hve-core/vally-tests/references/refusal-taxonomy.md',
 
     [Parameter(Mandatory = $false)]
     [string[]]$Include = @('*.yml', '*.yaml', '*.csv')

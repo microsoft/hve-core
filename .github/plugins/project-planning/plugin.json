@@ -1,6 +1,6 @@
 {
   "name": "hve-project-planning",
-  "description": "Author and review architecture decisions, business requirements, and product requirements. Pair with hve-rpi-builder for deeper research.",
+  "description": "Author and review ADRs, BRDs, PRDs, architecture diagrams, backlogs, SLOs, UX plans, and experiments, with Jira and GitLab workflows. Pair with hve-base for deeper research.",
   "version": "3.2.2",
   "author": {
     "name": "Microsoft",
@@ -14,27 +14,49 @@
     "project-planning",
     "adr",
     "brd",
-    "prd"
+    "prd",
+    "architecture",
+    "backlog",
+    "jira",
+    "gitlab"
   ],
   "agents": [
+    "agents/experimental/experiment-designer.agent.md",
     "agents/project-planning/adr-creation.agent.md",
+    "agents/project-planning/backlog-manager.agent.md",
     "agents/project-planning/brd-builder.agent.md",
+    "agents/project-planning/functional-planner.agent.md",
     "agents/project-planning/meeting-analyst.agent.md",
+    "agents/project-planning/network-isa95-planner.agent.md",
     "agents/project-planning/prd-builder.agent.md",
     "agents/project-planning/subagents/brd-quality-reviewer.agent.md",
+    "agents/project-planning/subagents/jira-backlog-executor.agent.md",
     "agents/project-planning/subagents/prd-quality-reviewer.agent.md",
-    "agents/project-planning/system-architecture-reviewer.agent.md"
+    "agents/project-planning/system-architecture-reviewer.agent.md",
+    "agents/project-planning/ux-ui-designer.agent.md"
   ],
   "rules": [
+    "instructions/experimental/experiment-designer.instructions.md",
     "instructions/project-planning/adr-byo-template.instructions.md",
     "instructions/project-planning/adr-handoff.instructions.md",
     "instructions/project-planning/adr-standards.instructions.md",
+    "instructions/project-planning/backlog-guardrails.instructions.md",
     "instructions/project-planning/planning-telemetry.instructions.md"
   ],
   "skills": [
+    "skills/hve-core/architecture-diagrams",
+    "skills/hve-core/c4-architecture",
     "skills/project-planning/adr-author",
     "skills/project-planning/architecture-review",
+    "skills/project-planning/backlog-execute",
+    "skills/project-planning/backlog-management",
+    "skills/project-planning/backlog-plan",
+    "skills/project-planning/experiment-design",
+    "skills/project-planning/functional-planner",
+    "skills/project-planning/gitlab",
+    "skills/project-planning/jira",
     "skills/project-planning/outcome-hypothesis",
+    "skills/project-planning/performance-slo-planner",
     "skills/project-planning/project-planning-disclaimers",
     "skills/project-planning/proposal-response",
     "skills/project-planning/requirements-author"

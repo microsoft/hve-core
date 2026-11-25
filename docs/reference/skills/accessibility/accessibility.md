@@ -3,7 +3,7 @@ title: accessibility
 description: "Consolidated accessibility skill entrypoint for WCAG 2.2, ARIA Authoring Practices, cognitive accessibility, Section 508, EN 301 549, design intent verification, and the Accessibility Planner workflow."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -11,12 +11,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                        |
-|-------------|----------------------------------------------|
-| Kind        | skill                                        |
-| Source      | `.github/skills/accessibility/accessibility` |
-| Invocation  | Loaded on demand by referencing agents       |
-| Interactive | No                                           |
+| Field       | Value                                                              |
+|-------------|--------------------------------------------------------------------|
+| Kind        | skill                                                              |
+| Source      | `.github/plugins/sdlc-security/skills/accessibility/accessibility` |
+| Invocation  | Loaded on demand by referencing agents                             |
+| Interactive | No                                                                 |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

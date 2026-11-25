@@ -9,12 +9,12 @@ stimuli:
       written.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/prd-builder.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/prd-builder.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
-        - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
     tags:
       category: agent-behavior
     graders:
@@ -59,13 +59,13 @@ stimuli:
       the PRD extension state, and do not replace the invalid artifact.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/prd-builder.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/prd-builder.agent.md
           dest: .github/copilot-instructions.md
         - src: ../behavior-conformance/fixtures/proposal-response-atlas-rfp-invalid-evidence.txt
           dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
       skills:
-        - ../../.github/skills/project-planning/proposal-response
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -100,7 +100,7 @@ stimuli:
       boundary.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/prd-builder.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/prd-builder.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/prd-state.json
           dest: .copilot-tracking/prd-sessions/atlas-product.state.json
@@ -109,9 +109,9 @@ stimuli:
         - src: fixtures/rpi-depth/prd-build-03-research.md
           dest: .copilot-tracking/prd-sessions/atlas-product/research/2026-09-21/atlas-product-prd-build-03-research.md
       skills:
-        - ../../.github/skills/project-planning/requirements-author
-        - ../../.github/skills/rpi/rpi-research
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+        - ../../.github/plugins/base/skills/rpi/rpi-research
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -137,12 +137,12 @@ stimuli:
       Explain the durable state and the smallest work that stops.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/prd-builder.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/prd-builder.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/project-planning/requirements-author
-        - ../../.github/skills/rpi/rpi-research
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+        - ../../.github/plugins/base/skills/rpi/rpi-research
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -174,7 +174,7 @@ stimuli:
       step. Do not run content-quality review or claim the Build gate passed.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/prd-builder.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/prd-builder.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/prd-state.json
           dest: .copilot-tracking/prd-sessions/atlas-product.state.json
@@ -185,10 +185,10 @@ stimuli:
         - src: fixtures/rpi-depth/authoring-plan-critique.md
           dest: .copilot-tracking/reviews/plans/2026-09-21/atlas-product-prd-build-01-plan-critique.md
       skills:
-        - ../../.github/skills/project-planning/requirements-author
-        - ../../.github/skills/rpi/rpi-plan
-        - ../../.github/skills/rpi/rpi-implement
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+        - ../../.github/plugins/base/skills/rpi/rpi-plan
+        - ../../.github/plugins/base/skills/rpi/rpi-implement
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -229,7 +229,7 @@ stimuli:
       content-quality review, or claim the Build gate passed.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/prd-builder.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/prd-builder.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/prd-state.json
           dest: .copilot-tracking/prd-sessions/atlas-product.state.json
@@ -242,8 +242,8 @@ stimuli:
         - src: fixtures/rpi-depth/prd-authoring-changes.md
           dest: .copilot-tracking/changes/2026-09-21/atlas-product-prd-build-02-changes.md
       skills:
-        - ../../.github/skills/project-planning/requirements-author
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior

@@ -13,14 +13,14 @@ stimuli:
       and stop without inventing its contract.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/subagents/vally-test-author.agent.md
+        - src: ../../.github/plugins/sdlc/agents/hve-core/subagents/vally-test-author.agent.md
           dest: .github/agents/hve-core/subagents/vally-test-author.agent.md
         - src: ../../.github/instructions/shared/content-policy-citation.instructions.md
           dest: .github/instructions/shared/content-policy-citation.instructions.md
         - src: fixtures/three-bullet-summary.txt
           dest: .github/prompts/three-bullet-summary.prompt.md
       skills:
-        - ../../.github/skills/hve-core/vally-tests
+        - ../../.github/plugins/sdlc/skills/hve-core/vally-tests
     tags:
       category: agent-behavior
       advisory: "true"
@@ -72,10 +72,10 @@ stimuli:
       valid and name the smallest correction. Do not append or claim a write.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/subagents/vally-test-author.agent.md
+        - src: ../../.github/plugins/sdlc/agents/hve-core/subagents/vally-test-author.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/hve-core/vally-tests
+        - ../../.github/plugins/sdlc/skills/hve-core/vally-tests
     tags:
       category: agent-behavior
       advisory: "true"
@@ -109,10 +109,10 @@ stimuli:
       append. Do not append or claim a write.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/subagents/vally-test-author.agent.md
+        - src: ../../.github/plugins/sdlc/agents/hve-core/subagents/vally-test-author.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/hve-core/vally-tests
+        - ../../.github/plugins/sdlc/skills/hve-core/vally-tests
     tags:
       category: agent-behavior
       advisory: "true"

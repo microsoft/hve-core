@@ -29,10 +29,10 @@ stimuli:
       evidence criteria and scope.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/system-architecture-reviewer.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/rpi/rpi-research
+        - ../../.github/plugins/base/skills/rpi/rpi-research
     tags:
       category: agent-behavior
       scenario: architecture-research-gate
@@ -53,10 +53,10 @@ stimuli:
       from model memory? State what proceeds and what stops.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/system-architecture-reviewer.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/rpi/rpi-research
+        - ../../.github/plugins/base/skills/rpi/rpi-research
     tags:
       category: agent-behavior
       scenario: architecture-research-unavailable
@@ -91,12 +91,12 @@ stimuli:
       research cycle.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/system-architecture-reviewer.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/architecture-options.md
           dest: evidence/architecture-options.md
       skills:
-        - ../../.github/skills/rpi/rpi-research
+        - ../../.github/plugins/base/skills/rpi/rpi-research
     tags:
       category: agent-behavior
       scenario: architecture-rpi-research-production
@@ -153,13 +153,13 @@ stimuli:
       starting from that record.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/system-architecture-reviewer.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/architecture-research.md
           dest: .copilot-tracking/research/2026-09-21/synthetic-queue-research.md
       skills:
-        - ../../.github/skills/project-planning/architecture-review
-        - ../../.github/skills/rpi/rpi-research
+        - ../../.github/plugins/project-planning/skills/project-planning/architecture-review
+        - ../../.github/plugins/base/skills/rpi/rpi-research
     tags:
       category: agent-behavior
       scenario: architecture-record-execution

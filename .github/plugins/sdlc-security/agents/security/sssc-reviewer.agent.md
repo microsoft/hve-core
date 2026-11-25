@@ -29,12 +29,12 @@ Review a repository's supply-chain security posture and produce an evidence-base
 
 ## Subagents
 
-| Dispatch name               | Purpose                                                                 |
-|-----------------------------|-------------------------------------------------------------------------|
-| Codebase Profiler           | Builds the repository profile and identifies applicable skills.         |
-| Supply Chain Skill Assessor | Assesses supply-chain posture against the supplied references.           |
-| Finding Deep Verifier       | Verifies FAIL and PARTIAL findings.                                     |
-| CVE Analyzer                | Provides per-CVE evidence for VEX assessment.                            |
+| Dispatch name               | Purpose                                                         |
+|-----------------------------|-----------------------------------------------------------------|
+| Codebase Profiler           | Builds the repository profile and identifies applicable skills. |
+| Supply Chain Skill Assessor | Assesses supply-chain posture against the supplied references.  |
+| Finding Deep Verifier       | Verifies FAIL and PARTIAL findings.                             |
+| CVE Analyzer                | Provides per-CVE evidence for VEX assessment.                   |
 
 This reviewer authors its own report and does not delegate report generation. `Report Generator` writes into `.copilot-tracking/security` or `.copilot-tracking/accessibility` using the `VULN_REPORT_V1` framework-oriented template, which is neither this reviewer's report root nor its report contract.
 

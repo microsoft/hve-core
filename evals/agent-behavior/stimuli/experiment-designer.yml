@@ -31,10 +31,10 @@ stimuli:
       you would do if the conditional ML skill were unavailable.
     agent_environment:
       files:
-        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
         - ../../.github/skills/data-science-engineering/ml-experimentation
     tags:
       category: agent-behavior
@@ -88,11 +88,11 @@ stimuli:
       past Phase 1.
     agent_environment:
       skills:
-        - '../../.github/skills/project-planning/experiment-design'
+        - '../../.github/plugins/project-planning/skills/project-planning/experiment-design'
       files:
-        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
           dest: .github/instructions/experimental/experiment-designer.instructions.md
     tags:
       category: agent-behavior
@@ -139,11 +139,11 @@ stimuli:
       past Phase 1.
     agent_environment:
       skills:
-        - '../../.github/skills/project-planning/experiment-design'
+        - '../../.github/plugins/project-planning/skills/project-planning/experiment-design'
       files:
-        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
           dest: .github/instructions/experimental/experiment-designer.instructions.md
     tags:
       category: agent-behavior
@@ -199,11 +199,11 @@ stimuli:
       run vetting or experiment design yet.
     agent_environment:
       skills:
-        - '../../.github/skills/project-planning/experiment-design'
+        - '../../.github/plugins/project-planning/skills/project-planning/experiment-design'
       files:
-        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
           dest: .github/instructions/experimental/experiment-designer.instructions.md
         - src: fixtures/experiment-lifecycle/classified-context.txt
           dest: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
@@ -252,11 +252,11 @@ stimuli:
       match that decision.
     agent_environment:
       skills:
-        - '../../.github/skills/project-planning/experiment-design'
+        - '../../.github/plugins/project-planning/skills/project-planning/experiment-design'
       files:
-        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
           dest: .github/instructions/experimental/experiment-designer.instructions.md
         - src: fixtures/experiment-lifecycle/weak-evidence-context.txt
           dest: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/context.md
@@ -309,11 +309,11 @@ stimuli:
       Report your summary in your response only.
     agent_environment:
       skills:
-        - '../../.github/skills/project-planning/experiment-design'
+        - '../../.github/plugins/project-planning/skills/project-planning/experiment-design'
       files:
-        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
           dest: .github/instructions/experimental/experiment-designer.instructions.md
         - src: fixtures/experiment-lifecycle/completed-mve-plan.txt
           dest: .copilot-tracking/mve/2026-03-02/synthetic-invoice-matching/mve-plan.md
@@ -347,11 +347,11 @@ stimuli:
       what durable state remains. Do not claim the artifact was saved.
     agent_environment:
       skills:
-        - '../../.github/skills/project-planning/experiment-design'
+        - '../../.github/plugins/project-planning/skills/project-planning/experiment-design'
       files:
-        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
           dest: .github/instructions/experimental/experiment-designer.instructions.md
         - src: fixtures/experiment-lifecycle/classified-context.txt
           dest: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
@@ -417,11 +417,11 @@ stimuli:
       would activate.
     agent_environment:
       files:
-        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/project-planning/experiment-design
-        - ../../.github/skills/rpi/rpi-research
+        - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
+        - ../../.github/plugins/base/skills/rpi/rpi-research
     tags:
       category: agent-behavior
       scenario: experiment-research-preparation
@@ -447,11 +447,11 @@ stimuli:
       framing of independent hypotheses continues.
     agent_environment:
       files:
-        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/project-planning/experiment-design
-        - ../../.github/skills/rpi/rpi-research
+        - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
+        - ../../.github/plugins/base/skills/rpi/rpi-research
     tags:
       category: agent-behavior
       scenario: experiment-research-unavailable
@@ -486,19 +486,19 @@ stimuli:
       one research cycle.
     agent_environment:
       files:
-        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/experiment-context.md
           dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/context.md
         - src: fixtures/rpi-depth/experiment-context.md
           dest: evidence/experiment-evidence.md
-        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
           dest: .github/instructions/experimental/experiment-designer.instructions.md
-        - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+        - src: ../../.github/plugins/base/instructions/hve-core/copilot-tracking.instructions.md
           dest: .github/instructions/hve-core/copilot-tracking.instructions.md
       skills:
-        - ../../.github/skills/project-planning/experiment-design
-        - ../../.github/skills/rpi/rpi-research
+        - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
+        - ../../.github/plugins/base/skills/rpi/rpi-research
     tags:
       category: agent-behavior
       scenario: experiment-rpi-research-execution
@@ -527,16 +527,16 @@ stimuli:
       execution or hypothesis validation has occurred. Do not rerun Research.
     agent_environment:
       files:
-        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/experiment-context.md
           dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/context.md
         - src: fixtures/rpi-depth/experiment-convergence-research.md
           dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/research/2026-09-21/synthetic-batching-recommendation-research.md
-        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
           dest: .github/instructions/experimental/experiment-designer.instructions.md
       skills:
-        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
     tags:
       category: agent-behavior
       scenario: experiment-rpi-research-reconciliation
@@ -559,15 +559,15 @@ stimuli:
       for synthetic date `2026-09-21` and begin with one open-ended question.
     agent_environment:
       files:
-        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/experiment-mve-plan.md
           dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/hypotheses.md
-        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
           dest: .github/instructions/experimental/experiment-designer.instructions.md
       skills:
-        - ../../.github/skills/project-planning/experiment-design
-        - ../../.github/skills/rpi/rpi-challenger
+        - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
+        - ../../.github/plugins/base/skills/rpi/rpi-challenger
     tags:
       category: agent-behavior
       scenario: experiment-rpi-challenge-execution
@@ -597,19 +597,19 @@ stimuli:
       `outcome.md`, or decide whether `H1` is validated.
     agent_environment:
       files:
-        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/experiment-mve-plan.md
           dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
         - src: fixtures/rpi-depth/experiment-run-data.md
           dest: evidence/experiment-run-data.md
-        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
           dest: .github/instructions/experimental/experiment-designer.instructions.md
-        - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+        - src: ../../.github/plugins/base/instructions/hve-core/copilot-tracking.instructions.md
           dest: .github/instructions/hve-core/copilot-tracking.instructions.md
       skills:
-        - ../../.github/skills/project-planning/experiment-design
-        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
+        - ../../.github/plugins/base/skills/rpi/rpi-plan
     tags:
       category: agent-behavior
       scenario: experiment-rpi-execution-plan
@@ -632,7 +632,7 @@ stimuli:
       write results or Changes, perform Review, or write `outcome.md`.
     agent_environment:
       files:
-        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/experiment-mve-plan.md
           dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
@@ -640,14 +640,14 @@ stimuli:
           dest: evidence/experiment-run-data.md
         - src: fixtures/rpi-depth/experiment-execution-plan-draft.md
           dest: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
-        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
           dest: .github/instructions/experimental/experiment-designer.instructions.md
-        - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+        - src: ../../.github/plugins/base/instructions/hve-core/copilot-tracking.instructions.md
           dest: .github/instructions/hve-core/copilot-tracking.instructions.md
       skills:
-        - ../../.github/skills/project-planning/experiment-design
-        - ../../.github/skills/rpi/rpi-plan
-        - ../../.github/skills/rpi/rpi-plan-critique
+        - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
+        - ../../.github/plugins/base/skills/rpi/rpi-plan
+        - ../../.github/plugins/base/skills/rpi/rpi-plan-critique
     tags:
       category: agent-behavior
       scenario: experiment-rpi-execution-critique
@@ -672,7 +672,7 @@ stimuli:
       Review, write `outcome.md`, or decide whether `H1` is validated.
     agent_environment:
       files:
-        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/experiment-mve-plan.md
           dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
@@ -682,14 +682,14 @@ stimuli:
           dest: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
         - src: fixtures/rpi-depth/experiment-execution-plan-critique.md
           dest: .copilot-tracking/reviews/plans/2026-09-21/synthetic-batching-execution-plan-critique.md
-        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
           dest: .github/instructions/experimental/experiment-designer.instructions.md
-        - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+        - src: ../../.github/plugins/base/instructions/hve-core/copilot-tracking.instructions.md
           dest: .github/instructions/hve-core/copilot-tracking.instructions.md
       skills:
-        - ../../.github/skills/project-planning/experiment-design
-        - ../../.github/skills/rpi/rpi-plan
-        - ../../.github/skills/rpi/rpi-implement
+        - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
+        - ../../.github/plugins/base/skills/rpi/rpi-plan
+        - ../../.github/plugins/base/skills/rpi/rpi-implement
     tags:
       category: agent-behavior
       scenario: experiment-rpi-execution-production
@@ -724,7 +724,7 @@ stimuli:
       `H1` is validated.
     agent_environment:
       files:
-        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/experiment-mve-plan.md
           dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
@@ -738,13 +738,13 @@ stimuli:
           dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/results.md
         - src: fixtures/rpi-depth/experiment-run-data.md
           dest: evidence/experiment-run-data.md
-        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
           dest: .github/instructions/experimental/experiment-designer.instructions.md
-        - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+        - src: ../../.github/plugins/base/instructions/hve-core/copilot-tracking.instructions.md
           dest: .github/instructions/hve-core/copilot-tracking.instructions.md
       skills:
-        - ../../.github/skills/project-planning/experiment-design
-        - ../../.github/skills/rpi/rpi-review
+        - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
+        - ../../.github/plugins/base/skills/rpi/rpi-review
     tags:
       category: agent-behavior
       scenario: experiment-rpi-execution-review
@@ -771,7 +771,7 @@ stimuli:
       downstream decision.
     agent_environment:
       files:
-        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/experiment-mve-plan.md
           dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
@@ -783,10 +783,10 @@ stimuli:
           dest: .copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md
         - src: fixtures/rpi-depth/experiment-run-data.md
           dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/results.md
-        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
           dest: .github/instructions/experimental/experiment-designer.instructions.md
       skills:
-        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
     tags:
       category: agent-behavior
       scenario: experiment-rpi-outcome-execution

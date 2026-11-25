@@ -3,7 +3,7 @@ title: RAI Planner
 description: "Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                          |
-|-------------|--------------------------------------------------------------------------------|
-| Kind        | agent                                                                          |
-| Source      | `.github/plugins/sdlc-responsible-ai/agents/rai-planning/rai-planner.agent.md` |
-| Invocation  | Selected from the chat agent picker as `RAI Planner`                           |
-| Interactive | Yes                                                                            |
+| Field       | Value                                                                    |
+|-------------|--------------------------------------------------------------------------|
+| Kind        | agent                                                                    |
+| Source      | `.github/plugins/sdlc-security/agents/rai-planning/rai-planner.agent.md` |
+| Invocation  | Selected from the chat agent picker as `RAI Planner`                     |
+| Interactive | Yes                                                                      |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

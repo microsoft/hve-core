@@ -51,7 +51,10 @@ def create_parser() -> argparse.ArgumentParser:
         "--skills-root",
         type=Path,
         default=skills_root,
-        help="Directory containing per-skill SECURITY.md files (default: packaged skills)",
+        help=(
+            "Directory containing per-skill SECURITY.md files "
+            "(default: packaged skills)"
+        ),
     )
     return parser
 

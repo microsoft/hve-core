@@ -1,0 +1,49 @@
+{
+  "name": "hve-sdlc",
+  "description": "Language coding standards, documentation authoring, root cause analysis, and Vally conformance testing. Pair with hve-base for RPI workflows and code review.",
+  "version": "3.2.2",
+  "author": {
+    "name": "Microsoft",
+    "url": "https://www.microsoft.com"
+  },
+  "homepage": "https://github.com/microsoft/hve-core",
+  "repository": "https://github.com/microsoft/hve-core",
+  "license": "MIT",
+  "keywords": [
+    "hve",
+    "sdlc",
+    "coding-standards",
+    "documentation",
+    "root-cause-analysis",
+    "vally"
+  ],
+  "agents": [
+    "agents/hve-core/documentation.agent.md",
+    "agents/hve-core/subagents/vally-test-author.agent.md"
+  ],
+  "rules": [
+    "instructions/coding-standards/bash/bash.instructions.md",
+    "instructions/coding-standards/bicep/bicep.instructions.md",
+    "instructions/coding-standards/csharp/csharp-tests.instructions.md",
+    "instructions/coding-standards/csharp/csharp.instructions.md",
+    "instructions/coding-standards/powershell/pester.instructions.md",
+    "instructions/coding-standards/powershell/powershell.instructions.md",
+    "instructions/coding-standards/python-script.instructions.md",
+    "instructions/coding-standards/python-tests.instructions.md",
+    "instructions/coding-standards/rust/rust-tests.instructions.md",
+    "instructions/coding-standards/rust/rust.instructions.md",
+    "instructions/coding-standards/terraform/terraform.instructions.md",
+    "instructions/coding-standards/typescript/typescript-doc-comments.instructions.md",
+    "instructions/coding-standards/uv-projects.instructions.md",
+    "instructions/hve-core/markdown.instructions.md",
+    "instructions/hve-core/writing-style.instructions.md"
+  ],
+  "skills": [
+    "skills/coding-standards/python-foundational",
+    "skills/hve-core/documentation",
+    "skills/hve-core/vally-tests",
+    "skills/root-cause-analysis/causal-evidence-likelihood",
+    "skills/root-cause-analysis/root-cause-analysis",
+    "skills/root-cause-analysis/statistical-hypothesis-testing"
+  ]
+}

@@ -67,12 +67,17 @@ param(
         '.github/prompts/**/*.md',
         '.github/instructions/**/*.md',
         '.github/skills/**/*.md',
+        '.github/plugins/*/agents/**/*.md',
+        '.github/plugins/*/prompts/**/*.md',
+        '.github/plugins/*/instructions/**/*.md',
+        '.github/plugins/*/skills/**/*.md',
         'docs/**/*.md'
     ),
 
     [Parameter(Mandatory = $false)]
     [string[]]$ExcludePath = @(
-        '.github/skills/hve-core/vally-tests/references/'
+        '.github/skills/hve-core/vally-tests/references/',
+        '.github/plugins/sdlc/skills/hve-core/vally-tests/references/'
     ),
 
     [Parameter(Mandatory = $false)]
@@ -153,6 +158,7 @@ function Get-CorpusManifest {
 
     $items = [System.Collections.Generic.List[hashtable]]::new()
     $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $resolvedRoot = (Resolve-Path -LiteralPath $RepoRoot).Path
 
     foreach ($glob in $CorpusGlob) {
         if ([string]::IsNullOrWhiteSpace($glob)) { continue }
@@ -163,45 +169,53 @@ function Get-CorpusManifest {
         $pattern = if ($parts.Count -eq 2) { $parts[1].TrimStart('/') } else { '' }
         if ([string]::IsNullOrEmpty($pattern)) { $pattern = '*' }
 
-        $baseFull = if ([string]::IsNullOrEmpty($base)) {
-            $RepoRoot
+        $baseCandidates = [System.Collections.Generic.List[string]]::new()
+        if ([string]::IsNullOrEmpty($base)) {
+            $baseCandidates.Add($resolvedRoot)
         }
         elseif ([System.IO.Path]::IsPathRooted($base)) {
-            $base
+            $baseCandidates.Add($base)
+        }
+        elseif ($base.Contains('*')) {
+            foreach ($dir in @(Get-Item -Path (Join-Path -Path $resolvedRoot -ChildPath $base) -ErrorAction SilentlyContinue | Where-Object { $_.PSIsContainer })) {
+                $baseCandidates.Add($dir.FullName)
+            }
         }
         else {
-            Join-Path -Path $RepoRoot -ChildPath $base
+            $baseCandidates.Add((Join-Path -Path $resolvedRoot -ChildPath $base))
         }
 
-        if (-not (Test-Path -LiteralPath $baseFull -PathType Container)) { continue }
+        foreach ($baseFull in $baseCandidates) {
+            if (-not (Test-Path -LiteralPath $baseFull -PathType Container)) { continue }
 
-        $found = Get-ChildItem -LiteralPath $baseFull -Recurse -File -Filter $pattern -ErrorAction SilentlyContinue
-        foreach ($file in $found) {
-            if (-not $seen.Add($file.FullName)) { continue }
+            $found = Get-ChildItem -LiteralPath $baseFull -Recurse -File -Filter $pattern -ErrorAction SilentlyContinue
+            foreach ($file in $found) {
+                if (-not $seen.Add($file.FullName)) { continue }
 
-            $rel = ($file.FullName.Substring($RepoRoot.Length)).TrimStart('\', '/').Replace('\', '/')
+                $rel = ([System.IO.Path]::GetRelativePath($resolvedRoot, $file.FullName)).TrimStart('\', '/').Replace('\', '/')
 
-            # Vendored dependencies are never part of the authored corpus.
-            if ($rel -match '(^|/)node_modules/') { continue }
+                # Vendored dependencies are never part of the authored corpus.
+                if ($rel -match '(^|/)node_modules/') { continue }
 
-            $skip = $false
-            foreach ($excluded in $normalizedExcludes) {
-                if ($excluded.EndsWith('/')) {
-                    if ($rel.StartsWith($excluded, [System.StringComparison]::OrdinalIgnoreCase)) { $skip = $true; break }
+                $skip = $false
+                foreach ($excluded in $normalizedExcludes) {
+                    if ($excluded.EndsWith('/')) {
+                        if ($rel.StartsWith($excluded, [System.StringComparison]::OrdinalIgnoreCase)) { $skip = $true; break }
+                    }
+                    elseif ([string]::Equals($rel, $excluded, [System.StringComparison]::OrdinalIgnoreCase)) {
+                        $skip = $true; break
+                    }
                 }
-                elseif ([string]::Equals($rel, $excluded, [System.StringComparison]::OrdinalIgnoreCase)) {
-                    $skip = $true; break
-                }
+                if ($skip) { continue }
+
+                $content = Get-Content -LiteralPath $file.FullName -Raw -ErrorAction SilentlyContinue
+                if ([string]::IsNullOrWhiteSpace($content)) { continue }
+
+                $body = Remove-MarkdownFrontmatter -Content $content
+                if ([string]::IsNullOrWhiteSpace($body)) { continue }
+
+                $items.Add(@{ spec = $rel; stimulus = 'body'; text = $body })
             }
-            if ($skip) { continue }
-
-            $content = Get-Content -LiteralPath $file.FullName -Raw -ErrorAction SilentlyContinue
-            if ([string]::IsNullOrWhiteSpace($content)) { continue }
-
-            $body = Remove-MarkdownFrontmatter -Content $content
-            if ([string]::IsNullOrWhiteSpace($body)) { continue }
-
-            $items.Add(@{ spec = $rel; stimulus = 'body'; text = $body })
         }
     }
 

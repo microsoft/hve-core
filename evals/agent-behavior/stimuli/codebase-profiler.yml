@@ -33,7 +33,7 @@ stimuli:
       details not supplied as unknown. Do not inspect other files or run Git.
     agent_environment:
       files:
-        - src: ../../.github/agents/security/subagents/codebase-profiler.agent.md
+        - src: ../../.github/plugins/sdlc-security/agents/security/subagents/codebase-profiler.agent.md
           dest: policy/codebase-profiler.agent.md
     tags:
       category: agent-behavior

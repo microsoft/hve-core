@@ -1,6 +1,6 @@
 {
   "name": "hve-sdlc-git",
-  "description": "Set up Git, commit, merge, prepare GitHub pull requests, and review code. Pair with hve-sdlc-security for a specialist security assessment.",
+  "description": "Set up Git, commit, merge, prepare GitHub pull requests, and manage GitHub backlog operations. Pair with hve-base for code review and RPI workflows.",
   "version": "3.2.2",
   "author": {
     "name": "Microsoft",
@@ -12,24 +12,22 @@
   "keywords": [
     "hve",
     "git",
+    "github",
     "pull-requests",
-    "code-review"
+    "backlog"
   ],
   "agents": [
-    "agents/coding-standards/code-review.agent.md"
+    "agents/project-planning/subagents/github-backlog-executor.agent.md"
   ],
   "rules": [
-    "instructions/git/code-review-telemetry.instructions.md"
+    "instructions/project-planning/github-backlog-grooming.instructions.md"
   ],
   "skills": [
-    "skills/coding-standards/code-review",
+    "skills/git/github-backlog",
     "skills/hve-core/git-commit",
     "skills/hve-core/git-merge",
     "skills/hve-core/git-setup",
     "skills/hve-core/pull-request",
     "skills/shared/pr-reference"
-  ],
-  "extensions": [
-    "extensions/hve-core"
   ]
 }

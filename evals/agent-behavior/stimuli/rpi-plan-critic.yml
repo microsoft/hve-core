@@ -11,7 +11,7 @@ stimuli:
       only the chosen option.
     agent_environment:
       files:
-        - src: "../../.github/agents/hve-core/subagents/rpi-plan-critic.agent.md"
+        - src: "../../.github/plugins/base/agents/hve-core/subagents/rpi-plan-critic.agent.md"
           dest: "policy/rpi-plan-critic.agent.md"
     tags:
       category: agent-behavior

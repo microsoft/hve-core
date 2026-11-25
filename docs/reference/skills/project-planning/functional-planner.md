@@ -3,7 +3,7 @@ title: functional-planner
 description: "Read-only PRD-to-work-item hierarchy planning. Use to turn a PRD into a validated Azure DevOps, GitHub, or Jira handoff."
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-09-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                |
 |-------------|--------------------------------------------------------------------------------------|
 | Kind        | skill                                                                                |
-| Source      | `.github/skills/project-planning/functional-planner`                                 |
+| Source      | `.github/plugins/project-planning/skills/project-planning/functional-planner`        |
 | Invocation  | Invoked directly as `/functional-planner`, or loaded on demand by referencing agents |
 | Interactive | No                                                                                   |
 <!-- END AUTO-GENERATED: metadata -->

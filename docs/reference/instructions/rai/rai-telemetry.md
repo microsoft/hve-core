@@ -3,7 +3,7 @@ title: Rai/Rai Telemetry
 description: Model-output telemetry evidence in RAI impact assessments
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                                |
-|-------------|--------------------------------------------------------------------------------------|
-| Kind        | instruction                                                                          |
-| Source      | `.github/plugins/sdlc-responsible-ai/instructions/rai/rai-telemetry.instructions.md` |
-| Invocation  | Applied automatically to `**/.copilot-tracking/rai-plans/**`                         |
-| Interactive | No                                                                                   |
+| Field       | Value                                                                          |
+|-------------|--------------------------------------------------------------------------------|
+| Kind        | instruction                                                                    |
+| Source      | `.github/plugins/sdlc-security/instructions/rai/rai-telemetry.instructions.md` |
+| Invocation  | Applied automatically to `**/.copilot-tracking/rai-plans/**`                   |
+| Interactive | No                                                                             |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

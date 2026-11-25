@@ -1,9 +1,9 @@
 ---
 title: Azure DevOps
 description: Work with Azure Boards items, Azure Repos pull requests, and Azure Pipelines builds.
-sidebar_position: 5
+sidebar_position: 6
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: how-to
 keywords:
   - Copilot plugin

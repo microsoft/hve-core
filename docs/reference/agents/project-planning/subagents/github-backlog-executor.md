@@ -3,7 +3,7 @@ title: GitHub Backlog Executor
 description: "Applies a dispatched GitHub backlog operation set in one confirmed repository. Creates, updates, comments on, and closes issues and sub-issues."
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-11-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                        |
-|-------------|------------------------------------------------------------------------------|
-| Kind        | agent                                                                        |
-| Source      | `.github/agents/project-planning/subagents/github-backlog-executor.agent.md` |
-| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)     |
-| Interactive | No                                                                           |
+| Field       | Value                                                                                         |
+|-------------|-----------------------------------------------------------------------------------------------|
+| Kind        | agent                                                                                         |
+| Source      | `.github/plugins/sdlc-git/agents/project-planning/subagents/github-backlog-executor.agent.md` |
+| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)                      |
+| Interactive | No                                                                                            |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

@@ -132,8 +132,8 @@ function Find-ReferenceMatches {
     param([Parameter(Mandatory)] [string]$Body)
 
     $hits = New-Object System.Collections.Generic.List[string]
-    # Markdown links into .github/{instructions,skills,agents}/
-    foreach ($m in [regex]::Matches($Body, '\]\(([^)]*\.github/(?:instructions|skills|agents)/[^)]+)\)')) {
+    # Markdown links into .github/{instructions,skills,agents}/ (including .github/plugins/<topic>/)
+    foreach ($m in [regex]::Matches($Body, '\]\(([^)]*\.github/(?:plugins/[^/]+/)?(?:instructions|skills|agents)/[^)]+)\)')) {
         $hits.Add($m.Groups[1].Value)
     }
     # Markdown links targeting any *.agent.md, *.instructions.md, or SKILL.md (covers `../../skills/...` relative links).
@@ -141,12 +141,12 @@ function Find-ReferenceMatches {
         $hits.Add($m.Groups[1].Value)
     }
     # Bare path mentions of .github/{instructions,skills}/...md or .github/agents/...agent.md
-    foreach ($m in [regex]::Matches($Body, '\.github/(?:instructions|skills|agents)/[A-Za-z0-9_./*-]+\.(?:md|agent\.md|instructions\.md)')) {
+    foreach ($m in [regex]::Matches($Body, '\.github/(?:plugins/[^/]+/)?(?:instructions|skills|agents)/[A-Za-z0-9_./*-]+\.(?:md|agent\.md|instructions\.md)')) {
         $hits.Add($m.Value)
     }
     # Bare mentions of skill subpaths (e.g. `.github/skills/jira/jira/scripts/jira.py`) → resolve to SKILL.md anchor.
-    foreach ($m in [regex]::Matches($Body, '\.github/skills/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)/')) {
-        $hits.Add(".github/skills/$($m.Groups[1].Value)/$($m.Groups[2].Value)/SKILL.md")
+    foreach ($m in [regex]::Matches($Body, '\.github/(?:plugins/[^/]+/)?skills/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)/')) {
+        $hits.Add("$($m.Value)SKILL.md")
     }
     return $hits.ToArray()
 }
@@ -217,11 +217,14 @@ function Get-SkillNameIndex {
     param([Parameter(Mandatory)] [string]$RepoRoot)
 
     $index = @{}
-    $skillsRoot = Join-Path $RepoRoot '.github/skills'
-    if (-not (Test-Path -LiteralPath $skillsRoot)) { return $index }
-    foreach ($skillFile in Get-ChildItem -Path $skillsRoot -Recurse -Filter 'SKILL.md' -File) {
-        $name = $skillFile.Directory.Name
-        if (-not $index.ContainsKey($name)) { $index[$name] = ConvertTo-RelativePath -RepoRoot $RepoRoot -Path $skillFile.FullName }
+    $skillsRoots = @(Get-Item -Path (Join-Path $RepoRoot '.github/skills'), (Join-Path $RepoRoot '.github/plugins/*/skills') -ErrorAction SilentlyContinue |
+        Where-Object { $_.PSIsContainer })
+    if ($skillsRoots.Count -eq 0) { return $index }
+    foreach ($skillsRoot in $skillsRoots) {
+        foreach ($skillFile in Get-ChildItem -Path $skillsRoot.FullName -Recurse -Filter 'SKILL.md' -File) {
+            $name = $skillFile.Directory.Name
+            if (-not $index.ContainsKey($name)) { $index[$name] = ConvertTo-RelativePath -RepoRoot $RepoRoot -Path $skillFile.FullName }
+        }
     }
     return $index
 }
@@ -409,12 +412,13 @@ if (-not $OutputPath) {
     $OutputPath = Join-Path $resolvedRoot 'logs/agent-dependency-map.json'
 }
 
-$agentsRoot = Join-Path $resolvedRoot '.github/agents'
-if (-not (Test-Path -LiteralPath $agentsRoot)) {
-    throw "Agents directory not found at '$agentsRoot'."
+$agentsRoots = @(Get-Item -Path (Join-Path $resolvedRoot '.github/agents'), (Join-Path $resolvedRoot '.github/plugins/*/agents') -ErrorAction SilentlyContinue |
+    Where-Object { $_.PSIsContainer })
+if ($agentsRoots.Count -eq 0) {
+    throw "Agents directory not found at '$(Join-Path $resolvedRoot '.github/agents')'."
 }
 
-$agentFiles = @(Get-ChildItem -Path $agentsRoot -Recurse -Filter '*.agent.md' -File)
+$agentFiles = @($agentsRoots | ForEach-Object { Get-ChildItem -Path $_.FullName -Recurse -Filter '*.agent.md' -File })
 $skillIndex = Get-SkillNameIndex -RepoRoot $resolvedRoot
 $agentNameIndex = Get-AgentNameIndex -RepoRoot $resolvedRoot -AgentFiles $agentFiles
 $subagentPaths = Get-SubagentPathSet -RepoRoot $resolvedRoot -AgentFiles $agentFiles

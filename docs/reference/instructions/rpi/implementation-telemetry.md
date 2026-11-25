@@ -3,7 +3,7 @@ title: Rpi/Implementation Telemetry
 description: Check new telemetry emitters before completing an implementation step
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                                   |
-|-------------|-----------------------------------------------------------------------------------------|
-| Kind        | instruction                                                                             |
-| Source      | `.github/plugins/rpi-builder/instructions/rpi/implementation-telemetry.instructions.md` |
-| Invocation  | Applied automatically to `**/.copilot-tracking/changes/**`                              |
-| Interactive | No                                                                                      |
+| Field       | Value                                                                            |
+|-------------|----------------------------------------------------------------------------------|
+| Kind        | instruction                                                                      |
+| Source      | `.github/plugins/base/instructions/rpi/implementation-telemetry.instructions.md` |
+| Invocation  | Applied automatically to `**/.copilot-tracking/changes/**`                       |
+| Interactive | No                                                                               |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

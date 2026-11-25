@@ -3,7 +3,7 @@ title: root-cause-analysis
 description: "Investigate incidents, software defects, and data or process failures by forming falsifiable hypotheses, executing tests against available evidence, and iterating to a verified causal explanation or an explicit evidence blocker. Use when performing root cause analysis, incident investigation, or postmortem analysis, with cost and model choice confirmed before a full investigation."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-04
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -14,7 +14,7 @@ keywords:
 | Field       | Value                                                                                 |
 |-------------|---------------------------------------------------------------------------------------|
 | Kind        | skill                                                                                 |
-| Source      | `.github/skills/root-cause-analysis/root-cause-analysis`                              |
+| Source      | `.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis`                 |
 | Invocation  | Invoked directly as `/root-cause-analysis`, or loaded on demand by referencing agents |
 | Interactive | No                                                                                    |
 <!-- END AUTO-GENERATED: metadata -->

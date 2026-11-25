@@ -352,7 +352,7 @@ jobs:
       # tests its schema baseline against the canvas indexer, so it runs on
       # changes in its directory or under .github/extensions/. Other projects
       # receive '' and keep node-tests.yml's JS-family default.
-      changed-paths-pattern: ${{ (startsWith(matrix.directory, 'slides/') || matrix.directory == '.github/skills/experimental/hve-slides') && format('^{0}/|^\.github/skills/experimental/hve-slides/', matrix.directory) || startsWith(matrix.directory, '.github/extensions/') && '^\.github/extensions/' || matrix.directory == '.github/skills/session-log-canvas-update' && '^\.github/(skills/session-log-canvas-update|extensions)/' || '' }}
+      changed-paths-pattern: ${{ (startsWith(matrix.directory, 'slides/') || matrix.directory == '.github/skills/experimental/hve-slides') && format('^{0}/|^\.github/skills/experimental/hve-slides/', matrix.directory) || (startsWith(matrix.directory, '.github/extensions/') || contains(matrix.directory, '/extensions/')) && '^\.github/(extensions|plugins/[^/]+/extensions)/' || matrix.directory == '.github/skills/session-log-canvas-update' && '^\.github/(skills/session-log-canvas-update|extensions|plugins/[^/]+/extensions)/' || '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -397,7 +397,7 @@ jobs:
       - name: Install accessibility skill Node dependencies
         shell: bash
         env:
-          SEARCH_ROOT: .github/skills/accessibility/accessibility
+          SEARCH_ROOT: .github/plugins/sdlc-security/skills/accessibility/accessibility
         run: ./scripts/ci/install-skill-node-deps.sh
 
       - name: Verify system Chrome

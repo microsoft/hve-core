@@ -10,12 +10,13 @@
     + 5 bucket-name cases via `-ForEach $script:bucketNames`).
 #>
 
+Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force
 $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 $script:files = @(
-    (Join-Path $script:repoRoot '.github/skills/project-planning/security-planning/references/stride-model.md'),
-    (Join-Path $script:repoRoot '.github/agents/security/security-planner.agent.md')
+    (Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/skills/project-planning/security-planning/references/stride-model.md'),
+    (Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/agents/security/security-planner.agent.md')
 )
-$script:gridFile = Join-Path $script:repoRoot '.github/skills/project-planning/security-planning/references/stride-model.md'
+$script:gridFile = Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/skills/project-planning/security-planning/references/stride-model.md'
 $script:bucketNames = @('Critical','High','Medium','Low','Informational')
 
 Describe 'Risk multiplication notation is forbidden' {
@@ -29,7 +30,8 @@ Describe 'Risk multiplication notation is forbidden' {
 
 Describe 'Named-bucket risk grid is present' {
     BeforeAll {
-        $script:gridFile = Join-Path (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path '.github/skills/project-planning/security-planning/references/stride-model.md'
+        Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force
+        $script:gridFile = Resolve-CanonicalArtifactPath -RepoRoot (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path -Path '.github/skills/project-planning/security-planning/references/stride-model.md'
     }
 
     It 'stride-model.md lists every named bucket: <_>' -ForEach $script:bucketNames {

@@ -13,7 +13,7 @@ Return an evidence-backed advisory report for maintainers without changing
 candidate issues or making unsupported final dispositions.
 
 Follow the shared policy in
-[github-backlog-grooming.instructions.md](../instructions/project-planning/github-backlog-grooming.instructions.md).
+[github-backlog-grooming.instructions.md](../plugins/sdlc-git/instructions/project-planning/github-backlog-grooming.instructions.md).
 Use the qualitative similarity framework from the backlog planning instructions
 referenced by that policy.
 

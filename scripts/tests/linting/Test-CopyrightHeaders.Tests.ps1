@@ -19,6 +19,7 @@ BeforeAll {
     $script:CIHelpersPath = Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1'
 
     # Import modules for mocking
+    Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force
     Import-Module $script:CIHelpersPath -Force
 
     # Create test fixtures directory
@@ -110,10 +111,10 @@ Describe 'Test-CopyrightHeaders Guidance Alignment' -Tag 'Unit' {
 
         $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
         $script:GuidanceFiles = @(
-            (Join-Path $repoRoot '.github/instructions/coding-standards/bash/bash.instructions.md')
-            (Join-Path $repoRoot '.github/instructions/coding-standards/powershell/powershell.instructions.md')
-            (Join-Path $repoRoot '.github/instructions/coding-standards/powershell/pester.instructions.md')
-            (Join-Path $repoRoot '.github/instructions/coding-standards/python-script.instructions.md')
+            (Resolve-CanonicalArtifactPath -RepoRoot $repoRoot -Path '.github/instructions/coding-standards/bash/bash.instructions.md')
+            (Resolve-CanonicalArtifactPath -RepoRoot $repoRoot -Path '.github/instructions/coding-standards/powershell/powershell.instructions.md')
+            (Resolve-CanonicalArtifactPath -RepoRoot $repoRoot -Path '.github/instructions/coding-standards/powershell/pester.instructions.md')
+            (Resolve-CanonicalArtifactPath -RepoRoot $repoRoot -Path '.github/instructions/coding-standards/python-script.instructions.md')
             (Join-Path $repoRoot 'docs/contributing/copyright-headers.md')
         )
         $script:CanonicalHeaderLines = Get-CanonicalHeaderLines -CommentPrefix '#'

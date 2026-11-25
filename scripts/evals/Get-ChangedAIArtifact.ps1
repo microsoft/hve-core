@@ -181,18 +181,19 @@ function Resolve-EquivalenceSubjectPath {
         [switch]$AllowMissing
     )
 
-    $AgentsRoot = Join-Path $Root '.github/agents'
+    $AgentsRoots = @(Get-Item -Path (Join-Path $Root '.github/agents'), (Join-Path $Root '.github/plugins/*/agents') -ErrorAction SilentlyContinue |
+        Where-Object { $_.PSIsContainer })
     $Candidates = @(
-        Get-ChildItem -LiteralPath $AgentsRoot -Recurse -File -Filter "$Slug.agent.md" -ErrorAction SilentlyContinue |
+        $AgentsRoots | ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -Recurse -File -Filter "$Slug.agent.md" -ErrorAction SilentlyContinue } |
             ForEach-Object { $_.FullName.Substring($Root.Length).TrimStart('\', '/').Replace('\', '/') } |
-            Sort-Object
+            Sort-Object -Unique
     )
     if ($Candidates.Count -gt 1) {
         throw "Equivalence subject '$Slug' matches $($Candidates.Count) agent files ($($Candidates -join ', ')); expected exactly one."
     }
     if ($Candidates.Count -eq 0) {
         if ($AllowMissing) { return $null }
-        throw "Equivalence subject '$Slug' matches no agent file under .github/agents; expected exactly one."
+        throw "Equivalence subject '$Slug' matches no agent file under .github/agents or .github/plugins/*/agents; expected exactly one."
     }
     return $Candidates[0]
 }
@@ -229,7 +230,7 @@ function Export-ComparisonBaseSurfaceTree {
         [string]$Destination
     )
 
-    $Listing = Invoke-EvalGit -RepoRoot $RepoRoot -Arguments @('ls-tree', '-z', '--name-only', $Commit, '--', '.github/agents', '.github/skills')
+    $Listing = Invoke-EvalGit -RepoRoot $RepoRoot -Arguments @('ls-tree', '-z', '--name-only', $Commit, '--', '.github/agents', '.github/skills', '.github/plugins')
     $Entries = @($Listing -split "`0" | Where-Object { -not [string]::IsNullOrEmpty($_) })
     if ($Entries.Count -eq 0) { return }
 
@@ -303,7 +304,7 @@ function Get-EquivalenceSurfaceAgent {
         if ($Record.previousPath) { $BasePaths.Add(([string]$Record.previousPath -replace '\\', '/').TrimStart('/')) }
     }
     # The surface holds only skill directories, so base paths elsewhere can never match.
-    $BaseSkillPaths = @($BasePaths | Where-Object { $_ -like '.github/skills/*' })
+    $BaseSkillPaths = @($BasePaths | Where-Object { $_ -like '.github/skills/*' -or $_ -like '.github/plugins/*/skills/*' })
 
     $TestSurface = {
         param([string[]]$Path, [string[]]$SkillDir)

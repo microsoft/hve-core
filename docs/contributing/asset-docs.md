@@ -3,7 +3,7 @@ title: Asset reference documentation
 description: How contributors generate, author, and validate reference pages for agents, instructions, and skills
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: how-to
 keywords:
   - asset documentation
@@ -38,7 +38,7 @@ HVE Core no longer accepts prompt files, so no prompt pages exist. A reusable sl
 command is a user-invocable skill and gets a skill page.
 
 Nested paths are preserved. For example,
-`.github/plugins/rpi-builder/agents/hve-core/subagents/rpi-researcher.agent.md` maps to
+`.github/plugins/base/agents/hve-core/subagents/rpi-researcher.agent.md` maps to
 `docs/reference/agents/hve-core/subagents/rpi-researcher.md`.
 
 ## Know which regions you own

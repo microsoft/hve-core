@@ -3,7 +3,7 @@ title: Installing HVE Core
 description: Install HVE Core for the Copilot agent harness as a plugin, a repository default, a repository copy, the VS Code extension, or a clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: how-to
 keywords: [installation, setup, github copilot, copilot plugin, agent plugins, marketplace, repository copy]
 estimated_reading_time: 7
@@ -116,9 +116,9 @@ For a copy inside your project's checkout, such as a submodule or a git-ignored 
 
 ```json
 {
-  "agentDirectories": ["lib/hve-core/.github/plugins/rpi-builder/agents"],
-  "skillDirectories": ["lib/hve-core/.github/plugins/rpi-builder/skills"],
-  "instructionDirectories": ["lib/hve-core/.github/plugins/rpi-builder/instructions"]
+  "agentDirectories": ["lib/hve-core/.github/plugins/base/agents"],
+  "skillDirectories": ["lib/hve-core/.github/plugins/base/skills"],
+  "instructionDirectories": ["lib/hve-core/.github/plugins/base/instructions"]
 }
 ```
 
@@ -179,7 +179,7 @@ For VS Code, the checked-in workspace settings list the topic folders by compone
 
 ## Distribution Identity and Channels
 
-The marketplace offers All and seven focused plugins. The single `ise-hve-essentials.hve-core` extension takes its supported components from All. [HVE Core Identity and Channels](packages) explains the plugin registration and the extension's Stable and PreRelease channels.
+The marketplace offers All and six focused plugins. The single `ise-hve-essentials.hve-core` extension takes its supported components from All. [HVE Core Identity and Channels](packages) explains the plugin registration and the extension's Stable and PreRelease channels.
 
 ## Post-Installation: Update Your .gitignore
 

@@ -595,6 +595,68 @@ function Resolve-StrictSafeMaturity {
     return $fallback
 }
 
+function Resolve-CanonicalArtifactPath {
+    <#
+    .SYNOPSIS
+    Resolves a .github artifact path across both .github/ and .github/plugins/*/.
+
+    .DESCRIPTION
+    Accepts a repository-relative path under .github/ (including .github/plugins/<topic>/...)
+    and returns the existing absolute path in either .github/<subpath> or
+    .github/plugins/<topic>/<subpath>. Falls back to the direct Join-Path when
+    neither exists so callers receive a deterministic path for error reporting.
+
+    .PARAMETER RepoRoot
+    Absolute repository root.
+
+    .PARAMETER Path
+    Repository-relative path under .github/.
+
+    .OUTPUTS
+    [string] Resolved absolute path.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path
+    )
+
+    $normalized = ($Path -replace '\\', '/') -replace '^\./', ''
+    $direct = Join-Path $RepoRoot $normalized
+    if (Test-Path -LiteralPath $direct) {
+        return $direct
+    }
+
+    $canonical = $normalized -replace '^\.github/plugins/[^/]+/', '.github/'
+    if ($canonical -ne $normalized) {
+        $canonicalFull = Join-Path $RepoRoot $canonical
+        if (Test-Path -LiteralPath $canonicalFull) {
+            return $canonicalFull
+        }
+    }
+
+    if ($canonical -match '^\.github/(.+)$') {
+        $subpath = $Matches[1]
+        $pluginsDir = Join-Path $RepoRoot '.github/plugins'
+        if (Test-Path -LiteralPath $pluginsDir -PathType Container) {
+            foreach ($pluginDir in (Get-ChildItem -LiteralPath $pluginsDir -Directory | Sort-Object Name)) {
+                $candidate = Join-Path $pluginDir.FullName $subpath
+                if (Test-Path -LiteralPath $candidate) {
+                    return $candidate
+                }
+            }
+        }
+    }
+
+    return $direct
+}
+
 Export-ModuleMember -Function @(
     'Get-ArtifactDescription',
     'Get-ArtifactFiles',
@@ -605,6 +667,7 @@ Export-ModuleMember -Function @(
     'Get-PackageDocArtifactHeadingPattern',
     'Get-YamlFrontmatterList',
     'Resolve-ArtifactMaturity',
+    'Resolve-CanonicalArtifactPath',
     'Resolve-StrictSafeMaturity',
     'Set-ContentIfChanged',
     'Split-PackageDocByMarkers',

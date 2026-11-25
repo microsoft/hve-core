@@ -3,7 +3,7 @@ title: HVE Builder Reviewer
 description: "Reviews one prompt, instruction, agent, subagent, or skill candidate in fresh context against the hve-builder requirements catalog and review rubric, and returns severity-graded findings with the smallest resolving change as suggestions for the calling agent to verify. Use during an hve-builder review pass when isolating the review would help."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                               |
-|-------------|-------------------------------------------------------------------------------------|
-| Kind        | agent                                                                               |
-| Source      | `.github/plugins/rpi-builder/agents/hve-core/subagents/hve-builder-review.agent.md` |
-| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)            |
-| Interactive | No                                                                                  |
+| Field       | Value                                                                        |
+|-------------|------------------------------------------------------------------------------|
+| Kind        | agent                                                                        |
+| Source      | `.github/plugins/base/agents/hve-core/subagents/hve-builder-review.agent.md` |
+| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)     |
+| Interactive | No                                                                           |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

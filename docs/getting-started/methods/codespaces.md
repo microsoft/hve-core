@@ -3,7 +3,7 @@ title: GitHub Codespaces Installation
 description: Set up HVE Core in GitHub Codespaces with committed plugin defaults or a cloned copy
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: how-to
 keywords:
   - codespaces
@@ -144,9 +144,9 @@ Declare the clone's folders in `.github/copilot/settings.json`. If the file has 
 
 ```json
 {
-  "agentDirectories": [".hve-core/.github/plugins/rpi-builder/agents"],
-  "skillDirectories": [".hve-core/.github/plugins/rpi-builder/skills"],
-  "instructionDirectories": [".hve-core/.github/plugins/rpi-builder/instructions"]
+  "agentDirectories": [".hve-core/.github/plugins/base/agents"],
+  "skillDirectories": [".hve-core/.github/plugins/base/skills"],
+  "instructionDirectories": [".hve-core/.github/plugins/base/instructions"]
 }
 ```
 

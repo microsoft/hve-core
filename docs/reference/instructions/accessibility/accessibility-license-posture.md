@@ -3,7 +3,7 @@ title: Accessibility/Accessibility License Posture
 description: Accessibility-specific overlay mapping accessibility standards onto the repository licensing posture
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                                                |
-|-------------|------------------------------------------------------------------------------------------------------|
-| Kind        | instruction                                                                                          |
-| Source      | `.github/instructions/accessibility/accessibility-license-posture.instructions.md`                   |
-| Invocation  | Applied automatically to `**/.github/skills/accessibility/**, **/.copilot-tracking/accessibility/**` |
-| Interactive | No                                                                                                   |
+| Field       | Value                                                                                                    |
+|-------------|----------------------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                              |
+| Source      | `.github/plugins/sdlc-security/instructions/accessibility/accessibility-license-posture.instructions.md` |
+| Invocation  | Applied automatically to `**/skills/accessibility/**, **/.copilot-tracking/accessibility/**`             |
+| Interactive | No                                                                                                       |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

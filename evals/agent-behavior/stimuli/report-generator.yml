@@ -22,10 +22,10 @@ stimuli:
         deployment evidence is absent. Location and fix N/A.
     agent_environment:
       files:
-        - src: ../../.github/agents/security/subagents/report-generator.agent.md
+        - src: ../../.github/plugins/sdlc-security/agents/security/subagents/report-generator.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/security/security-reviewer-formats
+        - ../../.github/plugins/sdlc-security/skills/security/security-reviewer-formats
     tags:
       category: agent-behavior
       advisory: "true"
@@ -94,10 +94,10 @@ stimuli:
         is in scope. Risk description and mitigation N/A.
     agent_environment:
       files:
-        - src: ../../.github/agents/security/subagents/report-generator.agent.md
+        - src: ../../.github/plugins/sdlc-security/agents/security/subagents/report-generator.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/security/security-reviewer-formats
+        - ../../.github/plugins/sdlc-security/skills/security/security-reviewer-formats
     tags:
       category: agent-behavior
       advisory: "true"

@@ -3,7 +3,7 @@ title: Copilot Plugin
 description: Install all HVE Core workflows or select focused plugins from the same Copilot marketplace
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: how-to
 keywords:
   - copilot plugin
@@ -14,7 +14,7 @@ keywords:
 estimated_reading_time: 6
 ---
 
-Use the [plugin selection table](../../plugins/hve-core#choose-a-plugin) to pick All (`hve-core`) or any of seven focused topics. Both VS Code and Copilot CLI use the `microsoft/hve-core` marketplace.
+Use the [plugin selection table](../../plugins/hve-core#choose-a-plugin) to pick All (`hve-core`) or any of six focused topics. Both VS Code and Copilot CLI use the `microsoft/hve-core` marketplace.
 
 ## When to Use This Method
 
@@ -75,7 +75,7 @@ copilot plugin install hve-core@hve-core
 
 VS Code also picks up plugins that Copilot CLI installs, so a CLI install covers both clients.
 
-For just Git, pull requests, and code review, use `copilot plugin install hve-sdlc-git@hve-core` **instead**. Installing a topic does not install its recommended companions. Installing All alongside a topic can make bare skill names ambiguous.
+For just Git, GitHub pull requests, and GitHub backlogs, use `copilot plugin install hve-sdlc-git@hve-core` **instead**. Installing a topic does not install its recommended companions. Installing All alongside a topic can make bare skill names ambiguous.
 
 ## Update an Installed Plugin
 

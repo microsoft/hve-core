@@ -3,7 +3,7 @@ title: Network ISA-95 Planner
 description: ISA-95-aligned network planning for secure edge Kubernetes to Azure connectivity and remediation roadmaps
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-11-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                            |
-|-------------|------------------------------------------------------------------|
-| Kind        | agent                                                            |
-| Source      | `.github/agents/project-planning/network-isa95-planner.agent.md` |
-| Invocation  | Selected from the chat agent picker as `Network ISA-95 Planner`  |
-| Interactive | Yes                                                              |
+| Field       | Value                                                                                     |
+|-------------|-------------------------------------------------------------------------------------------|
+| Kind        | agent                                                                                     |
+| Source      | `.github/plugins/project-planning/agents/project-planning/network-isa95-planner.agent.md` |
+| Invocation  | Selected from the chat agent picker as `Network ISA-95 Planner`                           |
+| Interactive | Yes                                                                                       |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

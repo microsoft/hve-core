@@ -3,7 +3,7 @@ title: Git/Code Review Telemetry
 description: Check telemetry evidence in code-review reports
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                             |
-|-------------|-----------------------------------------------------------------------------------|
-| Kind        | instruction                                                                       |
-| Source      | `.github/plugins/sdlc-git/instructions/git/code-review-telemetry.instructions.md` |
-| Invocation  | Applied automatically to `**/.copilot-tracking/reviews/code-reviews/**`           |
-| Interactive | No                                                                                |
+| Field       | Value                                                                         |
+|-------------|-------------------------------------------------------------------------------|
+| Kind        | instruction                                                                   |
+| Source      | `.github/plugins/base/instructions/git/code-review-telemetry.instructions.md` |
+| Invocation  | Applied automatically to `**/.copilot-tracking/reviews/code-reviews/**`       |
+| Interactive | No                                                                            |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

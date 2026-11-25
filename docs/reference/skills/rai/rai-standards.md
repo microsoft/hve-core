@@ -3,7 +3,7 @@ title: rai-standards
 description: "Consolidated Responsible AI standards reference: NIST AI RMF 1.0, AI STRIDE threat-modeling overlay, EU AI Act risk tiers, and an open-standards catalog with phase mapping"
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                          |
-|-------------|----------------------------------------------------------------|
-| Kind        | skill                                                          |
-| Source      | `.github/plugins/sdlc-responsible-ai/skills/rai/rai-standards` |
-| Invocation  | Loaded on demand by referencing agents                         |
-| Interactive | No                                                             |
+| Field       | Value                                                    |
+|-------------|----------------------------------------------------------|
+| Kind        | skill                                                    |
+| Source      | `.github/plugins/sdlc-security/skills/rai/rai-standards` |
+| Invocation  | Loaded on demand by referencing agents                   |
+| Interactive | No                                                       |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

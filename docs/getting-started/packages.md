@@ -3,7 +3,7 @@ title: HVE Core Identity and Channels
 description: Choose HVE Core All or focused Copilot plugins and understand the single VS Code extension's release channels
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: overview
 keywords:
   - packages
@@ -13,7 +13,7 @@ keywords:
 
 ## Choose Your Scope
 
-The marketplace offers `hve-core` (All) and [seven focused alternatives](../plugins/hve-core#choose-a-plugin). Install All or selected topics. You do not need a common plugin to use a focused one.
+The marketplace offers `hve-core` (All) and [six focused alternatives](../plugins/hve-core#choose-a-plugin). Install All or selected topics. You do not need a common plugin to use a focused one.
 
 Root `plugin.json` lists every distributable component for All and remains the only input to `ise-hve-essentials.hve-core`. Each marketplace entry points to its own manifest. Focused plugins do not produce separate VSIX packages.
 

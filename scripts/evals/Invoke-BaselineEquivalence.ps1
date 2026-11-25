@@ -216,10 +216,11 @@ function Get-AgentModelHint {
         [string]$Agent
     )
 
-    $agentsRoot = Join-Path $RepoRoot '.github/agents'
-    if (-not (Test-Path -LiteralPath $agentsRoot)) { return $null }
+    $agentsRoots = @(Get-Item -Path (Join-Path $RepoRoot '.github/agents'), (Join-Path $RepoRoot '.github/plugins/*/agents') -ErrorAction SilentlyContinue |
+        Where-Object { $_.PSIsContainer })
+    if ($agentsRoots.Count -eq 0) { return $null }
 
-    $candidate = Get-ChildItem -Path $agentsRoot -Recurse -Filter "$Agent.agent.md" -File -ErrorAction SilentlyContinue |
+    $candidate = $agentsRoots | ForEach-Object { Get-ChildItem -Path $_.FullName -Recurse -Filter "$Agent.agent.md" -File -ErrorAction SilentlyContinue } |
         Select-Object -First 1
     if (-not $candidate) { return $null }
 

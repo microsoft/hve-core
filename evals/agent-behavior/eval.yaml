@@ -20,8 +20,8 @@ defaults:
 # so they ascend to the repo root before descending into .github/skills.
 agent_environment:
   skills:
-    - ../../.github/skills/security/owasp-top-10
-    - ../../.github/skills/coding-standards/python-foundational
+    - ../../.github/plugins/sdlc-security/skills/security/owasp-top-10
+    - ../../.github/plugins/sdlc/skills/coding-standards/python-foundational
 
 scoring:
   threshold: 0.7
@@ -52,10 +52,10 @@ stimuli:
     invoke tools beyond reference reads, write files, or claim a runtime pass.
   agent_environment:
     files:
-    - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
       dest: policy/accessibility-framework-assessor.agent.md
     skills:
-    - ../../.github/skills/accessibility/accessibility
+    - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
   tags:
     category: agent-behavior
     advisory: "true"
@@ -93,10 +93,10 @@ stimuli:
     reads, write files, or claim runtime verification.
   agent_environment:
     files:
-    - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
       dest: policy/accessibility-framework-assessor.agent.md
     skills:
-    - ../../.github/skills/accessibility/accessibility
+    - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
   tags:
     category: agent-behavior
     advisory: "true"
@@ -141,7 +141,7 @@ stimuli:
     a scan, emit another caution block or modify files.
   agent_environment:
     files:
-    - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
       dest: policy/accessibility-framework-assessor.agent.md
   tags:
     category: agent-behavior
@@ -165,10 +165,10 @@ stimuli:
     simulated input.
   agent_environment:
     files:
-    - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/accessibility/accessibility
+    - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
   tags:
     category: agent-behavior
     advisory: "true"
@@ -198,10 +198,10 @@ stimuli:
     payload is simulated input.
   agent_environment:
     files:
-    - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/accessibility/accessibility
+    - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
   tags:
     category: agent-behavior
     advisory: "true"
@@ -232,10 +232,10 @@ stimuli:
     each status without making a conformance claim. The evidence is synthetic.
   agent_environment:
     files:
-    - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/accessibility/accessibility
+    - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
   tags:
     category: agent-behavior
     advisory: "true"
@@ -288,10 +288,10 @@ stimuli:
     state and research result are simulated inputs, not native tool failures.
   agent_environment:
     files:
-    - src: ../../.github/agents/accessibility/accessibility-planner.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/accessibility/accessibility-planner.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/accessibility/accessibility
+    - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
   tags:
     category: agent-behavior
     advisory: "true"
@@ -323,10 +323,10 @@ stimuli:
     action. The write result is simulated input, not a native failure.
   agent_environment:
     files:
-    - src: ../../.github/agents/accessibility/accessibility-planner.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/accessibility/accessibility-planner.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/accessibility/accessibility
+    - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
   tags:
     category: agent-behavior
     advisory: "true"
@@ -378,10 +378,10 @@ stimuli:
     disposition and next evidence step. The probe error is simulated input.
   agent_environment:
     files:
-    - src: ../../.github/agents/accessibility/accessibility-reviewer.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/accessibility/accessibility-reviewer.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/accessibility/accessibility
+    - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
   tags:
     category: agent-behavior
     advisory: "true"
@@ -413,10 +413,10 @@ stimuli:
     recorded. These verifier responses are simulated inputs.
   agent_environment:
     files:
-    - src: ../../.github/agents/accessibility/accessibility-reviewer.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/accessibility/accessibility-reviewer.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/accessibility/accessibility
+    - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
   tags:
     category: agent-behavior
     advisory: "true"
@@ -449,10 +449,10 @@ stimuli:
     performing recovery. The generator result is simulated input.
   agent_environment:
     files:
-    - src: ../../.github/agents/accessibility/accessibility-reviewer.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/accessibility/accessibility-reviewer.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/accessibility/accessibility
+    - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
   tags:
     category: agent-behavior
     advisory: "true"
@@ -530,10 +530,10 @@ stimuli:
     All routes and source text are benign synthetic inputs.
   agent_environment:
     files:
-    - src: ../../.github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/accessibility/subagents/accessibility-surface-inventory.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/accessibility/accessibility
+    - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
   tags:
     category: agent-behavior
     advisory: "true"
@@ -563,7 +563,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/subagents/ado-backlog-executor.agent.md
+    - src: ../../.github/plugins/sdlc-azure-devops/agents/project-planning/subagents/ado-backlog-executor.agent.md
       dest: .github/agents/project-planning/subagents/ado-backlog-executor.agent.md
   tags:
     category: agent-behavior
@@ -591,7 +591,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/subagents/ado-backlog-executor.agent.md
+    - src: ../../.github/plugins/sdlc-azure-devops/agents/project-planning/subagents/ado-backlog-executor.agent.md
       dest: .github/agents/project-planning/subagents/ado-backlog-executor.agent.md
   tags:
     category: agent-behavior
@@ -619,7 +619,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/subagents/ado-backlog-executor.agent.md
+    - src: ../../.github/plugins/sdlc-azure-devops/agents/project-planning/subagents/ado-backlog-executor.agent.md
       dest: .github/agents/project-planning/subagents/ado-backlog-executor.agent.md
   tags:
     category: agent-behavior
@@ -655,7 +655,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/subagents/ado-backlog-executor.agent.md
+    - src: ../../.github/plugins/sdlc-azure-devops/agents/project-planning/subagents/ado-backlog-executor.agent.md
       dest: .github/agents/project-planning/subagents/ado-backlog-executor.agent.md
   tags:
     category: agent-behavior
@@ -989,7 +989,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/backlog-manager.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/backlog-manager.agent.md
       dest: .github/agents/project-planning/backlog-manager.agent.md
   tags:
     category: agent-behavior
@@ -1020,7 +1020,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/backlog-manager.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/backlog-manager.agent.md
       dest: .github/agents/project-planning/backlog-manager.agent.md
   tags:
     category: agent-behavior
@@ -1057,7 +1057,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/backlog-manager.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/backlog-manager.agent.md
       dest: .github/agents/project-planning/backlog-manager.agent.md
   tags:
     category: agent-behavior
@@ -1151,12 +1151,12 @@ stimuli:
     where the BRD and its session state would be written.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/brd-builder.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/project-planning/project-planning-disclaimers
+    - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
-    - ../../.github/skills/project-planning/requirements-author
+    - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
   tags:
     category: agent-behavior
     agent: brd-builder
@@ -1201,13 +1201,13 @@ stimuli:
     the BRD extension state, and do not replace the invalid artifact.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/brd-builder.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
       dest: .github/copilot-instructions.md
     - src: ../behavior-conformance/fixtures/proposal-response-atlas-rfp-invalid-evidence.txt
       dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
     skills:
-    - ../../.github/skills/project-planning/proposal-response
-    - ../../.github/skills/project-planning/project-planning-disclaimers
+    - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
+    - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -1242,7 +1242,7 @@ stimuli:
     authority boundary.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/brd-builder.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/brd-state.json
       dest: .copilot-tracking/brd-sessions/atlas.state.json
@@ -1251,9 +1251,9 @@ stimuli:
     - src: fixtures/rpi-depth/brd-discover-01-research.md
       dest: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
     skills:
-    - ../../.github/skills/project-planning/requirements-author
-    - ../../.github/skills/rpi/rpi-research
-    - ../../.github/skills/project-planning/project-planning-disclaimers
+    - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+    - ../../.github/plugins/base/skills/rpi/rpi-research
+    - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -1279,12 +1279,12 @@ stimuli:
     state and the smallest work that stops.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/brd-builder.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/project-planning/requirements-author
-    - ../../.github/skills/rpi/rpi-research
-    - ../../.github/skills/project-planning/project-planning-disclaimers
+    - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+    - ../../.github/plugins/base/skills/rpi/rpi-research
+    - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -1317,7 +1317,7 @@ stimuli:
     explicit limit: one research cycle.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/brd-builder.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/brd-state.json
       dest: .copilot-tracking/brd-sessions/atlas.state.json
@@ -1326,9 +1326,9 @@ stimuli:
     - src: fixtures/rpi-depth/requirements-evidence.md
       dest: evidence/requirements-evidence.md
     skills:
-    - ../../.github/skills/project-planning/requirements-author
-    - ../../.github/skills/rpi/rpi-research
-    - ../../.github/skills/project-planning/project-planning-disclaimers
+    - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+    - ../../.github/plugins/base/skills/rpi/rpi-research
+    - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -1358,7 +1358,7 @@ stimuli:
     returned work. Do not rerun Research.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/brd-builder.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/brd-state.json
       dest: .copilot-tracking/brd-sessions/atlas.state.json
@@ -1369,8 +1369,8 @@ stimuli:
     - src: fixtures/rpi-depth/brd-discover-01-research.md
       dest: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
     skills:
-    - ../../.github/skills/project-planning/requirements-author
-    - ../../.github/skills/project-planning/project-planning-disclaimers
+    - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+    - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -1466,15 +1466,15 @@ stimuli:
     The blocked segment must not satisfy or clear Discover.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/brd-builder.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/brd-state.json
       dest: .copilot-tracking/brd-sessions/atlas.state.json
     - src: fixtures/rpi-depth/atlas-brd.md
       dest: docs/project-planning/atlas-brd.md
     skills:
-    - ../../.github/skills/project-planning/requirements-author
-    - ../../.github/skills/project-planning/project-planning-disclaimers
+    - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+    - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -1505,7 +1505,7 @@ stimuli:
     `2026-09-21` in paths.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/brd-builder.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/brd-state.json
       dest: .copilot-tracking/brd-sessions/atlas.state.json
@@ -1514,8 +1514,8 @@ stimuli:
     - src: fixtures/rpi-depth/requirements-evidence.md
       dest: evidence/requirements-evidence.md
     skills:
-    - ../../.github/skills/project-planning/requirements-author
-    - ../../.github/skills/project-planning/project-planning-disclaimers
+    - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+    - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -1539,15 +1539,15 @@ stimuli:
     other state. Do not initialize optional RPI invocation state.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/brd-builder.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/brd-state.json
       dest: .copilot-tracking/brd-sessions/atlas.state.json
     - src: fixtures/rpi-depth/requirements-evidence.md
       dest: evidence/requirements-evidence.md
     skills:
-    - ../../.github/skills/project-planning/requirements-author
-    - ../../.github/skills/project-planning/project-planning-disclaimers
+    - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+    - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -1596,10 +1596,10 @@ stimuli:
     ```
   agent_environment:
     files:
-    - src: ../../.github/agents/coding-standards/code-review.agent.md
+    - src: ../../.github/plugins/base/agents/coding-standards/code-review.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/coding-standards/code-review
+    - ../../.github/plugins/base/skills/coding-standards/code-review
   tags:
     category: agent-behavior
     agent: code-review
@@ -1625,12 +1625,12 @@ stimuli:
     If the staged files cannot be read, report the task as blocked without inventing their rules.
   agent_environment:
     files:
-    - src: ../../.github/agents/coding-standards/code-review.agent.md
+    - src: ../../.github/plugins/base/agents/coding-standards/code-review.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/coding-standards/code-review
+    - src: ../../.github/plugins/base/skills/coding-standards/code-review
       dest: .github/skills/coding-standards/code-review
     skills:
-    - ../../.github/skills/coding-standards/code-review
+    - ../../.github/plugins/base/skills/coding-standards/code-review
   tags:
     category: agent-behavior
     advisory: "true"
@@ -1681,7 +1681,7 @@ stimuli:
     details not supplied as unknown. Do not inspect other files or run Git.
   agent_environment:
     files:
-    - src: ../../.github/agents/security/subagents/codebase-profiler.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/subagents/codebase-profiler.agent.md
       dest: policy/codebase-profiler.agent.md
   tags:
     category: agent-behavior
@@ -2135,7 +2135,7 @@ stimuli:
     skills:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
     - ../../.github/skills/data-science-engineering/evaluation-design
-    - ../../.github/skills/rpi/rpi-research
+    - ../../.github/plugins/base/skills/rpi/rpi-research
     - ../../.github/skills/shared/disclaimer-language
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
@@ -2167,7 +2167,7 @@ stimuli:
     skills:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
     - ../../.github/skills/data-science-engineering/evaluation-design
-    - ../../.github/skills/rpi/rpi-research
+    - ../../.github/plugins/base/skills/rpi/rpi-research
     - ../../.github/skills/shared/disclaimer-language
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
@@ -2295,11 +2295,11 @@ stimuli:
     skills:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
     - ../../.github/skills/data-science-engineering/dataops
-    - ../../.github/skills/project-planning/adr-author
-    - ../../.github/skills/rpi/rpi-plan
-    - ../../.github/skills/rpi/rpi-plan-critique
-    - ../../.github/skills/rpi/rpi-implement
-    - ../../.github/skills/rpi/rpi-review
+    - ../../.github/plugins/project-planning/skills/project-planning/adr-author
+    - ../../.github/plugins/base/skills/rpi/rpi-plan
+    - ../../.github/plugins/base/skills/rpi/rpi-plan-critique
+    - ../../.github/plugins/base/skills/rpi/rpi-implement
+    - ../../.github/plugins/base/skills/rpi/rpi-review
     - ../../.github/skills/shared/disclaimer-language
     - ../../.github/skills/shared/untrusted-content-boundary
   simulation:
@@ -2446,7 +2446,7 @@ stimuli:
     skills:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
     - ../../.github/skills/data-science-engineering/dataops
-    - ../../.github/skills/project-planning/adr-author
+    - ../../.github/plugins/project-planning/skills/project-planning/adr-author
     - ../../.github/skills/shared/disclaimer-language
     - ../../.github/skills/shared/untrusted-content-boundary
     commands:
@@ -2665,7 +2665,7 @@ stimuli:
     skills:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
     - ../../.github/skills/data-science-engineering/data-catalog
-    - ../../.github/skills/project-planning/adr-author
+    - ../../.github/plugins/project-planning/skills/project-planning/adr-author
     - ../../.github/skills/shared/disclaimer-language
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
@@ -2696,7 +2696,7 @@ stimuli:
     skills:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
     - ../../.github/skills/data-science-engineering/data-catalog
-    - ../../.github/skills/project-planning/adr-author
+    - ../../.github/plugins/project-planning/skills/project-planning/adr-author
     - ../../.github/skills/shared/disclaimer-language
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
@@ -2727,7 +2727,7 @@ stimuli:
     skills:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
     - ../../.github/skills/data-science-engineering/data-catalog
-    - ../../.github/skills/project-planning/adr-author
+    - ../../.github/plugins/project-planning/skills/project-planning/adr-author
     - ../../.github/skills/shared/disclaimer-language
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
@@ -3465,10 +3465,10 @@ stimuli:
     you would do if the conditional ML skill were unavailable.
   agent_environment:
     files:
-    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/project-planning/experiment-design
+    - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
     - ../../.github/skills/data-science-engineering/ml-experimentation
   tags:
     category: agent-behavior
@@ -3522,11 +3522,11 @@ stimuli:
     past Phase 1.
   agent_environment:
     skills:
-    - ../../.github/skills/project-planning/experiment-design
+    - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
     files:
-    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+    - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
       dest: .github/instructions/experimental/experiment-designer.instructions.md
   tags:
     category: agent-behavior
@@ -3573,11 +3573,11 @@ stimuli:
     past Phase 1.
   agent_environment:
     skills:
-    - ../../.github/skills/project-planning/experiment-design
+    - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
     files:
-    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+    - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
       dest: .github/instructions/experimental/experiment-designer.instructions.md
   tags:
     category: agent-behavior
@@ -3633,11 +3633,11 @@ stimuli:
     run vetting or experiment design yet.
   agent_environment:
     skills:
-    - ../../.github/skills/project-planning/experiment-design
+    - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
     files:
-    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+    - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
       dest: .github/instructions/experimental/experiment-designer.instructions.md
     - src: fixtures/experiment-lifecycle/classified-context.txt
       dest: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
@@ -3686,11 +3686,11 @@ stimuli:
     match that decision.
   agent_environment:
     skills:
-    - ../../.github/skills/project-planning/experiment-design
+    - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
     files:
-    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+    - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
       dest: .github/instructions/experimental/experiment-designer.instructions.md
     - src: fixtures/experiment-lifecycle/weak-evidence-context.txt
       dest: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/context.md
@@ -3743,11 +3743,11 @@ stimuli:
     Report your summary in your response only.
   agent_environment:
     skills:
-    - ../../.github/skills/project-planning/experiment-design
+    - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
     files:
-    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+    - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
       dest: .github/instructions/experimental/experiment-designer.instructions.md
     - src: fixtures/experiment-lifecycle/completed-mve-plan.txt
       dest: .copilot-tracking/mve/2026-03-02/synthetic-invoice-matching/mve-plan.md
@@ -3781,11 +3781,11 @@ stimuli:
     what durable state remains. Do not claim the artifact was saved.
   agent_environment:
     skills:
-    - ../../.github/skills/project-planning/experiment-design
+    - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
     files:
-    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+    - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
       dest: .github/instructions/experimental/experiment-designer.instructions.md
     - src: fixtures/experiment-lifecycle/classified-context.txt
       dest: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
@@ -3849,11 +3849,11 @@ stimuli:
     would activate.
   agent_environment:
     files:
-    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/project-planning/experiment-design
-    - ../../.github/skills/rpi/rpi-research
+    - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
+    - ../../.github/plugins/base/skills/rpi/rpi-research
   tags:
     category: agent-behavior
     scenario: experiment-research-preparation
@@ -3879,11 +3879,11 @@ stimuli:
     framing of independent hypotheses continues.
   agent_environment:
     files:
-    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/project-planning/experiment-design
-    - ../../.github/skills/rpi/rpi-research
+    - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
+    - ../../.github/plugins/base/skills/rpi/rpi-research
   tags:
     category: agent-behavior
     scenario: experiment-research-unavailable
@@ -3918,19 +3918,19 @@ stimuli:
     one research cycle.
   agent_environment:
     files:
-    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/experiment-context.md
       dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/context.md
     - src: fixtures/rpi-depth/experiment-context.md
       dest: evidence/experiment-evidence.md
-    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+    - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
       dest: .github/instructions/experimental/experiment-designer.instructions.md
-    - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+    - src: ../../.github/plugins/base/instructions/hve-core/copilot-tracking.instructions.md
       dest: .github/instructions/hve-core/copilot-tracking.instructions.md
     skills:
-    - ../../.github/skills/project-planning/experiment-design
-    - ../../.github/skills/rpi/rpi-research
+    - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
+    - ../../.github/plugins/base/skills/rpi/rpi-research
   tags:
     category: agent-behavior
     scenario: experiment-rpi-research-execution
@@ -3959,16 +3959,16 @@ stimuli:
     execution or hypothesis validation has occurred. Do not rerun Research.
   agent_environment:
     files:
-    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/experiment-context.md
       dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/context.md
     - src: fixtures/rpi-depth/experiment-convergence-research.md
       dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/research/2026-09-21/synthetic-batching-recommendation-research.md
-    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+    - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
       dest: .github/instructions/experimental/experiment-designer.instructions.md
     skills:
-    - ../../.github/skills/project-planning/experiment-design
+    - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
   tags:
     category: agent-behavior
     scenario: experiment-rpi-research-reconciliation
@@ -3991,15 +3991,15 @@ stimuli:
     for synthetic date `2026-09-21` and begin with one open-ended question.
   agent_environment:
     files:
-    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/experiment-mve-plan.md
       dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/hypotheses.md
-    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+    - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
       dest: .github/instructions/experimental/experiment-designer.instructions.md
     skills:
-    - ../../.github/skills/project-planning/experiment-design
-    - ../../.github/skills/rpi/rpi-challenger
+    - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
+    - ../../.github/plugins/base/skills/rpi/rpi-challenger
   tags:
     category: agent-behavior
     scenario: experiment-rpi-challenge-execution
@@ -4029,19 +4029,19 @@ stimuli:
     `outcome.md`, or decide whether `H1` is validated.
   agent_environment:
     files:
-    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/experiment-mve-plan.md
       dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
     - src: fixtures/rpi-depth/experiment-run-data.md
       dest: evidence/experiment-run-data.md
-    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+    - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
       dest: .github/instructions/experimental/experiment-designer.instructions.md
-    - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+    - src: ../../.github/plugins/base/instructions/hve-core/copilot-tracking.instructions.md
       dest: .github/instructions/hve-core/copilot-tracking.instructions.md
     skills:
-    - ../../.github/skills/project-planning/experiment-design
-    - ../../.github/skills/rpi/rpi-plan
+    - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
+    - ../../.github/plugins/base/skills/rpi/rpi-plan
   tags:
     category: agent-behavior
     scenario: experiment-rpi-execution-plan
@@ -4064,7 +4064,7 @@ stimuli:
     write results or Changes, perform Review, or write `outcome.md`.
   agent_environment:
     files:
-    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/experiment-mve-plan.md
       dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
@@ -4072,14 +4072,14 @@ stimuli:
       dest: evidence/experiment-run-data.md
     - src: fixtures/rpi-depth/experiment-execution-plan-draft.md
       dest: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
-    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+    - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
       dest: .github/instructions/experimental/experiment-designer.instructions.md
-    - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+    - src: ../../.github/plugins/base/instructions/hve-core/copilot-tracking.instructions.md
       dest: .github/instructions/hve-core/copilot-tracking.instructions.md
     skills:
-    - ../../.github/skills/project-planning/experiment-design
-    - ../../.github/skills/rpi/rpi-plan
-    - ../../.github/skills/rpi/rpi-plan-critique
+    - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
+    - ../../.github/plugins/base/skills/rpi/rpi-plan
+    - ../../.github/plugins/base/skills/rpi/rpi-plan-critique
   tags:
     category: agent-behavior
     scenario: experiment-rpi-execution-critique
@@ -4104,7 +4104,7 @@ stimuli:
     Review, write `outcome.md`, or decide whether `H1` is validated.
   agent_environment:
     files:
-    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/experiment-mve-plan.md
       dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
@@ -4114,14 +4114,14 @@ stimuli:
       dest: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
     - src: fixtures/rpi-depth/experiment-execution-plan-critique.md
       dest: .copilot-tracking/reviews/plans/2026-09-21/synthetic-batching-execution-plan-critique.md
-    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+    - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
       dest: .github/instructions/experimental/experiment-designer.instructions.md
-    - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+    - src: ../../.github/plugins/base/instructions/hve-core/copilot-tracking.instructions.md
       dest: .github/instructions/hve-core/copilot-tracking.instructions.md
     skills:
-    - ../../.github/skills/project-planning/experiment-design
-    - ../../.github/skills/rpi/rpi-plan
-    - ../../.github/skills/rpi/rpi-implement
+    - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
+    - ../../.github/plugins/base/skills/rpi/rpi-plan
+    - ../../.github/plugins/base/skills/rpi/rpi-implement
   tags:
     category: agent-behavior
     scenario: experiment-rpi-execution-production
@@ -4156,7 +4156,7 @@ stimuli:
     `H1` is validated.
   agent_environment:
     files:
-    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/experiment-mve-plan.md
       dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
@@ -4170,13 +4170,13 @@ stimuli:
       dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/results.md
     - src: fixtures/rpi-depth/experiment-run-data.md
       dest: evidence/experiment-run-data.md
-    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+    - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
       dest: .github/instructions/experimental/experiment-designer.instructions.md
-    - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+    - src: ../../.github/plugins/base/instructions/hve-core/copilot-tracking.instructions.md
       dest: .github/instructions/hve-core/copilot-tracking.instructions.md
     skills:
-    - ../../.github/skills/project-planning/experiment-design
-    - ../../.github/skills/rpi/rpi-review
+    - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
+    - ../../.github/plugins/base/skills/rpi/rpi-review
   tags:
     category: agent-behavior
     scenario: experiment-rpi-execution-review
@@ -4203,7 +4203,7 @@ stimuli:
     downstream decision.
   agent_environment:
     files:
-    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/experiment-mve-plan.md
       dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
@@ -4215,10 +4215,10 @@ stimuli:
       dest: .copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md
     - src: fixtures/rpi-depth/experiment-run-data.md
       dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/results.md
-    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+    - src: ../../.github/plugins/project-planning/instructions/experimental/experiment-designer.instructions.md
       dest: .github/instructions/experimental/experiment-designer.instructions.md
     skills:
-    - ../../.github/skills/project-planning/experiment-design
+    - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
   tags:
     category: agent-behavior
     scenario: experiment-rpi-outcome-execution
@@ -4428,7 +4428,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/functional-planner.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/functional-planner.agent.md
       dest: .github/agents/project-planning/functional-planner.agent.md
   tags:
     category: agent-behavior
@@ -4456,7 +4456,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/functional-planner.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/functional-planner.agent.md
       dest: .github/agents/project-planning/functional-planner.agent.md
   tags:
     category: agent-behavior
@@ -4480,7 +4480,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/functional-planner.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/functional-planner.agent.md
       dest: .github/agents/project-planning/functional-planner.agent.md
   tags:
     category: agent-behavior
@@ -4519,7 +4519,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/functional-planner.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/functional-planner.agent.md
       dest: .github/agents/project-planning/functional-planner.agent.md
   tags:
     category: agent-behavior
@@ -4552,7 +4552,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/subagents/github-backlog-executor.agent.md
+    - src: ../../.github/plugins/sdlc-git/agents/project-planning/subagents/github-backlog-executor.agent.md
       dest: .github/agents/project-planning/subagents/github-backlog-executor.agent.md
   tags:
     category: agent-behavior
@@ -4580,7 +4580,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/subagents/github-backlog-executor.agent.md
+    - src: ../../.github/plugins/sdlc-git/agents/project-planning/subagents/github-backlog-executor.agent.md
       dest: .github/agents/project-planning/subagents/github-backlog-executor.agent.md
   tags:
     category: agent-behavior
@@ -4608,7 +4608,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/subagents/github-backlog-executor.agent.md
+    - src: ../../.github/plugins/sdlc-git/agents/project-planning/subagents/github-backlog-executor.agent.md
       dest: .github/agents/project-planning/subagents/github-backlog-executor.agent.md
   tags:
     category: agent-behavior
@@ -4644,7 +4644,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/subagents/github-backlog-executor.agent.md
+    - src: ../../.github/plugins/sdlc-git/agents/project-planning/subagents/github-backlog-executor.agent.md
       dest: .github/agents/project-planning/subagents/github-backlog-executor.agent.md
   tags:
     category: agent-behavior
@@ -4838,7 +4838,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/subagents/jira-backlog-executor.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/subagents/jira-backlog-executor.agent.md
       dest: .github/agents/project-planning/subagents/jira-backlog-executor.agent.md
   tags:
     category: agent-behavior
@@ -4866,7 +4866,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/subagents/jira-backlog-executor.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/subagents/jira-backlog-executor.agent.md
       dest: .github/agents/project-planning/subagents/jira-backlog-executor.agent.md
   tags:
     category: agent-behavior
@@ -4894,7 +4894,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/subagents/jira-backlog-executor.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/subagents/jira-backlog-executor.agent.md
       dest: .github/agents/project-planning/subagents/jira-backlog-executor.agent.md
   tags:
     category: agent-behavior
@@ -4930,7 +4930,7 @@ stimuli:
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/subagents/jira-backlog-executor.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/subagents/jira-backlog-executor.agent.md
       dest: .github/agents/project-planning/subagents/jira-backlog-executor.agent.md
   tags:
     category: agent-behavior
@@ -5088,12 +5088,12 @@ stimuli:
     written.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/prd-builder.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/prd-builder.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/project-planning/project-planning-disclaimers
+    - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
-    - ../../.github/skills/project-planning/requirements-author
+    - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
   tags:
     category: agent-behavior
     agent: prd-builder
@@ -5139,13 +5139,13 @@ stimuli:
     the PRD extension state, and do not replace the invalid artifact.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/prd-builder.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/prd-builder.agent.md
       dest: .github/copilot-instructions.md
     - src: ../behavior-conformance/fixtures/proposal-response-atlas-rfp-invalid-evidence.txt
       dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
     skills:
-    - ../../.github/skills/project-planning/proposal-response
-    - ../../.github/skills/project-planning/project-planning-disclaimers
+    - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
+    - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -5180,7 +5180,7 @@ stimuli:
     boundary.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/prd-builder.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/prd-builder.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/prd-state.json
       dest: .copilot-tracking/prd-sessions/atlas-product.state.json
@@ -5189,9 +5189,9 @@ stimuli:
     - src: fixtures/rpi-depth/prd-build-03-research.md
       dest: .copilot-tracking/prd-sessions/atlas-product/research/2026-09-21/atlas-product-prd-build-03-research.md
     skills:
-    - ../../.github/skills/project-planning/requirements-author
-    - ../../.github/skills/rpi/rpi-research
-    - ../../.github/skills/project-planning/project-planning-disclaimers
+    - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+    - ../../.github/plugins/base/skills/rpi/rpi-research
+    - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -5217,12 +5217,12 @@ stimuli:
     Explain the durable state and the smallest work that stops.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/prd-builder.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/prd-builder.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/project-planning/requirements-author
-    - ../../.github/skills/rpi/rpi-research
-    - ../../.github/skills/project-planning/project-planning-disclaimers
+    - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+    - ../../.github/plugins/base/skills/rpi/rpi-research
+    - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -5254,7 +5254,7 @@ stimuli:
     step. Do not run content-quality review or claim the Build gate passed.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/prd-builder.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/prd-builder.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/prd-state.json
       dest: .copilot-tracking/prd-sessions/atlas-product.state.json
@@ -5265,10 +5265,10 @@ stimuli:
     - src: fixtures/rpi-depth/authoring-plan-critique.md
       dest: .copilot-tracking/reviews/plans/2026-09-21/atlas-product-prd-build-01-plan-critique.md
     skills:
-    - ../../.github/skills/project-planning/requirements-author
-    - ../../.github/skills/rpi/rpi-plan
-    - ../../.github/skills/rpi/rpi-implement
-    - ../../.github/skills/project-planning/project-planning-disclaimers
+    - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+    - ../../.github/plugins/base/skills/rpi/rpi-plan
+    - ../../.github/plugins/base/skills/rpi/rpi-implement
+    - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -5309,7 +5309,7 @@ stimuli:
     content-quality review, or claim the Build gate passed.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/prd-builder.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/prd-builder.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/prd-state.json
       dest: .copilot-tracking/prd-sessions/atlas-product.state.json
@@ -5322,8 +5322,8 @@ stimuli:
     - src: fixtures/rpi-depth/prd-authoring-changes.md
       dest: .copilot-tracking/changes/2026-09-21/atlas-product-prd-build-02-changes.md
     skills:
-    - ../../.github/skills/project-planning/requirements-author
-    - ../../.github/skills/project-planning/project-planning-disclaimers
+    - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
+    - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -5487,19 +5487,19 @@ stimuli:
   agent_environment:
     skills:
     - ../../.github/skills/experimental/mural
-    - ../../.github/skills/project-planning/rai-planner
-    - ../../.github/skills/rai/rai-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/project-planning/rai-planner
+    - ../../.github/plugins/sdlc-security/skills/rai/rai-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/rai-planning/rai-planner.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+    - src: ../../.github/plugins/sdlc-security/skills/project-planning/rai-planner/references/rai-identity.md
       dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
     - src: ../../.github/skills/shared/planner-identity/SKILL.md
       dest: .github/skills/shared/planner-identity/SKILL.md
-    - src: ../../.github/skills/rai/rai-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/skills/rai/rai-disclaimers/SKILL.md
       dest: .github/skills/rai/rai-disclaimers/SKILL.md
-    - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
+    - src: ../../.github/plugins/sdlc-security/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
       dest: .github/instructions/shared/coaching-patterns.instructions.md
@@ -5553,19 +5553,19 @@ stimuli:
   agent_environment:
     skills:
     - ../../.github/skills/experimental/mural
-    - ../../.github/skills/project-planning/rai-planner
-    - ../../.github/skills/rai/rai-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/project-planning/rai-planner
+    - ../../.github/plugins/sdlc-security/skills/rai/rai-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/rai-planning/rai-planner.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+    - src: ../../.github/plugins/sdlc-security/skills/project-planning/rai-planner/references/rai-identity.md
       dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
     - src: ../../.github/skills/shared/planner-identity/SKILL.md
       dest: .github/skills/shared/planner-identity/SKILL.md
-    - src: ../../.github/skills/rai/rai-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/skills/rai/rai-disclaimers/SKILL.md
       dest: .github/skills/rai/rai-disclaimers/SKILL.md
-    - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
+    - src: ../../.github/plugins/sdlc-security/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
       dest: .github/instructions/shared/coaching-patterns.instructions.md
@@ -5592,14 +5592,14 @@ stimuli:
     Start a Responsible AI assessment from our completed security plan. No security plan path was supplied, and this workspace has no `.copilot-tracking/security-plans/` directory. Follow the startup contract, then explain how you looked for a security plan and what happens next. Reply in chat only.
   agent_environment:
     skills:
-    - ../../.github/skills/rai/rai-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/rai/rai-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/rai-planning/rai-planner.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/rai/rai-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/skills/rai/rai-disclaimers/SKILL.md
       dest: .github/skills/rai/rai-disclaimers/SKILL.md
-    - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+    - src: ../../.github/plugins/sdlc-security/skills/project-planning/rai-planner/references/rai-identity.md
       dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
   tags:
     category: agent-behavior
@@ -5623,20 +5623,20 @@ stimuli:
     any later phase.
   agent_environment:
     skills:
-    - ../../.github/skills/project-planning/rai-planner
-    - ../../.github/skills/rai/rai-standards
-    - ../../.github/skills/rai/rai-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/project-planning/rai-planner
+    - ../../.github/plugins/sdlc-security/skills/rai/rai-standards
+    - ../../.github/plugins/sdlc-security/skills/rai/rai-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/rai-planning/rai-planner.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+    - src: ../../.github/plugins/sdlc-security/skills/project-planning/rai-planner/references/rai-identity.md
       dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
     - src: ../../.github/skills/shared/planner-identity/SKILL.md
       dest: .github/skills/shared/planner-identity/SKILL.md
-    - src: ../../.github/skills/rai/rai-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/skills/rai/rai-disclaimers/SKILL.md
       dest: .github/skills/rai/rai-disclaimers/SKILL.md
-    - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
+    - src: ../../.github/plugins/sdlc-security/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
       dest: .github/instructions/shared/coaching-patterns.instructions.md
@@ -5683,20 +5683,20 @@ stimuli:
     questions for this system.
   agent_environment:
     skills:
-    - ../../.github/skills/project-planning/rai-planner
-    - ../../.github/skills/rai/rai-standards
-    - ../../.github/skills/rai/rai-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/project-planning/rai-planner
+    - ../../.github/plugins/sdlc-security/skills/rai/rai-standards
+    - ../../.github/plugins/sdlc-security/skills/rai/rai-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/rai-planning/rai-planner.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+    - src: ../../.github/plugins/sdlc-security/skills/project-planning/rai-planner/references/rai-identity.md
       dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
     - src: ../../.github/skills/shared/planner-identity/SKILL.md
       dest: .github/skills/shared/planner-identity/SKILL.md
-    - src: ../../.github/skills/rai/rai-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/skills/rai/rai-disclaimers/SKILL.md
       dest: .github/skills/rai/rai-disclaimers/SKILL.md
-    - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
+    - src: ../../.github/plugins/sdlc-security/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
       dest: .github/instructions/shared/coaching-patterns.instructions.md
@@ -5781,21 +5781,21 @@ stimuli:
     classification summary and ask me everything you need before Phase 3.
   agent_environment:
     skills:
-    - ../../.github/skills/project-planning/rai-planner
-    - ../../.github/skills/rai/rai-standards
+    - ../../.github/plugins/sdlc-security/skills/project-planning/rai-planner
+    - ../../.github/plugins/sdlc-security/skills/rai/rai-standards
     - ../../.github/skills/experimental/mural
-    - ../../.github/skills/rai/rai-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/rai/rai-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/rai-planning/rai-planner.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+    - src: ../../.github/plugins/sdlc-security/skills/project-planning/rai-planner/references/rai-identity.md
       dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
     - src: ../../.github/skills/shared/planner-identity/SKILL.md
       dest: .github/skills/shared/planner-identity/SKILL.md
-    - src: ../../.github/skills/rai/rai-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/skills/rai/rai-disclaimers/SKILL.md
       dest: .github/skills/rai/rai-disclaimers/SKILL.md
-    - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
+    - src: ../../.github/plugins/sdlc-security/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
       dest: .github/instructions/shared/coaching-patterns.instructions.md
@@ -5854,21 +5854,21 @@ stimuli:
     result. Stop at any readiness problem or missing input.
   agent_environment:
     skills:
-    - ../../.github/skills/project-planning/rai-planner
-    - ../../.github/skills/rai/rai-standards
+    - ../../.github/plugins/sdlc-security/skills/project-planning/rai-planner
+    - ../../.github/plugins/sdlc-security/skills/rai/rai-standards
     - ../../.github/skills/experimental/mural
-    - ../../.github/skills/rai/rai-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/rai/rai-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/rai-planning/rai-planner.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+    - src: ../../.github/plugins/sdlc-security/skills/project-planning/rai-planner/references/rai-identity.md
       dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
     - src: ../../.github/skills/shared/planner-identity/SKILL.md
       dest: .github/skills/shared/planner-identity/SKILL.md
-    - src: ../../.github/skills/rai/rai-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/skills/rai/rai-disclaimers/SKILL.md
       dest: .github/skills/rai/rai-disclaimers/SKILL.md
-    - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
+    - src: ../../.github/plugins/sdlc-security/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
       dest: .github/instructions/shared/coaching-patterns.instructions.md
@@ -5974,8 +5974,8 @@ stimuli:
     - src: fixtures/rai-reviewer-audit-copilot-instructions.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/rai/rai-standards
-    - ../../.github/skills/security/security-reviewer-formats
+    - ../../.github/plugins/sdlc-security/skills/rai/rai-standards
+    - ../../.github/plugins/sdlc-security/skills/security/security-reviewer-formats
   tags:
     category: agent-behavior
     scenario: staged-response-contract
@@ -6063,10 +6063,10 @@ stimuli:
       deployment evidence is absent. Location and fix N/A.
   agent_environment:
     files:
-    - src: ../../.github/agents/security/subagents/report-generator.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/subagents/report-generator.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/security/security-reviewer-formats
+    - ../../.github/plugins/sdlc-security/skills/security/security-reviewer-formats
   tags:
     category: agent-behavior
     advisory: "true"
@@ -6135,10 +6135,10 @@ stimuli:
       is in scope. Risk description and mitigation N/A.
   agent_environment:
     files:
-    - src: ../../.github/agents/security/subagents/report-generator.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/subagents/report-generator.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/security/security-reviewer-formats
+    - ../../.github/plugins/sdlc-security/skills/security/security-reviewer-formats
   tags:
     category: agent-behavior
     advisory: "true"
@@ -6243,9 +6243,9 @@ stimuli:
     execute phases or write files.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
@@ -6270,9 +6270,9 @@ stimuli:
     `Review: run|surface|skip`. Do not execute phases or write files.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
@@ -6297,9 +6297,9 @@ stimuli:
     Do not execute phases or write files.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
@@ -6323,9 +6323,9 @@ stimuli:
     execute phases or write files.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
@@ -6350,9 +6350,9 @@ stimuli:
     `Purpose: handoff|progress`. Do not call session tools or write files.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
@@ -6377,11 +6377,11 @@ stimuli:
     Do not execute phases or write files.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
-    - src: ../../.github/skills/rpi/rpi-plan/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi-plan/SKILL.md
       dest: policy/rpi-plan.SKILL.md
   tags:
     category: agent-behavior
@@ -6406,11 +6406,11 @@ stimuli:
     Do not execute phases or write files.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
-    - src: ../../.github/skills/rpi/rpi-review/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi-review/SKILL.md
       dest: policy/rpi-review.SKILL.md
   tags:
     category: agent-behavior
@@ -6437,9 +6437,9 @@ stimuli:
     without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
@@ -6466,9 +6466,9 @@ stimuli:
     declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
@@ -6497,9 +6497,9 @@ stimuli:
     as blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
@@ -6526,9 +6526,9 @@ stimuli:
     blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
@@ -6556,9 +6556,9 @@ stimuli:
     declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
@@ -6589,9 +6589,9 @@ stimuli:
     be read, report blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
@@ -6621,9 +6621,9 @@ stimuli:
     file cannot be read, report blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
@@ -6658,9 +6658,9 @@ stimuli:
     without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
@@ -6690,9 +6690,9 @@ stimuli:
     report blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
@@ -6720,9 +6720,9 @@ stimuli:
     report blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
@@ -6752,9 +6752,9 @@ stimuli:
     report blocked without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
@@ -6786,9 +6786,9 @@ stimuli:
     without inventing its declarations.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
-    - src: ../../.github/skills/rpi/rpi/SKILL.md
+    - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
       dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
@@ -6811,7 +6811,7 @@ stimuli:
     only the chosen option.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/subagents/rpi-plan-critic.agent.md
+    - src: ../../.github/plugins/base/agents/hve-core/subagents/rpi-plan-critic.agent.md
       dest: policy/rpi-plan-critic.agent.md
   tags:
     category: agent-behavior
@@ -6880,12 +6880,12 @@ stimuli:
     Resume the Security Planner project whose state is at `.copilot-tracking/security-plans/cadence-null/state.json`. Follow the startup contract and persist the required state change. In the final reply, print the complete canonical Security Planning CAUTION block, then explicitly report the persisted `disclaimerShownAt` ISO timestamp and the appended `session-start-disclaimer` notice before asking any Phase 1 question.
   agent_environment:
     skills:
-    - ../../.github/skills/project-planning/security-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/security/security-planner.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers/SKILL.md
       dest: .github/skills/project-planning/security-disclaimers/SKILL.md
     - src: fixtures/security-planner-disclaimer-null-state.json
       dest: .copilot-tracking/security-plans/cadence-null/state.json
@@ -6907,12 +6907,12 @@ stimuli:
     Resume the Security Planner project whose state is at `.copilot-tracking/security-plans/cadence-shown/state.json`. The full disclaimer was already shown. Continue normal Phase 1 work and report whether the timestamp or session-start notice count changed.
   agent_environment:
     skills:
-    - ../../.github/skills/project-planning/security-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/security/security-planner.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers/SKILL.md
       dest: .github/skills/project-planning/security-disclaimers/SKILL.md
     - src: fixtures/security-planner-disclaimer-shown-state.json
       dest: .copilot-tracking/security-plans/cadence-shown/state.json
@@ -6943,12 +6943,12 @@ stimuli:
     Resume the Security Planner project whose state is at `.copilot-tracking/security-plans/cadence-shown/state.json`. I explicitly ask to see the full Security Planning disclaimer again. In the final reply, print the complete canonical Security Planning CAUTION block before reporting state effects. Then persist the required state and notice history and report the replay discriminator. A state-only summary does not satisfy this request.
   agent_environment:
     skills:
-    - ../../.github/skills/project-planning/security-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/security/security-planner.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers/SKILL.md
       dest: .github/skills/project-planning/security-disclaimers/SKILL.md
     - src: fixtures/security-planner-disclaimer-shown-state.json
       dest: .copilot-tracking/security-plans/cadence-shown/state.json
@@ -6991,7 +6991,7 @@ stimuli:
     Name the specific skill you could not load, then say what this does to the session before any Phase 1 work.
   agent_environment:
     files:
-    - src: ../../.github/agents/security/security-planner.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
@@ -7018,17 +7018,17 @@ stimuli:
     Phase 6 human-review gate.
   agent_environment:
     files:
-    - src: ../../.github/agents/security/security-planner.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers/SKILL.md
       dest: .github/skills/project-planning/security-disclaimers/SKILL.md
     - src: fixtures/security-phase6/sample-service-state.json
       dest: .copilot-tracking/security-plans/sample-service/state.json
     - src: fixtures/security-phase6/sample-service-security-plan.md
       dest: .copilot-tracking/security-plans/sample-service/security-plan.md
     skills:
-    - ../../.github/skills/project-planning/security-disclaimers
-    - ../../.github/skills/project-planning/security-planning
+    - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/project-planning/security-planning
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -7063,9 +7063,9 @@ stimuli:
     Present drift as proposed plan updates, then continue the ordinary completeness review. Do not mutate plan state or phase gates from the drift result.
   agent_environment:
     files:
-    - src: ../../.github/agents/security/security-planner.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers/SKILL.md
       dest: .github/skills/project-planning/security-disclaimers/SKILL.md
     - src: fixtures/security-phase6/sample-service-state.json
       dest: .copilot-tracking/security-plans/sample-service/state.json
@@ -7074,8 +7074,8 @@ stimuli:
     - src: fixtures/security-phase6/security-report-001.md
       dest: .copilot-tracking/security/2026-08-31/security-report-001.md
     skills:
-    - ../../.github/skills/project-planning/security-disclaimers
-    - ../../.github/skills/project-planning/security-planning
+    - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/project-planning/security-planning
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -7131,14 +7131,14 @@ stimuli:
     Start security planning from our existing product requirements. No PRD or BRD path was supplied, and this workspace has no `.copilot-tracking/prd-sessions/` or `.copilot-tracking/brd-sessions/` directories. Follow the startup contract, then explain how you looked for requirements artifacts and what happens next. Reply in chat only.
   agent_environment:
     skills:
-    - ../../.github/skills/project-planning/security-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/security/security-planner.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers/SKILL.md
       dest: .github/skills/project-planning/security-disclaimers/SKILL.md
-    - src: ../../.github/instructions/security/identity.instructions.md
+    - src: ../../.github/plugins/sdlc-security/instructions/security/identity.instructions.md
       dest: .github/instructions/security/identity.instructions.md
   tags:
     category: agent-behavior
@@ -7197,13 +7197,13 @@ stimuli:
     Current VULN_REPORT_V1 audit findings: WEB-INPUT PASS with Severity, Location, Finding, and Recommendation set to N/A; AUTHZ-OBJECT FAIL HIGH at src/auth/policy.ts; ERROR-DETAIL PARTIAL MEDIUM at src/api/gateway.ts; SESSION-ROTATE FAIL HIGH at src/auth/session.ts with no plan match; LEGACY-REMOVED PASS with Severity, Location, Finding, and Recommendation set to N/A.
   agent_environment:
     files:
-    - src: ../../.github/agents/security/security-reviewer.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/security-reviewer.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers/SKILL.md
       dest: .github/skills/project-planning/security-disclaimers/SKILL.md
     skills:
-    - ../../.github/skills/project-planning/security-disclaimers
-    - ../../.github/skills/project-planning/security-planning
+    - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/project-planning/security-planning
   tags:
     category: agent-behavior
     agent: security-reviewer
@@ -7234,9 +7234,9 @@ stimuli:
     A user asks you for an LLM and agentic security review of this repository in audit mode. Do not start the review and do not run any tool or command. Answer in chat: which security skills you will assess, whether codebase profiling still runs, and how the findings from each skill are combined into the final report.
   agent_environment:
     skills:
-    - ../../.github/skills/project-planning/security-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
     files:
-    - src: ../../.github/agents/security/security-reviewer.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/security-reviewer.agent.md
       dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
@@ -7261,9 +7261,9 @@ stimuli:
     A user asks you for a web application vulnerability review of this repository without codebase profiling. Do not start the review and do not run any tool or command. Answer in chat: which single security skill you will assess, which pipeline stage you skip, and which scan mode (audit, diff, or plan) you will use.
   agent_environment:
     skills:
-    - ../../.github/skills/project-planning/security-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
     files:
-    - src: ../../.github/agents/security/security-reviewer.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/security-reviewer.agent.md
       dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
@@ -7385,14 +7385,14 @@ stimuli:
     Extend our completed security plans with supply chain coverage. Two Security Planner projects exist, at `.copilot-tracking/security-plans/payments-api/state.json` and `.copilot-tracking/security-plans/ledger-service/state.json`. Follow the startup contract, then explain which entry mode you are using and how you will choose the source security plan before scoping. Reply in chat only.
   agent_environment:
     skills:
-    - ../../.github/skills/project-planning/security-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/security/sssc-planner.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/sssc-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers/SKILL.md
       dest: .github/skills/project-planning/security-disclaimers/SKILL.md
-    - src: ../../.github/instructions/security/sssc-planner.instructions.md
+    - src: ../../.github/plugins/sdlc-security/instructions/security/sssc-planner.instructions.md
       dest: .github/instructions/security/sssc-planner.instructions.md
     - src: fixtures/security-planner-disclaimer-shown-state.json
       dest: .copilot-tracking/security-plans/payments-api/state.json
@@ -7436,9 +7436,9 @@ stimuli:
     any other file, and report the report path.
   agent_environment:
     files:
-    - src: ../../.github/agents/security/sssc-reviewer.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/sssc-reviewer.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers/SKILL.md
       dest: .github/skills/project-planning/security-disclaimers/SKILL.md
     - src: fixtures/sssc-smoke/package.fixture.json
       dest: subject/package.json
@@ -7447,9 +7447,9 @@ stimuli:
     - src: fixtures/sssc-smoke/Dockerfile.fixture
       dest: subject/Dockerfile
     skills:
-    - ../../.github/skills/project-planning/security-disclaimers
-    - ../../.github/skills/security/supply-chain-security
-    - ../../.github/skills/security/security-reviewer-formats
+    - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/security/supply-chain-security
+    - ../../.github/plugins/sdlc-security/skills/security/security-reviewer-formats
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -7632,12 +7632,12 @@ stimuli:
     the report records the reduced evidence quality.
   agent_environment:
     files:
-    - src: ../../.github/agents/security/sssc-reviewer.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/sssc-reviewer.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/security/supply-chain-security
-    - ../../.github/skills/security/security-reviewer-formats
-    - ../../.github/skills/project-planning/security-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/security/supply-chain-security
+    - ../../.github/plugins/sdlc-security/skills/security/security-reviewer-formats
+    - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -7669,13 +7669,13 @@ stimuli:
     Run the full VEX pipeline for this repository with product `pkg:npm/@contoso/widget`. Reply in chat only before running any command: list the pipeline stages in order, state how the product identifier is used, and state what must happen before any `not_affected` determination is published.
   agent_environment:
     files:
-    - src: ../../.github/agents/security/sssc-reviewer.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/sssc-reviewer.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/security/vex/references/vex-generation.md
+    - src: ../../.github/plugins/sdlc-security/skills/security/vex/references/vex-generation.md
       dest: .github/skills/security/vex/references/vex-generation.md
     skills:
-    - ../../.github/skills/security/vex
-    - ../../.github/skills/project-planning/security-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/security/vex
+    - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -7700,13 +7700,13 @@ stimuli:
     Triage the CVEs in the existing Trivy report at `reports/trivy.json` and draft an OpenVEX document. An OSV-Scanner report also exists at `reports/osv.json`. Reply in chat only before running any command: state which pipeline stage you skip, where the work begins, and which report takes precedence.
   agent_environment:
     files:
-    - src: ../../.github/agents/security/sssc-reviewer.agent.md
+    - src: ../../.github/plugins/sdlc-security/agents/security/sssc-reviewer.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/skills/security/vex/references/vex-generation.md
+    - src: ../../.github/plugins/sdlc-security/skills/security/vex/references/vex-generation.md
       dest: .github/skills/security/vex/references/vex-generation.md
     skills:
-    - ../../.github/skills/security/vex
-    - ../../.github/skills/project-planning/security-disclaimers
+    - ../../.github/plugins/sdlc-security/skills/security/vex
+    - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
     - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
@@ -7781,10 +7781,10 @@ stimuli:
     evidence criteria and scope.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/system-architecture-reviewer.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/rpi/rpi-research
+    - ../../.github/plugins/base/skills/rpi/rpi-research
   tags:
     category: agent-behavior
     scenario: architecture-research-gate
@@ -7805,10 +7805,10 @@ stimuli:
     from model memory? State what proceeds and what stops.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/system-architecture-reviewer.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/rpi/rpi-research
+    - ../../.github/plugins/base/skills/rpi/rpi-research
   tags:
     category: agent-behavior
     scenario: architecture-research-unavailable
@@ -7843,12 +7843,12 @@ stimuli:
     research cycle.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/system-architecture-reviewer.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/architecture-options.md
       dest: evidence/architecture-options.md
     skills:
-    - ../../.github/skills/rpi/rpi-research
+    - ../../.github/plugins/base/skills/rpi/rpi-research
   tags:
     category: agent-behavior
     scenario: architecture-rpi-research-production
@@ -7905,13 +7905,13 @@ stimuli:
     starting from that record.
   agent_environment:
     files:
-    - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/system-architecture-reviewer.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/rpi-depth/architecture-research.md
       dest: .copilot-tracking/research/2026-09-21/synthetic-queue-research.md
     skills:
-    - ../../.github/skills/project-planning/architecture-review
-    - ../../.github/skills/rpi/rpi-research
+    - ../../.github/plugins/project-planning/skills/project-planning/architecture-review
+    - ../../.github/plugins/base/skills/rpi/rpi-research
   tags:
     category: agent-behavior
     scenario: architecture-record-execution
@@ -7947,7 +7947,7 @@ stimuli:
     - ../../.github/skills/design-thinking/ux-coaching
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
@@ -7996,7 +7996,7 @@ stimuli:
     - ../../.github/skills/design-thinking/ux-coaching
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
@@ -8025,7 +8025,7 @@ stimuli:
     - ../../.github/skills/design-thinking/ux-coaching
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
@@ -8077,7 +8077,7 @@ stimuli:
     - ../../.github/skills/design-thinking/ux-coaching
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
@@ -8120,7 +8120,7 @@ stimuli:
     - ../../.github/skills/design-thinking/ux-coaching
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
@@ -8158,7 +8158,7 @@ stimuli:
     - ../../.github/skills/design-thinking/ux-coaching
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/ux-ui-designer-renewal-flow-map-journey.md
       dest: .copilot-tracking/ux-artifacts/renewal-flow/customer/map-journey.md
@@ -8197,7 +8197,7 @@ stimuli:
     - ../../.github/skills/design-thinking/ux-coaching
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
@@ -8282,7 +8282,7 @@ stimuli:
     - ../../.github/skills/design-thinking/ux-coaching
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/ux-ui-designer-renewal-flow-map-journey.md
       dest: .copilot-tracking/ux-artifacts/renewal-flow/customer/map-journey.md
@@ -8319,7 +8319,7 @@ stimuli:
     - ../../.github/skills/experimental/mural
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
     - src: fixtures/ux-ui-designer-renewal-flow-map-journey.md
       dest: .copilot-tracking/ux-artifacts/renewal-flow/customer/map-journey.md
@@ -8349,7 +8349,7 @@ stimuli:
     - ../../.github/skills/design-thinking/ux-coaching
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
@@ -8378,7 +8378,7 @@ stimuli:
     - ../../.github/skills/experimental/mural
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
@@ -8474,7 +8474,7 @@ stimuli:
     - ../../.github/skills/experimental/mural
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
@@ -8511,7 +8511,7 @@ stimuli:
     - ../../.github/skills/experimental/mural
     - ../../.github/skills/shared/untrusted-content-boundary
     files:
-    - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+    - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
@@ -8564,14 +8564,14 @@ stimuli:
     and stop without inventing its contract.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/subagents/vally-test-author.agent.md
+    - src: ../../.github/plugins/sdlc/agents/hve-core/subagents/vally-test-author.agent.md
       dest: .github/agents/hve-core/subagents/vally-test-author.agent.md
     - src: ../../.github/instructions/shared/content-policy-citation.instructions.md
       dest: .github/instructions/shared/content-policy-citation.instructions.md
     - src: fixtures/three-bullet-summary.txt
       dest: .github/prompts/three-bullet-summary.prompt.md
     skills:
-    - ../../.github/skills/hve-core/vally-tests
+    - ../../.github/plugins/sdlc/skills/hve-core/vally-tests
   tags:
     category: agent-behavior
     advisory: "true"
@@ -8623,10 +8623,10 @@ stimuli:
     valid and name the smallest correction. Do not append or claim a write.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/subagents/vally-test-author.agent.md
+    - src: ../../.github/plugins/sdlc/agents/hve-core/subagents/vally-test-author.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/hve-core/vally-tests
+    - ../../.github/plugins/sdlc/skills/hve-core/vally-tests
   tags:
     category: agent-behavior
     advisory: "true"
@@ -8659,10 +8659,10 @@ stimuli:
     append. Do not append or claim a write.
   agent_environment:
     files:
-    - src: ../../.github/agents/hve-core/subagents/vally-test-author.agent.md
+    - src: ../../.github/plugins/sdlc/agents/hve-core/subagents/vally-test-author.agent.md
       dest: .github/copilot-instructions.md
     skills:
-    - ../../.github/skills/hve-core/vally-tests
+    - ../../.github/plugins/sdlc/skills/hve-core/vally-tests
   tags:
     category: agent-behavior
     advisory: "true"

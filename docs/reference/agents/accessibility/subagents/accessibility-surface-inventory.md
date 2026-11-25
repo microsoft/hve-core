@@ -3,7 +3,7 @@ title: Accessibility Surface Inventory
 description: "Discovers runtime surfaces and interaction states from a codebase profile, then emits an accessibility runtime config for the harness"
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                             |
-|-------------|-----------------------------------------------------------------------------------|
-| Kind        | agent                                                                             |
-| Source      | `.github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md` |
-| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)          |
-| Interactive | No                                                                                |
+| Field       | Value                                                                                                   |
+|-------------|---------------------------------------------------------------------------------------------------------|
+| Kind        | agent                                                                                                   |
+| Source      | `.github/plugins/sdlc-security/agents/accessibility/subagents/accessibility-surface-inventory.agent.md` |
+| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)                                |
+| Interactive | No                                                                                                      |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

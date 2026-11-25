@@ -3,7 +3,7 @@ title: Mounted Directory Installation
 description: Advanced devcontainer setup mounting HVE Core from host filesystem
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: how-to
 keywords:
   - mounted directory
@@ -181,9 +181,9 @@ After the rebuild, create `.github/copilot/settings.json` in your project, or ad
 
 ```json
 {
-  "agentDirectories": [".hve-core/.github/plugins/rpi-builder/agents"],
-  "skillDirectories": [".hve-core/.github/plugins/rpi-builder/skills"],
-  "instructionDirectories": [".hve-core/.github/plugins/rpi-builder/instructions"]
+  "agentDirectories": [".hve-core/.github/plugins/base/agents"],
+  "skillDirectories": [".hve-core/.github/plugins/base/skills"],
+  "instructionDirectories": [".hve-core/.github/plugins/base/instructions"]
 }
 ```
 

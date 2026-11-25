@@ -37,14 +37,14 @@ checkout:
     .github/copilot-instructions.md
     .github/PULL_REQUEST_TEMPLATE.md
     .github/instructions/
-    .github/plugins/rpi-builder/instructions/
-    .github/plugins/sdlc-git/instructions/
-    .github/plugins/sdlc-git/skills/coding-standards/code-review/
-    .github/plugins/rpi-builder/skills/coding-standards/hve-artifact-authoring/
-    .github/skills/coding-standards/python-foundational/
+    .github/plugins/base/instructions/
+    .github/plugins/sdlc/instructions/
+    .github/plugins/base/skills/coding-standards/code-review/
+    .github/plugins/base/skills/coding-standards/hve-artifact-authoring/
+    .github/plugins/sdlc/skills/coding-standards/python-foundational/
     .github/skills/shared/telemetry-foundations/
-    .github/skills/accessibility/accessibility/SKILL.md
-    .github/skills/accessibility/accessibility/references/frameworks/
+    .github/plugins/sdlc-security/skills/accessibility/accessibility/SKILL.md
+    .github/plugins/sdlc-security/skills/accessibility/accessibility/references/frameworks/
     scripts/
     docs/
     package.json
@@ -109,13 +109,13 @@ This workflow is the host-managed automation contract for the `code-review`
 skill. Read these before reviewing and follow them as the review policy for
 this run:
 
-1. `.github/plugins/sdlc-git/skills/coding-standards/code-review/SKILL.md`, including its
+1. `.github/plugins/base/skills/coding-standards/code-review/SKILL.md`, including its
    Host-managed automation section
-2. `.github/plugins/sdlc-git/skills/coding-standards/code-review/references/review-contract.md`
+2. `.github/plugins/base/skills/coding-standards/code-review/references/review-contract.md`
 3. The perspective references under
-   `.github/plugins/sdlc-git/skills/coding-standards/code-review/references/`: `functional.md`,
+   `.github/plugins/base/skills/coding-standards/code-review/references/`: `functional.md`,
    `standards.md`, `accessibility.md`, `security.md`, and `readiness.md`
-4. For accessibility, `.github/skills/accessibility/accessibility/SKILL.md`
+4. For accessibility, `.github/plugins/sdlc-security/skills/accessibility/accessibility/SKILL.md`
    and only the files under its `references/frameworks/` that the changed
    surface needs
 5. For standards, the applicable instructions in the checked-out roots and

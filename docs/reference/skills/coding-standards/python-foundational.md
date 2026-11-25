@@ -3,7 +3,7 @@ title: python-foundational
 description: "Foundational Python best practices, idioms, and code quality fundamentals"
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-11-17
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                 |
-|-------------|-------------------------------------------------------|
-| Kind        | skill                                                 |
-| Source      | `.github/skills/coding-standards/python-foundational` |
-| Invocation  | Loaded on demand by referencing agents                |
-| Interactive | No                                                    |
+| Field       | Value                                                              |
+|-------------|--------------------------------------------------------------------|
+| Kind        | skill                                                              |
+| Source      | `.github/plugins/sdlc/skills/coding-standards/python-foundational` |
+| Invocation  | Loaded on demand by referencing agents                             |
+| Interactive | No                                                                 |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

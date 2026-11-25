@@ -32,10 +32,10 @@ stimuli:
       state and research result are simulated inputs, not native tool failures.
     agent_environment:
       files:
-        - src: ../../.github/agents/accessibility/accessibility-planner.agent.md
+        - src: ../../.github/plugins/sdlc-security/agents/accessibility/accessibility-planner.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/accessibility/accessibility
+        - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
     tags:
       category: agent-behavior
       advisory: "true"
@@ -70,10 +70,10 @@ stimuli:
       action. The write result is simulated input, not a native failure.
     agent_environment:
       files:
-        - src: ../../.github/agents/accessibility/accessibility-planner.agent.md
+        - src: ../../.github/plugins/sdlc-security/agents/accessibility/accessibility-planner.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/accessibility/accessibility
+        - ../../.github/plugins/sdlc-security/skills/accessibility/accessibility
     tags:
       category: agent-behavior
       advisory: "true"

@@ -3,7 +3,7 @@ title: Rai Planning/Rai License Posture
 description: RAI-specific overlay mapping RAI standards onto the repository licensing posture
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - instruction
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                                                                                            |
 |-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Kind        | instruction                                                                                                                                                      |
-| Source      | `.github/plugins/sdlc-responsible-ai/instructions/rai-planning/rai-license-posture.instructions.md`                                                              |
+| Source      | `.github/plugins/sdlc-security/instructions/rai-planning/rai-license-posture.instructions.md`                                                                    |
 | Invocation  | Applied automatically to `**/skills/rai**/**, **/skills/project-planning/rai-planner/**, **/.copilot-tracking/rai-plans/**, **/.copilot-tracking/rai-reviews/**` |
 | Interactive | No                                                                                                                                                               |
 <!-- END AUTO-GENERATED: metadata -->

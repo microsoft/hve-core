@@ -30,9 +30,9 @@
       ]
     },
     {
-      "name": "hve-rpi-builder",
-      "source": "./.github/plugins/rpi-builder",
-      "description": "Research, plan, implement, and review with RPI; build Copilot customizations with HVE Builder. Pair with hve-sdlc-git for pull requests.",
+      "name": "hve-base",
+      "source": "./.github/plugins/base",
+      "description": "Research, plan, implement, and review with RPI; build Copilot customizations with HVE Builder; review code with the RPI Workflow, Session Log, and Code Review canvases.",
       "version": "3.2.2",
       "author": {
         "name": "Microsoft",
@@ -43,15 +43,38 @@
       "license": "MIT",
       "keywords": [
         "hve",
+        "hve-base",
         "rpi",
         "hve-builder",
-        "agent-authoring"
+        "code-review",
+        "canvases"
+      ]
+    },
+    {
+      "name": "hve-sdlc",
+      "source": "./.github/plugins/sdlc",
+      "description": "Language coding standards, documentation authoring, root cause analysis, and Vally conformance testing. Pair with hve-base for RPI workflows and code review.",
+      "version": "3.2.2",
+      "author": {
+        "name": "Microsoft",
+        "url": "https://www.microsoft.com"
+      },
+      "homepage": "https://github.com/microsoft/hve-core",
+      "repository": "https://github.com/microsoft/hve-core",
+      "license": "MIT",
+      "keywords": [
+        "hve",
+        "sdlc",
+        "coding-standards",
+        "documentation",
+        "root-cause-analysis",
+        "vally"
       ]
     },
     {
       "name": "hve-project-planning",
       "source": "./.github/plugins/project-planning",
-      "description": "Author and review architecture decisions, business requirements, and product requirements. Pair with hve-rpi-builder for deeper research.",
+      "description": "Author and review ADRs, BRDs, PRDs, architecture diagrams, backlogs, SLOs, UX plans, and experiments, with Jira and GitLab workflows. Pair with hve-base for deeper research.",
       "version": "3.2.2",
       "author": {
         "name": "Microsoft",
@@ -65,13 +88,17 @@
         "project-planning",
         "adr",
         "brd",
-        "prd"
+        "prd",
+        "architecture",
+        "backlog",
+        "jira",
+        "gitlab"
       ]
     },
     {
       "name": "hve-sdlc-git",
       "source": "./.github/plugins/sdlc-git",
-      "description": "Set up Git, commit, merge, prepare GitHub pull requests, and review code. Pair with hve-sdlc-security for a specialist security assessment.",
+      "description": "Set up Git, commit, merge, prepare GitHub pull requests, and manage GitHub backlog operations. Pair with hve-base for code review and RPI workflows.",
       "version": "3.2.2",
       "author": {
         "name": "Microsoft",
@@ -83,8 +110,9 @@
       "keywords": [
         "hve",
         "git",
+        "github",
         "pull-requests",
-        "code-review"
+        "backlog"
       ]
     },
     {
@@ -110,7 +138,7 @@
     {
       "name": "hve-sdlc-security",
       "source": "./.github/plugins/sdlc-security",
-      "description": "Plan and review application and software supply chain security (SSSC). Pair with hve-sdlc-responsible-ai for AI systems or hve-sdlc-git for code review.",
+      "description": "Plan and review application security, software supply chain security (SSSC), privacy, Responsible AI, and accessibility. Pair with hve-base for code review.",
       "version": "3.2.2",
       "author": {
         "name": "Microsoft",
@@ -124,45 +152,10 @@
         "security",
         "security-review",
         "sssc",
-        "supply-chain"
-      ]
-    },
-    {
-      "name": "hve-sdlc-responsible-ai",
-      "source": "./.github/plugins/sdlc-responsible-ai",
-      "description": "Plan and review responsible AI systems, assess risks, and document human oversight. Pair with hve-sdlc-security or hve-sdlc-privacy for related assessments.",
-      "version": "3.2.2",
-      "author": {
-        "name": "Microsoft",
-        "url": "https://www.microsoft.com"
-      },
-      "homepage": "https://github.com/microsoft/hve-core",
-      "repository": "https://github.com/microsoft/hve-core",
-      "license": "MIT",
-      "keywords": [
-        "hve",
-        "responsible-ai",
-        "rai",
-        "risk-assessment"
-      ]
-    },
-    {
-      "name": "hve-sdlc-privacy",
-      "source": "./.github/plugins/sdlc-privacy",
-      "description": "Map personal-data flows, assess DPIA triggers, and review privacy plans. Pair with hve-sdlc-security for a security assessment.",
-      "version": "3.2.2",
-      "author": {
-        "name": "Microsoft",
-        "url": "https://www.microsoft.com"
-      },
-      "homepage": "https://github.com/microsoft/hve-core",
-      "repository": "https://github.com/microsoft/hve-core",
-      "license": "MIT",
-      "keywords": [
-        "hve",
+        "supply-chain",
         "privacy",
-        "dpia",
-        "data-protection"
+        "responsible-ai",
+        "accessibility"
       ]
     }
   ]

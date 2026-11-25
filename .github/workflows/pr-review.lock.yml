@@ -567,14 +567,14 @@ jobs:
             .github/copilot-instructions.md
             .github/PULL_REQUEST_TEMPLATE.md
             .github/instructions/
-            .github/plugins/rpi-builder/instructions/
-            .github/plugins/sdlc-git/instructions/
-            .github/plugins/sdlc-git/skills/coding-standards/code-review/
-            .github/plugins/rpi-builder/skills/coding-standards/hve-artifact-authoring/
-            .github/skills/coding-standards/python-foundational/
+            .github/plugins/base/instructions/
+            .github/plugins/sdlc/instructions/
+            .github/plugins/base/skills/coding-standards/code-review/
+            .github/plugins/base/skills/coding-standards/hve-artifact-authoring/
+            .github/plugins/sdlc/skills/coding-standards/python-foundational/
             .github/skills/shared/telemetry-foundations/
-            .github/skills/accessibility/accessibility/SKILL.md
-            .github/skills/accessibility/accessibility/references/frameworks/
+            .github/plugins/sdlc-security/skills/accessibility/accessibility/SKILL.md
+            .github/plugins/sdlc-security/skills/accessibility/accessibility/references/frameworks/
             scripts/
             docs/
             package.json

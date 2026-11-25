@@ -1156,13 +1156,13 @@ Use `continue-on-error: true` to prevent workflow failure on SARIF upload issues
 
 ## Configuration Files
 
-| File                                                              | Purpose                      | Used By                     |
-|-------------------------------------------------------------------|------------------------------|-----------------------------|
-| `scripts/linting/PSScriptAnalyzer.psd1`                           | PowerShell linting rules     | `ps-script-analyzer.yml`    |
-| `.markdownlint.json`                                              | Markdown formatting rules    | `markdown-lint.yml`         |
-| `scripts/linting/markdown-link-check.config.json`                 | Link checking configuration  | `markdown-link-check.yml`   |
-| `.cspell.json`                                                    | Spell checking configuration | `spell-check.yml`           |
-| `.github/instructions/hve-core/markdown.instructions.md`          | Markdown style guide         | All markdown workflows      |
+| File                                                                               | Purpose                      | Used By                     |
+|------------------------------------------------------------------------------------|------------------------------|-----------------------------|
+| `scripts/linting/PSScriptAnalyzer.psd1`                                            | PowerShell linting rules     | `ps-script-analyzer.yml`    |
+| `.markdownlint.json`                                                               | Markdown formatting rules    | `markdown-lint.yml`         |
+| `scripts/linting/markdown-link-check.config.json`                                  | Link checking configuration  | `markdown-link-check.yml`   |
+| `.cspell.json`                                                                     | Spell checking configuration | `spell-check.yml`           |
+| `.github/instructions/hve-core/markdown.instructions.md`                           | Markdown style guide         | All markdown workflows      |
 | `.github/plugins/sdlc-git/skills/hve-core/git-commit/references/commit-message.md` | Commit message standards     | All workflows (informative) |
 
 ## Resources

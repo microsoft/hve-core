@@ -2,7 +2,7 @@
 title: Session Log Canvas Update Skill Security Model
 description: STRIDE threat model for the session-log-canvas-update skill organized by assets, adversaries, and trust buckets (schema discovery and parsing, baseline and report outputs, indexer module import) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-10-23
+ms.date: 2026-11-24
 ms.topic: reference
 estimated_reading_time: 10
 keywords:
@@ -55,7 +55,7 @@ The session-log-canvas-update skill keeps the Session Log canvas aligned with Co
 
 1. `scripts/event-schema.mjs`: the CLI. It finds schemas at `<COPILOT_HOME or ~/.copilot>/pkg/<platform>/<version>/schemas/session-events.schema.json`, or reads the file passed with `--schema <path>.json`, reads the owning `package.json` for the package name and version, extracts event shapes under fixed bounds, and prints a snapshot or a Markdown or JSON diff.
 2. `assets/event-shapes.json`: the committed baseline of event types, field paths, type signatures, and source metadata. `snapshot --write` replaces it, and `diff` reads it unless `--baseline <path>` names another file.
-3. Canvas indexer, `.github/extensions/hve-core/session-log/lib/indexer.mjs`: the repository module that `diff` imports by default to read `HANDLED_EVENT_TYPES` and `HANDLED_EVENT_PREFIXES`. `diff --indexer <path>` imports a different module instead.
+3. Canvas indexer, `.github/plugins/base/extensions/hve-core/session-log/lib/indexer.mjs`: the repository module that `diff` imports by default to read `HANDLED_EVENT_TYPES` and `HANDLED_EVENT_PREFIXES`. `diff --indexer <path>` imports a different module instead.
 4. `tests/event-schema.test.mjs`: `node:test` coverage for extraction, rejection of files without event types, and the extraction bounds. The crafted deep and wide schemas run in a worker thread so the test timeout can stop a runaway extraction.
 
 ### Data Flow
@@ -232,7 +232,7 @@ flowchart TD
 
 ### Spoofing
 
-* The default module path is fixed relative to the script: `.github/extensions/hve-core/session-log/lib/indexer.mjs` in the same checkout. `diff --indexer <path>` replaces it with any path the operator gives, and the CLI cannot verify who wrote that module.
+* The default module path is fixed relative to the script: `.github/plugins/base/extensions/hve-core/session-log/lib/indexer.mjs` in the same checkout. `diff --indexer <path>` replaces it with any path the operator gives, and the CLI cannot verify who wrote that module.
 
 ### Tampering
 

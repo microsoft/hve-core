@@ -67,7 +67,7 @@ Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
 $script:AuthoredSchemaPath = Join-Path $PSScriptRoot 'schemas/design-intent.schema.json'
 $script:VerificationSchemaPath = Join-Path $PSScriptRoot 'schemas/design-intent-verification.schema.json'
-$script:DefaultProbeCriteriaMapPath = Join-Path $PSScriptRoot '../../.github/skills/accessibility/accessibility/scripts/runtime_a11y/probe-criteria-map.json'
+$script:DefaultProbeCriteriaMapPath = Join-Path $PSScriptRoot '../../.github/plugins/sdlc-security/skills/accessibility/accessibility/scripts/runtime_a11y/probe-criteria-map.json'
 
 # 'default' is every surface's implicit base state and is never declared in runtime config.
 $script:ImplicitState = 'default'

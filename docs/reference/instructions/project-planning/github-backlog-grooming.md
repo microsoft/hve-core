@@ -3,7 +3,7 @@ title: Project Planning/Github Backlog Grooming
 description: "Reusable GitHub backlog grooming policy for evidence-backed assessment, advisory dispositions, and approved writeback"
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                           |
-|-------------|---------------------------------------------------------------------------------|
-| Kind        | instruction                                                                     |
-| Source      | `.github/instructions/project-planning/github-backlog-grooming.instructions.md` |
-| Invocation  | Applied automatically to `**/.copilot-tracking/github-issues/backlog/**`        |
-| Interactive | No                                                                              |
+| Field       | Value                                                                                            |
+|-------------|--------------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                      |
+| Source      | `.github/plugins/sdlc-git/instructions/project-planning/github-backlog-grooming.instructions.md` |
+| Invocation  | Applied automatically to `**/.copilot-tracking/github-issues/backlog/**`                         |
+| Interactive | No                                                                                               |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

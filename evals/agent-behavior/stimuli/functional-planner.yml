@@ -18,7 +18,7 @@ stimuli:
       If the file cannot be read, report the task as blocked without inventing its declarations.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/functional-planner.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/functional-planner.agent.md
           dest: .github/agents/project-planning/functional-planner.agent.md
     tags:
       category: agent-behavior
@@ -46,7 +46,7 @@ stimuli:
       If the file cannot be read, report the task as blocked without inventing its declarations.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/functional-planner.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/functional-planner.agent.md
           dest: .github/agents/project-planning/functional-planner.agent.md
     tags:
       category: agent-behavior
@@ -70,7 +70,7 @@ stimuli:
       If the file cannot be read, report the task as blocked without inventing its declarations.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/functional-planner.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/functional-planner.agent.md
           dest: .github/agents/project-planning/functional-planner.agent.md
     tags:
       category: agent-behavior
@@ -109,7 +109,7 @@ stimuli:
       If the file cannot be read, report the task as blocked without inventing its declarations.
     agent_environment:
       files:
-        - src: ../../.github/agents/project-planning/functional-planner.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/functional-planner.agent.md
           dest: .github/agents/project-planning/functional-planner.agent.md
     tags:
       category: agent-behavior

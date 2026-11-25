@@ -13,7 +13,7 @@ tags:
   - architecture
   - reference
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -54,7 +54,9 @@ flowchart TD
   RP -->|"uses"| S2
 ```
 
-The RAI Planner agent definition lives at `.github/plugins/sdlc-responsible-ai/agents/rai-planning/rai-planner.agent.md`. At session start the agent activates the `planner-identity` and `rai-planner` skills and reads the `rai-planner` skill's `references/rai-identity.md`. One instruction file under `.github/plugins/sdlc-responsible-ai/instructions/rai-planning/` adds licensing rules for files under `.copilot-tracking/rai-plans/`. Phase-specific assessment guidance lives in the `rai-planner` skill and the `rai-standards` skill.
+The RAI Planner agent definition lives at `.github/plugins/sdlc-security/agents/rai-planning/rai-planner.agent.md`. At session start the agent activates the `planner-identity` and `rai-planner` skills and reads the `rai-planner` skill's `references/rai-identity.md`.
+
+One instruction file under `.github/plugins/sdlc-security/instructions/rai-planning/` adds licensing rules for files under `.copilot-tracking/rai-plans/`. Phase-specific assessment guidance lives in the `rai-planner` skill and the `rai-standards` skill.
 
 | Instruction file                      | Domain                                                                    |
 |---------------------------------------|---------------------------------------------------------------------------|
@@ -167,13 +169,13 @@ When conversation context is compacted, a seven-step recovery process reconstruc
 
 ## Related Files
 
-| File                                                                | Purpose                             |
-|---------------------------------------------------------------------|-------------------------------------|
-| `.github/plugins/sdlc-responsible-ai/agents/rai-planning/rai-planner.agent.md`                  | Agent definition                    |
-| `.github/plugins/sdlc-responsible-ai/agents/rai-planning/rai-reviewer.agent.md`                 | Reviewer agent orchestrator         |
-| `.github/plugins/sdlc-responsible-ai/agents/rai-planning/subagents/rai-skill-assessor.agent.md` | Skill assessor subagent             |
-| `.github/plugins/sdlc-responsible-ai/instructions/rai-planning/*.instructions.md`               | Identity and licensing instructions |
-| `.copilot-tracking/rai-plans/{project-slug}/state.json`             | Assessment state                    |
+| File                                                                                      | Purpose                             |
+|-------------------------------------------------------------------------------------------|-------------------------------------|
+| `.github/plugins/sdlc-security/agents/rai-planning/rai-planner.agent.md`                  | Agent definition                    |
+| `.github/plugins/sdlc-security/agents/rai-planning/rai-reviewer.agent.md`                 | Reviewer agent orchestrator         |
+| `.github/plugins/sdlc-security/agents/rai-planning/subagents/rai-skill-assessor.agent.md` | Skill assessor subagent             |
+| `.github/plugins/sdlc-security/instructions/rai-planning/*.instructions.md`               | Identity and licensing instructions |
+| `.copilot-tracking/rai-plans/{project-slug}/state.json`                                   | Assessment state                    |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

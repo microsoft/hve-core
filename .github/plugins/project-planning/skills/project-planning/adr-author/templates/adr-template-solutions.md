@@ -3,7 +3,7 @@ title: ADR Title
 description: '[The title should be unique within the library, provide a longer title if needed to differentiate with other ADRs]'
 sidebar_position: 1
 author: Name of author(s)
-ms.date: 2026-10-13
+ms.date: 2026-11-24
 ms.topic: architecture
 estimated_reading_time: 2
 keywords:
@@ -259,10 +259,3 @@ Neutral Consequences: [Other changes or considerations]
 Monitoring and Evolution: [What to watch for and when to re-evaluate]
 
 Review Triggers: [Conditions that would require re-evaluation of this decision]
-
----
-
-<!-- markdownlint-disable MD036 -->
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
-then carefully refined by our team of discerning human reviewers.*
-<!-- markdownlint-enable MD036 -->

@@ -48,8 +48,8 @@ stimuli:
         - src: fixtures/rai-reviewer-audit-copilot-instructions.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/rai/rai-standards
-        - ../../.github/skills/security/security-reviewer-formats
+        - ../../.github/plugins/sdlc-security/skills/rai/rai-standards
+        - ../../.github/plugins/sdlc-security/skills/security/security-reviewer-formats
     tags:
       category: agent-behavior
       scenario: staged-response-contract

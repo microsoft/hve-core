@@ -7,11 +7,12 @@
 #>
 
 BeforeAll {
+    Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force
     $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
     $script:validator = Join-Path $script:repoRoot 'scripts/linting/Validate-DesignIntent.ps1'
     $script:authoredSchemaPath = Join-Path $script:repoRoot 'scripts/linting/schemas/design-intent.schema.json'
     $script:verificationSchemaPath = Join-Path $script:repoRoot 'scripts/linting/schemas/design-intent-verification.schema.json'
-    $script:adequacyMapPath = Join-Path $script:repoRoot '.github/skills/accessibility/accessibility/scripts/runtime_a11y/probe-criteria-map.json'
+    $script:adequacyMapPath = Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/skills/accessibility/accessibility/scripts/runtime_a11y/probe-criteria-map.json'
     $script:fixtureRoot = Join-Path $script:repoRoot 'scripts/tests/fixtures/design-intent/valid-repo'
 
     Import-Module powershell-yaml -ErrorAction Stop | Out-Null
@@ -123,7 +124,7 @@ Describe 'Design Intent schemas' -Tag 'Unit' {
     }
 
     It 'Generated runtime authored schema is byte-identical after synchronization' {
-        $runtimeSchemaPath = Join-Path $script:repoRoot '.github/skills/accessibility/accessibility/scripts/runtime_a11y/design-intent.schema.json'
+        $runtimeSchemaPath = Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/skills/accessibility/accessibility/scripts/runtime_a11y/design-intent.schema.json'
         if (-not (Test-Path -LiteralPath $runtimeSchemaPath -PathType Leaf)) {
             Set-ItResult -Skipped -Because 'generated runtime schema copy has not been synchronized yet'
             return

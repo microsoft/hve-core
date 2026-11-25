@@ -3,7 +3,7 @@ title: Project Planning/Backlog Guardrails
 description: "Require the backlog-management destination, authorization, sanitization, and review controls before a tracker-bound mutation from a backlog tracking root"
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - instruction
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                                                                    |
 |-------------|------------------------------------------------------------------------------------------------------------------------------------------|
 | Kind        | instruction                                                                                                                              |
-| Source      | `.github/instructions/project-planning/backlog-guardrails.instructions.md`                                                               |
+| Source      | `.github/plugins/project-planning/instructions/project-planning/backlog-guardrails.instructions.md`                                      |
 | Invocation  | Applied automatically to `**/.copilot-tracking/workitems/**, **/.copilot-tracking/github-issues/**, **/.copilot-tracking/jira-issues/**` |
 | Interactive | No                                                                                                                                       |
 <!-- END AUTO-GENERATED: metadata -->

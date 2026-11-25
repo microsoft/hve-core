@@ -154,8 +154,9 @@ $script:invalidCases = @(
 )
 
 BeforeAll {
+    Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force
     $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
-    $script:schemaPath = Join-Path $script:repoRoot '.github/plugins/sdlc-responsible-ai/skills/project-planning/rai-planner/assets/schemas/rai-state.schema.json'
+    $script:schemaPath = Resolve-CanonicalArtifactPath -RepoRoot $script:repoRoot -Path '.github/skills/project-planning/rai-planner/assets/schemas/rai-state.schema.json'
     $script:schemaJson = Get-Content -Path $script:schemaPath -Raw
     $script:minimalFixturePath = Join-Path $script:repoRoot 'scripts/tests/fixtures/rai-state/phase-1-minimal.json'
 

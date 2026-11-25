@@ -2,7 +2,7 @@
 title: Creating Custom Agents
 description: Build specialized agents with tool lists, preloaded skills, and subagent delegation for your team
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: how-to
 keywords:
   - agents
@@ -81,7 +81,7 @@ Walk through improving the current RPI Researcher subagent using `hve-builder`.
 ### Step 1: Identify the target and requirements
 
 ```text
-RPI Researcher target: .github/plugins/rpi-builder/agents/hve-core/subagents/rpi-researcher.agent.md
+RPI Researcher target: .github/plugins/base/agents/hve-core/subagents/rpi-researcher.agent.md
 Requirements: Preserve its read-only, return-only contract, the source-pointer
 return shape, and the structured response contract.
 ```

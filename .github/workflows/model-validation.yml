@@ -10,6 +10,8 @@ on:
     paths:
       - '.github/agents/**/*.agent.md'
       - '.github/prompts/**/*.prompt.md'
+      - '.github/plugins/*/agents/**/*.agent.md'
+      - '.github/plugins/*/prompts/**/*.prompt.md'
       - 'scripts/linting/model-catalog.json'
       - 'scripts/linting/Test-ModelReferences.ps1'
   workflow_dispatch:

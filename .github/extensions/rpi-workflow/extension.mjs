@@ -2,4 +2,4 @@
 // SPDX-License-Identifier: MIT
 
 // Project discovery delegates to the same entry shipped in both plugins.
-import '../../plugins/rpi-builder/extensions/hve-core/rpi-workflow/extension.mjs';
+import '../../plugins/base/extensions/hve-core/rpi-workflow/extension.mjs';

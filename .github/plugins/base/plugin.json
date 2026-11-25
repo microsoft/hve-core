@@ -1,0 +1,52 @@
+{
+  "name": "hve-base",
+  "description": "Research, plan, implement, and review with RPI; build Copilot customizations with HVE Builder; review code with the RPI Workflow, Session Log, and Code Review canvases.",
+  "version": "3.2.2",
+  "author": {
+    "name": "Microsoft",
+    "url": "https://www.microsoft.com"
+  },
+  "homepage": "https://github.com/microsoft/hve-core",
+  "repository": "https://github.com/microsoft/hve-core",
+  "license": "MIT",
+  "keywords": [
+    "hve",
+    "hve-base",
+    "rpi",
+    "hve-builder",
+    "code-review",
+    "canvases"
+  ],
+  "agents": [
+    "agents/coding-standards/code-review.agent.md",
+    "agents/hve-core/rpi-agent.agent.md",
+    "agents/hve-core/subagents/hve-builder-review.agent.md",
+    "agents/hve-core/subagents/rpi-plan-critic.agent.md",
+    "agents/hve-core/subagents/rpi-researcher.agent.md",
+    "agents/hve-core/subagents/rpi-reviewer.agent.md"
+  ],
+  "rules": [
+    "instructions/git/code-review-telemetry.instructions.md",
+    "instructions/hve-core/copilot-tracking-location.instructions.md",
+    "instructions/hve-core/copilot-tracking.instructions.md",
+    "instructions/hve-core/hve-builder.instructions.md",
+    "instructions/rpi/implementation-telemetry.instructions.md"
+  ],
+  "skills": [
+    "skills/coding-standards/code-review",
+    "skills/coding-standards/hve-artifact-authoring",
+    "skills/hve-core/hve-builder",
+    "skills/rpi/rpi",
+    "skills/rpi/rpi-challenger",
+    "skills/rpi/rpi-implement",
+    "skills/rpi/rpi-plan",
+    "skills/rpi/rpi-plan-critique",
+    "skills/rpi/rpi-refine",
+    "skills/rpi/rpi-research",
+    "skills/rpi/rpi-review",
+    "skills/rpi/rpi-walkthrough"
+  ],
+  "extensions": [
+    "extensions/hve-core"
+  ]
+}

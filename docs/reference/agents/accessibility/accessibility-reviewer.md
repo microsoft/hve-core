@@ -3,7 +3,7 @@ title: Accessibility Reviewer
 description: Accessibility skill assessment orchestrator for codebase profiling and accessibility findings reporting
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                           |
-|-------------|-----------------------------------------------------------------|
-| Kind        | agent                                                           |
-| Source      | `.github/agents/accessibility/accessibility-reviewer.agent.md`  |
-| Invocation  | Selected from the chat agent picker as `Accessibility Reviewer` |
-| Interactive | Yes                                                             |
+| Field       | Value                                                                                |
+|-------------|--------------------------------------------------------------------------------------|
+| Kind        | agent                                                                                |
+| Source      | `.github/plugins/sdlc-security/agents/accessibility/accessibility-reviewer.agent.md` |
+| Invocation  | Selected from the chat agent picker as `Accessibility Reviewer`                      |
+| Interactive | Yes                                                                                  |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

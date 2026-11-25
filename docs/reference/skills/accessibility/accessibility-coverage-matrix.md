@@ -3,7 +3,7 @@ title: accessibility-coverage-matrix
 description: "Build, refresh, report, or probe an accessibility coverage matrix across criteria, surfaces, and evidence methods. Use when assessing coverage with the accessibility runtime harness and generated evidence bundle."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - skill
@@ -15,7 +15,7 @@ keywords:
 | Field       | Value                                                                                                        |
 |-------------|--------------------------------------------------------------------------------------------------------------|
 | Kind        | skill                                                                                                        |
-| Source      | `.github/skills/accessibility/accessibility-coverage-matrix`                                                 |
+| Source      | `.github/plugins/sdlc-security/skills/accessibility/accessibility-coverage-matrix`                           |
 | Invocation  | Invoked directly as `/accessibility-coverage-matrix`; model invocation is disabled, so agents do not load it |
 | Interactive | No                                                                                                           |
 <!-- END AUTO-GENERATED: metadata -->

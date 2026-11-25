@@ -681,7 +681,7 @@ Describe 'Repository agents' -Tag 'Unit' {
     It 'Resolves the RPI skills named in backticks as the rpi-agent surface' {
         $surface = @(Get-AgentSurfaceSkill -RepoRoot $script:RepoRoot -AgentRelativePath '.github/agents/hve-core/rpi-agent.agent.md')
         foreach ($skill in @('rpi-research', 'rpi-plan', 'rpi-implement', 'rpi-review', 'rpi-refine')) {
-            $surface | Should -Contain ".github/skills/rpi/$skill"
+            $surface | Should -Contain ".github/plugins/base/skills/rpi/$skill"
         }
     }
 

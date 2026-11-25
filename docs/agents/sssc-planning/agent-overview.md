@@ -124,12 +124,12 @@ When conversation context was compacted by the chat system, the agent also reads
 
 ## Related Files
 
-| File type    | Location                                                 |
-|--------------|----------------------------------------------------------|
-| Agent        | `.github/plugins/sdlc-security/agents/security/sssc-planner.agent.md`          |
-| Instructions | `.github/plugins/sdlc-security/instructions/security/`                         |
-| Skill        | `.github/plugins/sdlc-security/skills/security/supply-chain-security/`         |
-| State        | `.copilot-tracking/sssc-plans/{project-slug}/state.json` |
+| File type    | Location                                                               |
+|--------------|------------------------------------------------------------------------|
+| Agent        | `.github/plugins/sdlc-security/agents/security/sssc-planner.agent.md`  |
+| Instructions | `.github/plugins/sdlc-security/instructions/security/`                 |
+| Skill        | `.github/plugins/sdlc-security/skills/security/supply-chain-security/` |
+| State        | `.copilot-tracking/sssc-plans/{project-slug}/state.json`               |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

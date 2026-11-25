@@ -2,7 +2,7 @@
 title: RCAEval real-world RCA evaluation
 description: Compare skilled and skill-free RCA on separate prepared and raw blinded RCAEval cohorts
 author: HVE Core Team
-ms.date: 2026-11-09
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - root cause analysis
@@ -205,7 +205,7 @@ and published provenance, never in the model's incident metadata.
 
 ## Field investigations versus evaluation trials
 
-In field use, the [root-cause-analysis skill](../../.github/skills/root-cause-analysis/root-cause-analysis/SKILL.md)
+In field use, the [root-cause-analysis skill](../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis/SKILL.md)
 conducts one investigation, not three benchmark rounds. Continue hypothesis testing and evidence
 collection automatically whenever the skill's host-mode rules, security policy, authorization,
 declared scope, and execution budget permit it without another approval. Ask only when an

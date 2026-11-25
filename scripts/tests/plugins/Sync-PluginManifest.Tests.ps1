@@ -958,7 +958,7 @@ Describe 'Committed repository manifest' -Tag 'Unit' {
         $catalog = Get-PluginCatalog -RepoRoot $script:RepositoryRoot
         $all = Get-PluginComponentSet -RepoRoot $script:RepositoryRoot
         $topics = @($catalog.Entries | Where-Object { $_.Source -ne '.' })
-        $topics | Should -HaveCount 7
+        $topics | Should -HaveCount 6
         foreach ($topic in $topics) {
             $local = Get-Content -LiteralPath (Join-Path $script:RepositoryRoot $topic.ManifestPath) -Raw | ConvertFrom-Json -AsHashtable
             $local.skills.Count | Should -BeGreaterThan 0

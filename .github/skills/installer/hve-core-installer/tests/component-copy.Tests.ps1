@@ -26,7 +26,7 @@ BeforeAll {
         $root = Join-Path $TestDrive "component-copy-$($script:FixtureCounter)"
         $source = Join-Path $root 'source'
         $target = Join-Path $root 'target'
-        $topic = '.github/plugins/rpi-builder'
+        $topic = '.github/plugins/base'
         $skill = "$topic/skills/rpi/rpi-plan"
 
         $sourceFiles = @{

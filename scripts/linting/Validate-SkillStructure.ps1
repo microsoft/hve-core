@@ -306,7 +306,7 @@ function Get-SkillScriptFile {
     [System.IO.FileInfo[]] Shipped non-test script files.
 
     .EXAMPLE
-    $scripts = Get-SkillScriptFile -Directory (Get-Item '.github/plugins/rpi-builder/skills/rpi/rpi-plan')
+    $scripts = Get-SkillScriptFile -Directory (Get-Item '.github/plugins/base/skills/rpi/rpi-plan')
     #>
     [CmdletBinding()]
     [OutputType([System.IO.FileInfo[]])]
@@ -446,7 +446,7 @@ function Test-SkillSecurityClassification {
     [string[]] Classification errors (empty when the skill conforms).
 
     .EXAMPLE
-    $errs = Test-SkillSecurityClassification -Directory $dir -SkillKey 'rpi/rpi-plan' -Classification $entries -RelativePath '.github/plugins/rpi-builder/skills/rpi/rpi-plan'
+    $errs = Test-SkillSecurityClassification -Directory $dir -SkillKey 'rpi/rpi-plan' -Classification $entries -RelativePath '.github/plugins/base/skills/rpi/rpi-plan'
     #>
     [CmdletBinding()]
     [OutputType([string[]])]

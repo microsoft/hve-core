@@ -3,7 +3,7 @@ title: RAI Skill Assessor
 description: "Assesses a single Responsible AI framework from the rai-standards skill against the codebase, reading framework references and returning structured findings"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                                           |
-|-------------|-------------------------------------------------------------------------------------------------|
-| Kind        | agent                                                                                           |
-| Source      | `.github/plugins/sdlc-responsible-ai/agents/rai-planning/subagents/rai-skill-assessor.agent.md` |
-| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)                        |
-| Interactive | No                                                                                              |
+| Field       | Value                                                                                     |
+|-------------|-------------------------------------------------------------------------------------------|
+| Kind        | agent                                                                                     |
+| Source      | `.github/plugins/sdlc-security/agents/rai-planning/subagents/rai-skill-assessor.agent.md` |
+| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)                  |
+| Interactive | No                                                                                        |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

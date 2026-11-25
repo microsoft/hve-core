@@ -3,7 +3,7 @@ title: RPI Plan Critic
 description: "Assesses one lens of an RPI implementation plan, such as requirement coverage, evidence support, executability, or risk, and returns candidate findings with locations, suggested severity, and the smallest useful change for the critique parent to verify. Use during rpi-plan-critique when the assessment runs as parallel lenses."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - agent
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                            |
-|-------------|----------------------------------------------------------------------------------|
-| Kind        | agent                                                                            |
-| Source      | `.github/plugins/rpi-builder/agents/hve-core/subagents/rpi-plan-critic.agent.md` |
-| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)         |
-| Interactive | No                                                                               |
+| Field       | Value                                                                     |
+|-------------|---------------------------------------------------------------------------|
+| Kind        | agent                                                                     |
+| Source      | `.github/plugins/base/agents/hve-core/subagents/rpi-plan-critic.agent.md` |
+| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)  |
+| Interactive | No                                                                        |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

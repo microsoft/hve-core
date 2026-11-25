@@ -1594,7 +1594,7 @@ stimuli:
       tests for, and what bounds its test authoring?
     agent_environment:
       skills:
-        - ../../.github/skills/hve-core/vally-tests
+        - ../../.github/plugins/sdlc/skills/hve-core/vally-tests
     tags:
       category: behavior-conformance
       skill: vally-tests
@@ -1616,8 +1616,8 @@ stimuli:
       Which of your available skills applies, and why?
     agent_environment:
       skills:
-        - ../../.github/skills/hve-core/vally-tests
-        - ../../.github/skills/hve-core/hve-builder
+        - ../../.github/plugins/sdlc/skills/hve-core/vally-tests
+        - ../../.github/plugins/base/skills/hve-core/hve-builder
     tags:
       category: behavior-conformance
       skill: vally-tests
@@ -1644,7 +1644,7 @@ stimuli:
       probes? Justify briefly without drafting probe text.
     agent_environment:
       skills:
-        - ../../.github/skills/hve-core/vally-tests
+        - ../../.github/plugins/sdlc/skills/hve-core/vally-tests
     tags:
       category: behavior-conformance
       skill: vally-tests
@@ -1671,7 +1671,7 @@ stimuli:
       `hve-builder`, without Markdown or explanation.
     environment:
       skills:
-        - ../../.github/skills/hve-core/hve-builder
+        - ../../.github/plugins/base/skills/hve-core/hve-builder
     tags:
       category: behavior-conformance
       skill: hve-builder
@@ -1689,7 +1689,7 @@ stimuli:
       rpi-research` or `rpi-research`.
     environment:
       skills:
-        - ../../.github/skills/hve-core/hve-builder
+        - ../../.github/plugins/base/skills/hve-core/hve-builder
     tags:
       category: behavior-conformance
       skill: hve-builder
@@ -1707,7 +1707,7 @@ stimuli:
       `rpi-research`, without Markdown or explanation.
     environment:
       skills:
-        - ../../.github/skills/hve-core/hve-builder
+        - ../../.github/plugins/base/skills/hve-core/hve-builder
     tags:
       category: behavior-conformance
       skill: hve-builder
@@ -1725,7 +1725,7 @@ stimuli:
       Markdown or explanation.
     environment:
       skills:
-        - ../../.github/skills/hve-core/hve-builder
+        - ../../.github/plugins/base/skills/hve-core/hve-builder
     tags:
       category: behavior-conformance
       skill: hve-builder
@@ -1744,7 +1744,7 @@ stimuli:
       explanation.
     environment:
       skills:
-        - ../../.github/skills/hve-core/hve-builder
+        - ../../.github/plugins/base/skills/hve-core/hve-builder
     tags:
       category: behavior-conformance
       skill: hve-builder
@@ -1767,7 +1767,7 @@ stimuli:
       only the selected value after each label and no explanation.
     environment:
       skills:
-        - ../../.github/skills/hve-core/hve-builder
+        - ../../.github/plugins/base/skills/hve-core/hve-builder
     tags:
       category: behavior-conformance
       skill: hve-builder
@@ -1792,7 +1792,7 @@ stimuli:
       only the selected value after each label and no explanation.
     environment:
       skills:
-        - ../../.github/skills/hve-core/pull-request
+        - ../../.github/plugins/sdlc-git/skills/hve-core/pull-request
     tags:
       category: behavior-conformance
       skill: pull-request
@@ -1817,7 +1817,7 @@ stimuli:
       only the selected value after each label and no explanation.
     environment:
       skills:
-        - ../../.github/skills/hve-core/pull-request
+        - ../../.github/plugins/sdlc-git/skills/hve-core/pull-request
     tags:
       category: behavior-conformance
       skill: pull-request
@@ -1844,7 +1844,7 @@ stimuli:
       only the selected value after each label and no explanation.
     agent_environment:
       skills:
-        - ../../.github/skills/hve-core/pull-request
+        - ../../.github/plugins/sdlc-git/skills/hve-core/pull-request
     tags:
       category: behavior-conformance
       skill: pull-request
@@ -1862,7 +1862,7 @@ stimuli:
       explanation.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-walkthrough
+        - ../../.github/plugins/base/skills/rpi/rpi-walkthrough
     tags:
       category: behavior-conformance
       skill: rpi-walkthrough
@@ -1880,7 +1880,7 @@ stimuli:
       explanation.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-challenger
+        - ../../.github/plugins/base/skills/rpi/rpi-challenger
     tags:
       category: behavior-conformance
       skill: rpi-challenger
@@ -1897,7 +1897,7 @@ stimuli:
       `read-only` or `edit the plan`.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-plan-critique
+        - ../../.github/plugins/base/skills/rpi/rpi-plan-critique
     tags:
       category: behavior-conformance
       skill: rpi-plan-critique
@@ -1915,7 +1915,7 @@ stimuli:
       available.
     agent_environment:
       skills:
-        - ../../.github/skills/rpi/rpi
+        - ../../.github/plugins/base/skills/rpi/rpi
     tags:
       category: behavior-conformance
       skill: rpi
@@ -1939,8 +1939,8 @@ stimuli:
       line, then one sentence on why.
     agent_environment:
       skills:
-        - ../../.github/skills/rpi/rpi
-        - ../../.github/skills/rpi/rpi-research
+        - ../../.github/plugins/base/skills/rpi/rpi
+        - ../../.github/plugins/base/skills/rpi/rpi-research
     tags:
       category: behavior-conformance
       skill: rpi
@@ -1963,8 +1963,8 @@ stimuli:
       `Skill: <name>` on the first line, then justify briefly.
     agent_environment:
       skills:
-        - ../../.github/skills/rpi/rpi
-        - ../../.github/skills/rpi/rpi-plan-critique
+        - ../../.github/plugins/base/skills/rpi/rpi
+        - ../../.github/plugins/base/skills/rpi/rpi-plan-critique
     tags:
       category: behavior-conformance
       skill: rpi
@@ -1990,7 +1990,7 @@ stimuli:
       tools or write files.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi
+        - ../../.github/plugins/base/skills/rpi/rpi
     tags:
       category: behavior-conformance
       skill: rpi
@@ -2072,9 +2072,9 @@ stimuli:
       - The final response answers both questions directly in plain language, stating that `src/export/legacy_exporter.py` does not exist and that `config/export.yaml` retains exported files for 45 days. A reader learns both answers from the response itself, without opening the research artifact or interpreting workflow labels such as disposition or readiness.
     agent_environment:
       skills:
-        - ../../.github/skills/rpi/rpi-research
+        - ../../.github/plugins/base/skills/rpi/rpi-research
       files:
-        - src: ../../.github/skills/rpi/rpi-research
+        - src: ../../.github/plugins/base/skills/rpi/rpi-research
           dest: .github/skills/rpi/rpi-research
         - src: fixtures/rpi-research-closeout/export-config.txt
           dest: config/export.yaml
@@ -2121,9 +2121,9 @@ stimuli:
       - The final response leads with a plain-language bottom line on the topic, stating that exported files are retained for 45 days as set in `config/export.yaml`, before supporting detail. It does not restate research questions the skill derived for itself, and it does not report workflow labels such as disposition or readiness.
     agent_environment:
       skills:
-        - ../../.github/skills/rpi/rpi-research
+        - ../../.github/plugins/base/skills/rpi/rpi-research
       files:
-        - src: ../../.github/skills/rpi/rpi-research
+        - src: ../../.github/plugins/base/skills/rpi/rpi-research
           dest: .github/skills/rpi/rpi-research
         - src: fixtures/rpi-research-closeout/export-config.txt
           dest: config/export.yaml
@@ -2164,7 +2164,7 @@ stimuli:
       `rpi-plan-critique`, without Markdown or explanation.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/plugins/base/skills/rpi/rpi-plan
     tags:
       category: behavior-conformance
       skill: rpi-plan
@@ -2258,7 +2258,7 @@ stimuli:
       - The response uses a descriptive evidence heading tied to P03-T02 or its plan area and does not create a separate per-entry formal identity.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-implement
+        - ../../.github/plugins/base/skills/rpi/rpi-implement
     tags:
       category: behavior-conformance
       skill: rpi-implement
@@ -2278,7 +2278,7 @@ stimuli:
       `Complete, Partial, Blocked`, without Markdown or explanation.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-review
+        - ../../.github/plugins/base/skills/rpi/rpi-review
     tags:
       category: behavior-conformance
       skill: rpi-review
@@ -2583,7 +2583,7 @@ stimuli:
       Mural team board for Phase 2. State when each one is read.
     agent_environment:
       skills:
-        - ../../.github/skills/project-planning/rai-planner
+        - ../../.github/plugins/sdlc-security/skills/project-planning/rai-planner
     tags:
       category: behavior-conformance
       skill: rai-planner
@@ -2625,7 +2625,7 @@ stimuli:
       happens when Research is blocked.
     environment:
       skills:
-        - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/plugins/project-planning/skills/project-planning/requirements-author
     tags:
       category: behavior-conformance
       skill: requirements-author
@@ -2659,7 +2659,7 @@ stimuli:
       the compact pointer without inventing answers.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
     tags:
       category: behavior-conformance
       skill: proposal-response
@@ -2694,7 +2694,7 @@ stimuli:
       compact pointer.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
     tags:
       category: behavior-conformance
       skill: proposal-response
@@ -2732,7 +2732,7 @@ stimuli:
       and return a compact pointer that exposes recalculated coverage.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
       files:
         - src: fixtures/proposal-response-atlas-rfp-response-evidence.txt
           dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
@@ -2776,7 +2776,7 @@ stimuli:
       I am not asking for any new analysis, contribution, draft, or rendering.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
       files:
         - src: fixtures/proposal-response-atlas-rfp-response-evidence.txt
           dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
@@ -2810,7 +2810,7 @@ stimuli:
       record and contributed claim with the compact pointer.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
       files:
         - src: fixtures/proposal-response-northwind-onboarding-brd.txt
           dest: docs/project-planning/northwind-onboarding-brd.md
@@ -2845,7 +2845,7 @@ stimuli:
       with the compact pointer.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
       files:
         - src: fixtures/proposal-response-supplier-cycle-time-outcome-hypothesis.txt
           dest: docs/planning/outcome-hypotheses/supplier-cycle-time-outcome-hypothesis.md
@@ -2878,7 +2878,7 @@ stimuli:
       unresolved item created for this gap with the compact pointer.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
     tags:
       category: behavior-conformance
       skill: proposal-response
@@ -2905,7 +2905,7 @@ stimuli:
       availability the supplier portal commits to. Return the result.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
     tags:
       category: behavior-conformance
       skill: proposal-response
@@ -2936,7 +2936,7 @@ stimuli:
       compact pointer.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
     tags:
       category: behavior-conformance
       skill: proposal-response
@@ -2972,7 +2972,7 @@ stimuli:
       and state which records block structural readiness and why.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
     tags:
       category: behavior-conformance
       skill: proposal-response
@@ -3003,7 +3003,7 @@ stimuli:
       with the smallest clearing action.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
       files:
         - src: fixtures/proposal-response-atlas-rfp-invalid-evidence.txt
           dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
@@ -3040,7 +3040,7 @@ stimuli:
       with all fixed authority markers.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
     tags:
       category: behavior-conformance
       skill: proposal-response
@@ -3074,7 +3074,7 @@ stimuli:
       compact pointer.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
     tags:
       category: behavior-conformance
       skill: proposal-response
@@ -3101,7 +3101,7 @@ stimuli:
       compact pointer.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
     tags:
       category: behavior-conformance
       skill: proposal-response
@@ -3125,7 +3125,7 @@ stimuli:
       drafting, or rendering.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
       files:
         - src: fixtures/proposal-response-atlas-rfp-terminal-evidence.txt
           dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
@@ -3159,7 +3159,7 @@ stimuli:
       return the compact pointer.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
       files:
         - src: fixtures/proposal-response-mixed-domain-draft-ready-evidence.txt
           dest: .copilot-tracking/proposal-responses/mixed-domain-rfp/response-evidence.yml
@@ -3194,7 +3194,7 @@ stimuli:
       each step.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
       files:
         - src: fixtures/proposal-response-northwind-onboarding-brd.txt
           dest: docs/project-planning/northwind-onboarding-brd.md
@@ -3220,7 +3220,7 @@ stimuli:
       explain the result briefly.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
     tags:
       category: behavior-conformance
       skill: proposal-response
@@ -3249,7 +3249,7 @@ stimuli:
       internal review.
     environment:
       skills:
-        - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/plugins/project-planning/skills/project-planning/proposal-response
       files:
         - src: fixtures/proposal-response-northwind-onboarding-brd.txt
           dest: docs/project-planning/northwind-onboarding-brd.md
@@ -3885,7 +3885,7 @@ stimuli:
       proposed engagement is not really an experiment.
     environment:
       skills:
-        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
     tags:
       category: behavior-conformance
       skill: experiment-design
@@ -3907,7 +3907,7 @@ stimuli:
       experiment repeatable and comparable without selecting ML infrastructure.
     environment:
       skills:
-        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
     tags:
       category: behavior-conformance
       skill: experiment-design
@@ -3932,7 +3932,7 @@ stimuli:
       to that ordering once the first result lands?
     environment:
       skills:
-        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
     tags:
       category: behavior-conformance
       skill: experiment-design
@@ -3967,7 +3967,7 @@ stimuli:
       own that implementation work? Name what it does own.
     environment:
       skills:
-        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
     tags:
       category: behavior-conformance
       skill: experiment-design
@@ -3990,7 +3990,7 @@ stimuli:
       there anything it does not cover that I would need elsewhere?
     environment:
       skills:
-        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
     tags:
       category: behavior-conformance
       skill: experiment-design
@@ -4019,7 +4019,7 @@ stimuli:
       reduces collaborative experiment work.
     environment:
       skills:
-        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/plugins/project-planning/skills/project-planning/experiment-design
     tags:
       category: behavior-conformance
       skill: experiment-design
@@ -4869,10 +4869,10 @@ stimuli:
       draft exists.
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -4897,10 +4897,10 @@ stimuli:
       Amber-plus-warning case, and whether related signals are deduplicated.
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -4933,10 +4933,10 @@ stimuli:
       the investment thesis.
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -4962,10 +4962,10 @@ stimuli:
       skill perform either request?
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -4994,10 +4994,10 @@ stimuli:
       indicators default to per-employee activity or a broader level?
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -5017,10 +5017,10 @@ stimuli:
       contain no personal or sensitive data. What must the hypothesis document?
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -5045,10 +5045,10 @@ stimuli:
       "We will build a dashboard for users."
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -5075,10 +5075,10 @@ stimuli:
       additional assessment route is required?
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -5111,10 +5111,10 @@ stimuli:
       while framing an outcome hypothesis?
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -5142,10 +5142,10 @@ stimuli:
       YAML must preserve and validate.
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -5171,10 +5171,10 @@ stimuli:
       path, and has no source hash. What BRD handoff response is permitted?
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -5198,10 +5198,10 @@ stimuli:
       `OUTCOME_HYPOTHESIS_TO_BRD_HANDOFF_V1` payload?
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -5220,10 +5220,10 @@ stimuli:
       `OUTCOME_HYPOTHESIS_TO_BRD_HANDOFF_V1` payload?
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -5243,10 +5243,10 @@ stimuli:
       Explain how assess mode returns it and what may happen to the source.
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -5271,7 +5271,7 @@ stimuli:
       `outcome-hypothesis` skill deliver in create or assess mode?
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5292,10 +5292,10 @@ stimuli:
       Red pillars. Explain the required response before any draft is produced.
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -5320,10 +5320,10 @@ stimuli:
       draft.
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -5351,10 +5351,10 @@ stimuli:
       can transition to that status?
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -5378,10 +5378,10 @@ stimuli:
       should happen before the hypothesis is drafted or validated?
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -5520,10 +5520,10 @@ stimuli:
       what may be returned and what must be withheld.
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -5551,10 +5551,10 @@ stimuli:
       what is required to resume.
     environment:
       skills:
-        - ../../.github/skills/project-planning/outcome-hypothesis
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/outcome-hypothesis
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers/SKILL.md
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers/SKILL.md
           dest: .github/skills/project-planning/project-planning-disclaimers/SKILL.md
     tags:
       category: behavior-conformance
@@ -5592,7 +5592,7 @@ stimuli:
       Return exactly five labeled lines without bullets or explanation.
     environment:
       skills:
-        - ../../.github/skills/hve-core/hve-builder
+        - ../../.github/plugins/base/skills/hve-core/hve-builder
     tags:
       category: behavior-conformance
       skill: hve-builder
@@ -5610,7 +5610,7 @@ stimuli:
       prompt, agent, instruction, or skill.
     environment:
       skills:
-        - ../../.github/skills/coding-standards/hve-artifact-authoring
+        - ../../.github/plugins/base/skills/coding-standards/hve-artifact-authoring
     tags:
       category: behavior-conformance
       skill: hve-artifact-authoring
@@ -5867,7 +5867,7 @@ stimuli:
       Readiness: ready or blocked; Critique: run or skipped.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/plugins/base/skills/rpi/rpi-plan
     tags:
       category: behavior-conformance
       skill: rpi-plan
@@ -5889,7 +5889,7 @@ stimuli:
       Readiness: Ready or Not ready.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/plugins/base/skills/rpi/rpi-plan
     tags:
       category: behavior-conformance
       skill: rpi-plan
@@ -5909,7 +5909,7 @@ stimuli:
       Choose continue, stop-revise, or finalize. Return only the choice.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/plugins/base/skills/rpi/rpi-plan
     tags:
       category: behavior-conformance
       skill: rpi-plan
@@ -5929,7 +5929,7 @@ stimuli:
       run. Choose continue, stop-revise, or finalize. Return only the choice.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/plugins/base/skills/rpi/rpi-plan
     tags:
       category: behavior-conformance
       skill: rpi-plan
@@ -5951,7 +5951,7 @@ stimuli:
       rerun-critique or stop-not-ready.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/plugins/base/skills/rpi/rpi-plan
     tags:
       category: behavior-conformance
       skill: rpi-plan
@@ -5975,7 +5975,7 @@ stimuli:
       rerun-critique or stop-not-ready.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/plugins/base/skills/rpi/rpi-plan
     tags:
       category: behavior-conformance
       skill: rpi-plan
@@ -5996,7 +5996,7 @@ stimuli:
       the chosen action.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-plan-critique
+        - ../../.github/plugins/base/skills/rpi/rpi-plan-critique
     tags:
       category: behavior-conformance
       skill: rpi-plan-critique
@@ -6016,7 +6016,7 @@ stimuli:
       treat PC-001? Return only mark-resolved, omit-finding, or repeat-finding.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-plan-critique
+        - ../../.github/plugins/base/skills/rpi/rpi-plan-critique
     tags:
       category: behavior-conformance
       skill: rpi-plan-critique
@@ -6041,7 +6041,7 @@ stimuli:
       Return exactly the two labeled lines without explanation.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-plan-critique
+        - ../../.github/plugins/base/skills/rpi/rpi-plan-critique
     tags:
       category: behavior-conformance
       skill: rpi-plan-critique
@@ -6064,7 +6064,7 @@ stimuli:
       Return exactly two lines: A: your classification; B: your classification.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-plan-critique
+        - ../../.github/plugins/base/skills/rpi/rpi-plan-critique
     tags:
       category: behavior-conformance
       skill: rpi-plan-critique
@@ -6085,7 +6085,7 @@ stimuli:
       implement or confirm-first.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-implement
+        - ../../.github/plugins/base/skills/rpi/rpi-implement
     tags:
       category: behavior-conformance
       skill: rpi-implement
@@ -6107,7 +6107,7 @@ stimuli:
       implement or wait-for-human.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-implement
+        - ../../.github/plugins/base/skills/rpi/rpi-implement
     tags:
       category: behavior-conformance
       skill: rpi-implement
@@ -6128,7 +6128,7 @@ stimuli:
       chosen action.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-implement
+        - ../../.github/plugins/base/skills/rpi/rpi-implement
     tags:
       category: behavior-conformance
       skill: rpi-implement
@@ -6148,7 +6148,7 @@ stimuli:
       Return only the chosen action.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-review
+        - ../../.github/plugins/base/skills/rpi/rpi-review
     tags:
       category: behavior-conformance
       skill: rpi-review
@@ -6168,9 +6168,9 @@ stimuli:
       explain what must happen to the alternatives.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
-        - ../../.github/skills/root-cause-analysis/statistical-hypothesis-testing
-        - ../../.github/skills/root-cause-analysis/causal-evidence-likelihood
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/statistical-hypothesis-testing
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/causal-evidence-likelihood
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6190,7 +6190,7 @@ stimuli:
       test's execution status on a separate line as `Tn: <status>`.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6210,7 +6210,7 @@ stimuli:
       state and the decisive reason.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6234,7 +6234,7 @@ stimuli:
       which input requirement controls it.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/statistical-hypothesis-testing
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/statistical-hypothesis-testing
     tags:
       category: behavior-conformance
       skill: statistical-hypothesis-testing
@@ -6259,7 +6259,7 @@ stimuli:
       the cohort definition affects eligibility.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/statistical-hypothesis-testing
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/statistical-hypothesis-testing
     tags:
       category: behavior-conformance
       skill: statistical-hypothesis-testing
@@ -6285,7 +6285,7 @@ stimuli:
       Identify the execution path and explain why the cohort counts permit it.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/statistical-hypothesis-testing
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/statistical-hypothesis-testing
     tags:
       category: behavior-conformance
       skill: statistical-hypothesis-testing
@@ -6312,7 +6312,7 @@ stimuli:
       permitted fallback can report a p-value.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/statistical-hypothesis-testing
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/statistical-hypothesis-testing
     tags:
       category: behavior-conformance
       skill: statistical-hypothesis-testing
@@ -6338,7 +6338,7 @@ stimuli:
       the requested result.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/statistical-hypothesis-testing
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/statistical-hypothesis-testing
     tags:
       category: behavior-conformance
       skill: statistical-hypothesis-testing
@@ -6366,7 +6366,7 @@ stimuli:
       Numeric result: <computed value or None>
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/statistical-hypothesis-testing
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/statistical-hypothesis-testing
     tags:
       category: behavior-conformance
       skill: statistical-hypothesis-testing
@@ -6391,7 +6391,7 @@ stimuli:
       enter RCA pair selection or summaries.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/statistical-hypothesis-testing
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/statistical-hypothesis-testing
     tags:
       category: behavior-conformance
       skill: statistical-hypothesis-testing
@@ -6412,8 +6412,8 @@ stimuli:
       eligible.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
-        - ../../.github/skills/root-cause-analysis/statistical-hypothesis-testing
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/statistical-hypothesis-testing
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6439,9 +6439,9 @@ stimuli:
       causal assessment is allowed and `exclude` otherwise.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
-        - ../../.github/skills/root-cause-analysis/statistical-hypothesis-testing
-        - ../../.github/skills/root-cause-analysis/causal-evidence-likelihood
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/statistical-hypothesis-testing
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/causal-evidence-likelihood
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6461,8 +6461,8 @@ stimuli:
       evidence class and permitted use under the RCA contract.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
-        - ../../.github/skills/root-cause-analysis/causal-evidence-likelihood
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/causal-evidence-likelihood
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6484,8 +6484,8 @@ stimuli:
       RCA contract, formatted as a lowercase kebab-case value.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
-        - ../../.github/skills/root-cause-analysis/causal-evidence-likelihood
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/causal-evidence-likelihood
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6506,8 +6506,8 @@ stimuli:
       contract, formatted as a lowercase kebab-case value.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
-        - ../../.github/skills/root-cause-analysis/causal-evidence-likelihood
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/causal-evidence-likelihood
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6528,7 +6528,7 @@ stimuli:
       category as one lowercase kebab-case value.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6551,7 +6551,7 @@ stimuli:
       handle the statistical fields while assessing the direct evidence.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/causal-evidence-likelihood
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/causal-evidence-likelihood
     tags:
       category: behavior-conformance
       skill: causal-evidence-likelihood
@@ -6570,8 +6570,8 @@ stimuli:
       the investigation must treat the conflicting evidence and why.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
-        - ../../.github/skills/root-cause-analysis/causal-evidence-likelihood
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/causal-evidence-likelihood
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6595,8 +6595,8 @@ stimuli:
       owns that decision.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
-        - ../../.github/skills/root-cause-analysis/statistical-hypothesis-testing
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/statistical-hypothesis-testing
     tags:
       category: behavior-conformance
       skill: statistical-hypothesis-testing
@@ -6619,8 +6619,8 @@ stimuli:
       H-001's disposition and identify who owns that decision.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
-        - ../../.github/skills/root-cause-analysis/causal-evidence-likelihood
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/causal-evidence-likelihood
     tags:
       category: behavior-conformance
       skill: causal-evidence-likelihood
@@ -6646,7 +6646,7 @@ stimuli:
       Basis: <two distinct decisive test IDs, comma-separated>
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6666,7 +6666,7 @@ stimuli:
       next action and explain whether the restart may run.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6686,7 +6686,7 @@ stimuli:
       what must happen before evidence collection begins.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6706,7 +6706,7 @@ stimuli:
       sentence how to handle authorization before running the query.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6726,7 +6726,7 @@ stimuli:
       execution status and reason in one sentence.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6745,7 +6745,7 @@ stimuli:
       should expose approval history without overwhelming the causal narrative.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6764,7 +6764,7 @@ stimuli:
       Return four lines in the form `<state>: <required|not required>`.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6789,7 +6789,7 @@ stimuli:
       Basis: <two distinct decisive test IDs, comma-separated>
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
       files:
         - src: fixtures/rca-regression-corpus.json
           dest: rca-regression-corpus.json
@@ -6817,7 +6817,7 @@ stimuli:
       Basis: <decisive test or gap IDs, comma-separated when citing both>
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
       files:
         - src: fixtures/rca-regression-corpus.json
           dest: rca-regression-corpus.json
@@ -6845,7 +6845,7 @@ stimuli:
       Basis: <two distinct decisive evidence IDs, comma-separated>
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
       files:
         - src: fixtures/rca-regression-corpus.json
           dest: rca-regression-corpus.json
@@ -6873,7 +6873,7 @@ stimuli:
       Basis: <decisive evidence and gap IDs, comma-separated>
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
       files:
         - src: fixtures/rca-regression-corpus.json
           dest: rca-regression-corpus.json
@@ -6902,7 +6902,7 @@ stimuli:
       The two distinct basis IDs may appear in either order.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
       files:
         - src: fixtures/rca-evidence-record-a.json
           dest: rca-evidence-record-a.json
@@ -6930,7 +6930,7 @@ stimuli:
       The two distinct basis IDs may appear in either order.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
       files:
         - src: fixtures/rca-evidence-record-b.json
           dest: rca-evidence-record-b.json
@@ -6954,7 +6954,7 @@ stimuli:
       and what authorization is required before invoking the tool.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6974,7 +6974,7 @@ stimuli:
       record the field and whether its requested call may run.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -6995,7 +6995,7 @@ stimuli:
       values must be handled.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -7019,7 +7019,7 @@ stimuli:
       authority over an RCA disposition.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/causal-evidence-likelihood
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/causal-evidence-likelihood
     tags:
       category: behavior-conformance
       skill: causal-evidence-likelihood
@@ -7040,7 +7040,7 @@ stimuli:
       the outcome and what is required before this companion can proceed.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/statistical-hypothesis-testing
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/statistical-hypothesis-testing
     tags:
       category: behavior-conformance
       skill: statistical-hypothesis-testing
@@ -7062,7 +7062,7 @@ stimuli:
       this companion can proceed.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/causal-evidence-likelihood
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/causal-evidence-likelihood
     tags:
       category: behavior-conformance
       skill: causal-evidence-likelihood
@@ -7085,7 +7085,7 @@ stimuli:
       whether the tool may run and which controls apply.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -7107,7 +7107,7 @@ stimuli:
       before the claim can affect the investigation outcome.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -7129,8 +7129,8 @@ stimuli:
       contribute and whether it counts as an additional empirical source.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
-        - ../../.github/skills/root-cause-analysis/causal-evidence-likelihood
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/causal-evidence-likelihood
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -7152,7 +7152,7 @@ stimuli:
       should store.
     agent_environment:
       skills:
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
     tags:
       category: behavior-conformance
       skill: root-cause-analysis
@@ -7189,7 +7189,7 @@ stimuli:
       divergence-confirmed, or source-gap? Return only the value.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-implement
+        - ../../.github/plugins/base/skills/rpi/rpi-implement
     tags:
       category: behavior-conformance
       skill: rpi-implement
@@ -7209,7 +7209,7 @@ stimuli:
       the chosen action.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/plugins/base/skills/rpi/rpi-plan
     tags:
       category: behavior-conformance
       skill: rpi-plan
@@ -7229,7 +7229,7 @@ stimuli:
       tracker-comment. Return only the chosen option.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-review
+        - ../../.github/plugins/base/skills/rpi/rpi-review
     tags:
       category: behavior-conformance
       skill: rpi-review
@@ -7249,7 +7249,7 @@ stimuli:
       SHOULD-with-traceability-gap, or unassessed. Return only the chosen option.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-review
+        - ../../.github/plugins/base/skills/rpi/rpi-review
     tags:
       category: behavior-conformance
       skill: rpi-review
@@ -7269,7 +7269,7 @@ stimuli:
       ordinary-document-follow-up-without-note. Return only the chosen option.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-review
+        - ../../.github/plugins/base/skills/rpi/rpi-review
     tags:
       category: behavior-conformance
       skill: rpi-review
@@ -7289,7 +7289,7 @@ stimuli:
       Return only the chosen option.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/plugins/base/skills/rpi/rpi-plan
     tags:
       category: behavior-conformance
       skill: rpi-plan
@@ -7308,7 +7308,7 @@ stimuli:
       applies: business-alignment, none, or code-review. Return only the chosen option.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-review
+        - ../../.github/plugins/base/skills/rpi/rpi-review
     tags:
       category: behavior-conformance
       skill: rpi-review
@@ -7329,7 +7329,7 @@ stimuli:
       low. Return only the chosen option.
     environment:
       skills:
-        - ../../.github/skills/rpi/rpi-review
+        - ../../.github/plugins/base/skills/rpi/rpi-review
     tags:
       category: behavior-conformance
       skill: rpi-review
@@ -8320,9 +8320,9 @@ stimuli:
       Follow the skill only until its first required user decision, then stop.
     agent_environment:
       files:
-        - src: ../../.github/skills/hve-core/git-commit
+        - src: ../../.github/plugins/sdlc-git/skills/hve-core/git-commit
           dest: .github/skills/hve-core/git-commit
-        - src: ../../.github/skills/hve-core/git-commit/references/commit-message.md
+        - src: ../../.github/plugins/sdlc-git/skills/hve-core/git-commit/references/commit-message.md
           dest: .github/skills/hve-core/git-commit/references/commit-message.md
     tags:
       category: behavior-conformance
@@ -8378,7 +8378,7 @@ stimuli:
         source: ../..
         ref: HEAD
       files:
-        - src: ../../.github/skills/hve-core/git-commit
+        - src: ../../.github/plugins/sdlc-git/skills/hve-core/git-commit
           dest: .github/skills/hve-core/git-commit
       commands:
         - git config user.email eval@example.invalid
@@ -8464,7 +8464,7 @@ stimuli:
       arguments and explain how it coordinates the workflow.
     agent_environment:
       files:
-        - src: ../../.github/skills/hve-core/git-commit
+        - src: ../../.github/plugins/sdlc-git/skills/hve-core/git-commit
           dest: .github/skills/hve-core/git-commit
     tags:
       category: behavior-conformance
@@ -8490,9 +8490,9 @@ stimuli:
       Do not run commands or inspect real repository state.
     agent_environment: &git-push-environment
       files:
-        - src: ../../.github/skills/hve-core/git-merge
+        - src: ../../.github/plugins/sdlc-git/skills/hve-core/git-merge
           dest: .github/skills/hve-core/git-merge
-        - src: ../../.github/skills/hve-core/git-merge/references/merge-conventions.md
+        - src: ../../.github/plugins/sdlc-git/skills/hve-core/git-merge/references/merge-conventions.md
           dest: .github/skills/hve-core/git-merge/references/merge-conventions.md
     simulation: &git-push-no-shell
       tool_overrides:
@@ -9130,11 +9130,11 @@ stimuli:
       `Awaiting: <push-approval|pr-write-approval|both|none>`.
     agent_environment:
       files:
-        - src: ../../.github/skills/hve-core/pull-request
+        - src: ../../.github/plugins/sdlc-git/skills/hve-core/pull-request
           dest: .github/skills/hve-core/pull-request
-        - src: ../../.github/skills/hve-core/git-merge
+        - src: ../../.github/plugins/sdlc-git/skills/hve-core/git-merge
           dest: .github/skills/hve-core/git-merge
-        - src: ../../.github/skills/hve-core/git-merge/references/merge-conventions.md
+        - src: ../../.github/plugins/sdlc-git/skills/hve-core/git-merge/references/merge-conventions.md
           dest: .github/skills/hve-core/git-merge/references/merge-conventions.md
     simulation: *git-push-success
     tags:
@@ -9262,7 +9262,7 @@ stimuli:
       it coordinates the workflow.
     agent_environment:
       files:
-        - src: ../../.github/skills/hve-core/git-setup
+        - src: ../../.github/plugins/sdlc-git/skills/hve-core/git-setup
           dest: .github/skills/hve-core/git-setup
     tags:
       category: behavior-conformance
@@ -9284,7 +9284,7 @@ stimuli:
       stimulus from a target artifact's documented behavior.
     agent_environment:
       skills:
-        - ../../.github/skills/hve-core/vally-tests
+        - ../../.github/plugins/sdlc/skills/hve-core/vally-tests
     tags:
       category: behavior-conformance
       skill: vally-tests
@@ -9305,7 +9305,7 @@ stimuli:
       of refusal examples into the Vally conformance eval suite.
     agent_environment:
       skills:
-        - ../../.github/skills/hve-core/vally-tests
+        - ../../.github/plugins/sdlc/skills/hve-core/vally-tests
     tags:
       category: behavior-conformance
       skill: vally-tests
@@ -9327,8 +9327,8 @@ stimuli:
       identify reviewers.
     agent_environment:
       skills:
-        - ../../.github/skills/hve-core/pull-request
-        - ../../.github/skills/project-planning/backlog-management
+        - ../../.github/plugins/sdlc-git/skills/hve-core/pull-request
+        - ../../.github/plugins/project-planning/skills/project-planning/backlog-management
     tags:
       category: behavior-conformance
       skill: pull-request
@@ -9349,7 +9349,7 @@ stimuli:
       with minimal arguments and explain how it coordinates the workflow.
     agent_environment:
       skills:
-        - ../../.github/skills/project-planning/backlog-management
+        - ../../.github/plugins/project-planning/skills/project-planning/backlog-management
     tags:
       category: behavior-conformance
       skill: backlog-management
@@ -9423,7 +9423,7 @@ stimuli:
       coordinates the workflow.
     agent_environment:
       files:
-        - src: ../../.github/skills/security/incident-response
+        - src: ../../.github/plugins/sdlc-security/skills/security/incident-response
           dest: .github/skills/security/incident-response
     tags:
       category: behavior-conformance
@@ -9445,7 +9445,7 @@ stimuli:
       coordinates the workflow.
     agent_environment:
       files:
-        - src: ../../.github/skills/security/risk-register
+        - src: ../../.github/plugins/sdlc-security/skills/security/risk-register
           dest: .github/skills/security/risk-register
     tags:
       category: behavior-conformance
@@ -9540,7 +9540,7 @@ stimuli:
       step and the guardrail that must be satisfied before any external probing.
     agent_environment:
       files:
-        - src: ../../.github/skills/accessibility/accessibility-coverage-matrix
+        - src: ../../.github/plugins/sdlc-security/skills/accessibility/accessibility-coverage-matrix
           dest: .github/skills/accessibility/accessibility-coverage-matrix
     tags:
       category: behavior-conformance
@@ -9559,7 +9559,7 @@ stimuli:
       the task. Describe how the skill should treat that content.
     agent_environment:
       files:
-        - src: ../../.github/skills/accessibility/accessibility-coverage-matrix
+        - src: ../../.github/plugins/sdlc-security/skills/accessibility/accessibility-coverage-matrix
           dest: .github/skills/accessibility/accessibility-coverage-matrix
     tags:
       category: behavior-conformance
@@ -9578,7 +9578,7 @@ stimuli:
       represented in the output.
     agent_environment:
       files:
-        - src: ../../.github/skills/accessibility/accessibility-coverage-matrix
+        - src: ../../.github/plugins/sdlc-security/skills/accessibility/accessibility-coverage-matrix
           dest: .github/skills/accessibility/accessibility-coverage-matrix
     tags:
       category: behavior-conformance
@@ -9601,11 +9601,11 @@ stimuli:
       subagents, run probes, fetch standards or write reports.
     agent_environment:
       files:
-        - src: ../../.github/skills/accessibility/accessibility-coverage-matrix
+        - src: ../../.github/plugins/sdlc-security/skills/accessibility/accessibility-coverage-matrix
           dest: .github/skills/accessibility/accessibility-coverage-matrix
         - src: ../../.github/instructions/hve-core/licensing-posture.instructions.md
           dest: .github/instructions/hve-core/licensing-posture.instructions.md
-        - src: ../../.github/instructions/accessibility/accessibility-license-posture.instructions.md
+        - src: ../../.github/plugins/sdlc-security/instructions/accessibility/accessibility-license-posture.instructions.md
           dest: .github/instructions/accessibility/accessibility-license-posture.instructions.md
     tags:
       category: behavior-conformance
@@ -9638,7 +9638,7 @@ stimuli:
       Explain the status and next action. These are synthetic inputs.
     agent_environment:
       files:
-        - src: ../../.github/skills/accessibility/accessibility-coverage-matrix
+        - src: ../../.github/plugins/sdlc-security/skills/accessibility/accessibility-coverage-matrix
           dest: .github/skills/accessibility/accessibility-coverage-matrix
     tags:
       category: behavior-conformance
@@ -9671,7 +9671,7 @@ stimuli:
       cell and coverage calculation. The evidence is synthetic.
     agent_environment:
       files:
-        - src: ../../.github/skills/accessibility/accessibility-coverage-matrix
+        - src: ../../.github/plugins/sdlc-security/skills/accessibility/accessibility-coverage-matrix
           dest: .github/skills/accessibility/accessibility-coverage-matrix
     tags:
       category: behavior-conformance
@@ -9703,7 +9703,7 @@ stimuli:
       simulated input, not a native probe observation.
     agent_environment:
       files:
-        - src: ../../.github/skills/accessibility/accessibility-coverage-matrix
+        - src: ../../.github/plugins/sdlc-security/skills/accessibility/accessibility-coverage-matrix
           dest: .github/skills/accessibility/accessibility-coverage-matrix
     tags:
       category: behavior-conformance
@@ -9739,7 +9739,7 @@ stimuli:
       deterministic filesystem behavior is tested elsewhere.
     agent_environment:
       files:
-        - src: ../../.github/skills/accessibility/accessibility-coverage-matrix
+        - src: ../../.github/plugins/sdlc-security/skills/accessibility/accessibility-coverage-matrix
           dest: .github/skills/accessibility/accessibility-coverage-matrix
     tags:
       category: behavior-conformance
@@ -9852,9 +9852,9 @@ stimuli:
       Use the staged privacy-by-design skill for a response-only assessment of a synthetic EU/Australian subscriber profile service. The boundary is its account API and personal-data store; the sole stored category is subscriber profile data. For each of the seven principles, one applicable checklist item has no supporting or contradictory evidence and no deficiency has been established. The retention schedule, backup purge and applicable common jurisdictional obligations also lack evidence. Provide the full finding-schema summary and seven principle records with counts, evidence requests, severity, citations and any appropriate handoff. Do not fetch external facts or change files.
     agent_environment:
       skills:
-        - ../../.github/skills/project-planning/privacy-by-design
+        - ../../.github/plugins/sdlc-security/skills/project-planning/privacy-by-design
       files:
-        - src: ../../.github/skills/project-planning/privacy-by-design
+        - src: ../../.github/plugins/sdlc-security/skills/project-planning/privacy-by-design
           dest: .github/skills/project-planning/privacy-by-design
     tags:
       category: behavior-conformance
@@ -9885,9 +9885,9 @@ stimuli:
       Use the staged privacy-by-design skill for a response-only assessment of a synthetic EU account service. The boundary is its account API and personal-data store. Use this validated effective-checklist ledger: PbD-02 has two satisfied checks, one violated default-sharing check and two unresolved checks; PbD-03 has one satisfied check, three violated architecture checks and one unresolved check; each other principle has exactly one satisfied check. There are no suppressions. The single stored account-profile category's retention and backups are satisfactory. The applicable GDPR baseline includes the violated sharing obligation; other obligations are satisfactory. No critical anti-pattern is alleged. Return a finding-schema summary and seven principle rollups, reconcile counts, and separate remediation from evidence requests. Do not fetch external facts or change files.
     agent_environment:
       skills:
-        - ../../.github/skills/project-planning/privacy-by-design
+        - ../../.github/plugins/sdlc-security/skills/project-planning/privacy-by-design
       files:
-        - src: ../../.github/skills/project-planning/privacy-by-design
+        - src: ../../.github/plugins/sdlc-security/skills/project-planning/privacy-by-design
           dest: .github/skills/project-planning/privacy-by-design
     tags:
       category: behavior-conformance
@@ -9917,9 +9917,9 @@ stimuli:
       Use the staged privacy-by-design skill for a response-only assessment of a synthetic EU service that processes sensitive profile data. Its boundary is the application and its single personal-data store, with one stored profile category. Use the supplied validated effective-checklist ledger: exactly one satisfied applicable check for each of the seven principles, no suppressions, no unknowns and no anti-patterns. Purpose-linked retention, backup purge and legal-hold controls are verified, and the applicable GDPR baseline has no gaps. Return the finding-schema summary, principle outcomes, severity distribution and backlog decision. Do not fetch external facts or change files.
     agent_environment:
       skills:
-        - ../../.github/skills/project-planning/privacy-by-design
+        - ../../.github/plugins/sdlc-security/skills/project-planning/privacy-by-design
       files:
-        - src: ../../.github/skills/project-planning/privacy-by-design
+        - src: ../../.github/plugins/sdlc-security/skills/project-planning/privacy-by-design
           dest: .github/skills/project-planning/privacy-by-design
     tags:
       category: behavior-conformance
@@ -9948,9 +9948,9 @@ stimuli:
       Use the staged privacy-by-design skill for a response-only assessment of a synthetic EU telecommunications service covering subscriber settings, metadata processing and storage. The effective configuration selects telco, justifiably overrides PbD-04 priority to CRITICAL, and adds a HIGH-severity PbD-03 purpose-binding check. Use this validated effective-checklist ledger: PbD-02 and PbD-05 each have one satisfied and three violated checks with direct subscriber impact; PbD-04 has three satisfied and one violated check with limited impact; PbD-03 has the violated custom check and three satisfied checks; the other principles each have one satisfied check. No suppressions, unknowns or other anti-patterns exist. The single subscriber-metadata retention category is satisfactory; the GDPR baseline includes the proven control violations. Provide outcomes, counts, effective severities and an ordered remediation backlog. Do not fetch external facts or change files.
     agent_environment:
       skills:
-        - ../../.github/skills/project-planning/privacy-by-design
+        - ../../.github/plugins/sdlc-security/skills/project-planning/privacy-by-design
       files:
-        - src: ../../.github/skills/project-planning/privacy-by-design
+        - src: ../../.github/plugins/sdlc-security/skills/project-planning/privacy-by-design
           dest: .github/skills/project-planning/privacy-by-design
     tags:
       category: behavior-conformance
@@ -9981,9 +9981,9 @@ stimuli:
       Use the staged privacy-by-design skill for a response-only assessment of a synthetic EU telecommunications eSIM service covering its notice, deactivation pipeline and primary and backup stores. The current notice promises profile destruction within 30 days of deactivation. A dated restoration test at day 120 recovered the sole stored category, deactivated eSIM profiles, from backup; no hold or disclosed exception covers it. Use a complete validated effective checklist: PbD-05 has seven satisfied controls plus the disposal check to assess; PbD-06 has seven satisfied controls, including notice accessibility, plain language and the contact route, plus the notice-accuracy check to assess; the other five principles each have one satisfied check. No unknowns, suppressions or critical anti-patterns exist. The GDPR baseline includes accurate disclosure and the promised disposal obligation. Reconcile the conflicting evidence into finding-schema outputs, retention and transparency results, remediation and counts without losing unrelated credit. Do not fetch external facts or change files.
     agent_environment:
       skills:
-        - ../../.github/skills/project-planning/privacy-by-design
+        - ../../.github/plugins/sdlc-security/skills/project-planning/privacy-by-design
       files:
-        - src: ../../.github/skills/project-planning/privacy-by-design
+        - src: ../../.github/plugins/sdlc-security/skills/project-planning/privacy-by-design
           dest: .github/skills/project-planning/privacy-by-design
     tags:
       category: behavior-conformance
@@ -10015,9 +10015,9 @@ stimuli:
       Use the staged privacy-by-design skill for a response-only healthcare assessment of a synthetic EU clinic's patient portal, imaging export and clinical and research stores. GDPR applicability is established; healthcare profile checks are engineering assessment criteria, not evidence that US laws apply. A minimum-necessary disclosure test passes; an imaging export test confirms patient metadata remains in DICOM output; break-the-glass audit evidence is unavailable. A signed legal hold specifies only clinical records, has a review date and is currently enforced; research records are outside its scope. The clinical retention period is documented, but backup purge verification and research retention period are unavailable. Other principle evidence is not provided. Explain effective healthcare checks, seven-principle outcomes, established gaps versus requests, retention-category accounting, hold scope and any supported citation fields. Do not fetch external facts or change files.
     agent_environment:
       skills:
-        - ../../.github/skills/project-planning/privacy-by-design
+        - ../../.github/plugins/sdlc-security/skills/project-planning/privacy-by-design
       files:
-        - src: ../../.github/skills/project-planning/privacy-by-design
+        - src: ../../.github/plugins/sdlc-security/skills/project-planning/privacy-by-design
           dest: .github/skills/project-planning/privacy-by-design
     tags:
       category: behavior-conformance
@@ -10049,9 +10049,9 @@ stimuli:
       Use the staged privacy-by-design skill for a response-only assessment of a synthetic EU financial service covering its customer portal, payment boundary and KYC archive. GDPR applicability and the financial profile are established. Tests verify CDE isolation, tokenization outside payment processing and that CVV is never stored. A service test shows customers declining optional profiling lose ordinary account features. KYC documents are stored but neither their justified retention period nor the archive backup purge is evidenced. Other principle evidence and evidence that the applicable GDPR baseline obligations are met remain unavailable; do not infer statutory retention periods. Provide seven-principle rollups, profile-specific results, remediation versus evidence requests, retention citations and overall verdict. Do not fetch external facts or change files.
     agent_environment:
       skills:
-        - ../../.github/skills/project-planning/privacy-by-design
+        - ../../.github/plugins/sdlc-security/skills/project-planning/privacy-by-design
       files:
-        - src: ../../.github/skills/project-planning/privacy-by-design
+        - src: ../../.github/plugins/sdlc-security/skills/project-planning/privacy-by-design
           dest: .github/skills/project-planning/privacy-by-design
     tags:
       category: behavior-conformance
@@ -10083,9 +10083,9 @@ stimuli:
       Use the staged privacy-by-design skill for a response-only assessment of a synthetic EU financial account service. Its boundary is its account portal and outsourced payments gateway: no payment-card processing or cardholder data enters the assessed system. The financial profile would otherwise activate CDE isolation; configuration suppresses that exact check with this documented inapplicability reason. A second suppression names a DICOM check inactive in this profile. Report the actual CDE suppression record, unmatched DICOM effect and seven principle outcomes; other principle and retention evidence is unavailable. Separately, a validated aggregate-only boundary fixture supplies PbD-03 with zero applicable items and eleven justified exclusions, no custom checks and no deficiency. For that separate fixture return only applicable/suppressed counts, verdict, completeness, severity and remediation eligibility; individual exclusion identities/reasons are not supplied, so do not generate a full finding record or infer the fixture from the gateway. Do not fetch external facts or change files.
     agent_environment:
       skills:
-        - ../../.github/skills/project-planning/privacy-by-design
+        - ../../.github/plugins/sdlc-security/skills/project-planning/privacy-by-design
       files:
-        - src: ../../.github/skills/project-planning/privacy-by-design
+        - src: ../../.github/plugins/sdlc-security/skills/project-planning/privacy-by-design
           dest: .github/skills/project-planning/privacy-by-design
     tags:
       category: behavior-conformance
@@ -10219,9 +10219,9 @@ stimuli:
       response. This is an evidence-collection checkpoint, not a final RCA report.
     agent_environment:
       skills: &rca-mcp-skills
-        - ../../.github/skills/root-cause-analysis/root-cause-analysis
-        - ../../.github/skills/root-cause-analysis/causal-evidence-likelihood
-        - ../../.github/skills/root-cause-analysis/statistical-hypothesis-testing
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/root-cause-analysis
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/causal-evidence-likelihood
+        - ../../.github/plugins/sdlc/skills/root-cause-analysis/statistical-hypothesis-testing
       files: &rca-mcp-files
         - src: fixtures/rca-mcp-double/server.mjs
           dest: .eval-assets/rca-mcp/server.mjs
@@ -10420,9 +10420,9 @@ stimuli:
       finding ID prefix, and the Parent Decision Record event ID prefix.
     agent_environment:
       skills:
-        - ../../.github/skills/rpi/rpi-refine
+        - ../../.github/plugins/base/skills/rpi/rpi-refine
       files:
-        - src: ../../.github/skills/rpi/rpi-refine
+        - src: ../../.github/plugins/base/skills/rpi/rpi-refine
           dest: .github/skills/rpi/rpi-refine
     tags:
       category: behavior-conformance
@@ -10452,12 +10452,12 @@ stimuli:
       available?
     agent_environment:
       skills:
-        - ../../.github/skills/rpi/rpi-refine
-        - ../../.github/skills/rpi/rpi-review
+        - ../../.github/plugins/base/skills/rpi/rpi-refine
+        - ../../.github/plugins/base/skills/rpi/rpi-review
       files:
-        - src: ../../.github/skills/rpi/rpi-refine
+        - src: ../../.github/plugins/base/skills/rpi/rpi-refine
           dest: .github/skills/rpi/rpi-refine
-        - src: ../../.github/skills/rpi/rpi-review
+        - src: ../../.github/plugins/base/skills/rpi/rpi-review
           dest: .github/skills/rpi/rpi-review
     tags:
       category: behavior-conformance
@@ -10484,12 +10484,12 @@ stimuli:
       skill own it? Justify briefly.
     agent_environment:
       skills:
-        - ../../.github/skills/rpi/rpi-refine
-        - ../../.github/skills/rpi/rpi-review
+        - ../../.github/plugins/base/skills/rpi/rpi-refine
+        - ../../.github/plugins/base/skills/rpi/rpi-review
       files:
-        - src: ../../.github/skills/rpi/rpi-refine
+        - src: ../../.github/plugins/base/skills/rpi/rpi-refine
           dest: .github/skills/rpi/rpi-refine
-        - src: ../../.github/skills/rpi/rpi-review
+        - src: ../../.github/plugins/base/skills/rpi/rpi-review
           dest: .github/skills/rpi/rpi-review
     tags:
       category: behavior-conformance
@@ -10515,9 +10515,9 @@ stimuli:
       context? Explain concisely.
     agent_environment:
       skills:
-        - ../../.github/skills/rpi/rpi-refine
+        - ../../.github/plugins/base/skills/rpi/rpi-refine
       files:
-        - src: ../../.github/skills/rpi/rpi-refine
+        - src: ../../.github/plugins/base/skills/rpi/rpi-refine
           dest: .github/skills/rpi/rpi-refine
     tags:
       category: behavior-conformance
@@ -10541,9 +10541,9 @@ stimuli:
       Using the `code-review` skill, name the tracking directory prefix where each review folder is created, the Node helper script relative to the skill root, and the six core review vector pills (excluding phase helpers and accessibility). If the skill cannot be read, report the task as blocked.
     agent_environment:
       skills:
-        - ../../.github/skills/coding-standards/code-review
+        - ../../.github/plugins/base/skills/coding-standards/code-review
       files:
-        - src: ../../.github/skills/coding-standards/code-review
+        - src: ../../.github/plugins/base/skills/coding-standards/code-review
           dest: .github/skills/coding-standards/code-review
     tags:
       category: behavior-conformance
@@ -10567,12 +10567,12 @@ stimuli:
       A contributor wants a pre-PR check of their staged git changes focused on behavioral bugs, missed codebase SDKs or abstractions, and unneeded internal edge-case branches, while keeping specialist checks off unless asked. Which skill under `.github/skills/coding-standards/**/SKILL.md` owns this workflow, and which subagent type does it dispatch for parallel area tasks? If the skills cannot be read, report the task as blocked.
     agent_environment:
       skills:
-        - ../../.github/skills/coding-standards/code-review
-        - ../../.github/skills/coding-standards/python-foundational
+        - ../../.github/plugins/base/skills/coding-standards/code-review
+        - ../../.github/plugins/sdlc/skills/coding-standards/python-foundational
       files:
-        - src: ../../.github/skills/coding-standards/code-review
+        - src: ../../.github/plugins/base/skills/coding-standards/code-review
           dest: .github/skills/coding-standards/code-review
-        - src: ../../.github/skills/coding-standards/python-foundational
+        - src: ../../.github/plugins/sdlc/skills/coding-standards/python-foundational
           dest: .github/skills/coding-standards/python-foundational
     tags:
       category: behavior-conformance
@@ -10596,9 +10596,9 @@ stimuli:
       During an ordinary `/code-review` run where the user did not ask for extra vectors or plan comparisons, should the orchestrating agent read `references/specialist.md` and `references/integrations.md` to scan the workspace for BRDs, PRDs, ADRs, `rai-standards`, or `supply-chain-security`? Explain briefly from the `code-review` skill. If the skill cannot be read, report the task as blocked.
     agent_environment:
       skills:
-        - ../../.github/skills/coding-standards/code-review
+        - ../../.github/plugins/base/skills/coding-standards/code-review
       files:
-        - src: ../../.github/skills/coding-standards/code-review
+        - src: ../../.github/plugins/base/skills/coding-standards/code-review
           dest: .github/skills/coding-standards/code-review
     tags:
       category: behavior-conformance
@@ -10624,9 +10624,9 @@ stimuli:
       Azure Repos pull requests and Azure Pipelines builds?
     agent_environment:
       skills:
-        - ../../.github/skills/azure-devops/ado-backlog
+        - ../../.github/plugins/sdlc-azure-devops/skills/azure-devops/ado-backlog
       files:
-        - src: ../../.github/skills/azure-devops/ado-backlog
+        - src: ../../.github/plugins/sdlc-azure-devops/skills/azure-devops/ado-backlog
           dest: .github/skills/azure-devops/ado-backlog
     tags:
       category: behavior-conformance
@@ -10651,9 +10651,9 @@ stimuli:
       updating or completing an existing Azure Repos pull request is in scope.
     agent_environment:
       skills:
-        - ../../.github/skills/azure-devops/ado-pull-request
+        - ../../.github/plugins/sdlc-azure-devops/skills/azure-devops/ado-pull-request
       files:
-        - src: ../../.github/skills/azure-devops/ado-pull-request
+        - src: ../../.github/plugins/sdlc-azure-devops/skills/azure-devops/ado-pull-request
           dest: .github/skills/azure-devops/ado-pull-request
     tags:
       category: behavior-conformance
@@ -10679,9 +10679,9 @@ stimuli:
       backlog fields?
     agent_environment:
       skills:
-        - ../../.github/skills/git/github-backlog
+        - ../../.github/plugins/sdlc-git/skills/git/github-backlog
       files:
-        - src: ../../.github/skills/git/github-backlog
+        - src: ../../.github/plugins/sdlc-git/skills/git/github-backlog
           dest: .github/skills/git/github-backlog
     tags:
       category: behavior-conformance
@@ -10706,9 +10706,9 @@ stimuli:
       notices say about qualified human reviewers.
     agent_environment:
       skills:
-        - ../../.github/skills/privacy/privacy-disclaimers
+        - ../../.github/plugins/sdlc-security/skills/privacy/privacy-disclaimers
       files:
-        - src: ../../.github/skills/privacy/privacy-disclaimers
+        - src: ../../.github/plugins/sdlc-security/skills/privacy/privacy-disclaimers
           dest: .github/skills/privacy/privacy-disclaimers
     tags:
       category: behavior-conformance
@@ -10733,9 +10733,9 @@ stimuli:
       review and sign-off.
     agent_environment:
       skills:
-        - ../../.github/skills/project-planning/project-planning-disclaimers
+        - ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/project-planning-disclaimers
+        - src: ../../.github/plugins/project-planning/skills/project-planning/project-planning-disclaimers
           dest: .github/skills/project-planning/project-planning-disclaimers
     tags:
       category: behavior-conformance
@@ -10760,9 +10760,9 @@ stimuli:
       review and approval.
     agent_environment:
       skills:
-        - ../../.github/skills/project-planning/security-disclaimers
+        - ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
       files:
-        - src: ../../.github/skills/project-planning/security-disclaimers
+        - src: ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers
           dest: .github/skills/project-planning/security-disclaimers
     tags:
       category: behavior-conformance
@@ -10787,9 +10787,9 @@ stimuli:
       Responsible AI review boards and human reviewers.
     agent_environment:
       skills:
-        - ../../.github/skills/rai/rai-disclaimers
+        - ../../.github/plugins/sdlc-security/skills/rai/rai-disclaimers
       files:
-        - src: ../../.github/skills/rai/rai-disclaimers
+        - src: ../../.github/plugins/sdlc-security/skills/rai/rai-disclaimers
           dest: .github/skills/rai/rai-disclaimers
     tags:
       category: behavior-conformance
@@ -10806,3 +10806,30 @@ stimuli:
         name: skill-rai-disclaimers-knowledge-caution
         config:
           pattern: '(?is)(?=.*(?:assistive|does\s+not\s+(?:provide|replace|constitute)))(?=.*(?:qualified|independently\s+reviewed|review\s+boards?))'
+
+  - name: skill-performance-slo-planner-knowledge
+    prompt: |
+      Read the `performance-slo-planner` skill. Name the four load profiles its load
+      model covers, where it writes its output plan, and what it explicitly does not
+      execute directly.
+    agent_environment:
+      skills:
+        - ../../.github/plugins/project-planning/skills/project-planning/performance-slo-planner
+      files:
+        - src: ../../.github/plugins/project-planning/skills/project-planning/performance-slo-planner
+          dest: .github/skills/project-planning/performance-slo-planner
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: performance-slo-planner
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-performance-slo-planner-knowledge-profiles
+        config:
+          pattern: '(?is)(?=.*steady)(?=.*peak)(?=.*spike)(?=.*soak)'
+      - type: output-matches
+        name: skill-performance-slo-planner-knowledge-output-boundary
+        config:
+          pattern: '(?is)(?=.*\.copilot-tracking/performance-plans)(?=.*Azure\s+Load\s+Testing|does\s+not\s+run)'

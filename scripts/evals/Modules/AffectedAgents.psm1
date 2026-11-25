@@ -83,7 +83,7 @@ function Test-IsAgentArtifactPath {
     [OutputType([bool])]
     param([Parameter(Mandatory)] [string]$RelativePath)
 
-    return ($RelativePath -match '(?i)^\.github/agents/.+\.agent\.md$')
+    return ($RelativePath -match '(?i)^\.github/(?:plugins/[^/]+/)?agents/.+\.agent\.md$')
 }
 
 function Test-IsParentAgentByFrontmatter {
@@ -166,8 +166,8 @@ function Test-IsIndirectArtifactPath {
     [OutputType([bool])]
     param([Parameter(Mandatory)] [string]$RelativePath)
 
-    if ($RelativePath -match '(?i)^\.github/instructions/.+\.instructions\.md$') { return $true }
-    if ($RelativePath -match '(?i)^\.github/skills/.+\.md$') { return $true }
+    if ($RelativePath -match '(?i)^\.github/(?:plugins/[^/]+/)?instructions/.+\.instructions\.md$') { return $true }
+    if ($RelativePath -match '(?i)^\.github/(?:plugins/[^/]+/)?skills/.+\.md$') { return $true }
     return $false
 }
 
@@ -181,10 +181,11 @@ function Update-DepMapIfStale {
 
     $regenerate = -not (Test-Path -LiteralPath $DepMapPath -PathType Leaf)
     if (-not $regenerate) {
-        $mapMTime   = (Get-Item -LiteralPath $DepMapPath).LastWriteTimeUtc
-        $agentsRoot = Join-Path -Path $RepoRoot -ChildPath '.github/agents'
-        if (Test-Path -LiteralPath $agentsRoot -PathType Container) {
-            $newest = Get-ChildItem -Path $agentsRoot -Recurse -Filter '*.agent.md' -File -ErrorAction SilentlyContinue |
+        $mapMTime    = (Get-Item -LiteralPath $DepMapPath).LastWriteTimeUtc
+        $agentsRoots = @(Get-Item -Path (Join-Path $RepoRoot '.github/agents'), (Join-Path $RepoRoot '.github/plugins/*/agents') -ErrorAction SilentlyContinue |
+            Where-Object { $_.PSIsContainer })
+        if ($agentsRoots.Count -gt 0) {
+            $newest = $agentsRoots | ForEach-Object { Get-ChildItem -Path $_.FullName -Recurse -Filter '*.agent.md' -File -ErrorAction SilentlyContinue } |
                 Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
             if ($newest -and $newest.LastWriteTimeUtc -gt $mapMTime) { $regenerate = $true }
         }
@@ -339,10 +340,11 @@ function Build-ParentAgentNameIndex {
     )
 
     $index = @{}
-    $agentsRoot = Join-Path -Path $RepoRoot -ChildPath '.github/agents'
-    if (-not (Test-Path -LiteralPath $agentsRoot -PathType Container)) { return $index }
+    $agentsRoots = @(Get-Item -Path (Join-Path $RepoRoot '.github/agents'), (Join-Path $RepoRoot '.github/plugins/*/agents') -ErrorAction SilentlyContinue |
+        Where-Object { $_.PSIsContainer })
+    if ($agentsRoots.Count -eq 0) { return $index }
 
-    $agentFiles = @(Get-ChildItem -Path $agentsRoot -Recurse -Filter '*.agent.md' -File -ErrorAction SilentlyContinue)
+    $agentFiles = @($agentsRoots | ForEach-Object { Get-ChildItem -Path $_.FullName -Recurse -Filter '*.agent.md' -File -ErrorAction SilentlyContinue })
     $names = [System.Collections.Generic.List[string]]::new()
     foreach ($file in $agentFiles) {
         $raw = [System.IO.File]::ReadAllText($file.FullName)
@@ -492,13 +494,13 @@ function Get-AffectedAgentSlugs {
     }
 
     foreach ($rel in $normalized) {
-        if ($rel -match '(?i)^\.github/instructions/.+\.instructions\.md$') {
+        if ($rel -match '(?i)^\.github/(?:plugins/[^/]+/)?instructions/.+\.instructions\.md$') {
             if ($instructionIndex.ContainsKey($rel)) {
                 foreach ($slug in $instructionIndex[$rel]) { [void]$result.Add($slug) }
             }
             continue
         }
-        if ($rel -match '(?i)^\.github/skills/.+\.md$') {
+        if ($rel -match '(?i)^\.github/(?:plugins/[^/]+/)?skills/.+\.md$') {
             if ($skillIndex.ContainsKey($rel)) {
                 foreach ($slug in $skillIndex[$rel]) { [void]$result.Add($slug) }
             }

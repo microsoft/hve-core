@@ -2,7 +2,7 @@
 title: ASR Trigger Taxonomy
 description: Closed enum of eight Architecturally Significant Requirement (ASR) trigger kinds enforced by the ADR frontmatter validator (GP-07)
 author: microsoft/hve-core
-ms.date: 2026-08-21
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - adr

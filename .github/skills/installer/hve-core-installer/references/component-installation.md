@@ -68,7 +68,7 @@ For a new install or an upgrade of the `all` profile, read the source clone's ro
 | `rules` entry `instructions/<subpath>/<name>.instructions.md` | `rules/<subpath>/<name>.instructions.md` |
 | `skills/<subpath>/<name>`                                     | `skills/<subpath>/<name>`                |
 
-For example, `.github/plugins/rpi-builder/agents/hve-core/rpi-agent.agent.md` is selected as `agents/hve-core/rpi-agent.md` and copied to `.github/agents/hve-core/rpi-agent.agent.md`. The destination and tracking key do not change when the source moves into a topic. Reject an undeclared selection or one that maps to two different sources before any write.
+For example, `.github/plugins/base/agents/hve-core/rpi-agent.agent.md` is selected as `agents/hve-core/rpi-agent.md` and copied to `.github/agents/hve-core/rpi-agent.agent.md`. The destination and tracking key do not change when the source moves into a topic. Reject an undeclared selection or one that maps to two different sources before any write.
 
 ### Upstream Source Verification
 

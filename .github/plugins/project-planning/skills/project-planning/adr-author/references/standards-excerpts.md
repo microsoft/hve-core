@@ -2,7 +2,7 @@
 title: ADR Standards Excerpts
 description: Curated external standards excerpts and citations supporting the adr-author skill, with license attribution
 author: microsoft/hve-core
-ms.date: 2026-10-20
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - adr

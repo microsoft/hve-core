@@ -53,9 +53,9 @@ stimuli:
       execute phases or write files.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
     tags:
       category: agent-behavior
@@ -79,9 +79,9 @@ stimuli:
       `Review: run|surface|skip`. Do not execute phases or write files.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
     tags:
       category: agent-behavior
@@ -105,9 +105,9 @@ stimuli:
       Do not execute phases or write files.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
     tags:
       category: agent-behavior
@@ -130,9 +130,9 @@ stimuli:
       execute phases or write files.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
     tags:
       category: agent-behavior
@@ -156,9 +156,9 @@ stimuli:
       `Purpose: handoff|progress`. Do not call session tools or write files.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
     tags:
       category: agent-behavior
@@ -182,11 +182,11 @@ stimuli:
       Do not execute phases or write files.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
-        - src: ../../.github/skills/rpi/rpi-plan/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi-plan/SKILL.md
           dest: policy/rpi-plan.SKILL.md
     tags:
       category: agent-behavior
@@ -210,11 +210,11 @@ stimuli:
       Do not execute phases or write files.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
-        - src: ../../.github/skills/rpi/rpi-review/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi-review/SKILL.md
           dest: policy/rpi-review.SKILL.md
     tags:
       category: agent-behavior
@@ -240,9 +240,9 @@ stimuli:
       without inventing its declarations.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
     tags:
       category: agent-behavior
@@ -268,9 +268,9 @@ stimuli:
       declarations.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
     tags:
       category: agent-behavior
@@ -298,9 +298,9 @@ stimuli:
       as blocked without inventing its declarations.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
     tags:
       category: agent-behavior
@@ -326,9 +326,9 @@ stimuli:
       blocked without inventing its declarations.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
     tags:
       category: agent-behavior
@@ -355,9 +355,9 @@ stimuli:
       declarations.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
     tags:
       category: agent-behavior
@@ -387,9 +387,9 @@ stimuli:
       be read, report blocked without inventing its declarations.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
     tags:
       category: agent-behavior
@@ -418,9 +418,9 @@ stimuli:
       file cannot be read, report blocked without inventing its declarations.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
     tags:
       category: agent-behavior
@@ -454,9 +454,9 @@ stimuli:
       without inventing its declarations.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
     tags:
       category: agent-behavior
@@ -485,9 +485,9 @@ stimuli:
       report blocked without inventing its declarations.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
     tags:
       category: agent-behavior
@@ -514,9 +514,9 @@ stimuli:
       report blocked without inventing its declarations.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
     tags:
       category: agent-behavior
@@ -545,9 +545,9 @@ stimuli:
       report blocked without inventing its declarations.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
     tags:
       category: agent-behavior
@@ -578,9 +578,9 @@ stimuli:
       without inventing its declarations.
     agent_environment:
       files:
-        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+        - src: ../../.github/plugins/base/agents/hve-core/rpi-agent.agent.md
           dest: policy/rpi-agent.agent.md
-        - src: ../../.github/skills/rpi/rpi/SKILL.md
+        - src: ../../.github/plugins/base/skills/rpi/rpi/SKILL.md
           dest: policy/rpi.SKILL.md
     tags:
       category: agent-behavior

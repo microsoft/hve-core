@@ -13,7 +13,7 @@ stimuli:
         - '../../.github/skills/design-thinking/ux-coaching'
         - '../../.github/skills/shared/untrusted-content-boundary'
       files:
-        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
           dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior
@@ -62,7 +62,7 @@ stimuli:
         - '../../.github/skills/design-thinking/ux-coaching'
         - '../../.github/skills/shared/untrusted-content-boundary'
       files:
-        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
           dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior
@@ -91,7 +91,7 @@ stimuli:
         - '../../.github/skills/design-thinking/ux-coaching'
         - '../../.github/skills/shared/untrusted-content-boundary'
       files:
-        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
           dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior
@@ -143,7 +143,7 @@ stimuli:
         - '../../.github/skills/design-thinking/ux-coaching'
         - '../../.github/skills/shared/untrusted-content-boundary'
       files:
-        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
           dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior
@@ -186,7 +186,7 @@ stimuli:
         - '../../.github/skills/design-thinking/ux-coaching'
         - '../../.github/skills/shared/untrusted-content-boundary'
       files:
-        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
           dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior
@@ -224,7 +224,7 @@ stimuli:
         - '../../.github/skills/design-thinking/ux-coaching'
         - '../../.github/skills/shared/untrusted-content-boundary'
       files:
-        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/ux-ui-designer-renewal-flow-map-journey.md
           dest: .copilot-tracking/ux-artifacts/renewal-flow/customer/map-journey.md
@@ -263,7 +263,7 @@ stimuli:
         - '../../.github/skills/design-thinking/ux-coaching'
         - '../../.github/skills/shared/untrusted-content-boundary'
       files:
-        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
           dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior
@@ -348,7 +348,7 @@ stimuli:
         - '../../.github/skills/design-thinking/ux-coaching'
         - '../../.github/skills/shared/untrusted-content-boundary'
       files:
-        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/ux-ui-designer-renewal-flow-map-journey.md
           dest: .copilot-tracking/ux-artifacts/renewal-flow/customer/map-journey.md
@@ -385,7 +385,7 @@ stimuli:
         - '../../.github/skills/experimental/mural'
         - '../../.github/skills/shared/untrusted-content-boundary'
       files:
-        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
           dest: .github/copilot-instructions.md
         - src: fixtures/ux-ui-designer-renewal-flow-map-journey.md
           dest: .copilot-tracking/ux-artifacts/renewal-flow/customer/map-journey.md
@@ -415,7 +415,7 @@ stimuli:
         - '../../.github/skills/design-thinking/ux-coaching'
         - '../../.github/skills/shared/untrusted-content-boundary'
       files:
-        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
           dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior
@@ -444,7 +444,7 @@ stimuli:
         - '../../.github/skills/experimental/mural'
         - '../../.github/skills/shared/untrusted-content-boundary'
       files:
-        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
           dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior
@@ -540,7 +540,7 @@ stimuli:
         - '../../.github/skills/experimental/mural'
         - '../../.github/skills/shared/untrusted-content-boundary'
       files:
-        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
           dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior
@@ -579,7 +579,7 @@ stimuli:
         - '../../.github/skills/experimental/mural'
         - '../../.github/skills/shared/untrusted-content-boundary'
       files:
-        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+        - src: ../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md
           dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior

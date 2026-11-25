@@ -1,6 +1,6 @@
 {
   "name": "hve-sdlc-security",
-  "description": "Plan and review application and software supply chain security (SSSC). Pair with hve-sdlc-responsible-ai for AI systems or hve-sdlc-git for code review.",
+  "description": "Plan and review application security, software supply chain security (SSSC), privacy, Responsible AI, and accessibility. Pair with hve-base for code review.",
   "version": "3.2.2",
   "author": {
     "name": "Microsoft",
@@ -14,9 +14,21 @@
     "security",
     "security-review",
     "sssc",
-    "supply-chain"
+    "supply-chain",
+    "privacy",
+    "responsible-ai",
+    "accessibility"
   ],
   "agents": [
+    "agents/accessibility/accessibility-planner.agent.md",
+    "agents/accessibility/accessibility-reviewer.agent.md",
+    "agents/accessibility/subagents/accessibility-framework-assessor.agent.md",
+    "agents/accessibility/subagents/accessibility-surface-inventory.agent.md",
+    "agents/privacy/privacy-planner.agent.md",
+    "agents/privacy/privacy-reviewer.agent.md",
+    "agents/rai-planning/rai-planner.agent.md",
+    "agents/rai-planning/rai-reviewer.agent.md",
+    "agents/rai-planning/subagents/rai-skill-assessor.agent.md",
     "agents/security/security-planner.agent.md",
     "agents/security/security-reviewer.agent.md",
     "agents/security/sssc-planner.agent.md",
@@ -29,6 +41,11 @@
     "agents/security/subagents/supply-chain-skill-assessor.agent.md"
   ],
   "rules": [
+    "instructions/accessibility/accessibility-identity.instructions.md",
+    "instructions/accessibility/accessibility-license-posture.instructions.md",
+    "instructions/privacy/privacy-telemetry.instructions.md",
+    "instructions/rai-planning/rai-license-posture.instructions.md",
+    "instructions/rai/rai-telemetry.instructions.md",
     "instructions/security/identity.instructions.md",
     "instructions/security/security-telemetry.instructions.md",
     "instructions/security/sssc-planner.instructions.md",
@@ -36,8 +53,16 @@
     "instructions/security/vex-standards.instructions.md"
   ],
   "skills": [
+    "skills/accessibility/accessibility",
+    "skills/accessibility/accessibility-coverage-matrix",
+    "skills/privacy/privacy-disclaimers",
+    "skills/project-planning/privacy-by-design",
+    "skills/project-planning/privacy-standards",
+    "skills/project-planning/rai-planner",
     "skills/project-planning/security-disclaimers",
     "skills/project-planning/security-planning",
+    "skills/rai/rai-disclaimers",
+    "skills/rai/rai-standards",
     "skills/security/gh-code-scanning",
     "skills/security/incident-response",
     "skills/security/mcsb",

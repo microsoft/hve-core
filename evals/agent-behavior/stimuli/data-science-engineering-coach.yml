@@ -299,7 +299,7 @@ stimuli:
       skills:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
         - ../../.github/skills/data-science-engineering/evaluation-design
-        - ../../.github/skills/rpi/rpi-research
+        - ../../.github/plugins/base/skills/rpi/rpi-research
         - ../../.github/skills/shared/disclaimer-language
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
@@ -331,7 +331,7 @@ stimuli:
       skills:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
         - ../../.github/skills/data-science-engineering/evaluation-design
-        - ../../.github/skills/rpi/rpi-research
+        - ../../.github/plugins/base/skills/rpi/rpi-research
         - ../../.github/skills/shared/disclaimer-language
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
@@ -459,11 +459,11 @@ stimuli:
       skills:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
         - ../../.github/skills/data-science-engineering/dataops
-        - ../../.github/skills/project-planning/adr-author
-        - ../../.github/skills/rpi/rpi-plan
-        - ../../.github/skills/rpi/rpi-plan-critique
-        - ../../.github/skills/rpi/rpi-implement
-        - ../../.github/skills/rpi/rpi-review
+        - ../../.github/plugins/project-planning/skills/project-planning/adr-author
+        - ../../.github/plugins/base/skills/rpi/rpi-plan
+        - ../../.github/plugins/base/skills/rpi/rpi-plan-critique
+        - ../../.github/plugins/base/skills/rpi/rpi-implement
+        - ../../.github/plugins/base/skills/rpi/rpi-review
         - ../../.github/skills/shared/disclaimer-language
         - ../../.github/skills/shared/untrusted-content-boundary
     simulation:
@@ -610,7 +610,7 @@ stimuli:
       skills:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
         - ../../.github/skills/data-science-engineering/dataops
-        - ../../.github/skills/project-planning/adr-author
+        - ../../.github/plugins/project-planning/skills/project-planning/adr-author
         - ../../.github/skills/shared/disclaimer-language
         - ../../.github/skills/shared/untrusted-content-boundary
       # Replace the staged scanner with an always-unavailable stub so every
@@ -832,7 +832,7 @@ stimuli:
       skills:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
         - ../../.github/skills/data-science-engineering/data-catalog
-        - ../../.github/skills/project-planning/adr-author
+        - ../../.github/plugins/project-planning/skills/project-planning/adr-author
         - ../../.github/skills/shared/disclaimer-language
         - ../../.github/skills/shared/untrusted-content-boundary
       files:
@@ -863,7 +863,7 @@ stimuli:
       skills:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
         - ../../.github/skills/data-science-engineering/data-catalog
-        - ../../.github/skills/project-planning/adr-author
+        - ../../.github/plugins/project-planning/skills/project-planning/adr-author
         - ../../.github/skills/shared/disclaimer-language
         - ../../.github/skills/shared/untrusted-content-boundary
       files:
@@ -894,7 +894,7 @@ stimuli:
       skills:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
         - ../../.github/skills/data-science-engineering/data-catalog
-        - ../../.github/skills/project-planning/adr-author
+        - ../../.github/plugins/project-planning/skills/project-planning/adr-author
         - ../../.github/skills/shared/disclaimer-language
         - ../../.github/skills/shared/untrusted-content-boundary
       files:

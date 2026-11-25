@@ -14,19 +14,19 @@ Set-StrictMode -Version Latest
 $script:ArtifactPatterns = @(
     [pscustomobject]@{
         Kind    = 'agent'
-        Pattern = '^\.github/agents/(?:.+/)?(?<slug>[^/]+)\.agent\.md$'
+        Pattern = '^\.github/(?:plugins/[^/]+/)?agents/(?:.+/)?(?<slug>[^/]+)\.agent\.md$'
     }
     [pscustomobject]@{
         Kind    = 'prompt'
-        Pattern = '^\.github/prompts/(?:.+/)?(?<slug>[^/]+)\.prompt\.md$'
+        Pattern = '^\.github/(?:plugins/[^/]+/)?prompts/(?:.+/)?(?<slug>[^/]+)\.prompt\.md$'
     }
     [pscustomobject]@{
         Kind    = 'instruction'
-        Pattern = '^\.github/instructions/(?:.+/)?(?<slug>[^/]+)\.instructions\.md$'
+        Pattern = '^\.github/(?:plugins/[^/]+/)?instructions/(?:.+/)?(?<slug>[^/]+)\.instructions\.md$'
     }
     [pscustomobject]@{
         Kind    = 'skill'
-        Pattern = '^\.github/skills/(?:.+/)?(?<slug>[^/]+)/SKILL\.md$'
+        Pattern = '^\.github/(?:plugins/[^/]+/)?skills/(?:.+/)?(?<slug>[^/]+)/SKILL\.md$'
     }
 )
 

@@ -69,7 +69,7 @@ updates:
 - commit-message:
     include: scope
     prefix: chore
-  directory: /.github/skills/accessibility/accessibility
+  directory: /.github/plugins/sdlc-security/skills/accessibility/accessibility
   groups:
     security-updates:
       applies-to: security-updates
@@ -321,7 +321,7 @@ updates:
 - commit-message:
     include: scope
     prefix: chore
-  directory: /.github/skills/hve-core/architecture-diagrams
+  directory: /.github/plugins/project-planning/skills/hve-core/architecture-diagrams
   groups:
     security-updates:
       applies-to: security-updates
@@ -342,7 +342,7 @@ updates:
 - commit-message:
     include: scope
     prefix: chore
-  directory: /.github/skills/hve-core/vally-tests
+  directory: /.github/plugins/sdlc/skills/hve-core/vally-tests
   groups:
     security-updates:
       applies-to: security-updates
@@ -384,7 +384,7 @@ updates:
 - commit-message:
     include: scope
     prefix: chore
-  directory: /.github/skills/project-planning/gitlab
+  directory: /.github/plugins/project-planning/skills/project-planning/gitlab
   groups:
     security-updates:
       applies-to: security-updates
@@ -405,7 +405,7 @@ updates:
 - commit-message:
     include: scope
     prefix: chore
-  directory: /.github/skills/project-planning/jira
+  directory: /.github/plugins/project-planning/skills/project-planning/jira
   groups:
     security-updates:
       applies-to: security-updates

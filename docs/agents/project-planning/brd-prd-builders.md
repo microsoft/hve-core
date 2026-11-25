@@ -76,13 +76,13 @@ Both agents use templates to structure their output, ensuring consistent section
 
 ## Key Differences
 
-| Aspect            | BRD Builder                                               | PRD Builder                                               |
-|-------------------|-----------------------------------------------------------|-----------------------------------------------------------|
-| Agent file        | `.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md`    | `.github/plugins/project-planning/agents/project-planning/prd-builder.agent.md`    |
-| Lifecycle         | Three-phase (Discover, Define, Govern)                    | Seven-phase (Assess through Finalize)                     |
-| Template strategy | `requirements-author` skill (`templates/brd/brd-full.md`) | `requirements-author` skill (`templates/prd/prd-full.md`) |
-| Focus             | Business justification and stakeholder scope              | Product specifications with measurable requirements       |
-| Session directory | `.copilot-tracking/brd-sessions/`                         | `.copilot-tracking/prd-sessions/`                         |
+| Aspect            | BRD Builder                                                                     | PRD Builder                                                                     |
+|-------------------|---------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| Agent file        | `.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md` | `.github/plugins/project-planning/agents/project-planning/prd-builder.agent.md` |
+| Lifecycle         | Three-phase (Discover, Define, Govern)                                          | Seven-phase (Assess through Finalize)                                           |
+| Template strategy | `requirements-author` skill (`templates/brd/brd-full.md`)                       | `requirements-author` skill (`templates/prd/prd-full.md`)                       |
+| Focus             | Business justification and stakeholder scope                                    | Product specifications with measurable requirements                             |
+| Session directory | `.copilot-tracking/brd-sessions/`                                               | `.copilot-tracking/prd-sessions/`                                               |
 
 The PRD Builder's longer lifecycle reflects its deeper requirement-building, integration, and validation phases for handling detailed product specifications.
 

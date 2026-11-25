@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Templates"
 pagination_label: Templates
 author: Microsoft
-ms.date: 2026-11-18
+ms.date: 2026-11-24
 ms.topic: overview
 keywords:
   - templates
@@ -28,7 +28,7 @@ Standardized templates for common documentation tasks. Each template provides a 
 | [Code Review Output Format](full-review-output-format.md)                                                                                                                           | Where the canonical Code Review report contract lives            |
 | [Code Review Standards Output Format](standards-review-output-format.md)                                                                                                            | How standards findings fit the shared Code Review contract       |
 | [Engineering Fundamentals](engineering-fundamentals.md)                                                                                                                             | Language-agnostic design principles applied to code reviews      |
-| [RAI Assessment](https://github.com/microsoft/hve-core/blob/main/.github/plugins/sdlc-responsible-ai/skills/project-planning/rai-planner/assets/templates/rai-plan-template.md)     | RAI assessment output structure                                  |
+| [RAI Assessment](https://github.com/microsoft/hve-core/blob/main/.github/plugins/sdlc-security/skills/project-planning/rai-planner/assets/templates/rai-plan-template.md)           | RAI assessment output structure                                  |
 | [Root Cause Analysis](https://github.com/microsoft/hve-core/blob/main/.github/plugins/sdlc-security/skills/security/incident-response/assets/templates/rca-template.md)             | Investigate incidents with timeline, analysis, and action items  |
 | [Security Plan](https://github.com/microsoft/hve-core/blob/main/.github/plugins/sdlc-security/skills/project-planning/security-planning/assets/templates/security-plan-template.md) | Define security controls, threat models, and compliance measures |
 | [Skill Security Model](skill-security-model-template.md)                                                                                                                            | Canonical structure for per-skill STRIDE security models         |

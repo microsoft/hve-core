@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-11-17
+ms.date: 2026-11-24
 ms.topic: guide
 keywords:
   - copilot
@@ -275,7 +275,7 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 * `results/<snapshot-id>/<work-id>.json` (one result per perspective or context/investigation task)
 * `review.md` (human-editable report, with a PR comment draft for PR and MR targets)
 
-**Skills:** The agent preloads `code-review` and `disclaimer-language` and follows the same workflow as `/code-review`. All perspective and phase guidance lives under `.github/plugins/sdlc-git/skills/coding-standards/code-review/references/`.
+**Skills:** The agent preloads `code-review` and follows the same workflow as `/code-review`. All perspective and phase guidance lives under `.github/plugins/base/skills/coding-standards/code-review/references/`.
 
 **Workflow:** Resolve target → Capture snapshot → Map areas and reasons → Run functional review (inline or parallel general-purpose tasks) → Verify findings → Render report → Publish only with consent
 

@@ -2,4 +2,4 @@
 // SPDX-License-Identifier: MIT
 
 // Project discovery delegates to the packaged implementation.
-import '../../plugins/sdlc-git/extensions/hve-core/code-review/extension.mjs';
+import '../../plugins/base/extensions/hve-core/code-review/extension.mjs';

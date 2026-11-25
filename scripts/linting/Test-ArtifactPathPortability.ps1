@@ -61,13 +61,14 @@ function Test-ArtifactPathPortabilityExcludedFile {
         return $true
     }
 
+    $canonicalPath = $normalizedPath -replace '^\.github/plugins/[^/]+/', '.github/'
     $vallyEvidenceFiles = @(
         '.github/skills/hve-core/vally-tests/references/agents.md',
         '.github/skills/hve-core/vally-tests/references/instructions.md',
         '.github/skills/hve-core/vally-tests/references/prompts.md',
         '.github/skills/hve-core/vally-tests/references/skills.md'
     )
-    return $normalizedPath -in $vallyEvidenceFiles
+    return $canonicalPath -in $vallyEvidenceFiles
 }
 
 function Get-ArtifactPathPortabilityFiles {
@@ -220,12 +221,14 @@ function Test-ArtifactPathReferenceAllowed {
     )
 
     $exactAllowedReferences = @{
-        '.github/plugins/sdlc-responsible-ai/agents/rai-planning/rai-planner.agent.md' = @('.github/plugins/sdlc-responsible-ai/skills/rai/rai-standards/SKILL.md')
-        '.github/plugins/sdlc-responsible-ai/skills/project-planning/rai-planner/references/rai-identity.md' = @('.github/plugins/sdlc-responsible-ai/skills/rai/rai-standards/SKILL.md')
-        '.github/plugins/rpi-builder/instructions/hve-core/hve-builder.instructions.md' = @('.github/')
+        '.github/agents/rai-planning/rai-planner.agent.md' = @('.github/skills/rai/rai-standards/SKILL.md')
+        '.github/skills/project-planning/rai-planner/references/rai-identity.md' = @('.github/skills/rai/rai-standards/SKILL.md')
+        '.github/instructions/hve-core/hve-builder.instructions.md' = @('.github/')
     }
+    $canonicalRelativePath = ($RelativePath -replace '\\', '/') -replace '^\.github/plugins/[^/]+/', '.github/'
     $trimmedReference = $Reference.Trim('(', ')', '[', ']')
-    if ($exactAllowedReferences.ContainsKey($RelativePath) -and $trimmedReference -in $exactAllowedReferences[$RelativePath]) {
+    $canonicalReference = $trimmedReference -replace '^\.github/plugins/[^/]+/', '.github/'
+    if ($exactAllowedReferences.ContainsKey($canonicalRelativePath) -and $canonicalReference -in $exactAllowedReferences[$canonicalRelativePath]) {
         return $true
     }
 

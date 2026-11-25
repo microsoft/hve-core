@@ -557,7 +557,7 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
     $stimulus = $script:BacklogPartial.stimuli | Where-Object { $_.name -eq $Scenario }
     $files = @($stimulus.agent_environment.files)
     $files | Should -HaveCount 1
-    $files[0].src | Should -Be '../../.github/agents/project-planning/backlog-manager.agent.md'
+    $files[0].src | Should -Be '../../.github/plugins/project-planning/agents/project-planning/backlog-manager.agent.md'
     $files[0].dest | Should -Be '.github/agents/project-planning/backlog-manager.agent.md'
     Test-Path -LiteralPath (Join-Path $script:AgentEvalRoot $files[0].src) | Should -BeTrue
     $stimulus.prompt | Should -Match 'blocked without inventing'
@@ -598,7 +598,7 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
     $files | Should -HaveCount 1
     $files[0].dest | Should -Be 'policy/accessibility-framework-assessor.agent.md'
     Test-Path -LiteralPath (Join-Path $script:AgentEvalRoot $files[0].src) | Should -BeTrue
-    $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/accessibility/accessibility'
+    $stimulus.agent_environment.skills | Should -Contain '../../.github/plugins/sdlc-security/skills/accessibility/accessibility'
     $stimulus.prompt | Should -Match 'synthetic source fragment'
     $stimulus.prompt | Should -Match '2\.1\.1'
     $stimulus.prompt | Should -Match '4\.1\.3'
@@ -618,7 +618,7 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
     foreach ($file in $files) {
       Test-Path -LiteralPath (Join-Path $script:AgentEvalRoot $file.src) | Should -BeTrue
     }
-    $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/hve-core/vally-tests'
+    $stimulus.agent_environment.skills | Should -Contain '../../.github/plugins/sdlc/skills/hve-core/vally-tests'
     $fixture = Get-Content -Raw (Join-Path $script:AgentEvalRoot 'fixtures/three-bullet-summary.txt')
     $fixture | Should -Match 'exactly three Markdown bullet points'
     $stimulus.prompt | Should -Match 'chat only: do not append'
@@ -673,7 +673,7 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
   It 'Supplies the Vally skill for its attribution boundary without changing graders' {
     $suite = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot '../behavior-conformance/skill-behavior.eval.yaml'))
     $stimulus = $suite.stimuli | Where-Object { $_.name -eq 'skill-vally-tests-bleed-detection' }
-    $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/hve-core/vally-tests'
+    $stimulus.agent_environment.skills | Should -Contain '../../.github/plugins/sdlc/skills/hve-core/vally-tests'
     $stimulus.graders | Should -HaveCount 3
     $stimulus.graders.name | Should -Contain 'skill-vally-tests-bleed-detection-skill-attribution'
     $stimulus.graders.name | Should -Contain 'skill-vally-tests-bleed-detection-scope-language'
@@ -687,7 +687,7 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
 Describe 'Offline lexical grader contracts' -Tag 'Unit' {
   BeforeAll {
     $script:LexicalEvalRoot = Join-Path $PSScriptRoot '../../../evals/agent-behavior'
-    $disclaimers = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/project-planning/security-disclaimers/SKILL.md')
+    $disclaimers = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers/SKILL.md')
     $script:SecurityCaution = [regex]::Match($disclaimers, '(?s)## Security Planning\s+(.*?)(?=\r?\n## )').Groups[1].Value.Trim()
     $script:StaticGraderPath = (Resolve-Path (Join-Path $PSScriptRoot '../../../node_modules/@microsoft/vally/dist/graders/static/output-matches-grader.js')).Path
     $script:StaticGraderProbe = @'
@@ -751,8 +751,8 @@ console.log(JSON.stringify(results));
 
   It 'Keeps parent-approved reads and fallback constraints explicit' -Tag 'RpiReviewRemediation' {
     $root = (Resolve-Path (Join-Path $script:LexicalEvalRoot '../..')).Path
-    $critic = Get-Content -Raw (Join-Path $root '.github/agents/hve-core/subagents/rpi-plan-critic.agent.md')
-    $lenses = Get-Content -Raw (Join-Path $root '.github/skills/rpi/rpi-plan-critique/references/lens-assessment.md')
+    $critic = Get-Content -Raw (Join-Path $root '.github/plugins/base/agents/hve-core/subagents/rpi-plan-critic.agent.md')
+    $lenses = Get-Content -Raw (Join-Path $root '.github/plugins/base/skills/rpi/rpi-plan-critique/references/lens-assessment.md')
     $critic | Should -Match ([regex]::Escape('Do not open anything the assignment does not supply, such as a file the plan names'))
     $critic | Should -Not -Match 'Open a file outside the supplied set only when a statement'
     $fallback = [regex]::Match($lenses, '(?s)When `RPI Plan Critic` is unavailable,(.*?)(?=\r?\n## )').Value
@@ -776,7 +776,7 @@ console.log(JSON.stringify(results));
     $stimulus = $specification.stimuli | Where-Object name -eq 'brd-builder-reconciles-completed-research-segment'
     $stimulus.graders | Should -HaveCount 2
     $grader = $stimulus.graders | Where-Object name -eq 'brd-research-disposition-projected'
-    $template = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/project-planning/requirements-author/templates/brd/brd-full.md')
+    $template = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/plugins/project-planning/skills/project-planning/requirements-author/templates/brd/brd-full.md')
     $header = [regex]::Match($template, '(?m)^\| Gap ID[^\r\n]+').Value
     $header | Should -Not -BeNullOrEmpty
     $prefix = "## Research Finding Dispositions`n`n$header`n|---|---|---|---|---|---|`n"
@@ -803,7 +803,7 @@ console.log(JSON.stringify(results));
   }
 
   It 'Keeps one complete UX routing prerequisite and evidence-label authority' -Tag 'GuidanceRepair' {
-    $agent = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/agents/project-planning/ux-ui-designer.agent.md')
+    $agent = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/plugins/project-planning/agents/project-planning/ux-ui-designer.agent.md')
     $mural = ($agent -split '### Mural', 2)[1].Split('## Cross-agent collaboration')[0]
     foreach ($required in @('mode \(`extractor` or `facilitator`\)', 'destination target', 'action intent \(`create`, `mutate`, `append`, or `no-op`\)')) {
       $mural | Should -Match $required
@@ -817,7 +817,7 @@ console.log(JSON.stringify(results));
   }
 
   It 'Executes the portable robustness example with JavaScript semantics' -Tag 'GuidanceRepair' {
-    $guide = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/hve-core/vally-tests/references/grader-robustness.md')
+    $guide = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/plugins/sdlc/skills/hve-core/vally-tests/references/grader-robustness.md')
     $example = [regex]::Match($guide, '(?s)```javascript\r?\n(.*?)\r?\n```').Groups[1].Value
     $example | Should -Not -BeNullOrEmpty
     & node --eval $example
@@ -854,7 +854,7 @@ console.log(JSON.stringify(results));
     $patterns | Should -HaveCount 3
     @($patterns | Select-Object -Unique) | Should -HaveCount 1
 
-    $guide = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/hve-core/vally-tests/references/agents.md')
+    $guide = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/plugins/sdlc/skills/hve-core/vally-tests/references/agents.md')
     $example = [regex]::Match($guide, 'for example ``(.+?)``\. Sentences end')
     $example.Success | Should -BeTrue -Because 'the shared example must use a double-backtick span so its inner backtick renders'
     $example.Groups[1].Value | Should -BeExactly $patterns[0]
@@ -915,7 +915,7 @@ console.log(JSON.stringify(results));
     $grader = $stimulus.graders | Where-Object name -eq 'identifies-target-by-name-not-path'
     $grader.config.negate | Should -BeTrue
 
-    $guide = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/hve-core/vally-tests/references/agents.md')
+    $guide = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/plugins/sdlc/skills/hve-core/vally-tests/references/agents.md')
     $example = [regex]::Match($guide, 'identified by its file path, with a truthful-denial guard, for example `(.+?)`\.')
     $example.Success | Should -BeTrue
     $example.Groups[1].Value | Should -BeExactly $grader.config.pattern
@@ -1717,8 +1717,8 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
   It 'Stages a PRD Implement plan whose recorded critique passed' -Tag 'NativeFixture', 'AdmissionFixture' {
     $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:ObservationRoot 'stimuli/prd-builder.yml'))
     $stimulus = $specification.stimuli | Where-Object name -eq 'prd-builder-executes-approved-authoring-plan'
-    $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/rpi/rpi-plan'
-    $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/rpi/rpi-implement'
+    $stimulus.agent_environment.skills | Should -Contain '../../.github/plugins/base/skills/rpi/rpi-plan'
+    $stimulus.agent_environment.skills | Should -Contain '../../.github/plugins/base/skills/rpi/rpi-implement'
     $planMount = $stimulus.agent_environment.files | Where-Object dest -like '.copilot-tracking/plans/*'
     $critiqueMount = $stimulus.agent_environment.files | Where-Object dest -like '.copilot-tracking/reviews/plans/*'
     $critique = Get-Content -Raw (Join-Path $script:ObservationRoot $critiqueMount.src)
@@ -1807,10 +1807,10 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     foreach ($name in $noPrecreated.Keys) { $stimuli[$name].agent_environment.files.dest | Should -Not -Contain $noPrecreated[$name] -Because $name }
     $stimuli['experiment-designer-produces-execution-rpi-artifacts'].agent_environment.files.dest | Should -Not -Contain '.copilot-tracking/mve/2026-09-21/synthetic-batching/results.md'
     $stimuli['experiment-designer-reviews-execution'].agent_environment.files.dest | Should -Not -Contain '.copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md'
-    $stimuli['experiment-designer-produces-execution-rpi-artifacts'].agent_environment.skills | Should -Contain '../../.github/skills/rpi/rpi-plan'
-    $stimuli['experiment-designer-produces-execution-rpi-artifacts'].agent_environment.skills | Should -Contain '../../.github/skills/rpi/rpi-implement'
-    $stimuli['experiment-designer-critiques-execution-plan'].agent_environment.skills | Should -Contain '../../.github/skills/rpi/rpi-plan-critique'
-    $stimuli['experiment-designer-reviews-execution'].agent_environment.skills | Should -Contain '../../.github/skills/rpi/rpi-review'
+    $stimuli['experiment-designer-produces-execution-rpi-artifacts'].agent_environment.skills | Should -Contain '../../.github/plugins/base/skills/rpi/rpi-plan'
+    $stimuli['experiment-designer-produces-execution-rpi-artifacts'].agent_environment.skills | Should -Contain '../../.github/plugins/base/skills/rpi/rpi-implement'
+    $stimuli['experiment-designer-critiques-execution-plan'].agent_environment.skills | Should -Contain '../../.github/plugins/base/skills/rpi/rpi-plan-critique'
+    $stimuli['experiment-designer-reviews-execution'].agent_environment.skills | Should -Contain '../../.github/plugins/base/skills/rpi/rpi-review'
     $stimuli['experiment-designer-reviews-execution'].agent_environment.files.dest | Should -Contain 'evidence/experiment-run-data.md'
     $reviewPlan = $stimuli['experiment-designer-reviews-execution'].agent_environment.files | Where-Object dest -like '.copilot-tracking/plans/*'
     (Get-Content -Raw (Join-Path $script:ObservationRoot $reviewPlan.src)) | Should -Not -Match '(?m)^#{3,4} \[ \] P01'
@@ -2049,7 +2049,7 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
       'subject/package.json', 'subject/.github/workflows/release.yml', 'subject/Dockerfile')
     @($mounts.dest | Where-Object { $_ -like '.copilot-tracking/*' }) | Should -HaveCount 0
     foreach ($mount in $mounts) { Test-Path -LiteralPath (Join-Path $script:ObservationRoot $mount.src) -PathType Leaf | Should -BeTrue -Because $mount.src }
-    @($stimulus.agent_environment.skills) | Should -Be @('../../.github/skills/project-planning/security-disclaimers', '../../.github/skills/security/supply-chain-security', '../../.github/skills/security/security-reviewer-formats',
+    @($stimulus.agent_environment.skills) | Should -Be @('../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers', '../../.github/plugins/sdlc-security/skills/security/supply-chain-security', '../../.github/plugins/sdlc-security/skills/security/security-reviewer-formats',
       '../../.github/skills/shared/untrusted-content-boundary')
     $workflow = Get-Content -Raw (Join-Path $script:ObservationRoot 'fixtures/sssc-smoke/release-workflow.fixture')
     $workflow | Should -Match 'uses: actions/checkout@v4'
@@ -2540,9 +2540,9 @@ console.log(JSON.stringify(await new DiffMatchGrader(input.type).grade(input)));
 Describe 'Requirements builder reliability contracts' -Tag 'Unit', 'HveBuilderReliability' {
   BeforeAll {
     $script:RepositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
-    $script:ResearchContract = Get-Content -Raw (Join-Path $script:RepositoryRoot '.github/skills/project-planning/requirements-author/references/_shared/rpi-research-integration.md')
-    $script:BrdAgent = Get-Content -Raw (Join-Path $script:RepositoryRoot '.github/agents/project-planning/brd-builder.agent.md')
-    $script:PrdAgent = Get-Content -Raw (Join-Path $script:RepositoryRoot '.github/agents/project-planning/prd-builder.agent.md')
+    $script:ResearchContract = Get-Content -Raw (Join-Path $script:RepositoryRoot '.github/plugins/project-planning/skills/project-planning/requirements-author/references/_shared/rpi-research-integration.md')
+    $script:BrdAgent = Get-Content -Raw (Join-Path $script:RepositoryRoot '.github/plugins/project-planning/agents/project-planning/brd-builder.agent.md')
+    $script:PrdAgent = Get-Content -Raw (Join-Path $script:RepositoryRoot '.github/plugins/project-planning/agents/project-planning/prd-builder.agent.md')
   }
 
   It 'Represents a completed unanswered return without clearing the owning gate' {
@@ -2625,7 +2625,7 @@ Describe 'RAI Reviewer evaluation ownership' -Tag 'Unit' {
     $script:RaiReviewerPartial = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText($script:RaiReviewerPartialPath))
     $script:RaiReviewerFixturePath = Join-Path $PSScriptRoot '../../../evals/agent-behavior/fixtures/rai-reviewer-audit-copilot-instructions.md'
     $script:RaiReviewerFixture = [System.IO.File]::ReadAllText($script:RaiReviewerFixturePath)
-    $disclaimerPath = Join-Path $PSScriptRoot '../../../.github/skills/rai/rai-disclaimers/SKILL.md'
+    $disclaimerPath = Join-Path $PSScriptRoot '../../../.github/plugins/sdlc-security/skills/rai/rai-disclaimers/SKILL.md'
     $script:DisclaimerSource = [System.IO.File]::ReadAllText($disclaimerPath)
     $script:RaiReviewerSmoke = $script:RaiReviewerPartial['stimuli'] |
       Where-Object { $_['name'] -eq 'rai-reviewer-class-recipe' }
@@ -2677,8 +2677,8 @@ $script:RaiReviewerFixtureCaution
     $files | Should -HaveCount 1
     $files[0]['src'] | Should -Be 'fixtures/rai-reviewer-audit-copilot-instructions.md'
     $files[0]['dest'] | Should -Be '.github/copilot-instructions.md'
-    $skills | Should -Contain '../../.github/skills/rai/rai-standards'
-    $skills | Should -Contain '../../.github/skills/security/security-reviewer-formats'
+    $skills | Should -Contain '../../.github/plugins/sdlc-security/skills/rai/rai-standards'
+    $skills | Should -Contain '../../.github/plugins/sdlc-security/skills/security/security-reviewer-formats'
     $graderNames | Should -Contain 'rai-report-format'
     $graderNames | Should -Contain 'generation-complete'
     $graderNames | Should -Contain 'rai-report-root-and-path'
@@ -2871,7 +2871,7 @@ Describe 'Data Science Coach RPI evaluation contracts' -Tag 'Unit' {
         $stimulus.tags.Contains('advisory') | Should -BeFalse
         $stimulus.constraints.max_agent_duration | Should -Be '900s'
         $stimulus.constraints.max_duration | Should -Be '960s'
-        $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/rpi/rpi-plan-critique'
+        $stimulus.agent_environment.skills | Should -Contain '../../.github/plugins/base/skills/rpi/rpi-plan-critique'
         $stimulus.graders | Should -HaveCount 6
         @($stimulus.graders | Where-Object { $_.type -eq 'tool-calls' }) | Should -HaveCount 1
         @($stimulus.graders | Where-Object { $_.type -eq 'file-exists' }) | Should -HaveCount 3

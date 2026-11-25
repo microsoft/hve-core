@@ -3,7 +3,7 @@ title: Coding Standards/Bicep/Bicep
 description: Bicep infrastructure-as-code authoring conventions
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-06
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                               |
-|-------------|---------------------------------------------------------------------|
-| Kind        | instruction                                                         |
-| Source      | `.github/instructions/coding-standards/bicep/bicep.instructions.md` |
-| Invocation  | Applied automatically to `**/*.bicep, **/*.bicepparam, **/bicep/**` |
-| Interactive | No                                                                  |
+| Field       | Value                                                                            |
+|-------------|----------------------------------------------------------------------------------|
+| Kind        | instruction                                                                      |
+| Source      | `.github/plugins/sdlc/instructions/coding-standards/bicep/bicep.instructions.md` |
+| Invocation  | Applied automatically to `**/*.bicep, **/*.bicepparam, **/bicep/**`              |
+| Interactive | No                                                                               |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

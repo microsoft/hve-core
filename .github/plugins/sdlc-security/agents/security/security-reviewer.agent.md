@@ -110,8 +110,8 @@ Skill resolution: Read the applicable security skill (e.g., `owasp-top-10`, `owa
 
 ### Subagents
 
-| Dispatch name         | Purpose                                                                           |
-|-----------------------|-----------------------------------------------------------------------------------|
+| Dispatch name         | Purpose                                                                            |
+|-----------------------|------------------------------------------------------------------------------------|
 | Codebase Profiler     | Scans the repository to build a technology profile and identify applicable skills. |
 | Finding Deep Verifier | Verifies findings using evidence and full vulnerability references.                |
 | Report Generator      | Collates verified findings and generates the final vulnerability report.           |
