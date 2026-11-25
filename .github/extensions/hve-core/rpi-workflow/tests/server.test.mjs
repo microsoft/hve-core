@@ -13,7 +13,7 @@ import { agentEditSection, CLAIM_STALE_MS, claimDelivery, createFeedback, markDe
 import { buildScenario } from '../lib/scenario.mjs';
 import { clientInfoFrom, createCanvasServer as newServer, MAX_BODY, renderShell } from '../lib/server.mjs';
 import { createInboxRunner } from '../lib/inbox.mjs';
-import { CANVAS_ID, createPanelOpener, panelInstanceId } from '../lib/panels.mjs';
+import { CANVAS_ID, PREVIEW_CANVAS_ID, createPanelOpener, panelInstanceId } from '../lib/panels.mjs';
 import { createSourceController } from '../lib/sources.mjs';
 import { storeIdFor } from '../lib/source/workspace.mjs';
 import { createStore } from '../lib/store.mjs';
@@ -1577,7 +1577,7 @@ describe('the picker and panels of a canvas that shows no session', () => {
 });
 
 describe('opening a session in a new panel', () => {
-    const PROVIDER = 'project:rpi-workflow';
+    const PROVIDER = 'plugin:hve-core:rpi-workflow';
     const SESSION = 'c4d5e6f7-0a1b-4c2d-9e3f-4a5b6c7d8e9f';
     const OTHER_SESSION = 'd5e6f7a8-1b2c-4d3e-8f4a-5b6c7d8e9f0a';
     const UNKNOWN = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
@@ -1591,22 +1591,23 @@ describe('opening a session in a new panel', () => {
      * Only SESSION and OTHER_SESSION have a workspace that reads; any other session is not found. Its clock is the
      * test's, so the ask interval can be checked.
      */
-    async function panelSetup(name, { rpc, deliver, opener = true } = {}) {
+    async function panelSetup(name, { rpc, deliver, opener = true, canvasId = CANVAS_ID, provider = PROVIDER } = {}) {
         const store = createStore({ root: path.join(tmp, name), pollMs: 20 });
         const session = await store.create({ ...rootSession().session, id: storeIdFor(ROOT_TASK, FIXTURE_ROOT) });
         const sent = [];
         let clock = NOW;
         const server = createCanvasServer({
+            canvasId,
             store,
             getSessionId: () => session.id,
             getCanvas: () => ({ handle: 'K7QF', instanceId: 'rpi-workflow-demo' }),
             getSource: () => ({ kind: 'rpi', workspace: { root: FIXTURE_ROOT }, follow: { paused: false } }),
-            getExtensionId: () => PROVIDER,
+            getExtensionId: () => provider,
             resolveSession: async (sessionId) => {
                 if (sessionId !== SESSION && sessionId !== OTHER_SESSION) throw new Error(`No Copilot session ${sessionId} was found.`);
                 return { root: FIXTURE_ROOT, tracking: path.join(FIXTURE_ROOT, '.copilot-tracking') };
             },
-            ...(opener ? { openPanel: createPanelOpener({ rpc: () => rpc, extensionId: () => PROVIDER, canvasId: CANVAS_ID }) } : {}),
+            ...(opener ? { openPanel: createPanelOpener({ rpc: () => rpc, extensionId: () => provider, canvasId }) } : {}),
             deliver: deliver ?? (async (message) => {
                 sent.push(message);
             }),
@@ -1671,6 +1672,16 @@ describe('opening a session in a new panel', () => {
         noApi.store.close();
         await noOpener.server.stop();
         noOpener.store.close();
+    });
+
+    it('asks the agent to open the preview with its own canvas and instance IDs when the host refuses', async () => {
+        const rpc = hostCanvas({ openError: new Error('Canvases cannot open from this session.') });
+        const provider = 'project:rpi-workflow';
+        const { server, url, store, sent } = await panelSetup('panel-preview-refused', { rpc, canvasId: PREVIEW_CANVAS_ID, provider });
+        assert.equal((await askPanel(url)).json.outcome, 'asked');
+        assert.ok(sent[0].prompt.includes(`canvasId "${PREVIEW_CANVAS_ID}", instanceId "rpi-preview-c4d5e6f7", input ${JSON.stringify(OPEN)}, extensionId "${provider}"`));
+        await server.stop();
+        store.close();
     });
 
     it('waits 30 seconds between asks, and says how long is left', async () => {

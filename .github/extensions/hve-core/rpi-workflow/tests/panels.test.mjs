@@ -2,13 +2,44 @@
 // SPDX-License-Identifier: MIT
 
 import assert from 'node:assert/strict';
+import { registerHooks } from 'node:module';
 import { describe, it } from 'node:test';
 
-import { CANVAS_ID, createPanelOpener, panelInstanceId, providerOf } from '../lib/panels.mjs';
+import { CANVAS_ID, PREVIEW_CANVAS_ID, createPanelOpener, panelInstanceId, providerOf } from '../lib/panels.mjs';
 import { hostCanvas } from './helpers/host-canvas.mjs';
 
 const SESSION = '7b2e8f10-3c4d-4e5f-8a6b-1c2d3e4f5a6b';
 const PROVIDER = 'project:rpi-workflow';
+
+describe('published and workspace canvas registration', () => {
+    it('lets a host route to either entry without a provider ID', async () => {
+        const sdk = `data:text/javascript,${encodeURIComponent(`
+            export const registrations = [];
+            export class CanvasError extends Error {}
+            export const createCanvas = (options) => options;
+            export async function joinSession({ canvases }) {
+                registrations.push(...canvases);
+                return {};
+            }
+        `)}`;
+        const hook = registerHooks({
+            resolve(specifier, context, nextResolve) {
+                return specifier === '@github/copilot-sdk/extension' ? { url: sdk, shortCircuit: true } : nextResolve(specifier, context);
+            },
+        });
+        try {
+            await import('../extension.mjs');
+            await import('../../../rpi-workflow/extension.mjs');
+        } finally {
+            hook.deregister();
+        }
+        const { registrations } = await import(sdk);
+        assert.deepEqual(registrations.map(({ id, displayName }) => [id, displayName]), [
+            ['hve-core-rpi-workflow', 'RPI Workflow'],
+            ['hve-core-rpi-workflow-preview', 'RPI Workflow (workspace preview)'],
+        ]);
+    });
+});
 
 describe('session panel instance IDs', () => {
     it('is rpi and the first eight characters of the session ID, in lowercase', () => {
@@ -35,6 +66,13 @@ describe('opening a session panel through the host', () => {
         const openPanel = createPanelOpener({ rpc: () => rpc, extensionId: () => record.extensionId, canvasId: CANVAS_ID });
         assert.deepEqual(await openPanel({ session: SESSION }), { outcome: 'opened', instanceId: 'rpi-7b2e8f10' });
         assert.deepEqual(rpc.opens, [{ extensionId: PROVIDER, canvasId: 'hve-core-rpi-workflow', instanceId: 'rpi-7b2e8f10', input: { session: SESSION } }]);
+    });
+
+    it('opens a preview beside an existing panel for the same session instead of reusing its instance', async () => {
+        const rpc = hostCanvas({ listed: [{ instanceId: 'rpi-7b2e8f10', extensionId: PROVIDER, canvasId: CANVAS_ID }] });
+        const openPanel = createPanelOpener({ rpc: () => rpc, extensionId: () => PROVIDER, canvasId: PREVIEW_CANVAS_ID });
+        assert.deepEqual(await openPanel({ session: SESSION }), { outcome: 'opened', instanceId: 'rpi-preview-7b2e8f10' });
+        assert.deepEqual(rpc.opens, [{ extensionId: PROVIDER, canvasId: PREVIEW_CANVAS_ID, instanceId: 'rpi-preview-7b2e8f10', input: { session: SESSION } }]);
     });
 
     it('reads the provider at each open, so a reopen through another provider uses that one', async () => {
