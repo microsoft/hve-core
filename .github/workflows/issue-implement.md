@@ -33,7 +33,8 @@ checkout:
   sparse-checkout: |
     .github/workflows/
     .github/copilot-instructions.md
-    .github/instructions/coding-standards/
+    .github/plugins/sdlc/instructions/coding-standards/
+    .github/plugins/sdlc/instructions/hve-core/
     .github/instructions/hve-core/
     .github/instructions/shared/
     scripts/

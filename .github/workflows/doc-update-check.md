@@ -34,17 +34,19 @@ network:
 timeout-minutes: 15
 
 imports:
-  - ../agents/hve-core/documentation.agent.md
+  - ../plugins/sdlc/agents/hve-core/documentation.agent.md
 
 checkout:
   fetch-depth: 0
   sparse-checkout: |
     .github/copilot-instructions.md
     .github/ISSUE_TEMPLATE/
-    .github/instructions/coding-standards/
+    .github/plugins/sdlc/instructions/coding-standards/
+    .github/plugins/sdlc/instructions/hve-core/
     .github/instructions/hve-core/
     .github/instructions/shared/
     .github/instructions/skill-security-model.instructions.md
+    .github/plugins/
     .github/skills/
     .github/workflows/
     docs/

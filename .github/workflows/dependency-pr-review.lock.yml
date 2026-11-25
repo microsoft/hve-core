@@ -549,13 +549,15 @@ jobs:
           filter: 'blob:limit=1073741824'
           sparse-checkout: |
             .github/copilot-instructions.md
-            .github/instructions/coding-standards/
+            .github/plugins/sdlc/instructions/coding-standards/
+            .github/plugins/sdlc/instructions/hve-core/
             .github/instructions/hve-core/
             .github/instructions/shared/
             .devcontainer/
             .github/workflows/copilot-setup-steps.yml
             package.json
             package-lock.json
+            .github/plugins/
             .github/skills/
       - name: Clear partial clone markers after sparse checkout
         continue-on-error: true

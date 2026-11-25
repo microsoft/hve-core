@@ -2717,7 +2717,7 @@ Describe 'Node test discovery and selection for Copilot extensions' -Tag 'Unit' 
             return $match.Groups[1].Value
         }
 
-        $script:ExtensionPattern = Get-NodeSelectionPattern -Condition "startsWith(matrix.directory, '.github/extensions/')"
+        $script:ExtensionPattern = Get-NodeSelectionPattern -Condition "(startsWith(matrix.directory, '.github/extensions/') || contains(matrix.directory, '/extensions/'))"
         $script:CanvasUpdatePattern = Get-NodeSelectionPattern -Condition "matrix.directory == '.github/skills/session-log-canvas-update'"
 
         # Run the discovery step against a fixture tree with every candidate kind.
@@ -2770,6 +2770,7 @@ Describe 'Node test discovery and selection for Copilot extensions' -Tag 'Unit' 
 
     It 'Selects every extension lane for <Path>' -ForEach @(
         @{ Path = '.github/extensions/hve-core/session-log/lib/indexer.mjs' }
+        @{ Path = '.github/plugins/base/extensions/hve-core/session-log/lib/indexer.mjs' }
         @{ Path = '.github/extensions/hve-core/session-log/ui/styles.css' }
         @{ Path = '.github/extensions/hve-core/session-log/ui/index.html' }
         @{ Path = '.github/extensions/hve-core/session-log/README.md' }
@@ -2790,6 +2791,7 @@ Describe 'Node test discovery and selection for Copilot extensions' -Tag 'Unit' 
         @{ Path = '.github/skills/session-log-canvas-update/assets/event-shapes.json' }
         @{ Path = '.github/skills/session-log-canvas-update/scripts/event-schema.mjs' }
         @{ Path = '.github/extensions/hve-core/session-log/lib/indexer.mjs' }
+        @{ Path = '.github/plugins/base/extensions/hve-core/session-log/lib/indexer.mjs' }
     ) {
         $Path | Should -Match $script:CanvasUpdatePattern
     }

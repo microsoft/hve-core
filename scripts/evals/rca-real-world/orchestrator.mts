@@ -294,7 +294,7 @@ export async function runTrial(options: RunTrialOptions): Promise<TrialArtifact>
 
 /** Copies the exact RCA skill package into an isolated workspace and returns its prompt bundle. */
 export async function stageSkills(repositoryRoot: string, workspace: string): Promise<string> {
-  const sourceRoot = join(repositoryRoot, ".github", "skills", "root-cause-analysis");
+  const sourceRoot = join(repositoryRoot, ".github", "plugins", "sdlc", "skills", "root-cause-analysis");
   const targetRoot = join(workspace, ".github", "skills");
   await mkdir(targetRoot, { recursive: true });
   for (const skillName of RCA_SKILL_NAMES) {

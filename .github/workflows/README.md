@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-11-10
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - github actions
@@ -1162,7 +1162,7 @@ Use `continue-on-error: true` to prevent workflow failure on SARIF upload issues
 | `.markdownlint.json`                                                               | Markdown formatting rules    | `markdown-lint.yml`         |
 | `scripts/linting/markdown-link-check.config.json`                                  | Link checking configuration  | `markdown-link-check.yml`   |
 | `.cspell.json`                                                                     | Spell checking configuration | `spell-check.yml`           |
-| `.github/instructions/hve-core/markdown.instructions.md`                           | Markdown style guide         | All markdown workflows      |
+| `.github/plugins/sdlc/instructions/hve-core/markdown.instructions.md`              | Markdown style guide         | All markdown workflows      |
 | `.github/plugins/sdlc-git/skills/hve-core/git-commit/references/commit-message.md` | Commit message standards     | All workflows (informative) |
 
 ## Resources

@@ -524,7 +524,7 @@ export async function createInputFingerprint(
   const roots = [
     join(repositoryRoot, "evals", "rca-real-world"),
     join(repositoryRoot, "scripts", "evals", "rca-real-world"),
-    join(repositoryRoot, ".github", "skills", "root-cause-analysis"),
+    join(repositoryRoot, ".github", "plugins", "sdlc", "skills", "root-cause-analysis"),
   ];
   const files: { path: string; sha256: string }[] = [];
   for (const root of roots) {

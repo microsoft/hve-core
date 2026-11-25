@@ -95,7 +95,7 @@ test("fingerprints input paths in code-unit order", async (context) => {
   context.after(() => rm(root, { recursive: true, force: true }));
   const runRoot = join(root, "run");
   const paths = [
-    ".github/skills/root-cause-analysis/skill.txt",
+    ".github/plugins/sdlc/skills/root-cause-analysis/skill.txt",
     "evals/rca-real-world/Z.txt",
     "evals/rca-real-world/a.txt",
     "package-lock.json",
