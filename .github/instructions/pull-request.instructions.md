@@ -1,66 +1,54 @@
 ---
-description: 'HVE Core repository conventions for preparing, creating, or updating pull requests, including template mapping, AI artifact checkboxes, validation reporting, and GHCP membership changes.'
+description: 'HVE Core pull request conventions for change-type mapping, human-only items, AI artifact sections, validation and security checkboxes, and GHCP membership changes'
 applyTo: '**/.copilot-tracking/pr/**'
 ---
 
 # HVE Core Pull Request Conventions
 
-Apply these repository-specific rules when the pull request skill prepares or updates a pull request
-for HVE Core.
-
-## Human-Only Checkboxes
-
-Leave these items unchecked:
-
-* HVE Builder review attestations
-* AI artifact contribution verification
-* Free-form `Other` change type
-* Manual testing and qualified-human review
-* Hosted CI checks without a successful hosted result
-
-Do not annotate an unchecked human-only item as failed.
-
-## AI Artifact Sections
-
-For changed `.instructions.md`, `.agent.md`, or `SKILL.md` files, populate Sample
-Prompts with a compact, natural request, a short execution summary, the user-visible output, and one
-observable success signal. Keep preview content brief. Remove the section when it is not applicable
-and the template permits deletion.
-
-Select each AI artifact change type proven by changed paths. A `SKILL.md` change is a skill even
-though it is Markdown. Leave `Other` for a human.
-
-## Testing And Checks
-
-List only commands that ran, with their results. Do not list inferred or planned checks as passed.
-Leave the local validation aggregate unchecked when only targeted checks ran. Check documentation,
-naming, compatibility, and test-coverage items only when direct diff evidence proves the exact
-statement.
-
-For security considerations:
-
-* Leave the sensitive-information attestation for a human.
-* Assess dependency security only when dependency manifests or lockfiles changed.
-* Assess least privilege only when security-sensitive scripts or permission declarations changed.
-
-## Distribution Changes
-
-When distributable Copilot artifact membership changed, add `## GHCP Membership Changes` before
-`## Additional Notes`. Determine membership from root `plugin.json` after required synchronization,
-and list only added or removed artifacts. Mention `npm run plugin:sync` and
-`npm run plugin:validate` in Validation when those commands ran.
+Apply these rules to pull request descriptions under `.copilot-tracking/pr/`.
 
 ## Change Types
 
-Infer types from branch and commit prefixes plus changed paths. Common mappings include:
+Select every type that branch names, commit messages, or changed paths prove.
 
-* `fix`, `bugfix`, or `hotfix` to Bug fix
-* `feat` or `feature` to New feature
-* `BREAKING CHANGE` or a conventional-commit `!` to Breaking change
-* `docs/` to Documentation update
-* `.github/workflows/` to GitHub Actions workflow
-* dependency manifests and lockfiles to Dependency update
-* `.instructions.md`, `.agent.md`, and `SKILL.md` to their matching AI artifact types
-* `.ps1`, `.sh`, and `.py` to Script or automation
+| Evidence                                                                                                | Type of Change             |
+|---------------------------------------------------------------------------------------------------------|----------------------------|
+| `fix`, `bugfix`, or `hotfix` prefix                                                                     | Bug fix                    |
+| `feat` or `feature` prefix                                                                              | New feature                |
+| `BREAKING CHANGE` footer or `!` after the type                                                          | Breaking change            |
+| `docs/` or a `README.md`                                                                                | Documentation update       |
+| `.github/workflows/` or `.github/actions/`                                                              | GitHub Actions workflow    |
+| `.markdownlint*`, `.cspell*`, or `scripts/linting/` configuration files                                 | Linting configuration      |
+| `.gitleaks.toml`, `.github/codeql/`, `scripts/security/*.json`, or `skill-security-classification.json` | Security configuration     |
+| `.devcontainer/`                                                                                        | DevContainer configuration |
+| Dependency manifests or lockfiles                                                                       | Dependency update          |
+| `*.instructions.md`                                                                                     | Copilot instructions       |
+| `*.agent.md`                                                                                            | Copilot agent              |
+| `SKILL.md` or other files in a skill folder                                                             | Copilot skill              |
+| `evals/`                                                                                                | Eval spec added/updated    |
+| `.ps1`, `.sh`, or `.py` files                                                                           | Script/automation          |
 
-Select all supported types. Do not infer a generic type only to avoid leaving every item unchecked.
+Leave Copilot hook unchecked; this repository has no hooks.
+
+## Human-Only Items
+
+Leave these unchecked, without marking them as failed:
+
+* `Other` under Type of Change
+* The `hve-builder` review items under Type of Change and AI Artifact Contributions
+* The common-standards verification under AI Artifact Contributions
+* The sensitive-information statement under Security Considerations
+
+## AI Artifact Sections
+
+When an `.instructions.md`, `.agent.md`, or `SKILL.md` file changed, fill Sample Prompts with a short request, a brief execution summary, the visible output, and one observable success signal. Otherwise delete the section.
+
+## Validation and Security
+
+* Check a Required Local Checks item only when that exact command ran and passed. Targeted checks don't satisfy `npm run validate:local`.
+* Check the documentation, naming, compatibility, and test-coverage items only when the diff proves the exact statement.
+* Assess dependency security only when a manifest or lockfile changed, and least privilege only when security-sensitive scripts or permission declarations changed.
+
+## GHCP Membership Changes
+
+When distributable artifact membership changed, add `## GHCP Membership Changes` before `## Additional Notes`, listing only artifacts added to or removed from the root `plugin.json` after any required sync. Mention `npm run plugin:sync` and `npm run plugin:validate` under Testing when they ran.
