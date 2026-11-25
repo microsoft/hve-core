@@ -15,6 +15,25 @@ scoring:
     prompt: 0.85
     wall-time: 0.15
   threshold: 0.85
+# Stage the agent at the path turn 0 launches, plus the skills, instructions, and schema it loads.
+# Paths resolve from this spec's directory, three levels below the repository root.
+agent_environment:
+  skills:
+  - ../../../.github/skills/shared/untrusted-content-boundary
+  - ../../../.github/skills/shared/planner-identity
+  - ../../../.github/skills/accessibility/accessibility
+  - ../../../.github/skills/shared/backlog-templates
+  files:
+  - src: ../../../.github/agents/accessibility/accessibility-planner.agent.md
+    dest: .github/agents/accessibility/accessibility-planner.agent.md
+  - src: ../../../.github/instructions/accessibility/accessibility-identity.instructions.md
+    dest: .github/instructions/accessibility/accessibility-identity.instructions.md
+  - src: ../../../.github/instructions/accessibility/accessibility-license-posture.instructions.md
+    dest: .github/instructions/accessibility/accessibility-license-posture.instructions.md
+  - src: ../../../.github/instructions/hve-core/licensing-posture.instructions.md
+    dest: .github/instructions/hve-core/licensing-posture.instructions.md
+  - src: ../../../scripts/linting/schemas/accessibility-state.schema.json
+    dest: scripts/linting/schemas/accessibility-state.schema.json
 stimuli:
 - name: aria-no-native-semantics-anti-pattern
   turns:

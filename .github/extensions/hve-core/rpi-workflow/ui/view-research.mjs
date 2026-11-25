@@ -59,6 +59,7 @@ export function lanesCard(ctx, filter) {
 export function outline(ctx) {
     const { research, sections } = ctx.data.session;
     return [
+        sections['research-source'] ? { id: 'research-source', label: 'Source' } : null,
         { id: 'research-summary', label: 'Summary' },
         sections['research-unknowns'] ? { id: 'research-unknowns', label: 'What you may not know' } : null,
         { id: 'questions', label: 'Questions', count: research.questions.length },
@@ -76,6 +77,15 @@ export function renderView(ctx) {
     const readiness = research.readiness;
     const readinessBadge = readiness ? badge(readiness.status === 'ready' ? { icon: 'check-circle', label: 'Ready for planning', tone: 'success' } : { icon: 'hand', label: 'Not ready', tone: 'attention' }) : null;
     const rows = [];
+
+    if (session.sections['research-source']) {
+        rows.push(row(ctx, {
+            id: 'research-source', idLabel: null, title: 'Source', level: 2,
+            actions: rowActions(ctx, { rowId: 'research-source' }),
+            body: [sectionBody(ctx, 'research-source')],
+            margin: notesFor(ctx, ['research-source']).map((item) => marginNote(ctx, item)),
+        }));
+    }
 
     rows.push(row(ctx, {
         id: 'research-summary', idLabel: null, title: 'Summary', level: 2, badges: [readinessBadge],

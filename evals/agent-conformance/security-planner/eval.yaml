@@ -16,6 +16,23 @@ scoring:
     wall-time: 0.15
     output-contains: 0.15
   threshold: 0.7
+# Stage the agent at the path turn 0 launches, plus the skills and instructions it loads.
+# Paths resolve from this spec's directory, three levels below the repository root.
+agent_environment:
+  skills:
+  - ../../../.github/skills/shared/disclaimer-language
+  - ../../../.github/skills/shared/untrusted-content-boundary
+  - ../../../.github/skills/shared/planner-identity
+  - ../../../.github/skills/project-planning/security-planning
+  files:
+  - src: ../../../.github/agents/security/security-planner.agent.md
+    dest: .github/agents/security/security-planner.agent.md
+  - src: ../../../.github/instructions/security/identity.instructions.md
+    dest: .github/instructions/security/identity.instructions.md
+  - src: ../../../.github/instructions/security/standards-mapping.instructions.md
+    dest: .github/instructions/security/standards-mapping.instructions.md
+  - src: ../../../.github/instructions/shared/coaching-patterns.instructions.md
+    dest: .github/instructions/shared/coaching-patterns.instructions.md
 stimuli:
 - name: trust-boundary-identification
   turns:
@@ -210,6 +227,11 @@ stimuli:
     Resume project cadence-null in Phase 1. Its valid state has disclaimerShownAt=null
     and an empty noticeLog. State the ordered startup actions and the state changes
     before asking any scoping question.
+  # Merged with the suite-level environment; add only the staged project state.
+  agent_environment:
+    files:
+    - src: ../../agent-behavior/fixtures/security-planner-disclaimer-null-state.json
+      dest: .copilot-tracking/security-plans/cadence-null/state.json
   tags:
     category: agent-conformance-security-planner
     phase: startup
@@ -236,6 +258,11 @@ stimuli:
     Resume project cadence-shown in Phase 1. Its valid state has
     disclaimerShownAt=2026-09-01T12:00:00Z and exactly one session-start-disclaimer
     notice. Continue normal work and state what changes, if anything, to those fields.
+  # Merged with the suite-level environment; add only the staged project state.
+  agent_environment:
+    files:
+    - src: ../../agent-behavior/fixtures/security-planner-disclaimer-shown-state.json
+      dest: .copilot-tracking/security-plans/cadence-shown/state.json
   tags:
     category: agent-conformance-security-planner
     phase: startup

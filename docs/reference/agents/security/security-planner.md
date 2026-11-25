@@ -3,7 +3,7 @@ title: Security Planner
 description: "Phase-based security planner producing security models, standards mappings, and backlog handoffs with AI/ML detection and RAI Planner integration"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-21
 ms.topic: reference
 keywords:
   - agent

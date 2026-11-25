@@ -10,12 +10,13 @@ import {
     parseChanges,
     parseCritique,
     parsePlan,
+    parseRefinement,
     parseResearch,
     parseReview,
     parseState,
     stateDecision,
 } from '../lib/source/parse.mjs';
-import { CHANGES, CHILD_CHANGES, CHILD_STATE, CRITIQUE, PLAN, RESEARCH, REVIEW, ROOT_STATE, STALE_STATE } from './helpers/rpi-fixture.mjs';
+import { CHANGES, CHILD_CHANGES, CHILD_STATE, CRITIQUE, PLAN, REFINEMENT, RESEARCH, REVIEW, ROOT_STATE, STALE_STATE } from './helpers/rpi-fixture.mjs';
 
 
 /** A critique record with a lens table, as the critique writes it while it runs and when it ends. */
@@ -43,7 +44,7 @@ const critiqueRecord = (execution, verdict, lenses, findings = '') => [
 
 describe('artifact kinds and state', () => {
     it('recognizes each kind by its first heading', () => {
-        assert.deepEqual([RESEARCH, PLAN, CRITIQUE, CHANGES, REVIEW].map(artifactKind), ['research', 'plan', 'critique', 'changes', 'review']);
+        assert.deepEqual([RESEARCH, PLAN, CRITIQUE, CHANGES, REVIEW, REFINEMENT].map(artifactKind), ['research', 'plan', 'critique', 'changes', 'review', 'refinement']);
         assert.equal(artifactKind('# Something else\n'), null);
         assert.equal(parseArtifact('no heading at all'), null);
     });
@@ -103,6 +104,17 @@ describe('artifact kinds and state', () => {
         assert.deepEqual(state.children.map((link) => link.taskId ?? link.statePath), ['kept', '.copilot-tracking/rpi-sessions/2026-01-15/s/path-only-state.json']);
         assert.deepEqual(state.warnings, ['parent_task names no task_id or state_path.', 'child_tasks entry 2 names no task_id or state_path.', 'child_tasks entry 4 names no task_id or state_path.']);
         assert.deepEqual(parseState({ task_id: 'x', child_tasks: 'not a list' }).warnings, ['child_tasks is not a list.']);
+    });
+
+    it('ignores a session_id on a link, which reads as its task ID, slug, and state path only', () => {
+        const state = parseState({
+            task_id: 'linked',
+            parent_task: { task_id: 'root', state_path: '.copilot-tracking/rpi-sessions/2026-01-15/s/root-state.json', session_id: '3f2a6c1e-8d4b-4f7a-9c2e-1a2b3c4d5e6f' },
+            child_tasks: [{ task_id: 'kid', state_path: '.copilot-tracking/rpi-sessions/2026-01-15/k/kid-state.json', session_id: 42 }],
+        });
+        assert.deepEqual(state.parent, { taskId: 'root', taskSlug: 'root', statePath: '.copilot-tracking/rpi-sessions/2026-01-15/s/root-state.json' });
+        assert.deepEqual(state.children, [{ taskId: 'kid', taskSlug: 'kid', statePath: '.copilot-tracking/rpi-sessions/2026-01-15/k/kid-state.json' }]);
+        assert.deepEqual(state.warnings, []);
     });
 });
 
@@ -278,5 +290,18 @@ describe('changes and review', () => {
         assert.deepEqual(review.followUps.map((f) => f.item), ['Second region']);
         assert.match(review.disposition, /Final outcome: Defects found/);
         assert.deepEqual(review.other.map((o) => o.heading), ['Risks, Blockers, and Residual Work', 'Review Record']);
+    });
+
+    it('reads refinement review findings with dimension, current state, rework, depth, and FD history', () => {
+        const refinement = parseRefinement(REFINEMENT);
+        assert.equal(parseArtifact(REFINEMENT)?.kind, 'refinement');
+        assert.deepEqual([refinement.execution, refinement.outcome, refinement.depth], ['Complete', 'Refinements identified', 'standard']);
+        assert.equal(refinement.findings.length, 1);
+        assert.deepEqual([refinement.findings[0].id, refinement.findings[0].severity, refinement.findings[0].dimension, refinement.findings[0].destination], ['RF-001', 'medium', 'Dependencies and SDKs', 'rpi-plan']);
+        assert.deepEqual(refinement.findings[0].related, ['P01-T01', 'CH-001']);
+        assert.match(refinement.findings[0].current, /custom backoff timer/);
+        assert.match(refinement.findings[0].rework, /retryWithBackoff/);
+        assert.deepEqual(refinement.history.map((h) => [h.id, h.subject, h.status]), [['FD-001', 'Review execution', 'Complete'], ['FD-002', 'RF-001', 'accepted']]);
+        assert.deepEqual(refinement.warnings, []);
     });
 });

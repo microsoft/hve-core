@@ -97,6 +97,30 @@ export function shownMain() {
     return [...document.querySelectorAll('main')].find((element) => !element.closest('[hidden]')) ?? null;
 }
 
+/**
+ * Runs `replace`, which renders `region` again, and keeps focus where it was: on the control with the same ID,
+ * else the same data key, else on `fallback()`, so focus never drops to the page body. Focus outside the region
+ * stays where it is, and so does a focused control that `replace` kept.
+ *
+ * @param {Element} region
+ * @param {() => Element | null} fallback the element, usually the region's heading, that takes focus when the focused control is gone
+ * @param {() => void} replace
+ * @param {(element: Element) => boolean} focus focuses an element and says whether focus landed
+ */
+export function keepingFocus(region, fallback, replace, focus) {
+    const keyOf = (element) => element.dataset?.key || element.getAttribute('data-key') || null;
+    const active = document.activeElement;
+    const inside = Boolean(active) && active !== region && region.contains(active);
+    const anchor = inside ? { id: active.getAttribute('id') || null, key: keyOf(active) } : null;
+    replace();
+    if (!anchor || region.contains(document.activeElement)) return;
+    const same = (element) => (Boolean(anchor.id) && element.getAttribute('id') === anchor.id) || (Boolean(anchor.key) && keyOf(element) === anchor.key);
+    const target = [...region.querySelectorAll('*')].find(same);
+    if (target && focus(target)) return;
+    const heading = fallback();
+    if (heading) focus(heading);
+}
+
 // Times read in the reader's language and time zone, through the browser's own formatters.
 const RELATIVE = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
 const SHORT_DATE = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
@@ -155,7 +179,7 @@ export function decisionAlias(session, id, phase) {
     return local ? local.id : id;
 }
 
-const vocab = (entries) => Object.freeze(Object.fromEntries(entries.map(([key, iconName, label, tone]) => [key, Object.freeze({ icon: iconName, label, tone })])));
+const vocab = (entries) => Object.freeze(Object.fromEntries(entries.map(([key, iconName, label, tone, tip]) => [key, Object.freeze({ icon: iconName, label, tone, ...(tip ? { tip } : {}) })])));
 
 export const PHASE_STATUS = vocab([
     ['done', 'check-circle', 'Done', 'success'],
@@ -164,6 +188,7 @@ export const PHASE_STATUS = vocab([
     ['paused', 'pause', 'Paused for you', 'attention'],
     ['blocked', 'alert', 'Blocked', 'danger'],
     ['skipped', 'dash-circle', 'Skipped', 'muted'],
+    ['provided', 'nodes', 'Provided', 'teal', 'Provided by the user or another session'],
 ]);
 
 export const TASK_STATUS = vocab([
@@ -190,6 +215,14 @@ export const DECISION_STATUS = vocab([
     ['decided', 'sparkle', 'Agent decided', 'agent'],
     ['override-pending', 'undo', 'Override pending', 'attention'],
     ['resolved', 'check', 'Resolved', 'success'],
+]);
+
+export const FINDING_DECISION = vocab([
+    ['proposed', 'question', 'Proposed', 'muted'],
+    ['accepted', 'check', 'Accepted', 'success'],
+    ['rejected', 'x', 'Rejected', 'muted'],
+    ['deferred', 'clock', 'Deferred', 'attention'],
+    ['resolved', 'check-circle', 'Resolved', 'success'],
 ]);
 
 export const EVIDENCE_STATE = vocab([
@@ -285,6 +318,19 @@ export const PHASE_META = Object.freeze({
     review: { icon: 'eye', label: 'Review', key: '4' },
     followup: { icon: 'loop', label: 'Follow-up', key: '5' },
 });
+
+/**
+ * A phase tab's accessible name, tooltip, and description. The name states the phase, its status,
+ * the agent marker, and the items that need the person. A status with a tip adds the tip to the
+ * tooltip; the description is the tip alone, so assistive technology does not repeat the name.
+ *
+ * @param {{ phase: string, meta: { label: string, tip?: string }, active: boolean, needs: number, key: string | null }} options `key` is the shortcut the tooltip names, or null.
+ */
+export function phaseTabText({ phase, meta, active, needs, key }) {
+    const name = [PHASE_META[phase].label, meta.label, active ? 'agent is here' : null, needs ? `${plural(needs, 'item')} ${needs === 1 ? 'needs' : 'need'} you` : null].filter(Boolean).join(', ');
+    const named = key ? `${name} (${key})` : name;
+    return { name, tooltip: meta.tip ? `${named}. ${meta.tip}` : named, description: meta.tip ?? null };
+}
 
 /**
  * The vocabulary entry for a key, a neutral entry that names an unrecognized key, or null

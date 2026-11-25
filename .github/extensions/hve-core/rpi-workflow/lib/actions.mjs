@@ -5,6 +5,7 @@ import {
     agentEditSection,
     artifactFor,
     deriveView,
+    isCopilotSessionId,
     ModelError,
     PHASES,
     recordActivity,
@@ -21,7 +22,7 @@ import {
 } from './model.mjs';
 import { buildScenario, SCENARIO_ID, STAGES } from './scenario.mjs';
 import { loadSessionDocs } from './session-docs.mjs';
-import { sourceSummary } from './sources.mjs';
+import { sessionListOf, sourceSummary } from './sources.mjs';
 
 const str = (description, extra = {}) => ({ type: 'string', description, ...extra });
 const ids = (description) => ({ type: 'array', items: { type: 'string' }, description });
@@ -29,8 +30,8 @@ const PHASE = { type: 'string', enum: [...PHASES], description: 'research, plan,
 
 /** What the agent does with a canvas that shows no RPI session. */
 export const NOT_CONNECTED_NEXT_STEP = 'Connect the canvas with show_task, giving { "state": "<this conversation\'s RPI state file>" } or { "task": "current" }.';
-/** Actions that work on a canvas that shows no session: they read it, connect it, or change its look. */
-const WITHOUT_SESSION = new Set(['get_state', 'show_task', 'load_scenario', 'set_appearance']);
+/** Actions that work on a canvas that shows no session: they read it, connect it, list its picker, or change its look. */
+const WITHOUT_SESSION = new Set(['get_state', 'show_task', 'load_scenario', 'set_sessions', 'set_appearance']);
 
 /** Agent-facing action declarations. Handlers live in createActionHandlers. */
 export const ACTION_DEFINITIONS = Object.freeze([
@@ -46,14 +47,27 @@ export const ACTION_DEFINITIONS = Object.freeze([
     },
     {
         name: 'show_task',
-        description: 'Point this canvas at an RPI task read from the workspace .copilot-tracking folder, or back at the sample. Give state, the workspace-relative path of a state file in a session folder, or task: "current" (the most recently changed task whose session is running), a task ID from a state file, or "sample" with an optional stage. The canvas follows the session\'s files while the page is open and moves to its running loop; showing a task that is not running pauses that until the user resumes it. Your edits and the user\'s feedback stay in the canvas.',
+        description: 'Point this canvas at an RPI task read from a workspace .copilot-tracking folder, or back at the sample. Give session, the Copilot session ID of a local session, to read the task from that session\'s workspace: state is then relative to that workspace, and session alone shows its current task. Without session, give state, the workspace-relative path of a state file in a session folder, or task: "current" (the most recently changed task whose session is running), a task ID from a state file, or "sample" with an optional stage. The canvas keeps the session it shows across calls that omit session. It follows the session\'s files while the page is open and moves to its running loop; showing a task that is not running pauses that until the user resumes it. Your edits and the user\'s feedback stay in the canvas.',
         inputSchema: {
             type: 'object',
             properties: {
-                state: str('State file path such as .copilot-tracking/rpi-sessions/2026-10-23/rpi-workflow-canvas/rpi-workflow-canvas-state.json'),
-                task: str('"current", a task ID such as rpi-workflow-canvas, or "sample"'),
+                session: str('Copilot session ID (a UUID) of a local session whose workspace holds the task. Omit it to keep the session this canvas shows.'),
+                state: str('State file path such as .copilot-tracking/rpi-sessions/2026-10-23/rpi-workflow-canvas/rpi-workflow-canvas-state.json; relative to the bound session\'s workspace when session is given'),
+                task: str('"current", a task ID such as rpi-workflow-canvas, or "sample"; with session, a task of that session\'s workspace'),
                 stage: { type: 'string', enum: [...STAGES], description: 'Sample stage, when task is "sample"' },
             },
+            additionalProperties: false,
+        },
+    },
+    {
+        name: 'set_sessions',
+        description: 'Set the Copilot sessions this conversation started, which the canvas lists first in its picker on the Not connected screen and in the session menu. Each row offers Show here and Open in new panel. Replaces the whole list; an empty list clears it. Up to 50 session IDs, kept until the canvas closes.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                sessions: { type: 'array', items: { type: 'string' }, maxItems: 50, description: 'Copilot session IDs (UUIDs) of the sessions this conversation started, in the order to list them; an empty list clears them' },
+            },
+            required: ['sessions'],
             additionalProperties: false,
         },
     },
@@ -68,14 +82,14 @@ export const ACTION_DEFINITIONS = Object.freeze([
                 sessionStatus: { type: 'string', enum: ['running', 'stopped'] },
                 mode: { type: 'string', enum: ['automatic', 'manual'] },
                 nextAction: str('Plain-language next action'),
-                phaseStatus: { type: 'object', additionalProperties: { type: 'string', enum: ['done', 'active', 'upcoming', 'paused', 'blocked', 'skipped'] } },
+                phaseStatus: { type: 'object', additionalProperties: { type: 'string', enum: ['done', 'active', 'upcoming', 'paused', 'blocked', 'skipped', 'provided'] } },
             },
             additionalProperties: false,
         },
     },
     {
         name: 'upsert_decision',
-        description: 'Ask the user for a decision (owner user) or record a decision the agent made that the user can override (owner agent). Updates the decision when id exists. The card appears beside its anchor row when that row is a research finding (F1), plan phase or task (P02, P02-T03), implement discovery (DS-004), or review finding (RV-001) in a phase that has started; otherwise it appears as a full card in the steering panel. Decisions read from RPI files cannot be edited here; new questions can be asked.',
+        description: 'Ask the user for a decision (owner user) or record a decision the agent made that the user can override (owner agent). Updates the decision when id exists. The card appears beside its anchor row when that row is a research finding (F1), plan phase or task (P02, P02-T03), implement discovery (DS-004), or review finding (RV-001 or RF-001) in a phase that has started; otherwise it appears as a full card in the steering panel. Decisions read from RPI files cannot be edited here; new questions can be asked.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -90,7 +104,7 @@ export const ACTION_DEFINITIONS = Object.freeze([
                 options: { type: 'array', items: { type: 'object', properties: { id: str('Option ID'), label: str('Option label'), consequence: str('What happens if chosen'), recommended: { type: 'boolean' }, why: str('Why it is recommended') }, required: ['label'], additionalProperties: false } },
                 chosen: str('Chosen option ID; required for agent decisions'),
                 evidence: ids('Evidence IDs such as C5 or W2'),
-                anchor: { type: 'object', properties: { rowId: str('Row the decision sits beside: a finding (F3), plan phase or task (P02-T03), discovery (DS-004), or review finding (RV-001)') }, required: ['rowId'], additionalProperties: false },
+                anchor: { type: 'object', properties: { rowId: str('Row the decision sits beside: a finding (F3), plan phase or task (P02-T03), discovery (DS-004), or review finding (RV-001 or RF-001)') }, required: ['rowId'], additionalProperties: false },
                 status: { type: 'string', enum: ['needs-input', 'answered', 'decided', 'override-pending', 'resolved'] },
             },
             additionalProperties: false,
@@ -151,11 +165,11 @@ export const ACTION_DEFINITIONS = Object.freeze([
     },
     {
         name: 'update_finding',
-        description: 'Create or update a review finding (RV-xxx): severity, expected and observed behavior, resolution condition, route, and decision. On a canvas that follows RPI files (show_task), this is refused with source_managed; update the file instead.',
+        description: 'Create or update a review or refinement finding (RV-xxx or RF-xxx): severity, expected and observed behavior, resolution condition, route, and decision. On a canvas that follows RPI files (show_task), this is refused with source_managed; update the file instead.',
         inputSchema: {
             type: 'object',
             properties: {
-                id: str('Finding ID such as RV-003'),
+                id: str('Finding ID such as RV-003 or RF-002'),
                 severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low'] },
                 title: str('Finding title'), summary: str('Plain summary'), expected: str('Expected behavior'), observed: str('Observed behavior and evidence'),
                 impact: str('Impact'), resolution: str('Resolution condition'),
@@ -193,6 +207,7 @@ export const ACTION_DEFINITIONS = Object.freeze([
 /** Groups used by validation to exercise every area of the action vocabulary. */
 export const ACTION_GROUPS = Object.freeze({
     state: ['get_state', 'load_scenario', 'show_task'],
+    sessions: ['set_sessions'],
     session: ['update_session'],
     decisionsAndFeedback: ['upsert_decision', 'take_feedback', 'record_interpretation'],
     implementation: ['update_task', 'record_change', 'record_discovery', 'record_activity'],
@@ -234,7 +249,7 @@ export function summarize(session) {
  *   store: ReturnType<import('./store.mjs').createStore>,
  *   makeError: (code: string, message: string) => Error,
  *   now?: () => number,
- *   switchSource?: (instance: any, request: { task?: string, stage?: string, replace?: boolean }, context: { workingDirectory?: string }) => Promise<{ session: any }>,
+ *   switchSource?: (instance: any, request: { session?: string, state?: string, task?: string, stage?: string, replace?: boolean }, context: { workingDirectory?: string }) => Promise<{ session: any }>,
  * }} deps
  */
 export function createActionHandlers(deps) {
@@ -328,8 +343,8 @@ export function createActionHandlers(deps) {
             case 'update_task': return artifacts.plan;
             case 'record_change':
             case 'record_discovery': return artifacts.changes;
-            case 'update_finding': return artifacts.review;
-            case 'update_section': return artifactFor(session, session?.sections?.[input.sectionId]?.doc) ?? source.statePath;
+            case 'update_finding': return /^RF-\d{3}$/.test(input?.id ?? '') ? (artifacts.refinement ?? artifacts.review) : (artifacts.review ?? artifacts.refinement);
+            case 'update_section': return artifactFor(session, session?.sections?.[input.sectionId]?.doc, input.sectionId) ?? source.statePath;
             case 'upsert_decision': {
                 const decision = input.id === undefined ? null : session?.decisions?.find((item) => item.id === input.id);
                 if (!decision || decision.origin !== 'artifact') return null;
@@ -396,6 +411,9 @@ export function createActionHandlers(deps) {
             if (!deps.switchSource) {
                 throw makeError('unavailable', 'This canvas cannot switch sources.');
             }
+            if (input.session !== undefined && !isCopilotSessionId(input.session)) {
+                throw makeError('invalid_input', 'session must be a Copilot session ID (a UUID).');
+            }
             if (input.task !== undefined && typeof input.task !== 'string') {
                 throw makeError('invalid_input', 'task must be "current", a task ID, or "sample".');
             }
@@ -408,15 +426,33 @@ export function createActionHandlers(deps) {
             if (input.stage !== undefined && !STAGES.includes(input.stage)) {
                 throw makeError('invalid_input', `stage must be one of: ${STAGES.join(', ')}.`);
             }
-            if (input.task === undefined && input.state === undefined && input.stage === undefined) {
-                throw makeError('invalid_input', 'Give state, task ("current", a task ID, or "sample"), or a sample stage.');
+            if (input.task === undefined && input.state === undefined && input.session === undefined && input.stage === undefined) {
+                throw makeError('invalid_input', 'Give session, state, task ("current", a task ID, or "sample"), or a sample stage.');
+            }
+            if (input.session !== undefined && (input.task === 'sample' || input.stage !== undefined)) {
+                throw makeError('invalid_input', 'session shows a task in that session, so it cannot be combined with stage or task "sample".');
             }
             if (((input.task !== undefined && input.task !== 'sample') || input.state !== undefined) && input.stage !== undefined) {
                 throw makeError('invalid_input', 'stage applies only to the sample.');
             }
-            const request = input.state !== undefined ? { state: input.state } : input.task === 'sample' ? { task: 'sample', stage: input.stage } : input.task === undefined ? { stage: input.stage } : { task: input.task };
+            let request;
+            if (input.session !== undefined) {
+                request = { session: input.session, ...(input.state !== undefined ? { state: input.state } : { task: input.task ?? 'current' }) };
+            } else {
+                request = input.state !== undefined ? { state: input.state } : input.task === 'sample' ? { task: 'sample', stage: input.stage } : input.task === undefined ? { stage: input.stage } : { task: input.task };
+            }
             const prepared = await deps.switchSource(instance, request, { workingDirectory: ctx?.session?.workingDirectory });
             return { ...summarize(prepared.session), source: sourceSummary(instance, prepared.session) };
+        }),
+
+        // Replaces the sessions the picker lists first. An open picker fetches the list again on the page's reload.
+        set_sessions: (ctx) => guard(async () => {
+            const instance = instanceOf(ctx);
+            const input = inputOf(ctx);
+            const sessions = sessionListOf(input.sessions, makeError);
+            instance.sessions = sessions;
+            instance.server.notifyReload?.({ sessions: true });
+            return { sessions: sessions.length };
         }),
 
         update_session: managed('update_session', mutation((s, input, now) => updateSession(s, input, now), (_r, s) => summarize(s))),

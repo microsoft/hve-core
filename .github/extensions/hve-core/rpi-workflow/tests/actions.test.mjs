@@ -147,6 +147,7 @@ describe('handlers', () => {
         await call('record_activity', { text: 'Ran tests', kind: 'test' });
         assert.equal(await code(call('record_activity', { text: 'x', kind: 'dance' })), 'invalid_input');
         await call('update_session', { activePhase: 'review', phaseStatus: { implement: 'done' } });
+        assert.equal((await call('update_session', { phaseStatus: { research: 'provided' } })).phases.research, 'provided');
         assert.equal((await call('update_finding', { id: 'RV-010', severity: 'low', title: 'Typo', decision: 'accepted', rationale: 'Trivial' })).finding.decision, 'accepted');
         assert.equal((await call('update_section', { sectionId: 'changes-summary', markdown: 'Updated by the agent' })).section.revision, 2);
         assert.equal(await code(call('update_section', { sectionId: 'nope', markdown: 'x' })), 'not_found');
@@ -273,5 +274,63 @@ describe('instance registry', () => {
         servers[0].release();
         assert.ok(await reopened);
         assert.equal(registry.size, 1);
+    });
+});
+
+describe('the picker\'s sessions', () => {
+    const idAt = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+    const FIRST = idAt(1);
+    const SECOND = idAt(2);
+
+    /** Handlers for one canvas that shows no session, whose server records each reload it is asked for. */
+    async function pickerSetup(name) {
+        const store = createStore({ root: path.join(tmp, name) });
+        const reloads = [];
+        const instance = {
+            server: { url: 'http://127.0.0.1:1/?k=test', address: 'http://127.0.0.1:1/', editor: null, clientInfo: null, streamClients: 0, notifyReload: (detail) => reloads.push(detail) },
+            sessionId: '',
+            instanceId: 'i1',
+            handle: 'K7QF',
+            source: { kind: 'none', reason: 'no-input', detail: null },
+        };
+        const handlers = createActionHandlers({ getInstance: (id) => (id === 'i1' ? instance : undefined), store, makeError });
+        return { store, instance, reloads, call: (action, input) => handlers[action]({ instanceId: 'i1', input }), handlers };
+    }
+
+    it('declares the list as required, with at most fifty session IDs, in a group of its own', () => {
+        const definition = ACTION_DEFINITIONS.find((item) => item.name === 'set_sessions');
+        assert.deepEqual(definition.inputSchema.required, ['sessions']);
+        assert.equal(definition.inputSchema.properties.sessions.maxItems, 50);
+        assert.deepEqual(ACTION_GROUPS.sessions, ['set_sessions']);
+    });
+
+    it('replaces the list on the instance without a session, drops repeats, and reports the count', async () => {
+        const { store, instance, reloads, call } = await pickerSetup('picker-replace');
+        assert.deepEqual(await call('set_sessions', { sessions: [FIRST.toUpperCase(), SECOND, FIRST] }), { sessions: 2 });
+        assert.deepEqual(instance.sessions, [FIRST, SECOND]);
+        assert.deepEqual(reloads, [{ sessions: true }], 'the page is told so an open picker fetches again');
+        assert.deepEqual(await call('set_sessions', { sessions: [] }), { sessions: 0 });
+        assert.deepEqual(instance.sessions, []);
+        assert.equal(instance.source.kind, 'none', 'the canvas stays not connected');
+        store.close();
+    });
+
+    it('takes exactly fifty sessions and refuses fifty-one, a value that is not a list, or a bad ID', async () => {
+        const { store, instance, call } = await pickerSetup('picker-limits');
+        const fifty = Array.from({ length: 50 }, (_, n) => idAt(n + 1));
+        assert.deepEqual(await call('set_sessions', { sessions: fifty }), { sessions: 50 });
+        const refused = [{ sessions: Array.from({ length: 51 }, (_, n) => idAt(n + 1)) }, { sessions: 'x' }, { sessions: [FIRST, 'nope'] }, { sessions: [42] }, {}, { sessions: null }, [FIRST]];
+        for (const input of refused) {
+            const error = await call('set_sessions', input).then(() => null, (failure) => failure);
+            assert.equal(error?.code, 'invalid_input', JSON.stringify(input).slice(0, 60));
+        }
+        assert.equal(instance.sessions.length, 50, 'a refused list leaves the list as it was');
+        store.close();
+    });
+
+    it('needs an open instance', async () => {
+        const { store, handlers } = await pickerSetup('picker-missing');
+        assert.equal(await code(handlers.set_sessions({ instanceId: 'missing', input: { sessions: [] } })), 'instance_not_found');
+        store.close();
     });
 });

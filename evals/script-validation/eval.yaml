@@ -12,7 +12,7 @@ defaults:
 
 # Skill paths are resolved relative to this spec's directory (evals/script-validation/),
 # so they ascend to the repo root before descending into .github/skills.
-environment:
+agent_environment:
   skills:
     - ../../.github/skills/coding-standards/python-foundational
 
