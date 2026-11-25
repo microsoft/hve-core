@@ -115,7 +115,8 @@ SER_NS = "http://schemas.microsoft.com/2003/10/Serialization/"
 
 def _security_planning_disclaimer() -> str:
     source = Path(__file__).resolve().parents[2] / "security-disclaimers" / "SKILL.md"
-    section = source.read_text(encoding="utf-8").partition("\n## Security Planning\n")[2]
+    text = source.read_text(encoding="utf-8")
+    section = text.partition("\n## Security Planning\n")[2]
     block = re.search(
         r"(?m)^> \[!CAUTION\]\n> \*\*Disclaimer:\*\* (.+(?:\n> .+)*)",
         section.partition("\n## ")[0],

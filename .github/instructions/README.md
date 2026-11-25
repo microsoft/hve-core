@@ -2,7 +2,7 @@
 title: GitHub Copilot Instructions
 description: Repository-specific coding guidelines and conventions for GitHub Copilot
 author: HVE Core Team
-ms.date: 2026-11-06
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - copilot
@@ -60,9 +60,11 @@ Protocols that agents load when they start, such as planner identities, disclaim
 
 ### Git and Workflow
 
-| File                                                         | Applies To                   | Purpose                           |
-|--------------------------------------------------------------|------------------------------|-----------------------------------|
-| [pull-request.instructions.md](pull-request.instructions.md) | `**/.copilot-tracking/pr/**` | HVE Core pull request conventions |
+| File                                                                                         | Applies To                                     | Purpose                                         |
+|----------------------------------------------------------------------------------------------|------------------------------------------------|-------------------------------------------------|
+| [git/code-review-telemetry.instructions.md](git/code-review-telemetry.instructions.md)       | `**/.copilot-tracking/reviews/code-reviews/**` | Check telemetry evidence in code-review reports |
+| [pull-request.instructions.md](pull-request.instructions.md)                                 | `**/.copilot-tracking/pr/**`                   | HVE Core pull request conventions               |
+| [rpi/implementation-telemetry.instructions.md](rpi/implementation-telemetry.instructions.md) | `**/.copilot-tracking/changes/**`              | Check new telemetry emitters before completion  |
 
 ### Repository Workflow
 
@@ -85,28 +87,37 @@ The instructions below are scoped to specific planning agents and their `.copilo
 | [accessibility/accessibility-identity.instructions.md](accessibility/accessibility-identity.instructions.md)               | `**/.copilot-tracking/accessibility/**`                                     | Accessibility Planner identity and workflow |
 | [accessibility/accessibility-license-posture.instructions.md](accessibility/accessibility-license-posture.instructions.md) | `**/.github/skills/accessibility/**, **/.copilot-tracking/accessibility/**` | Accessibility licensing overlay             |
 
+#### Privacy
+
+| File                                                                                   | Applies To                                                                       | Purpose                                                  |
+|----------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|----------------------------------------------------------|
+| [privacy/privacy-telemetry.instructions.md](privacy/privacy-telemetry.instructions.md) | `**/.copilot-tracking/privacy-plans/**, **/.copilot-tracking/privacy-reviews/**` | Auditable processing and consent signals in privacy work |
+
 #### Responsible AI
 
-| File                                                                                                 | Applies To                                              | Purpose               |
-|------------------------------------------------------------------------------------------------------|---------------------------------------------------------|-----------------------|
-| [rai-planning/rai-license-posture.instructions.md](rai-planning/rai-license-posture.instructions.md) | `**/skills/rai**/**, **/.copilot-tracking/rai-plans/**` | RAI licensing overlay |
+| File                                                                                                 | Applies To                                              | Purpose                                          |
+|------------------------------------------------------------------------------------------------------|---------------------------------------------------------|--------------------------------------------------|
+| [rai-planning/rai-license-posture.instructions.md](rai-planning/rai-license-posture.instructions.md) | `**/skills/rai**/**, **/.copilot-tracking/rai-plans/**` | RAI licensing overlay                            |
+| [rai/rai-telemetry.instructions.md](rai/rai-telemetry.instructions.md)                               | `**/.copilot-tracking/rai-plans/**`                     | Model-output telemetry in RAI impact assessments |
 
-#### Project Planning (ADRs)
+#### Project Planning (ADRs and PRDs)
 
-| File                                                                                                   | Applies To                                                    | Purpose                                    |
-|--------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|--------------------------------------------|
-| [project-planning/adr-standards.instructions.md](project-planning/adr-standards.instructions.md)       | `**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**` | Embedded ADR standards (MADR, Y-Statement) |
-| [project-planning/adr-byo-template.instructions.md](project-planning/adr-byo-template.instructions.md) | `**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**` | BYO ADR template contract                  |
-| [project-planning/adr-handoff.instructions.md](project-planning/adr-handoff.instructions.md)           | `**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**` | ADR Govern-phase handoff protocol          |
+| File                                                                                                       | Applies To                                                                                          | Purpose                                    |
+|------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|--------------------------------------------|
+| [project-planning/adr-standards.instructions.md](project-planning/adr-standards.instructions.md)           | `**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**`                                       | Embedded ADR standards (MADR, Y-Statement) |
+| [project-planning/adr-byo-template.instructions.md](project-planning/adr-byo-template.instructions.md)     | `**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**`                                       | BYO ADR template contract                  |
+| [project-planning/adr-handoff.instructions.md](project-planning/adr-handoff.instructions.md)               | `**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**`                                       | ADR Govern-phase handoff protocol          |
+| [project-planning/planning-telemetry.instructions.md](project-planning/planning-telemetry.instructions.md) | `**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**, **/.copilot-tracking/prd-sessions/**` | Telemetry choices in ADRs and PRDs         |
 
 #### Security
 
-| File                                                                                     | Applies To                                                 | Purpose                                |
-|------------------------------------------------------------------------------------------|------------------------------------------------------------|----------------------------------------|
-| [security/identity.instructions.md](security/identity.instructions.md)                   | `**/.copilot-tracking/security-plans/**`                   | Security Planner identity and workflow |
-| [security/standards-mapping.instructions.md](security/standards-mapping.instructions.md) | `**/.copilot-tracking/security-plans/**`                   | OWASP and NIST standards references    |
-| [security/sssc-planner.instructions.md](security/sssc-planner.instructions.md)           | `**/.copilot-tracking/sssc-plans/**`                       | SSSC Planner identity and workflow     |
-| [security/vex-standards.instructions.md](security/vex-standards.instructions.md)         | `**/security/vex/**, **/.copilot-tracking/security/vex/**` | OpenVEX document standards             |
+| File                                                                                       | Applies To                                                                                                         | Purpose                                      |
+|--------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|----------------------------------------------|
+| [security/identity.instructions.md](security/identity.instructions.md)                     | `**/.copilot-tracking/security-plans/**`                                                                           | Security Planner identity and workflow       |
+| [security/security-telemetry.instructions.md](security/security-telemetry.instructions.md) | `**/.copilot-tracking/security-plans/**, **/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/sssc-reviews/**` | Security and supply-chain telemetry evidence |
+| [security/standards-mapping.instructions.md](security/standards-mapping.instructions.md)   | `**/.copilot-tracking/security-plans/**`                                                                           | OWASP and NIST standards references          |
+| [security/sssc-planner.instructions.md](security/sssc-planner.instructions.md)             | `**/.copilot-tracking/sssc-plans/**`                                                                               | SSSC Planner identity and workflow           |
+| [security/vex-standards.instructions.md](security/vex-standards.instructions.md)           | `**/security/vex/**, **/.copilot-tracking/security/vex/**`                                                         | OpenVEX document standards                   |
 
 #### Shared Planner Scaffolds
 
@@ -201,6 +212,8 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   └── terminology.instructions.md
 ├── experimental/                     # Experimental workflows
 │   └── experiment-designer.instructions.md
+├── git/                              # Git review conventions
+│   └── code-review-telemetry.instructions.md
 ├── hve-core/                         # HVE Core workflow
 │   ├── copilot-tracking.instructions.md
 │   ├── copilot-tracking-location.instructions.md
@@ -208,6 +221,8 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── markdown.instructions.md
 │   ├── hve-builder.instructions.md
 │   └── writing-style.instructions.md
+├── privacy/                          # Privacy planning and review
+│   └── privacy-telemetry.instructions.md
 ├── project-planning/                 # Project planning and ADRs
 │   ├── adr-byo-template.instructions.md
 │   ├── adr-handoff.instructions.md
@@ -215,12 +230,18 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── adr-standards.instructions.md
 │   ├── backlog-guardrails.instructions.md
 │   ├── community-interaction.instructions.md
-│   └── github-backlog-grooming.instructions.md
+│   ├── github-backlog-grooming.instructions.md
+│   └── planning-telemetry.instructions.md
+├── rai/                              # Responsible AI telemetry
+│   └── rai-telemetry.instructions.md
 ├── rai-planning/                     # Responsible AI planning
 │   ├── rai-identity.instructions.md
 │   └── rai-license-posture.instructions.md
+├── rpi/                              # RPI implementation conventions
+│   └── implementation-telemetry.instructions.md
 ├── security/                         # Security planning
 │   ├── identity.instructions.md
+│   ├── security-telemetry.instructions.md
 │   ├── sssc-planner.instructions.md
 │   ├── standards-mapping.instructions.md
 │   ├── tm7-generation-workflow.instructions.md

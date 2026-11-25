@@ -28,10 +28,16 @@ Check new telemetry emitters before completing an implementation step
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply this instruction when recording implementation changes under
+`.copilot-tracking/changes/`. It prompts you to verify every newly added
+telemetry emitter and its attributes against `telemetry-foundations` before
+marking an implementation step complete. Use `code-review-telemetry` during
+subsequent code review; skip emitter checks when an implementation step adds no
+telemetry instrumentation.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+While updating `.copilot-tracking/changes/2026-11-24-retry-backoff-changes.md`
+after instrumenting HTTP retry attempts, Copilot applies the instruction and
+verifies that each new span and attribute name matches `telemetry-foundations`
+and omits sensitive request headers before marking the task complete.

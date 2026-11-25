@@ -28,10 +28,21 @@ Plan and apply Azure Boards backlog operations in one Azure DevOps project. Use 
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Invoke `/ado-backlog` when inspecting, planning, triaging, or applying work-item
+operations in a single Azure DevOps project. It routes read-only planning to
+`backlog-plan`, PRD decomposition to `functional-planner` with Azure Boards
+hierarchy rules, and authorized writes to `backlog-execute` under
+`backlog-management` controls. Use `ado-pull-request` for Azure Repos pull
+requests, `ado-build-info` for Azure Pipelines builds, or `github-backlog` and
+`jira` for other trackers.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Run `/ado-backlog discover MyProject "state = Active AND tag contains telemetry"`
+to search Azure Boards work items without modifying the tracker.
+
+The skill runs Azure Boards preflight against `MyProject`, queries matching work
+items using the platform bindings, and returns the matching IDs, titles, states,
+and iteration paths. To apply a reviewed handoff after approval, run
+`/ado-backlog run MyProject .copilot-tracking/workitems/handoff.md` and confirm
+the reported created or updated work-item IDs.

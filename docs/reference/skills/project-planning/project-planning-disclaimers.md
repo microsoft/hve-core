@@ -28,10 +28,26 @@ Verbatim CAUTION notices for outcome hypotheses, ADRs, PRDs, and BRDs. Use the s
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Project-planning agents and skills preload or activate this skill to emit
+verbatim CAUTION notices for `Outcome-Hypothesis`, `ADR Planning`,
+`PRD Requirements Planning`, and `BRD Requirements Planning` deliverables. Use
+the section matching the active workflow at the display and handoff points
+defined by the caller. Reach for `security-disclaimers`, `privacy-disclaimers`,
+`rai-disclaimers`, or `disclaimer-language` for security, privacy, RAI, or
+coaching workflows.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+An agent such as ADR Creator, PRD Builder, or BRD Builder preloads this skill in
+its frontmatter:
+
+```yaml
+skills:
+  - project-planning-disclaimers
+  - untrusted-content-boundary
+```
+
+When ADR Creator finishes drafting an Architecture Decision Record or prepares a
+Govern-phase handoff, it selects the `ADR Planning` section and embeds the
+CAUTION block verbatim so reviewers see that outputs require qualified
+architecture and engineering sign-off.

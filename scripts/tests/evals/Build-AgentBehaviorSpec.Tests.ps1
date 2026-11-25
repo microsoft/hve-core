@@ -687,7 +687,7 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
 Describe 'Offline lexical grader contracts' -Tag 'Unit' {
   BeforeAll {
     $script:LexicalEvalRoot = Join-Path $PSScriptRoot '../../../evals/agent-behavior'
-    $disclaimers = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/shared/disclaimer-language/SKILL.md')
+    $disclaimers = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/project-planning/security-disclaimers/SKILL.md')
     $script:SecurityCaution = [regex]::Match($disclaimers, '(?s)## Security Planning\s+(.*?)(?=\r?\n## )').Groups[1].Value.Trim()
     $script:StaticGraderPath = (Resolve-Path (Join-Path $PSScriptRoot '../../../node_modules/@microsoft/vally/dist/graders/static/output-matches-grader.js')).Path
     $script:StaticGraderProbe = @'
@@ -2625,7 +2625,7 @@ Describe 'RAI Reviewer evaluation ownership' -Tag 'Unit' {
     $script:RaiReviewerPartial = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText($script:RaiReviewerPartialPath))
     $script:RaiReviewerFixturePath = Join-Path $PSScriptRoot '../../../evals/agent-behavior/fixtures/rai-reviewer-audit-copilot-instructions.md'
     $script:RaiReviewerFixture = [System.IO.File]::ReadAllText($script:RaiReviewerFixturePath)
-    $disclaimerPath = Join-Path $PSScriptRoot '../../../.github/skills/shared/disclaimer-language/SKILL.md'
+    $disclaimerPath = Join-Path $PSScriptRoot '../../../.github/skills/rai/rai-disclaimers/SKILL.md'
     $script:DisclaimerSource = [System.IO.File]::ReadAllText($disclaimerPath)
     $script:RaiReviewerSmoke = $script:RaiReviewerPartial['stimuli'] |
       Where-Object { $_['name'] -eq 'rai-reviewer-class-recipe' }
@@ -2699,7 +2699,7 @@ $script:RaiReviewerFixtureCaution
   It 'Embeds the canonical RAI Planning caution in the effective workspace fixture' {
     $raiSection = [regex]::Match(
       $script:DisclaimerSource,
-      '(?ms)^## RAI Planning\s+(?<Caution>> \[!CAUTION\]\s+> \*\*Disclaimer:\*\*.*?)(?=\r?\n\r?\n## )'
+      '(?ms)^## RAI Planning\s+(?<Caution>> \[!CAUTION\]\s+> \*\*Disclaimer:\*\*.*?)(?=\r?\n\r?\n## |\r?\n?\z)'
     )
 
     $raiSection.Success | Should -BeTrue

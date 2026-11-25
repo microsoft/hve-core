@@ -28,10 +28,24 @@ Verbatim CAUTION notices for Privacy Planner sessions and Privacy Reviewer findi
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Privacy Planner and Privacy Reviewer preload this skill so they can emit the
+canonical privacy professional-review CAUTION block verbatim without duplicating
+disclaimer text across agents. Select `Privacy Planning` for plans and planner
+handoffs, and `Privacy Review` for review findings. Use `security-disclaimers`,
+`rai-disclaimers`, `project-planning-disclaimers`, or `disclaimer-language` for
+other domains.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Privacy Planner declares the skill in its agent frontmatter:
+
+```yaml
+skills:
+  - privacy-disclaimers
+  - untrusted-content-boundary
+```
+
+When a new privacy planning session starts with `disclaimerShownAt: null`, the
+agent outputs the `Privacy Planning` CAUTION block verbatim before Phase 1
+questions and records the display timestamp in session state. Privacy Reviewer
+loads the `Privacy Review` section instead when rendering privacy review reports.

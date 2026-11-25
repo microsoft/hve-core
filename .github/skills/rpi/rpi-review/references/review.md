@@ -58,7 +58,7 @@ Treat each return as suggestions. Read the cited evidence yourself, go deeper on
 |------------|-----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `surface`  | Repeated loop in the same session that introduced significant changes | Check only files, contracts, requirements, and behavior modified by the latest loop without re-auditing settled work from earlier passes.               |
 | `standard` | Default on a task's initial Review pass                               | Reconcile every in-scope requirement, task marker, critique disposition, alignment entry, and validation check concisely without low-impact commentary. |
-| `deep`     | Explicit user request (`depth=deep`)                                  | Exhaustive contract, edge-case, cross-module, and helper-lane reconciliation across the full boundary.           |
+| `deep`     | Explicit user request (`depth=deep`)                                  | Exhaustive contract, edge-case, cross-module, and helper-lane reconciliation across the full boundary.                                                  |
 
 ## Separate execution from outcome
 

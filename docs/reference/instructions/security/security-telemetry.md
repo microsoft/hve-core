@@ -28,10 +28,20 @@ Telemetry evidence for security plans, supply-chain plans, and supply-chain revi
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply this instruction when working on security plans under
+`.copilot-tracking/security-plans/`, supply-chain security plans under
+`.copilot-tracking/sssc-plans/`, or supply-chain reviews under
+`.copilot-tracking/sssc-reviews/`. It aligns STRIDE threat entries with
+`telemetry-foundations` log severity levels and enforces `vcs.*` and `ci.*`
+resource attributes on build and release controls. Use `rai-telemetry` or
+`privacy-telemetry` for RAI or privacy planning artifacts instead.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Edit a security plan at
+`.copilot-tracking/security-plans/api-gateway/security-plan.md` or a
+supply-chain review under `.copilot-tracking/sssc-reviews/`. For the security
+plan, Copilot cross-references authentication failure STRIDE threats with
+`telemetry-foundations` security-event log severities. For the supply-chain
+review, Copilot flags build provenance findings that lack supporting `vcs.*` or
+`ci.*` telemetry attributes.

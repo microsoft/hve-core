@@ -108,16 +108,16 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 
 ### Method and Boundaries
 
-| Field                            | Record                                                                                  |
-|----------------------------------|-----------------------------------------------------------------------------------------|
-| Research posture and provenance  | {{balanced/focused/expansive}}; {{default/caller/instruction/brief}}                    |
-| Completion basis                 | {{posture_specific_evidence_sufficiency_and_stop_basis}}                                |
-| Explicit limits or deadline      | {{caller_or_codebase_limit_or_none}}                                                    |
-| Codebase and external scope      | {{workspace_scope_or_none}}; {{external_scope_or_none}}                                 |
-| Initial candidate areas          | {{internal_and_external_starting_points_or_none}}                                       |
-| Evidence root                    | {{resolved_default_or_trusted_alternate_root}}                                          |
-| Constraints and excluded sources | {{versions_licenses_sources_to_avoid_and_research_only_boundaries}}                     |
-| Prior knowledge                  | {{reviewed_artifacts_verified_reuse_and_superseded_or_stale_material}}                  |
+| Field                            | Record                                                                 |
+|----------------------------------|------------------------------------------------------------------------|
+| Research posture and provenance  | {{balanced/focused/expansive}}; {{default/caller/instruction/brief}}   |
+| Completion basis                 | {{posture_specific_evidence_sufficiency_and_stop_basis}}               |
+| Explicit limits or deadline      | {{caller_or_codebase_limit_or_none}}                                   |
+| Codebase and external scope      | {{workspace_scope_or_none}}; {{external_scope_or_none}}                |
+| Initial candidate areas          | {{internal_and_external_starting_points_or_none}}                      |
+| Evidence root                    | {{resolved_default_or_trusted_alternate_root}}                         |
+| Constraints and excluded sources | {{versions_licenses_sources_to_avoid_and_research_only_boundaries}}    |
+| Prior knowledge                  | {{reviewed_artifacts_verified_reuse_and_superseded_or_stale_material}} |
 
 ### Extensions and Participation
 

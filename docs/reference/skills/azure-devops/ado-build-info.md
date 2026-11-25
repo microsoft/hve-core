@@ -28,10 +28,18 @@ Inspect Azure Pipelines build status, failures, logs, and changes for a build ID
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Invoke `/ado-build-info` for read-only investigation of Azure Pipelines build
+status, failure logs, or commit changes by build ID, Azure Repos pull request,
+or branch. It never queues, retries, cancels, or modifies pipelines. Use
+`ado-pull-request` to prepare or create an Azure Repos pull request, or
+`ado-backlog` for Azure Boards work-item operations.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Run `/ado-build-info MyProject "PR 482" logs save` to investigate the latest
+pipeline run for pull request 482 and record findings locally.
+
+The skill resolves branch `refs/pull/482/merge`, queries the latest build with
+`queueTimeDescending`, retrieves status and failing log excerpts with secrets
+redacted, summarizes the root error in chat, and writes the structured report to
+`.copilot-tracking/pr/<YYYY-MM-DD>-build-<buildId>.md`.

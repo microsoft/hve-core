@@ -46,9 +46,9 @@ Describe 'Planner startup disclosures' -Tag 'Unit' {
 
             foreach ($path in $paths) {
                 $content = Get-Content -Path $path -Raw
-                $content | Should -Match '(?ms)^skills:\s*$.*?^\s+-\s+disclaimer-language\s*$'
-                $content | Should -Not -Match 'instruction file named `disclaimer-language'
-                $content | Should -Match '`Security Planning` section of the preloaded `disclaimer-language` skill'
+                $content | Should -Match '(?ms)^skills:\s*$.*?^\s+-\s+security-disclaimers\s*$'
+                $content | Should -Not -Match 'instruction file named `(?:disclaimer-language|security-disclaimers)'
+                $content | Should -Match '`Security Planning` section of the preloaded `security-disclaimers` skill'
                 $content | Should -Match 'cannot be found or loaded, halt before questions, analysis, state initialization, or phase work'
             }
         }

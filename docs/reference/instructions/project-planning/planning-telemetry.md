@@ -28,10 +28,19 @@ Telemetry choices in architecture decisions and acceptance criteria in product r
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply this instruction when drafting or updating Architecture Decision Records
+under `.copilot-tracking/adr-plans/` or `docs/planning/adrs/`, or Product
+Requirements Documents under `.copilot-tracking/prd-sessions/`. Use it when an
+architecture decision or product requirement affects observable production
+behavior so telemetry choices and acceptance criteria stay grounded in
+`telemetry-foundations`. Omit telemetry sections when the decision or
+requirement introduces no observable runtime behavior.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Draft an ADR at `docs/planning/adrs/0042-async-order-queue.md` or a PRD under
+`.copilot-tracking/prd-sessions/order-sync/`. In the ADR, Copilot records the
+queue-depth metric and dead-letter alert strategy under **Consequences** with
+citations to the matching `telemetry-foundations` section. In the PRD, Copilot
+adds measurable latency and failure-rate telemetry acceptance criteria under
+**Success Metrics** and **Operational Readiness**.

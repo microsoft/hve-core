@@ -28,10 +28,20 @@ Plan and apply GitHub issue, sub-issue, milestone, label, and pull request field
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Invoke `/github-backlog` for issue, sub-issue, milestone, label, and pull
+request field workflows in one GitHub repository, including bounded inspection,
+discovery, triage, grooming, PRD hierarchy planning, and reviewed handoff
+execution. Use `pull-request` for full GitHub pull request authoring or
+updates beyond backlog fields, and use `ado-backlog` or `jira` for Azure Boards
+or Jira trackers.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Run `/github-backlog triage example/service "is:issue is:open no:label"` to
+review unlabeled issues in `example/service` without modifying GitHub.
+
+The skill runs repository preflight through the GitHub bindings, routes the
+request to `backlog-plan`, and returns a reviewable triage table with proposed
+labels, milestones, and ambiguities preserved. For approved single-item creation
+or handoff execution, invoke `/github-backlog add` or `/github-backlog run` with
+the target repository and reviewed artifact.

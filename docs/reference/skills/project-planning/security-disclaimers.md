@@ -28,10 +28,26 @@ Verbatim CAUTION notices for Security Planning, SSSC Planning, and Security-Revi
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Security Planner, SSSC Planner, Security Reviewer, SSSC Reviewer, and security
+report tooling preload or read this skill to emit verbatim CAUTION notices for
+`Security Planning`, `SSSC Planning`, and `Security-Review`. Pick the section
+that matches the active planner, reviewer, or threat-model output. Use
+`rai-disclaimers`, `privacy-disclaimers`, `project-planning-disclaimers`, or
+`disclaimer-language` for non-security workflows.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Security Planner preloads this skill in its agent frontmatter:
+
+```yaml
+skills:
+  - security-disclaimers
+  - untrusted-content-boundary
+```
+
+When starting a new security plan or resuming a session with
+`disclaimerShownAt: null`, the planner displays the `Security Planning` CAUTION
+block verbatim before asking Phase 1 scoping questions, then updates
+`disclaimerShownAt` and appends a `session-start-disclaimer` entry in
+`state.json`. If the skill cannot be loaded, the planner halts before phase
+work.

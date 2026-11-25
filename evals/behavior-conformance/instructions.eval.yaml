@@ -42,16 +42,16 @@ stimuli:
 
   - name: skill-ado-get-build-info-conformance
     prompt: |
-      Read the staged `.github/skills/project-planning/backlog-management/references/ado-build-info.md`.
+      Read the staged `.github/skills/azure-devops/ado-build-info/SKILL.md`.
       A user asks: "Save the status of the latest build for PR 482." Which branch
       value, build query ordering, status tool, and tracking-file path apply?
     agent_environment:
       files:
-        - src: ../../.github/skills/project-planning/backlog-management/references/ado-build-info.md
-          dest: .github/skills/project-planning/backlog-management/references/ado-build-info.md
+        - src: ../../.github/skills/azure-devops/ado-build-info/SKILL.md
+          dest: .github/skills/azure-devops/ado-build-info/SKILL.md
     tags:
       category: behavior-conformance
-      skill: backlog-management
+      skill: ado-build-info
       advisory: "true"
     graders:
       - type: output-matches

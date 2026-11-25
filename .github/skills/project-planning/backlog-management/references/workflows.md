@@ -11,11 +11,11 @@ Read these shared protocols and templates with the [core conventions](../SKILL.m
 
 Resolve template values through the active provider rather than copying the names of another tracker:
 
-| Binding                                    | Source in the platform reference |
-|--------------------------------------------|----------------------------------|
-| Analysis and plan files                    | Platform Bindings                |
-| Payload fields                             | Field Vocabulary                 |
-| Item vocabulary, verbs, and ID prefix      | Platform Bindings                |
+| Binding                               | Source in the platform reference |
+|---------------------------------------|----------------------------------|
+| Analysis and plan files               | Platform Bindings                |
+| Payload fields                        | Field Vocabulary                 |
+| Item vocabulary, verbs, and ID prefix | Platform Bindings                |
 
 `planning-log.md`, `handoff.md`, `handoff-logs.md`, and `handoff-dryrun.md` are constant across platforms. The templates below use `<analysis-file>` and `<plan-file>` where a binding applies; substitute the platform's value when creating the file.
 

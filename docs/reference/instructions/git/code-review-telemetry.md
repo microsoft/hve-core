@@ -28,10 +28,19 @@ Check telemetry evidence in code-review reports
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply this instruction when reviewing code changes and writing code-review
+reports under `.copilot-tracking/reviews/code-reviews/`. It ensures production
+code paths that emit logs, metrics, or traces cite a semantic-convention
+reference rather than introducing unverified telemetry names. Use
+`telemetry-overlay` and `telemetry-foundations` alongside it for shared
+attribute naming and PII rules; skip it when reviewed changes do not emit
+telemetry.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Open or update a review report at
+`.copilot-tracking/reviews/code-reviews/2026-11-24-checkout-review.md` while
+reviewing a pull request that adds a custom counter metric. Copilot applies the
+instruction automatically and flags any new production emitter that lacks a
+semantic-convention reference in `telemetry-foundations`, prompting you to link
+the convention or record a proposed addition before approving the change.
