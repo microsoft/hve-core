@@ -50,7 +50,6 @@ network:
     - repo.yarnpkg.com
     - skimdb.npmjs.com
     - storage.googleapis.com
-    - telemetry.vercel.com
     - www.npmjs.com
     - www.npmjs.org
     - yarnpkg.com

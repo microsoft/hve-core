@@ -3,7 +3,7 @@ title: Branch Protection
 description: Main branch protection requirements for the hve-core repository
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - branch protection
@@ -20,7 +20,7 @@ The main branch for hve-core is protected to reduce the risk of unreviewed or un
 
 That protection comes from a GitHub repository ruleset named `main-branch-protection` (id `9453100`), which targets the default branch and is actively enforced with no bypass actors. Classic branch protection is inert on this repository: the GitHub API reports `main` as `protected`, but `protection.enabled` is `false` and its status-check enforcement level is `off`. The ruleset is the mechanism that matters.
 
-> This page describes the security policy and rationale for branch protection. For contributor-facing configuration steps, required status checks, and OpenSSF Scorecard guidance, see [Branch Protection Configuration](../contributing/branch-protection.md).
+> This page describes the security policy and rationale for branch protection. For contributor-facing configuration steps, required status checks, and OpenSSF Scorecard guidance, see [Branch Protection Configuration](../contributing/branch-protection).
 
 ## Required Controls
 
@@ -28,6 +28,7 @@ The `main-branch-protection` ruleset enforces the following on the default branc
 
 * Require a pull request before merging, with two approving reviews
 * Require review from a Code Owner before merging
+* Dismiss stale pull request approvals automatically when new commits are pushed
 * Require approval of the most recent reviewable push, so a final commit cannot merge on an earlier reviewer's approval alone
 * Require an extra approval on pull requests that Copilot opens under its own identity rather than on behalf of a person
 * Require every review conversation to be resolved before merging
@@ -44,29 +45,11 @@ GitHub enables this rule by default on new and existing rulesets, so its presenc
 and GitHub lists it as public preview and subject to change. Re-check this description when the ruleset is next revised or when the
 feature leaves preview.
 
-For the exact status-check contexts and per-parameter values, see [Branch Protection Configuration](../contributing/branch-protection.md).
-
-## Accepted Gap: Stale Review Dismissal
-
-Stale-review dismissal is not currently enforced. The ruleset sets `dismiss_stale_reviews_on_push` to `false`, so an existing approval is not automatically cleared when a contributor pushes new commits.
-
-The compensating control is `require_last_push_approval`, which is enabled. The most recent reviewable push must itself be approved by someone other than the person who pushed it, so an approval cannot silently carry forward onto commits nobody reviewed. Two other controls narrow the window further: the merge queue re-runs the required check against the final merged result on the latest `main`, and unresolved review conversations block merging.
-
-This gap was assessed and accepted in [issue #2461](https://github.com/microsoft/hve-core/issues/2461). The corresponding OpenSSF Scorecard code scanning alert, [#1](https://github.com/microsoft/hve-core/security/code-scanning/1), was not dismissed and remains open. Scorecard currently scores Branch-Protection at 5/10; see [Branch Protection Configuration](../contributing/branch-protection.md) for the breakdown.
-
-The gap remains accepted after the move to a merge queue. The merge queue never pushes to a pull request branch, so it neither creates nor clears stale approvals, and `require_last_push_approval` still covers commits pushed after an approval.
-
-These conditions should reopen that decision:
-
-* `require_last_push_approval` is relaxed or disabled. It is the entire basis for accepting the gap, so the two settings must never both be off.
-* A change in review practice or tooling makes stale approvals reachable in a way the last-push approval does not cover.
-
-Verify the current value at any time:
-
-```bash
-gh api repos/microsoft/hve-core/rules/branches/main \
-  --jq '.[] | select(.type=="pull_request") | .parameters.dismiss_stale_reviews_on_push'
-```
+Pairing automatic stale-review dismissal (`dismiss_stale_reviews_on_push`) with last-push approval (`require_last_push_approval`)
+ensures new commits clear prior approvals while preventing the person who pushed the final commit from supplying its required approval;
+queue validation re-runs `PR Validation Success` against `main` without pushing to the pull request branch, retiring the earlier accepted
+gap in [issue #2461](https://github.com/microsoft/hve-core/issues/2461). For the exact status-check contexts, per-parameter values, API
+verification commands, and OpenSSF Scorecard status, see [Branch Protection Configuration](../contributing/branch-protection).
 
 ## CODEOWNERS Coverage
 

@@ -2,7 +2,7 @@
 title: Security Scripts
 description: PowerShell scripts for dependency pinning validation, SHA staleness monitoring, supply chain security, and centralized PS module installation
 author: HVE Core Team
-ms.date: 2026-11-06
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - powershell
@@ -45,27 +45,12 @@ The security scripts share common modules and follow a consistent pattern:
 * [`Get-CodeScanningExceptionStatus.ps1`](#get-codescanningexceptionstatusps1): tracked exception status for the weekly job
 * [`Get-UpstreamWatchStatus.ps1`](#get-upstreamwatchstatusps1): upstream catch-up watches
 * [`Test-ToolVersionConsistency.ps1`](#test-toolversionconsistencyps1): hard-coded tool versions against the manifest
-* [`Set-GhAwNodeVersion.ps1`](#set-ghawnodeversionps1): normalize generated detection jobs to the exact repository Node version
 * [`Test-ActionPinProvenance.ps1`](#test-actionpinprovenanceps1): action pin comments and commits against upstream
 * [`Install-PSModules.ps1`](#install-psmodulesps1): centralized PS module install with retry
 * [`Test-PSModulePins.ps1`](#test-psmodulepinsps1): PS module version pin enforcement
 * [`Sign-PlannerArtifacts.ps1`](#sign-plannerartifactsps1): planner artifact manifest and signing
 * [`Modules/SecurityClasses.psm1`](#modulessecurityclassespsm1): shared data types
 * [`Modules/SecurityHelpers.psm1`](#modulessecurityhelperspsm1): shared utilities
-
-### `Set-GhAwNodeVersion.ps1`
-
-Normalizes the generated threat-detection jobs for the declared canonical
-workflows. Run it immediately after compiling those workflows with the `gh-aw`
-version pinned in `tool-checksums.json`. The script reads the exact version from
-the repository `.node-version` file and fails closed unless each generated
-detection job contains one version-commented `setup-node` step.
-
-```powershell
-gh aw compile
-./scripts/security/Set-GhAwNodeVersion.ps1
-./scripts/security/Set-GhAwNodeVersion.ps1 -Verify
-```
 
 ### `Test-DependencyPinning.ps1`
 

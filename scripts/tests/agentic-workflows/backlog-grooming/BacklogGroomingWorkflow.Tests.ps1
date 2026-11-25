@@ -1036,7 +1036,7 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
         $script:Lock | Should -Match '(?m)^  workflow_call:$'
         $script:Lock | Should -Not -Match '(?m)^  schedule:$'
         $script:Lock | Should -Not -Match '(?m)^  workflow_dispatch:$'
-        $script:Lock | Should -Match '(?m)^      issues: read$'
+        $script:Lock | Should -Match '(?m)^      issues: read # .+\r?$'
         $script:Lock | Should -Match 'runtime-import \.github/instructions/project-planning/github-backlog-grooming\.instructions\.md'
     }
 
@@ -1081,8 +1081,8 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
         $script:Lock | Should -Match 'Invoke-BacklogGroomResultCollector\.ps1'
         $script:Lock | Should -Match 'result-output/shard-result\.json'
         $script:Lock | Should -Match 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a'
-        $script:Lock | Should -Not -Match '(?m)^\s*issues: write$'
-        $script:Lock | Should -Not -Match '(?m)^\s*security-events: write$'
+        $script:Lock | Should -Not -Match '(?m)^\s*issues: write(?:\s*#.*)?\r?$'
+        $script:Lock | Should -Not -Match '(?m)^\s*security-events: write(?:\s*#.*)?\r?$'
         $script:Lock | Should -Not -Match 'create_code_scanning_alert'
     }
 

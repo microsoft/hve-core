@@ -16,6 +16,22 @@ import { CHECK_RULES, fetchTextFromGitHub, getCheckFindings, readCachedRemoteTex
 // registered, so the parser is loaded dynamically rather than statically.
 const { parseWorkflow, convertWorkflowTemplate, NoOperationTraceWriter } = await import('@actions/workflow-parser');
 const { parseAction, convertActionTemplate } = await import('@actions/workflow-parser/actions/index');
+const { JSONObjectReader } = await import('@actions/workflow-parser/templates/json-object-reader');
+const { TemplateSchema } = await import('@actions/workflow-parser/templates/schema/index');
+const { TemplateContext, TemplateValidationErrors } = await import('@actions/workflow-parser/templates/template-context');
+
+// Overlay documented workflow- and job-level cache-mode until upstream
+// @actions/workflow-parser ships https://github.com/actions/languageservices/issues/397.
+// Guarded by probes/cache-mode.yml (workflow-parser-probe-cache-mode) against the unmodified parser.
+const workflowSchema = (() => {
+  const parserDist = dirname(fileURLToPath(import.meta.resolve('@actions/workflow-parser')));
+  const raw = JSON.parse(readFileSync(join(parserDist, 'workflow-v1.0.min.json'), 'utf8'));
+  raw.definitions['cache-mode'] = { 'allowed-values': ['read', 'write', 'write-only', 'none'] };
+  for (const key of ['workflow-root', 'workflow-root-strict', 'job-factory', 'workflow-job']) {
+    raw.definitions[key].mapping.properties['cache-mode'] = 'cache-mode';
+  }
+  return TemplateSchema.load(new JSONObjectReader(undefined, JSON.stringify(raw)));
+})();
 
 export const TOOL_NAME = 'hve-workflow-validator';
 export const PARSER_RULE = 'workflow-parser/error';
@@ -62,7 +78,9 @@ export function discoverFiles(repoRoot) {
 export async function getParserFindings(path, content, kind) {
   const file = { name: path, content };
   const trace = new NoOperationTraceWriter();
-  const parsed = kind === 'action' ? parseAction(file, trace) : parseWorkflow(file, trace);
+  const parsed = kind === 'action'
+    ? parseAction(file, trace)
+    : parseWorkflow(file, new TemplateContext(new TemplateValidationErrors(), workflowSchema, trace));
   const errors = [...parsed.context.errors.getErrors()];
   if (parsed.value) {
     if (kind === 'action') {
