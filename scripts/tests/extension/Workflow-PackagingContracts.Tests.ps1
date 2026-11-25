@@ -1965,7 +1965,7 @@ Describe 'Release-please ownership and promotion transforms' -Tag 'Unit' {
         $sources = (Get-Content -LiteralPath $catalogPath -Raw | ConvertFrom-Json).plugins.source
         $manifests = @($sources | ForEach-Object { [System.IO.Path]::GetFullPath((Join-Path $script:RepositoryRoot $_ 'plugin.json')) })
         foreach ($target in @($extraFiles | Where-Object { $_.path -match '(^|/)plugin\.json$' })) {
-            $manifests | Should -Contain (Join-Path $script:RepositoryRoot $target.path)
+            $manifests | Should -Contain ([System.IO.Path]::GetFullPath((Join-Path $script:RepositoryRoot $target.path)))
         }
     }
 
@@ -2035,13 +2035,15 @@ Describe 'Release-please ownership and promotion transforms' -Tag 'Unit' {
         )
     }
 
-    It 'Restores release-owned files without a candidate record in <Workflow>' -ForEach @(
+    It 'Restores release-owned files without clobbering the promoted catalog in <Workflow>' -Tag 'PluginCatalog' -ForEach @(
         @{ Workflow = 'release-prerelease-prepare.yml' }
         @{ Workflow = 'release-stable.yml' }
     ) {
         $run = [string](Get-NamedJobStep -Document (Get-WorkflowDocument -Name $Workflow) `
                 -JobName 'prepare-promotion' -StepName 'Refresh the promotion head')['run']
-        $run | Should -Match "restore_from_base required CHANGELOG\.md \.github/plugin/marketplace\.json"
+        $run | Should -Match 'restore_from_base required CHANGELOG\.md\r?\n'
+        $run | Should -Not -Match 'restore_from_base required CHANGELOG\.md \.github/plugin/marketplace\.json'
+        $run | Should -Match 'git checkout "\$SOURCE_SHA" --[\s\S]*plugin\.json \.github/plugin/marketplace\.json'
         $run | Should -Match "'plugin\.json'"
         $run | Should -Not -Match 'release-candidate\.json'
     }

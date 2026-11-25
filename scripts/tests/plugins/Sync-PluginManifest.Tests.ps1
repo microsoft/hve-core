@@ -752,6 +752,28 @@ Describe 'Multiple catalog sources' -Tag 'Unit' {
             & git -C $script:MultiRoot add -- '.github/agents/alpha/plugin.json'
         }
     }
+
+    It 'Validates a focused plugin declaring an extension container with multiple extensions' {
+        $root = New-PluginFixture -Root (Join-Path $TestDrive 'multi-extensions')
+        $github = Join-Path $root '.github'
+        foreach ($name in @('rpi-workflow', 'session-log', 'code-review')) {
+            $entry = Join-Path $github "extensions/hve-core/$name/extension.mjs"
+            New-Item -ItemType Directory -Path (Split-Path $entry -Parent) -Force | Out-Null
+            Set-Content -LiteralPath $entry -Value '// fixture' -Encoding UTF8
+        }
+        $meta = [ordered]@{ name = 'hve-base'; description = 'Base focused plugin'; version = '1.2.3' }
+        Set-Content -LiteralPath (Join-Path $github 'extensions/plugin.json') `
+            -Value (ConvertTo-PluginManifestJson -Manifest ($meta + @{ extensions = @('hve-core') })) -Encoding UTF8 -NoNewline
+        Set-FixtureCatalog -Root $root -Transform {
+            param($c) $c.plugins = @($c.plugins) + @($meta + @{ source = './.github/extensions' }); $c
+        }
+        & git -C $root add --all
+
+        $sync = Invoke-PluginManifestSync -RepoRoot $root
+        $sync.Violations | Should -HaveCount 0
+        $sync.Manifest.extensions | Should -Be @('.github/extensions/hve-core')
+        (Invoke-PluginManifestSync -RepoRoot $root -Check).Violations | Should -HaveCount 0
+    }
 }
 
 Describe 'Retired hooks support' -Tag 'Unit' {
