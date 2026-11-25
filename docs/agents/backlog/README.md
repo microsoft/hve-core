@@ -2,7 +2,7 @@
 title: Backlog Management
 description: Cross-platform work item discovery, triage, sprint planning, and execution for Azure DevOps, GitHub, and Jira
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-11-21
 ms.topic: concept
 keywords:
   - backlog management
@@ -58,10 +58,12 @@ You do not declare a platform. The skill resolves it from your workspace, then r
 | Platform     | Resolution signal                                                      | Access mechanism                             |
 |--------------|------------------------------------------------------------------------|----------------------------------------------|
 | Azure DevOps | ADO remote, existing `.copilot-tracking/workitems/`                    | MCP server                                   |
-| GitHub       | GitHub remote, existing `.copilot-tracking/github-issues/`             | MCP server                                   |
+| GitHub       | GitHub remote, existing `.copilot-tracking/github-issues/`             | MCP server, or the `gh` CLI as fallback      |
 | Jira         | Configured Jira environment, existing `.copilot-tracking/jira-issues/` | Environment credentials via the `jira` skill |
 
 When the signals are ambiguous, the workflow states its inference and asks you to confirm before touching anything. See [MCP Configuration](../../getting-started/mcp-configuration.md) for server setup, and the `jira` skill's Credential Setup section for Jira.
+
+Some hosts withhold GitHub MCP tools. The GitHub Copilot app, for example, removes issue and pull request read tools from its built-in GitHub MCP server when the `gh` CLI is installed. In that case GitHub workflows fall back to a bounded set of `gh` commands that you have already authenticated with `gh auth login`. Backlog Manager uses only read-only `gh` commands, and every tracker write still goes through GitHub Backlog Executor.
 
 > [!NOTE]
 > GitLab is not a backlog tracker in this model. The `gitlab` skill covers merge request and pipeline inspection for delivery context.

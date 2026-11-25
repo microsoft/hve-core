@@ -40,13 +40,13 @@ Four things must hold before the first mutating call. Everything else can be dis
 
 ### Supported direct-invocation contexts
 
-| Context                                                          | Write surface                | Notes                                                                                                       |
-|------------------------------------------------------------------|------------------------------|-------------------------------------------------------------------------------------------------------------|
-| A platform executor subagent dispatched by `Backlog Manager`     | That platform's write family | Preferred path; the orchestrator resolves and confirms, the executor runs this flow with its platform delta |
-| An agent or host session carrying the platform's own write tools | Those tools directly         | Requires the ADO or GitHub write family, or terminal access for the Jira CLI                                |
-| A read-only session                                              | None                         | Plan the operations, write the handoff, and stop before mutating                                            |
+| Context                                                          | Write surface                | Notes                                                                                                                                                                                   |
+|------------------------------------------------------------------|------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| A platform executor subagent dispatched by `Backlog Manager`     | That platform's write family | Preferred path; the orchestrator resolves and confirms, the executor runs this flow with its platform delta                                                                             |
+| An agent or host session carrying the platform's own write tools | Those tools directly         | Requires the ADO or GitHub write family, terminal access for the Jira CLI, or a GitHub executor contract that grants the `gh` CLI fallback in the `backlog-management` GitHub reference |
+| A read-only session                                              | None                         | Plan the operations, write the handoff, and stop before mutating                                                                                                                        |
 
-When the active context exposes no compatible write surface, say so plainly and stop before the first mutating call: state which platform was resolved, that the current context has no write surface for it, and that the planned operations were written to the handoff file for execution through `Backlog Manager` or an equivalently equipped context. Do not substitute a terminal command or an alternate CLI to reach an operation the context withholds, and never fall back to a different platform because that one happens to be reachable.
+When the active context exposes no compatible write surface, say so plainly and stop before the first mutating call: state which platform was resolved, that the current context has no write surface for it, and that the planned operations were written to the handoff file for execution through `Backlog Manager` or an equivalently equipped context. Do not substitute a terminal command or an alternate CLI to reach an operation the context withholds; the only exceptions are the Jira CLI and, for a context whose contract grants it, the bounded GitHub `gh` fallback that the `backlog-management` GitHub reference defines. Never fall back to a different platform because that one happens to be reachable.
 
 ### Direct-invocation scenarios
 
