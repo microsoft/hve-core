@@ -109,13 +109,15 @@ jobs:
           INPUT_SOFT_FAIL: ${{ inputs.soft-fail }}
           INPUT_UPLOAD_SARIF: ${{ inputs.upload-sarif }}
 
+      # Uploading needs security-events: write, which a fork pull request never
+      # receives. Skip the step for forks rather than attempt it; the validation
+      # step still decides every pull request.
       - name: Upload SARIF to Security tab
-        if: inputs.upload-sarif && always()
+        if: inputs.upload-sarif && always() && hashFiles('logs/action-version-consistency-results.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           sarif_file: logs/action-version-consistency-results.sarif
           category: action-version-consistency
-        continue-on-error: true
 
       - name: Upload validation report
         if: inputs.upload-artifact && always()

@@ -35,6 +35,10 @@ on:
         required: false
         type: boolean
         default: true
+    outputs:
+      leaks-found:
+        description: 'Whether gitleaks detected any secrets'
+        value: ${{ jobs.scan.outputs.leaks-found }}
 
 permissions:
   contents: read
@@ -46,6 +50,8 @@ jobs:
     permissions:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
+    outputs:
+      leaks-found: ${{ steps.gitleaks.outputs.leaks-found }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -69,23 +75,25 @@ jobs:
         run: |
           set -euo pipefail
 
-          GITLEAKS_VERSION="8.30.0"
-          GITLEAKS_SHA256="79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e"
+          GITLEAKS_VERSION="8.30.1"
+          GITLEAKS_SHA256="551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
           GITLEAKS_URL="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
-          GITLEAKS_TARBALL="gitleaks.tar.gz"
+          GITLEAKS_TARBALL="${RUNNER_TEMP}/gitleaks.tar.gz"
+          GITLEAKS_BIN="${RUNNER_TEMP}/gitleaks"
 
           echo "Downloading gitleaks v${GITLEAKS_VERSION}..."
-          curl -fsSL -o "${GITLEAKS_TARBALL}" "${GITLEAKS_URL}"
+          curl --proto '=https' --tlsv1.2 -fsSL --retry 3 --retry-all-errors -o "${GITLEAKS_TARBALL}" "${GITLEAKS_URL}"
 
           echo "Verifying SHA256 checksum..."
           echo "${GITLEAKS_SHA256}  ${GITLEAKS_TARBALL}" | sha256sum -c -
 
           echo "Extracting gitleaks binary..."
-          tar -xzf "${GITLEAKS_TARBALL}" gitleaks
-          chmod +x gitleaks
+          tar -xzf "${GITLEAKS_TARBALL}" -C "${RUNNER_TEMP}" gitleaks
+          rm -f "${GITLEAKS_TARBALL}"
+          chmod +x "${GITLEAKS_BIN}"
 
           echo "Gitleaks version:"
-          ./gitleaks version
+          "${GITLEAKS_BIN}" version
 
       - name: Run gitleaks scan
         id: gitleaks
@@ -123,14 +131,17 @@ jobs:
             exit 1
           fi
 
-          # Respect .gitleaksignore for pre-existing secrets
+          # Respect repository gitleaks configuration for allowlisted test fixtures
+          if [ -f ".gitleaks.toml" ]; then
+            echo "Found .gitleaks.toml — repository allowlist configuration will be applied."
+          fi
           if [ -f ".gitleaksignore" ]; then
             echo "Found .gitleaksignore — known secrets will be suppressed."
           fi
 
           echo "Running gitleaks scan..."
           EXIT_CODE=0
-          ./gitleaks "${SCAN_ARGS[@]}" || EXIT_CODE=$?
+          "${RUNNER_TEMP}/gitleaks" "${SCAN_ARGS[@]}" || EXIT_CODE=$?
 
           if [ "$EXIT_CODE" -eq 0 ]; then
             echo "No secrets detected."
@@ -147,13 +158,15 @@ jobs:
             exit "$EXIT_CODE"
           fi
 
+      # Uploading needs security-events: write, which a fork pull request never
+      # receives. Skip the step for forks rather than attempt it; the scan step
+      # still decides every pull request.
       - name: Upload SARIF to Security tab
-        if: inputs.upload-sarif && always()
+        if: inputs.upload-sarif && always() && hashFiles('logs/gitleaks-results.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           sarif_file: logs/gitleaks-results.sarif
           category: gitleaks
-        continue-on-error: true
 
       - name: Upload scan results
         if: inputs.upload-artifact && always()
@@ -172,8 +185,10 @@ jobs:
           LEAKS_FOUND="$GITLEAKS_LEAKS_FOUND"
           if [ "$LEAKS_FOUND" = "true" ]; then
             STATUS="⚠️ Secrets Detected"
-          else
+          elif [ "$LEAKS_FOUND" = "false" ]; then
             STATUS="✅ No Secrets Found"
+          else
+            STATUS="❌ Scan Did Not Complete"
           fi
 
           cat >> "$GITHUB_STEP_SUMMARY" <<EOF

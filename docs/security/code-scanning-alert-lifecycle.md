@@ -3,7 +3,7 @@ title: Code-Scanning Alert Lifecycle
 description: How HVE Core detects, blocks, tracks, and resolves code-scanning alerts without ever dismissing them
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-11-07
+ms.date: 2026-11-24
 ms.topic: concept
 keywords:
   - security
@@ -47,17 +47,19 @@ flowchart LR
 
 ## Detection
 
-| Source                   | What it finds                                                                                                            | When it runs                                                                            |
-|--------------------------|--------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
-| CodeQL                   | Security and quality findings in `actions`, `python`, and `javascript-typescript` source, plus the delivered slide decks | Pull requests, pushes to `main`, Sundays at 2 AM and 4 AM UTC                           |
-| OpenSSF Scorecard        | Repository posture, including branch protection and known-vulnerable dependencies                                        | Sundays at 3 AM UTC and on pushes to `main`                                             |
-| OSV-Scanner (VEX)        | Dependency advisories not yet triaged in `security/vex/hve-core.openvex.json`                                            | Tuesdays at 8 AM UTC                                                                    |
-| zizmor                   | GitHub Actions security audits at the `pedantic` persona, with `--no-ignores`                                            | Pull requests, pushes to `main` that touch workflows or actions, Mondays at 4:30 AM UTC |
-| Workflow validator       | GitHub workflow-parser errors, custom workflow checks, and ShellCheck results in `run:` scripts                          | Pull requests                                                                           |
-| Tool version consistency | Hard-coded tool versions, digests, and runtimes that differ from `scripts/security/tool-checksums.json`                  | Pull requests                                                                           |
-| Action pin provenance    | Action pins whose commit is not on an upstream tag or default branch, or whose comment names the wrong tag               | Pull requests                                                                           |
-| Dependency pinning       | Unpinned dependencies, one rule per dependency type                                                                      | Pull requests and the weekly security maintenance run                                   |
-| Poutine                  | Supply-chain risks in GitHub Actions workflows; advisory, not gated                                                      | Pull requests and the weekly security maintenance run                                   |
+| Source                     | What it finds                                                                                                            | When it runs                                                                            |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
+| CodeQL                     | Security and quality findings in `actions`, `python`, and `javascript-typescript` source, plus the delivered slide decks | Pull requests, pushes to `main`, Sundays at 2 AM and 4 AM UTC                           |
+| OpenSSF Scorecard          | Repository posture, including branch protection and known-vulnerable dependencies                                        | Sundays at 3 AM UTC and on pushes to `main`                                             |
+| OSV-Scanner (VEX)          | Dependency advisories not yet triaged in `security/vex/hve-core.openvex.json`                                            | Tuesdays at 8 AM UTC                                                                    |
+| zizmor                     | GitHub Actions security audits at the `pedantic` persona, with `--no-ignores`                                            | Pull requests, pushes to `main` that touch workflows or actions, Mondays at 4:30 AM UTC |
+| Workflow validator         | GitHub workflow-parser errors, custom workflow checks, and ShellCheck results in `run:` scripts                          | Pull requests                                                                           |
+| Tool version consistency   | Hard-coded tool versions, digests, and runtimes that differ from `scripts/security/tool-checksums.json`                  | Pull requests                                                                           |
+| Action pin provenance      | Action pins whose commit is not on an upstream tag or default branch, or whose comment names the wrong tag               | Pull requests                                                                           |
+| Dependency pinning         | Unpinned dependencies, one rule per dependency type                                                                      | Pull requests and the weekly security maintenance run                                   |
+| Action version consistency | SHA-pinned GitHub Actions with mismatched or missing version comments                                                    | Pull requests and the weekly security maintenance run                                   |
+| Gitleaks                   | Hard-coded secrets across commit history (respecting `.gitleaks.toml` allowlists for test fixtures)                      | Pull requests, merge-queue groups, and the weekly security maintenance run              |
+| Poutine                    | Supply-chain risks in GitHub Actions workflows; advisory, not gated                                                      | Pull requests and the weekly security maintenance run                                   |
 
 The scanners that run only from pull requests have no analysis on `main`, so their alerts appear on pull-request branches, and the weekly exception status reports their tracked exceptions as not observed rather than closed.
 

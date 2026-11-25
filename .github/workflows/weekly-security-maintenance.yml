@@ -66,10 +66,35 @@ jobs:
       upload-sarif: true
       upload-artifact: true
 
+  # Keep Action Version Consistency SARIF fresh on the default branch.
+  action-version-consistency-scan:
+    name: Action Version Consistency Scan
+    uses: $/.github/workflows/action-version-consistency-scan.yml
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to Security tab
+    with:
+      soft-fail: true
+      upload-sarif: true
+      upload-artifact: true
+
+  # Keep Gitleaks secret scanning SARIF fresh on the default branch.
+  gitleaks-scan:
+    name: Gitleaks Secret Scan
+    uses: $/.github/workflows/gitleaks-scan.yml
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to Security tab
+    with:
+      change-mode: full
+      soft-fail: true
+      upload-sarif: true
+      upload-artifact: true
+
   # Generate consolidated summary.
   summary:
     name: Security Maintenance Summary
-    needs: [validate-pinning, check-staleness, codeql-analysis, dangerous-workflow-scan]
+    needs: [validate-pinning, check-staleness, codeql-analysis, dangerous-workflow-scan, action-version-consistency-scan, gitleaks-scan]
     if: always()
     runs-on: ubuntu-24.04
     permissions:
@@ -94,6 +119,12 @@ jobs:
           STALE_COUNT: ${{ needs.check-staleness.outputs.stale-count }}
           CODEQL_RESULT: ${{ needs.codeql-analysis.result }}
           WORKFLOW_SCAN_RESULT: ${{ needs.dangerous-workflow-scan.result }}
+          ACTION_VERSION_RESULT: ${{ needs.action-version-consistency-scan.result }}
+          ACTION_VERSION_COMPLIANT: ${{ needs.action-version-consistency-scan.outputs.is-compliant }}
+          ACTION_VERSION_MISMATCH_COUNT: ${{ needs.action-version-consistency-scan.outputs.mismatch-count }}
+          ACTION_VERSION_MISSING_COMMENTS: ${{ needs.action-version-consistency-scan.outputs.missing-comments }}
+          GITLEAKS_RESULT: ${{ needs.gitleaks-scan.result }}
+          GITLEAKS_LEAKS_FOUND: ${{ needs.gitleaks-scan.outputs.leaks-found }}
           EVENT_NAME: ${{ github.event_name }}
           SERVER_URL: ${{ github.server_url }}
           REPO: ${{ github.repository }}
@@ -111,6 +142,12 @@ jobs:
           $staleCount = $env:STALE_COUNT
           $codeqlResult = $env:CODEQL_RESULT
           $workflowScanResult = $env:WORKFLOW_SCAN_RESULT
+          $actionVersionResult = $env:ACTION_VERSION_RESULT
+          $actionVersionCompliant = $env:ACTION_VERSION_COMPLIANT
+          $actionVersionMismatchCount = if ($env:ACTION_VERSION_MISMATCH_COUNT) { $env:ACTION_VERSION_MISMATCH_COUNT } else { '0' }
+          $actionVersionMissingComments = if ($env:ACTION_VERSION_MISSING_COMMENTS) { $env:ACTION_VERSION_MISSING_COMMENTS } else { '0' }
+          $gitleaksResult = $env:GITLEAKS_RESULT
+          $gitleaksLeaksFound = $env:GITLEAKS_LEAKS_FOUND
           $thresholdDays = $env:THRESHOLD_DAYS
           
           # Determine overall status
@@ -120,6 +157,8 @@ jobs:
           if ($staleCount -ne '0') { $hasIssues = $true }
           if ($codeqlResult -ne 'success') { $hasIssues = $true }
           if ($workflowScanResult -ne 'success') { $hasIssues = $true }
+          if ($actionVersionResult -ne 'success' -or $actionVersionCompliant -eq 'false') { $hasIssues = $true }
+          if ($gitleaksResult -ne 'success' -or $gitleaksLeaksFound -eq 'true') { $hasIssues = $true }
           
           @"
           # 🔐 Weekly Security Maintenance Report
@@ -143,6 +182,8 @@ jobs:
           |-----------|--------|
           | CodeQL Analysis | $(if ($codeqlResult -eq 'success') { '✅ Complete' } else { '⚠️ See details' }) |
           | Dangerous Workflow / Poutine | $(if ($workflowScanResult -eq 'success') { '✅' } else { '⚠️' }) $workflowScanResult (advisory; review logs and SARIF) |
+          | Action Version Consistency | $(if ($actionVersionResult -ne 'success') { "⚠️ $actionVersionResult (review logs)" } elseif ($actionVersionCompliant -eq 'false') { "⚠️ $actionVersionMismatchCount mismatch(es), $actionVersionMissingComments missing comment(s)" } else { '✅ Compliant' }) |
+          | Gitleaks Secret Scan | $(if ($gitleaksResult -ne 'success') { "⚠️ $gitleaksResult (review logs)" } elseif ($gitleaksLeaksFound -eq 'true') { '⚠️ Secrets detected (review SARIF and Security tab)' } else { '✅ No secrets found' }) |
           | Secret Scanning | ✅ Enabled (GitHub native) |
           | Dependabot Alerts | ✅ Enabled (GitHub native) |
 
@@ -243,6 +284,8 @@ jobs:
           * Download the JSON report artifacts for detailed analysis
           $(if ($codeqlResult -ne 'success') { "* CodeQL analysis result was $codeqlResult; review the codeql-analysis job logs`n" })
           $(if ($workflowScanResult -ne 'success') { "* Dangerous workflow scan result was $workflowScanResult; review the dangerous-workflow-scan job's scanner step logs and confirm the poutine-results artifact exists`n" })
+          $(if ($actionVersionResult -ne 'success' -or $actionVersionCompliant -eq 'false') { "* Action version consistency result was $actionVersionResult (compliant: $actionVersionCompliant); review the action-version-consistency-scan job logs and Security tab`n" })
+          $(if ($gitleaksResult -ne 'success' -or $gitleaksLeaksFound -eq 'true') { "* Gitleaks secret scan result was $gitleaksResult (leaks found: $gitleaksLeaksFound); review the gitleaks-scan job logs, gitleaks-results artifact, and Security tab`n" })
           
           "@
           })
@@ -258,11 +301,19 @@ jobs:
           EXCEPTION_ERROR_COUNT: ${{ needs.validate-pinning.outputs.exception-error-count }}
           GATE_ERROR: ${{ needs.validate-pinning.outputs.gate-error }}
           STALE_COUNT: ${{ needs.check-staleness.outputs.stale-count }}
+          ACTION_VERSION_RESULT: ${{ needs.action-version-consistency-scan.result }}
+          ACTION_VERSION_COMPLIANT: ${{ needs.action-version-consistency-scan.outputs.is-compliant }}
+          GITLEAKS_RESULT: ${{ needs.gitleaks-scan.result }}
+          GITLEAKS_LEAKS_FOUND: ${{ needs.gitleaks-scan.outputs.leaks-found }}
         run: |
           $gateError = $env:GATE_ERROR -eq 'true'
           $unpinnedCount = if ($gateError) { 'unknown' } elseif ($env:FAILING_COUNT) { $env:FAILING_COUNT } else { $env:UNPINNED_COUNT }
           $exceptionErrorCount = if ($gateError) { 'unknown' } elseif ($env:EXCEPTION_ERROR_COUNT) { $env:EXCEPTION_ERROR_COUNT } else { '0' }
           $staleCount = $env:STALE_COUNT
+          $actionVersionResult = $env:ACTION_VERSION_RESULT
+          $actionVersionCompliant = $env:ACTION_VERSION_COMPLIANT
+          $gitleaksResult = $env:GITLEAKS_RESULT
+          $gitleaksLeaksFound = $env:GITLEAKS_LEAKS_FOUND
           $thresholdDays = $env:THRESHOLD_DAYS
           
           # Informational output - workflow succeeds but logs warnings
@@ -281,8 +332,16 @@ jobs:
           if ($staleCount -ne '0') {
             Write-Output "::warning::Found $staleCount stale SHA pins (>$thresholdDays days old). Consider updating them."
           }
+
+          if ($actionVersionResult -ne 'success' -or $actionVersionCompliant -eq 'false') {
+            Write-Output "::warning::Action version consistency scan reported issues (result: $actionVersionResult, compliant: $actionVersionCompliant). Review the action-version-consistency-scan job logs."
+          }
+
+          if ($gitleaksResult -ne 'success' -or $gitleaksLeaksFound -eq 'true') {
+            Write-Output "::warning::Gitleaks secret scan reported issues (result: $gitleaksResult, leaks found: $gitleaksLeaksFound). Review the gitleaks-scan job logs and Security tab."
+          }
           
-          if (!$gateError -and $unpinnedCount -eq '0' -and $exceptionErrorCount -eq '0' -and $staleCount -eq '0') {
+          if (!$gateError -and $unpinnedCount -eq '0' -and $exceptionErrorCount -eq '0' -and $staleCount -eq '0' -and $actionVersionResult -eq 'success' -and $actionVersionCompliant -ne 'false' -and $gitleaksResult -eq 'success' -and $gitleaksLeaksFound -ne 'true') {
             Write-Output "::notice::All dependencies are properly pinned and up-to-date!"
           }
       - name: Download staleness report
