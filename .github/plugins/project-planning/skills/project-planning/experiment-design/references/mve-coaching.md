@@ -213,23 +213,20 @@ These mistakes occur during experiment design and execution. Unlike red flags, w
 
 ### Decision framework
 
-* Go: the hypothesis is validated. Proceed to MVP planning, scale the approach, or apply the finding.
-* No-go: the hypothesis is invalidated. Pivot, abandon, or redesign based on what was learned.
-* Adjust: results are mixed or inconclusive. Refine the hypothesis, increase sample size, or address confounding factors and re-run.
+* Go: the hypothesis is validated against the precommitted criteria for the evaluated evidence. Proceed to MVP planning, scale the approach, or advance to the next scoped validation stage (record scope limits such as synthetic or bounded fixture evidence in the rationale rather than downgrading a validated hypothesis to `adjust`).
+* No-go: the hypothesis is invalidated against the precommitted criteria. Pivot, abandon, or redesign based on what was learned.
+* Adjust: results are mixed or inconclusive against the precommitted criteria. Refine the hypothesis, increase sample size, or address confounding factors and re-run.
 
 ### Outcome record
 
-Write `outcome.md` only after the execution Review is available. Bind the exact pre-execution and execution evidence:
+Write `outcome.md` only after the execution Review is available. Record each required element using explicit `Field: value` lines (or a two-column `Field | Value` table):
 
-* `mve-plan.md` path and SHA-256.
-* RPI Plan path and SHA-256.
-* RPI Changes path and SHA-256.
-* RPI Review path and SHA-256.
-* Precommitted criteria and any post-start divergence.
-* Quantitative results, sample size, confidence, anomalies, and qualitative observations.
-* One hypothesis outcome per hypothesis: `validated`, `invalidated`, `mixed`, `inconclusive`, or `not-evaluable`.
-* The unchanged RPI Review execution and outcome values as separate fields.
-* One downstream decision: `go`, `no-go`, or `adjust`, with rationale and next action.
+* Evidence bindings: workspace-relative path and SHA-256 for `mve-plan.md`, RPI Plan, RPI Changes, and RPI Review.
+* Precommitted criteria and divergence: restate each precommitted threshold verbatim and explicitly state whether precommitted criteria were unchanged (`Divergence: none` when no post-start change occurred).
+* Quantitative results: report each committed metric on its own labeled line with the computed numeric value immediately after the label (for example, `Latency reduction: <N>%`, `Sample size: <N>`, `Error rate: <N>%`), followed by separate `Anomalies:` (for example, `Anomalies: none`), `Confidence:`, and `Qualitative observations:` lines.
+* Hypothesis outcomes: one labeled `Outcome:` per hypothesis (`validated`, `invalidated`, `mixed`, `inconclusive`, or `not-evaluable`).
+* RPI Review status: preserve the unchanged `Review execution:` and `Review outcome:` values as separate labeled fields.
+* Downstream decision: one labeled `Downstream decision:` (`go`, `no-go`, or `adjust`) matching the Decision framework above, with rationale and next action.
 
 Never reinterpret an execution status as a hypothesis outcome. A conformant execution may invalidate a hypothesis and still be a successful MVE. Criteria changed after execution begins are divergence and do not replace the committed comparison boundary.
 

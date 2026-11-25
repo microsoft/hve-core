@@ -61,6 +61,8 @@ stimuli:
           dest: .github/copilot-instructions.md
         - src: ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers/SKILL.md
           dest: .github/skills/project-planning/security-disclaimers/SKILL.md
+        - src: ../../.github/plugins/sdlc-security/instructions/security/identity.instructions.md
+          dest: .github/instructions/security/identity.instructions.md
         - src: fixtures/security-planner-disclaimer-shown-state.json
           dest: .copilot-tracking/security-plans/cadence-shown/state.json
     tags:
@@ -70,7 +72,7 @@ stimuli:
       - type: output-matches
         name: normal-resume-suppresses-replay
         config:
-          pattern: '(?is)(not repeat|suppress|skip|already shown|no (?:automatic )?redisplay)'
+          pattern: '(?is)(not repeat(?:ed)?|suppress(?:ed|ing)?|skip(?:ped|ping)?|omit(?:ted|ting)?|already shown|no (?:automatic )?redisplay|not redisplay(?:ed)?|not re-?shown|not shown again)'
       - type: output-matches
         name: existing-timestamp-preserved
         config:
@@ -78,7 +80,7 @@ stimuli:
       - type: output-matches
         name: no-duplicate-session-start-notice
         config:
-          pattern: '(?is)(no duplicate|not add|unchanged|remain(?:s|ed)? (?:at )?(?:one|1)).{0,250}session-start-disclaimer|session-start-disclaimer.{0,250}(no duplicate|not add|unchanged|(?:one|1))'
+          pattern: '(?is)(no duplicate|not add(?:ed)?|did not change|unchanged|remain(?:s|ed)? (?:at )?(?:one|1)).{0,250}session-start(?:[-\s]+disclaimer|\s+notice)|session-start(?:[-\s]+disclaimer|\s+notice).{0,250}(no duplicate|not add(?:ed)?|did not change|unchanged|(?:one|1))'
       - type: output-matches
         name: no-full-disclaimer-replay
         config:
@@ -215,6 +217,8 @@ stimuli:
           dest: .github/copilot-instructions.md
         - src: ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers/SKILL.md
           dest: .github/skills/project-planning/security-disclaimers/SKILL.md
+        - src: ../../.github/plugins/sdlc-security/instructions/security/identity.instructions.md
+          dest: .github/instructions/security/identity.instructions.md
         - src: fixtures/security-phase6/sample-service-state.json
           dest: .copilot-tracking/security-plans/sample-service/state.json
         - src: fixtures/security-phase6/sample-service-security-plan.md

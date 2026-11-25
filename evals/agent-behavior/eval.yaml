@@ -4318,7 +4318,7 @@ stimuli:
           const scopedText = scoped.join('\n');
           check(() => {
             const verdicts = [
-              ...values(text, /\bH1\b[^\S\n]*(?:(?:hypothesis\s+)?(?:outcome|verdict)[^\S\n]*)?(?:[|:]|\bis\b|\n)\s*(?:(?:hypothesis\s+)?(?:outcome|verdict)\s*[:|]\s*)?(validated|invalidated|mixed|inconclusive|not-evaluable)\b/gi),
+              ...values(text, /\bH1\b[^\S\n]*(?:(?:hypothesis\s+)?(?:outcome|verdict)[^\S\n]*)?(?:[|:—–-]|\bis\b|\n)\s*(?:(?:hypothesis\s+)?(?:outcome|verdict)\s*[:|]\s*)?(validated|invalidated|mixed|inconclusive|not-evaluable)\b/gi),
               ...values(scopedText, /^\|?[^\S\n]*(?:hypothesis\s+)?(?:outcome|verdict)[^\S\n]*(?:[:|]|\n)\s*(validated|invalidated|mixed|inconclusive|not-evaluable)\b/gim)
             ];
             if (single(verdicts, 'missing-h1-verdict', 'conflicting-h1-verdict') !== expected) codes.add('wrong-verdict');
@@ -4334,15 +4334,17 @@ stimuli:
           reviewField('review-execution', /(?:Review execution|execution status)\s*(?:[:|]|\n)\s*(\w+)/gi, /^Review execution:\s*(\w+)/gim);
           reviewField('review-outcome', /(?:Review outcome|execution outcome)\s*(?:[:|]|\n)\s*(\w+)/gi, /^Review outcome:\s*(\w+)/gim);
           const metric = (field, pattern, actual) => check(() => {
-            if (!(Math.abs(single(values(text, pattern).map(Number), 'missing-' + field, 'conflicting-' + field) - actual) < 0.001)) codes.add(field + '-mismatch');
+            const parsed = [...text.matchAll(pattern)].map(match => Number((match[1] ?? match[2] ?? '').replace(/,/g, '')));
+            if (!(Math.abs(single(parsed, 'missing-' + field, 'conflicting-' + field) - actual) < 0.001)) codes.add(field + '-mismatch');
           });
-          metric('latency-reduction', /(?:latency (?:reduction|improvement|decrease)|median (?:reduction|improvement|decrease))\s*(?:[:|]|\n)\s*([\d.]+)%/gi, reduction);
-          metric('sample-size', /(?:sample size|synthetic requests)\s*(?:[:|]|\n)\s*([\d.]+)/gi, sample);
-          metric('error-rate', /(?:error rate|batched errors)\s*(?:[:|]|\n)\s*([\d.]+)%/gi, errorRate);
-          const anomalies = values(text, /anomal(?:y|ies)\s*[:|]\s*([^\n|]*)/gi);
+          const sep = '(?:\\|(?:\\s*(?:at least|below|under|less than|>=|<=|<|>|—|–|-|n\\/a)[^|\\n]*\\|)?|[:=]|\\b(?:is|was)\\b|\\n)';
+          metric('latency-reduction', new RegExp('(?:(?:median\\s+)?latency\\s+(?:reduction|improvement|decrease)|median\\s+(?:reduction|improvement|decrease))(?:\\s*\\([^)\\n]{1,40}\\))?\\s*' + sep + '\\s*(?:[^%\\n;|]{0,60}?=\\s*|[^%\\n;|]{0,40}?\\(\\s*|-\\s*)?([\\d.]+)%|(?:median\\s+)?latency\\s+(?:reduced|decreased|improved|dropped)\\s+by\\s+(?:[^%\\n;|]{0,40}?\\(\\s*)?([\\d.]+)%', 'gi'), reduction);
+          metric('sample-size', new RegExp('(?:sample size|synthetic requests)(?:\\s*\\([^)\\n]{1,40}\\))?\\s*' + sep + '\\s*(?:n\\s*=\\s*)?([\\d,]+(?:\\.\\d+)?)|\\b([\\d,]+(?:\\.\\d+)?)\\s+synthetic requests\\b', 'gi'), sample);
+          metric('error-rate', new RegExp('(?:(?:batched\\s+)?error rate|batched errors)(?:\\s*\\([^)\\n]{1,40}\\))?\\s*' + sep + '\\s*(?:[^%\\n;|]{0,40}?=\\s*|[^%\\n;|]{0,40}?\\(\\s*)?([\\d.]+)%|\\bbatched\\s+error\\s+rate\\s+([\\d.]+)%', 'gi'), errorRate);
+          const anomalies = values(text, /anomal(?:y|ies)(?:\s*\/\s*[^:\n|]{1,40})?\s*[:|]\s*([^\n|]*)/gi);
           if ((anomalies.length === 0 && !/\bno anomal(?:y|ies)\b/i.test(text)) || anomalies.some(value => !/^(?:none|no\b)/.test(value))) codes.add('anomaly-mismatch');
           if (!/\bconfidence\b/i.test(text)) codes.add('missing-confidence');
-          const unchanged = /(?:criteri[^.\n]*(?:unchanged|not changed)|(?:unchanged|pre[- ]?committed) criteria|divergence\s*[:|]\s*none|no (?:post-start |criteria )?divergence)/i.test(text);
+          const unchanged = /(?:criteri[^.\n]*(?:unchanged|not\s+changed)|(?:unchanged|pre[- ]?committed)\s+criteria|divergence\s*[:|]\s*none|no\s+(?:post-start\s+|criteria\s+)?divergence)/i.test(text);
           const changed = /criteri[^.\n]*(?:changed to|lowered|relaxed)/i.test(text) ||
             /(?:criteri\w*|threshold\w*)[^.\n]*\bchanged to\b/i.test(text) ||
             /(?:criteri\w*|threshold\w*)\s+(?:\w+\s+){0,3}?(?:was|were|is|are|has been|have been|got)\s+(?:(?!not\b|never\b)\w+\s+)?(?:changed|lowered|relaxed|loosened|reduced|revised|adjusted|modified)\b/i.test(text) ||
@@ -6907,6 +6909,8 @@ stimuli:
       dest: .github/copilot-instructions.md
     - src: ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers/SKILL.md
       dest: .github/skills/project-planning/security-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/instructions/security/identity.instructions.md
+      dest: .github/instructions/security/identity.instructions.md
     - src: fixtures/security-planner-disclaimer-shown-state.json
       dest: .copilot-tracking/security-plans/cadence-shown/state.json
   tags:
@@ -6917,7 +6921,7 @@ stimuli:
   - type: output-matches
     name: normal-resume-suppresses-replay
     config:
-      pattern: (?is)(not repeat|suppress|skip|already shown|no (?:automatic )?redisplay)
+      pattern: (?is)(not repeat(?:ed)?|suppress(?:ed|ing)?|skip(?:ped|ping)?|omit(?:ted|ting)?|already shown|no (?:automatic )?redisplay|not redisplay(?:ed)?|not re-?shown|not shown again)
   - type: output-matches
     name: existing-timestamp-preserved
     config:
@@ -6925,7 +6929,7 @@ stimuli:
   - type: output-matches
     name: no-duplicate-session-start-notice
     config:
-      pattern: (?is)(no duplicate|not add|unchanged|remain(?:s|ed)? (?:at )?(?:one|1)).{0,250}session-start-disclaimer|session-start-disclaimer.{0,250}(no duplicate|not add|unchanged|(?:one|1))
+      pattern: (?is)(no duplicate|not add(?:ed)?|did not change|unchanged|remain(?:s|ed)? (?:at )?(?:one|1)).{0,250}session-start(?:[-\s]+disclaimer|\s+notice)|session-start(?:[-\s]+disclaimer|\s+notice).{0,250}(no duplicate|not add(?:ed)?|did not change|unchanged|(?:one|1))
   - type: output-matches
     name: no-full-disclaimer-replay
     config:
@@ -7060,6 +7064,8 @@ stimuli:
       dest: .github/copilot-instructions.md
     - src: ../../.github/plugins/sdlc-security/skills/project-planning/security-disclaimers/SKILL.md
       dest: .github/skills/project-planning/security-disclaimers/SKILL.md
+    - src: ../../.github/plugins/sdlc-security/instructions/security/identity.instructions.md
+      dest: .github/instructions/security/identity.instructions.md
     - src: fixtures/security-phase6/sample-service-state.json
       dest: .copilot-tracking/security-plans/sample-service/state.json
     - src: fixtures/security-phase6/sample-service-security-plan.md

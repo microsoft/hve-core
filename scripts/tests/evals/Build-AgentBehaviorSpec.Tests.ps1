@@ -1924,6 +1924,11 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     @{ Variant = 'missing-outcome'; Expected = $false; Bound = $false; Codes = 'read-error' }
     @{ Variant = 'percent-word'; Expected = $true; Bound = $true; Codes = '' }
     @{ Variant = 'percent-space'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'formula-reduction'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'prose-metrics-and-emdash'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'criterion-first-table'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'parenthetical-and-n-prefix'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'criterion-first-wrong-metric'; Expected = $false; Bound = $true; Codes = 'latency-reduction-mismatch' }
     @{ Variant = 'verdict-label'; Expected = $true; Bound = $true; Codes = '' }
     @{ Variant = 'execution-status-label'; Expected = $true; Bound = $true; Codes = '' }
     @{ Variant = 'other-hypothesis'; Expected = $true; Bound = $true; Codes = '' }
@@ -1996,6 +2001,11 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     if ($Variant -eq 'conflicting-decision') { $body += "`nDecision: no-go" }
     if ($Variant -eq 'percent-word') { $body = $body.Replace('Error rate: 0.5%', 'Error rate: 0.5 percent').Replace('Latency reduction: 24%', 'Latency reduction: 24 percent') }
     if ($Variant -eq 'percent-space') { $body = $body.Replace('Error rate: 0.5%', 'Error rate: 0.5 %') }
+    if ($Variant -eq 'formula-reduction') { $body = $body.Replace('Latency reduction: 24%', 'Median latency reduction: (100 - 76) / 100 * 100 = 24% (criterion: at least 20%).') }
+    if ($Variant -eq 'prose-metrics-and-emdash') { $body = "## Hypothesis Outcome`n**H1 $([char]0x2014) validated.**`n100 synthetic requests; batched error rate 0.5%; Median latency reduction was (100 - 76) / 100 * 100 = 24%.`nAnomalies / qualitative observations: none reported.`nConfidence: limited to supplied synthetic data.`nBoth precommitted`ncriteria (at least 20% reduction and below 1% errors) had no`ncriteria divergence.`nReview execution: Complete`nReview outcome: Accepted`nDownstream decision: go" }
+    if ($Variant -eq 'criterion-first-table') { $body = "| Metric | Criterion | Recorded result |`n|---|---|---|`n| Median latency reduction | At least 20% | 24% |`n| Batched error rate | Below 1% | 0.5% |`n| Sample size | $([char]0x2014) | 100 synthetic requests |`n`n## H1`nOutcome: validated`nAnomalies: none`nConfidence: limited to supplied synthetic data.`nPrecommitted criteria unchanged: at least 20% reduction and below 1% errors.`nReview execution: Complete`nReview outcome: Accepted`nDownstream decision: go" }
+    if ($Variant -eq 'parenthetical-and-n-prefix') { $body = $body.Replace('Latency reduction: 24%', 'Median latency reduction (ms): 24 ms (24%)').Replace('Sample size: 100', 'Sample size (synthetic): n = 100').Replace('Error rate: 0.5%', 'Error rate (batched): 0.5%') }
+    if ($Variant -eq 'criterion-first-wrong-metric') { $body = "| Metric | Criterion | Recorded result |`n|---|---|---|`n| Median latency reduction | >= 20% | 30% |`n| Batched error rate | < 1% | 0.5% |`n| Sample size | $([char]0x2014) | 100 |`n`n## H1`nOutcome: validated`nAnomalies: none`nConfidence: limited to supplied synthetic data.`nPrecommitted criteria unchanged: at least 20% reduction and below 1% errors.`nReview execution: Complete`nReview outcome: Accepted`nDownstream decision: go" }
     if ($Variant -eq 'verdict-label') { $body = $body.Replace('Outcome: validated', 'Verdict: validated') }
     if ($Variant -eq 'execution-status-label') { $body = $body.Replace('Review execution:', 'Review execution status:') }
     if ($Variant -eq 'other-hypothesis') { $body += "`n## H2`nOutcome: invalidated" }
