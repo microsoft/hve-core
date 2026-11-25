@@ -849,7 +849,7 @@ Describe 'Retired multi-package contracts' -Tag 'Unit' {
         $text | Should -Not -Match 'CandidateAction'
     }
 
-    # A one-entry catalog carries a relative source, so no workflow may derive
+    # Catalog entries carry relative sources, so no workflow may derive
     # or assert an immutable per-package locator.
     It 'Derives no catalog source locator in <Workflow>' -ForEach @(
         @{ Workflow = 'release-prerelease.yml' }
@@ -1842,14 +1842,15 @@ Describe 'Retained release reconciliation and OpenVEX' -Tag 'Unit', 'ReleaseReco
         [string]$step['if'] | Should -Match "release-state == 'published'"
     }
 
-    It 'Verifies every committed version field at the tag event commit' {
+    It 'Verifies every committed version field at the tag event commit' -Tag 'PluginCatalog' {
         $steps = Get-JobStepText -Document (Get-WorkflowDocument -Name 'release-vsix-publish.yml') -JobName 'validate-release'
         $verify = @($steps | Where-Object { $_ -match 'but the tag declares \$RELEASE_VERSION' })
         $verify | Should -HaveCount 1
         foreach ($path in @('package\.json', 'package-lock\.json', 'release-please.*manifest\.json',
                 'extension/templates/package\.template\.json', 'plugin\.json',
                 '\.github/plugin/marketplace\.json:\.metadata\.version',
-                '\.github/plugin/marketplace\.json:\.plugins\[0\]\.version')) {
+                'length > 0 and all\(\.\[\]; \.version == \$version',
+                'git cat-file blob "HEAD:\./\$source/plugin\.json"')) {
             $verify[0] | Should -Match $path
         }
     }
@@ -1949,7 +1950,7 @@ Describe 'Retained release reconciliation and OpenVEX' -Tag 'Unit', 'ReleaseReco
 }
 
 Describe 'Release-please ownership and promotion transforms' -Tag 'Unit' {
-    It 'Versions root plugin.json in <Config>' -ForEach @(
+    It 'Versions the root manifest and every locator in <Config>' -Tag 'PluginCatalog' -ForEach @(
         @{ Config = 'release-please-config.json' }
         @{ Config = 'release-please-prerelease-config.json' }
     ) {
@@ -1958,8 +1959,14 @@ Describe 'Release-please ownership and promotion transforms' -Tag 'Unit' {
         $extraFiles = @($config.packages.'.'.'extra-files')
         @($extraFiles | Where-Object { $_.path -eq 'plugin.json' -and $_.jsonpath -eq '$.version' }) |
             Should -HaveCount 1
-        @($extraFiles | Where-Object { $_.path -eq '.github/plugin.json' }) |
-            Should -HaveCount 0
+        @($extraFiles | Where-Object { $_.path -eq '.github/plugin/marketplace.json' -and $_.jsonpath -eq '$.plugins[*].version' }) |
+            Should -HaveCount 1
+        $catalogPath = Join-Path $script:RepositoryRoot '.github/plugin/marketplace.json'
+        $sources = (Get-Content -LiteralPath $catalogPath -Raw | ConvertFrom-Json).plugins.source
+        $manifests = @($sources | ForEach-Object { [System.IO.Path]::GetFullPath((Join-Path $script:RepositoryRoot $_ 'plugin.json')) })
+        foreach ($target in @($extraFiles | Where-Object { $_.path -match '(^|/)plugin\.json$' })) {
+            $manifests | Should -Contain ([System.IO.Path]::GetFullPath((Join-Path $script:RepositoryRoot $target.path)))
+        }
     }
 
     It 'Creates no tag or GitHub release outside release-please in <Workflow>' -ForEach @(
@@ -2001,15 +2008,17 @@ Describe 'Release-please ownership and promotion transforms' -Tag 'Unit' {
         $run.Substring($finalCheckPosition) | Should -Match '-Check'
     }
 
-    It 'Stages only the Stable release-owned files' {
+    It 'Stages only the Stable release-owned files and checked locator manifests' -Tag 'PluginCatalog' {
         $run = [string](Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'release-stable.yml') `
                 -JobName 'prepare-promotion' -StepName 'Refresh the promotion head')['run']
         $run | Should -Match 'RELEASE_OWNED_FILES=\('
         $run | Should -Match 'git add -- "\$\{RELEASE_OWNED_FILES\[@\]\}"'
+        $run | Should -Match '\.plugins\[\] \| \(\.source \+ "/plugin\.json"\)'
+        $run | Should -Match 'git --literal-pathspecs add -u -- "\$manifest"'
         $run | Should -Not -Match 'git add --all'
     }
 
-    It 'Checks out only trusted release tooling from main in <Workflow>' -ForEach @(
+    It 'Checks out only trusted release tooling from main in <Workflow>' -Tag 'PluginCatalog' -ForEach @(
         @{ Workflow = 'release-prerelease-prepare.yml' }
         @{ Workflow = 'release-stable.yml' }
     ) {
@@ -2021,22 +2030,25 @@ Describe 'Release-please ownership and promotion transforms' -Tag 'Unit' {
         $sparse | Should -Be @(
             'scripts/release/Resolve-ReleasePromotionVersion.ps1'
             'scripts/release/Set-RepositoryVersion.ps1'
+            'scripts/plugins/PluginCatalog.psm1'
             'scripts/plugins/Sync-PluginManifest.ps1'
         )
     }
 
-    It 'Restores release-owned files without a candidate record in <Workflow>' -ForEach @(
+    It 'Restores release-owned files without clobbering the promoted catalog in <Workflow>' -Tag 'PluginCatalog' -ForEach @(
         @{ Workflow = 'release-prerelease-prepare.yml' }
         @{ Workflow = 'release-stable.yml' }
     ) {
         $run = [string](Get-NamedJobStep -Document (Get-WorkflowDocument -Name $Workflow) `
                 -JobName 'prepare-promotion' -StepName 'Refresh the promotion head')['run']
-        $run | Should -Match "restore_from_base required CHANGELOG\.md \.github/plugin/marketplace\.json"
+        $run | Should -Match 'restore_from_base required CHANGELOG\.md\r?\n'
+        $run | Should -Not -Match 'restore_from_base required CHANGELOG\.md \.github/plugin/marketplace\.json'
+        $run | Should -Match 'git checkout "\$SOURCE_SHA" --[\s\S]*plugin\.json \.github/plugin/marketplace\.json'
         $run | Should -Match "'plugin\.json'"
         $run | Should -Not -Match 'release-candidate\.json'
     }
 
-    It 'Syncs the managed release preparation branch through the bounded scripts in <Workflow>' -ForEach @(
+    It 'Syncs the managed release preparation branch through the bounded scripts in <Workflow>' -Tag 'PluginCatalog' -ForEach @(
         @{ Workflow = 'release-prerelease.yml' }
         @{ Workflow = 'release-stable-publish.yml' }
     ) {
@@ -2046,6 +2058,8 @@ Describe 'Release-please ownership and promotion transforms' -Tag 'Unit' {
         $run = [string]$step['run']
         $run | Should -Match 'scripts/plugins/Sync-PluginManifest\.ps1'
         $run | Should -Match 'scripts/release/Set-RepositoryVersion\.ps1'
+        $run.IndexOf('scripts/plugins/Sync-PluginManifest.ps1') |
+            Should -BeGreaterThan $run.IndexOf('scripts/release/Set-RepositoryVersion.ps1')
         $run | Should -Match "del\(\.packages\[\`"\.\`"\]\[\`"release-as\`"\]\)"
         $run | Should -Not -Match 'release-candidate\.json'
 
@@ -2054,6 +2068,7 @@ Describe 'Release-please ownership and promotion transforms' -Tag 'Unit' {
                 ForEach-Object { $_.Trim() } | Where-Object { $_ })
         $sparse | Should -Be @(
             'scripts/release/Set-RepositoryVersion.ps1'
+            'scripts/plugins/PluginCatalog.psm1'
             'scripts/plugins/Sync-PluginManifest.ps1'
         )
     }

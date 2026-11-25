@@ -82,6 +82,7 @@ jobs:
           sparse-checkout: |
             scripts/release/Resolve-ReleasePromotionVersion.ps1
             scripts/release/Set-RepositoryVersion.ps1
+            scripts/plugins/PluginCatalog.psm1
             scripts/plugins/Sync-PluginManifest.ps1
           sparse-checkout-cone-mode: false
           persist-credentials: false
@@ -363,7 +364,7 @@ jobs:
           merge_ref "$SOURCE_SHA" theirs
 
           # Target-owned release state is restored whole, so a promotion
-          # never carries a source changelog or catalog forward.
+          # never carries a source changelog forward.
           # A seeded branch can predate its branch-local manifest, so that one
           # is restored only when the base already carries it and the first
           # reviewed promotion introduces it from the merged source instead of
@@ -389,14 +390,15 @@ jobs:
             fi
           }
 
-          restore_from_base required CHANGELOG.md .github/plugin/marketplace.json
+          restore_from_base required CHANGELOG.md
           restore_from_base optional "$TARGET_MANIFEST"
 
           # Reapply selected-source shared content on every rerun. Once the
           # source commit is an ancestor, merging it again is a no-op.
           git checkout "$SOURCE_SHA" -- \
             package.json package-lock.json \
-            extension/templates/package.template.json
+            extension/templates/package.template.json \
+            plugin.json .github/plugin/marketplace.json
 
           TARGET_VERSION=$(jq -r '.["."] // ""' "$TARGET_MANIFEST")
           if [ "$TARGET_VERSION" != "$STABLE_BASELINE" ]; then
@@ -457,6 +459,12 @@ jobs:
               -Check
 
           git add -- "${RELEASE_OWNED_FILES[@]}"
+          # Stage only tracked manifests from the checked catalog, without
+          # broadening the conflict-resolution allowlist or interpreting globs.
+          jq -j '.plugins[] | (.source + "/plugin.json"), "\u0000"' .github/plugin/marketplace.json |
+            while IFS= read -r -d '' manifest; do
+              git --literal-pathspecs add -u -- "$manifest"
+            done
           if git diff --cached --quiet; then
             git reset --quiet
           else

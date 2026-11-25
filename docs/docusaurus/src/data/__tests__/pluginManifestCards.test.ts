@@ -24,26 +24,27 @@ interface PluginManifest {
 const catalog = JSON.parse(fs.readFileSync(pluginLocatorPath, "utf-8")) as {
   plugins: Array<{ name: string; source: string; version: string }>;
 };
-const [locator] = catalog.plugins;
-const manifestPath = path.resolve(
-  __dirname,
-  `../../../../../${locator.source}/plugin.json`,
-);
-const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8")) as PluginManifest;
+const repoRoot = path.resolve(path.dirname(pluginLocatorPath), "../..");
+function readManifest(source: string): PluginManifest {
+  return JSON.parse(fs.readFileSync(path.resolve(repoRoot, source, "plugin.json"), "utf-8"));
+}
+const manifest = readManifest(".");
 
 // Independent re-derivation of the component tally so expected values come from
 // the manifest itself rather than from the function under test or a magic number.
 const componentFields = ["agents", "commands", "rules", "skills"];
-const expectedContents = [
-  { field: "agents", kind: "agents", label: "Agents", href: "/docs/reference/agents" },
-  { field: "commands", kind: "prompts", label: "Prompts", href: "/docs/reference/prompts" },
-  { field: "rules", kind: "instructions", label: "Instructions", href: "/docs/reference/instructions" },
-  { field: "skills", kind: "skills", label: "Skills", href: "/docs/reference/skills" },
-].flatMap(({ field, ...definition }) => {
-  const value = manifest[field];
-  const count = typeof value === "string" ? 1 : Array.isArray(value) ? value.length : 0;
-  return count === 0 ? [] : [{ ...definition, count }];
-});
+function expectedContents(entry: PluginManifest) {
+  return [
+    { field: "agents", kind: "agents", label: "Agents", href: "/docs/reference/agents" },
+    { field: "commands", kind: "prompts", label: "Prompts", href: "/docs/reference/prompts" },
+    { field: "rules", kind: "instructions", label: "Instructions", href: "/docs/reference/instructions" },
+    { field: "skills", kind: "skills", label: "Skills", href: "/docs/reference/skills" },
+  ].flatMap(({ field, ...definition }) => {
+    const value = entry[field];
+    const count = typeof value === "string" ? 1 : Array.isArray(value) ? value.length : 0;
+    return count === 0 ? [] : [{ ...definition, count }];
+  });
+}
 
 function expectedComponentCount(entry: PluginManifest): number {
   return componentFields.reduce((total, field) => {
@@ -57,16 +58,19 @@ function expectedComponentCount(entry: PluginManifest): number {
 const packageCards = loadPackageCards(pluginLocatorPath);
 
 describe("loadPackageCards against the canonical plugin manifest", () => {
-  it("derives one stable card from the locator and plugin manifest", () => {
-    expect(packageCards).toEqual([{
-      name: locator.name,
-      title: labelRegistry.hveCore,
-      description: manifest.description,
-      href: `/docs/plugins/${locator.name}`,
-      maturity: labelRegistry.stable,
-      artifacts: expectedComponentCount(manifest),
-      contents: expectedContents,
-    }]);
+  it("derives each stable card from its own locator and plugin manifest", () => {
+    expect(packageCards).toEqual(catalog.plugins.map(({ name, source }) => {
+      const local = readManifest(source);
+      return {
+        name,
+        title: path.resolve(repoRoot, source) === repoRoot ? labelRegistry.hveCore : name,
+        description: local.description,
+        href: `/docs/plugins/${name}`,
+        maturity: labelRegistry.stable,
+        artifacts: expectedComponentCount(local),
+        contents: expectedContents(local),
+      };
+    }));
   });
 });
 
@@ -119,7 +123,7 @@ describe("countPluginComponents", () => {
   });
 
   it("summarizes non-empty component kinds in display order", () => {
-    expect(summarizePluginComponents(manifest)).toEqual(expectedContents);
+    expect(summarizePluginComponents(manifest)).toEqual(expectedContents(manifest));
   });
 
   it("omits component kinds with no declared entries", () => {

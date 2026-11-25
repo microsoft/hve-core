@@ -27,11 +27,12 @@ BeforeAll {
     function New-PluginFixture {
         <#
         .SYNOPSIS
-            Builds a git-tracked fixture repository with one plugin root.
+            Builds a git-tracked fixture repository with an optional focused manifest.
         #>
         param(
             [string]$Root,
-            [string]$Version = '1.2.3'
+            [string]$Version = '1.2.3',
+            [switch]$WithFocusedPlugin
         )
 
         $github = Join-Path $Root '.github'
@@ -97,6 +98,13 @@ BeforeAll {
                     keywords    = @('hve', 'agents')
                 }
             )
+        }
+        if ($WithFocusedPlugin) {
+            $metadata = [ordered]@{ name = 'focus'; description = 'Focused plugin'; version = $Version }
+            $source = '.github/agents/alpha'
+            Set-Content -LiteralPath (Join-Path $Root $source 'plugin.json') `
+                -Value (ConvertTo-PluginManifestJson -Manifest ($metadata + @{ agents = @('./one.agent.md') })) -NoNewline
+            $catalog.plugins = @($metadata + @{ source = "./$source" }) + $catalog.plugins
         }
         Set-Content -LiteralPath $catalogPath -Value (($catalog | ConvertTo-Json -Depth 10) + "`n") -Encoding UTF8 -NoNewline
 
@@ -533,38 +541,24 @@ Describe 'Plugin catalog validation' -Tag 'Unit' {
     BeforeAll {
         $script:CatalogRoot = New-PluginFixture -Root (Join-Path $TestDrive 'catalog')
         $script:CatalogManifest = (Invoke-PluginManifestSync -RepoRoot $script:CatalogRoot).Manifest
+        $script:CatalogPath = Join-Path $script:CatalogRoot '.github/plugin/marketplace.json'
+        $script:CatalogBytes = [System.IO.File]::ReadAllBytes($script:CatalogPath)
     }
 
     AfterEach {
-        Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
-            param($c)
-            $c['plugins'] = @(
-                [ordered]@{
-                    name        = 'hve-core'
-                    source      = '.'
-                    description = 'Fixture plugin'
-                    version     = $c['metadata']['version']
-                    author      = [ordered]@{ name = 'Microsoft'; url = 'https://www.microsoft.com' }
-                    homepage    = 'https://github.com/microsoft/hve-core'
-                    repository  = 'https://github.com/microsoft/hve-core'
-                    license     = 'MIT'
-                    keywords    = @('hve', 'agents')
-                }
-            )
-            $c
-        }
+        [System.IO.File]::WriteAllBytes($script:CatalogPath, $script:CatalogBytes)
     }
 
     It 'Accepts one relative locator entry' {
         Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest | Should -HaveCount 0
     }
 
-    It 'Rejects more than one entry' {
+    It 'Rejects an empty catalog' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
-            param($c) $c['plugins'] = @($c['plugins']) + @([ordered]@{ name = 'extra'; source = '.github'; version = '1.2.3' }); $c
+            param($c) $c.plugins = @(); $c
         }
         (Get-PluginCatalogMetadataViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest).Violations -join "`n" |
-            Should -Match 'declares 2 entries'
+            Should -Match 'non-empty array'
     }
 
     It 'Rejects a name that differs from the manifest' {
@@ -590,9 +584,6 @@ Describe 'Plugin catalog validation' -Tag 'Unit' {
         (Get-PluginCatalogMetadataViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest).Violations -join "`n" |
             Should -Match 'metadata version'
 
-        Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
-            param($c) $c['metadata']['version'] = $script:CatalogManifest['version']; $c
-        }
     }
 
     It 'Rejects duplicated field <Field> that differs from the manifest' -ForEach @(
@@ -692,6 +683,96 @@ Describe 'Plugin catalog validation' -Tag 'Unit' {
 
         (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $manifest) -join "`n" |
             Should -Match 'agents path resolves outside the plugin root'
+    }
+}
+
+Describe 'Multiple catalog sources' -Tag 'Unit' {
+    BeforeAll {
+        $script:MultiRoot = New-PluginFixture -Root (Join-Path $TestDrive 'multi') -WithFocusedPlugin
+        $script:FocusRoot = Join-Path $script:MultiRoot '.github/agents/alpha'
+        $script:FocusFile = Join-Path $script:FocusRoot 'plugin.json'
+        $script:FocusBytes = [System.IO.File]::ReadAllBytes($script:FocusFile)
+        $script:FocusCatalog = Join-Path $script:MultiRoot '.github/plugin/marketplace.json'
+        $script:LocatorBytes = [System.IO.File]::ReadAllBytes($script:FocusCatalog)
+        $script:MultiSync = Invoke-PluginManifestSync -RepoRoot $script:MultiRoot
+        Set-Content -LiteralPath (Join-Path $script:FocusRoot 'untracked.agent.md') -Value 'not in git'
+    }
+
+    AfterEach {
+        [System.IO.File]::WriteAllBytes($script:FocusFile, $script:FocusBytes)
+        [System.IO.File]::WriteAllBytes($script:FocusCatalog, $script:LocatorBytes)
+    }
+
+    It 'Syncs only All and checks the same tracked component relative to both roots' {
+        $script:MultiSync.Changed | Should -BeTrue
+        $script:MultiSync.Violations | Should -HaveCount 0
+        $script:MultiSync.Manifest.agents | Should -Contain '.github/agents/alpha/one.agent.md'
+        [System.IO.File]::ReadAllBytes($script:FocusFile) | Should -Be $script:FocusBytes
+        (Invoke-PluginManifestSync -RepoRoot $script:MultiRoot -Check).Violations | Should -HaveCount 0
+    }
+
+    It 'Rejects drift in the focused manifest, not just the root' {
+        Set-FixtureManifest -Root $script:FocusRoot -Transform { param($m) $m.description = 'Stale'; $m }
+        (Invoke-PluginManifestSync -RepoRoot $script:MultiRoot -Check).Violations -join "`n" |
+            Should -Match "field 'description' does not match the manifest: \.github/agents/alpha/plugin.json"
+    }
+
+    It 'Rejects <Case> focused membership' -ForEach @(
+        @{ Case = 'untracked'; Paths = @('untracked.agent.md'); Error = 'not a tracked distributable' }
+        @{ Case = 'tracked but ineligible'; Paths = @('notes.md'); Error = 'not a tracked distributable' }
+        @{ Case = 'escaping'; Paths = @('../elsewhere'); Error = 'escapes the plugin root' }
+        @{ Case = 'duplicate'; Paths = @('./one.agent.md', 'one.agent.md'); Error = 'duplicated' }
+    ) {
+        Set-FixtureManifest -Root $script:FocusRoot -Transform { param($m) $m.agents = $Paths; $m }.GetNewClosure()
+        (Invoke-PluginManifestSync -RepoRoot $script:MultiRoot -Check).Violations -join "`n" | Should -Match $Error
+    }
+
+    It 'Rejects duplicate names and normalized source aliases' {
+        Set-FixtureCatalog -Root $script:MultiRoot -Transform {
+            param($c) $c.plugins += @{ name = 'FOCUS'; source = '.github/agents/./alpha/' }; $c
+        }
+        $violations = (Invoke-PluginManifestSync -RepoRoot $script:MultiRoot -Check).Violations -join "`n"
+        $violations | Should -Match 'Duplicate catalog entry name'
+        $violations | Should -Match 'Duplicate catalog entry source'
+    }
+
+    It 'Requires a locator for the root All plugin' {
+        Set-FixtureCatalog -Root $script:MultiRoot -Transform { param($c) $c.plugins = @($c.plugins[0]); $c }
+        (Invoke-PluginManifestSync -RepoRoot $script:MultiRoot -Check).Violations -join "`n" |
+            Should -Match 'missing the root plugin locator'
+    }
+
+    It 'Rejects a locator manifest that is not tracked' {
+        & git -C $script:MultiRoot rm --cached --quiet -- '.github/agents/alpha/plugin.json'
+        try {
+            (Invoke-PluginManifestSync -RepoRoot $script:MultiRoot -Check).Violations -join "`n" |
+                Should -Match 'not a tracked regular file: \.github/agents/alpha/plugin.json'
+        }
+        finally {
+            & git -C $script:MultiRoot add -- '.github/agents/alpha/plugin.json'
+        }
+    }
+
+    It 'Validates a focused plugin declaring an extension container with multiple extensions' {
+        $root = New-PluginFixture -Root (Join-Path $TestDrive 'multi-extensions')
+        $github = Join-Path $root '.github'
+        foreach ($name in @('rpi-workflow', 'session-log', 'code-review')) {
+            $entry = Join-Path $github "extensions/hve-core/$name/extension.mjs"
+            New-Item -ItemType Directory -Path (Split-Path $entry -Parent) -Force | Out-Null
+            Set-Content -LiteralPath $entry -Value '// fixture' -Encoding UTF8
+        }
+        $meta = [ordered]@{ name = 'hve-base'; description = 'Base focused plugin'; version = '1.2.3' }
+        Set-Content -LiteralPath (Join-Path $github 'extensions/plugin.json') `
+            -Value (ConvertTo-PluginManifestJson -Manifest ($meta + @{ extensions = @('hve-core') })) -Encoding UTF8 -NoNewline
+        Set-FixtureCatalog -Root $root -Transform {
+            param($c) $c.plugins = @($c.plugins) + @($meta + @{ source = './.github/extensions' }); $c
+        }
+        & git -C $root add --all
+
+        $sync = Invoke-PluginManifestSync -RepoRoot $root
+        $sync.Violations | Should -HaveCount 0
+        $sync.Manifest.extensions | Should -Be @('.github/extensions/hve-core')
+        (Invoke-PluginManifestSync -RepoRoot $root -Check).Violations | Should -HaveCount 0
     }
 }
 

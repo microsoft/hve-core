@@ -69,6 +69,7 @@ jobs:
           sparse-checkout: |
             scripts/release/Resolve-ReleasePromotionVersion.ps1
             scripts/release/Set-RepositoryVersion.ps1
+            scripts/plugins/PluginCatalog.psm1
             scripts/plugins/Sync-PluginManifest.ps1
           sparse-checkout-cone-mode: false
           persist-credentials: false
@@ -309,7 +310,7 @@ jobs:
           merge_ref "$SOURCE_SHA" theirs
 
           # Target-owned release state is restored whole, so a promotion
-          # never carries a source changelog or catalog forward.
+          # never carries a source changelog forward.
           # A seeded branch can predate its branch-local manifest, so that one
           # is restored only when the base already carries it and the first
           # reviewed promotion introduces it from the merged source instead of
@@ -335,8 +336,15 @@ jobs:
             fi
           }
 
-          restore_from_base required CHANGELOG.md .github/plugin/marketplace.json
+          restore_from_base required CHANGELOG.md
           restore_from_base optional "$TARGET_MANIFEST"
+
+          # Reapply selected-source shared content on every rerun. Once the
+          # source commit is an ancestor, merging it again is a no-op.
+          git checkout "$SOURCE_SHA" -- \
+            package.json package-lock.json \
+            extension/templates/package.template.json \
+            plugin.json .github/plugin/marketplace.json
 
           TARGET_VERSION=$(jq -r '.["."] // ""' "$TARGET_MANIFEST")
           if [ "$TARGET_VERSION" != "$PRERELEASE_BASELINE" ]; then
