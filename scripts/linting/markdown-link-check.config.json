@@ -24,6 +24,7 @@
     { "pattern": "^https://www\\.cyber\\.gov\\.au/" },
     { "pattern": "^https://www\\.security\\.gov\\.uk/" },
     { "pattern": "^https://nvd\\.nist\\.gov" },
+    { "pattern": "^https://eur-lex\\.europa\\.eu/eli/reg/2024/1689(?:/oj)?$" },
     { "pattern": "^https://www\\.iso\\.org/" },
     { "pattern": "^https://ieeexplore\\.ieee\\.org/" },
     { "pattern": "^https://jobs-to-be-done\\.com/" },

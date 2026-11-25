@@ -2,7 +2,7 @@
 title: ADR Standards Excerpts
 description: Curated external standards excerpts and citations supporting the adr-author skill, with license attribution
 author: microsoft/hve-core
-ms.date: 2026-08-23
+ms.date: 2026-10-20
 ms.topic: reference
 keywords:
   - adr
@@ -28,7 +28,7 @@ Markdown Any Decision Records (MADR) is a lean ADR template optimized for collab
 
 The Y-Statement is a six-slot single-sentence decision capture formula authored by Olaf Zimmermann and Uwe Zdun. It captures the use case, concern, chosen option, rejected alternatives, target quality, and accepted downside in HVE's own wording. The `adr-author` skill produces one when `state.outputTemplate` is `y-statement`, regardless of entry mode.
 
-- Citation: [Olaf Zimmermann, "Y-Statements"](https://medium.com/olzzio/y-statements-10eb07b5a177), based on work with Uwe Zdun.
+- Citation: [Olaf Zimmermann, "Architectural Decisions - The Making Of"](https://ozimmer.ch/practices/2020/04/27/ArchitectureDecisionMaking.html#y-statements-and-other-templates), based on work with Uwe Zdun.
 - Purpose: produce a single durable sentence that records a low-stakes or reversible decision and its tradeoff without requiring MADR long-form output.
 
 ## Azure Well-Architected Framework: Architecture Decisions
