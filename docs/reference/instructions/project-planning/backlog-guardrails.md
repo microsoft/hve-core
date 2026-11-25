@@ -1,9 +1,9 @@
 ---
 title: Project Planning/Backlog Guardrails
-description: "Always-on mutation guardrail for backlog tracking roots: require backlog-management activation before any tracker-bound mutation and stop when it is unavailable"
+description: "Require the backlog-management destination, authorization, sanitization, and review controls before a tracker-bound mutation from a backlog tracking root"
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - instruction
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Always-on mutation guardrail for backlog tracking roots: require backlog-management activation before any tracker-bound mutation and stop when it is unavailable
+Require the backlog-management destination, authorization, sanitization, and review controls before a tracker-bound mutation from a backlog tracking root
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

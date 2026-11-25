@@ -34,6 +34,8 @@ Use the following categories when creating or refining backlog entries:
 
 ## Handoff format
 
+For an ADO work item or GitHub issue, use the `backlog-templates` skeleton. Put `threat_id`, `stride_category`, `bucket`, and `risk_level` in the ADO description or the GitHub YAML header. Identify the mitigation by name, link it to the threat and its description, and include the applicable standards in the ADO description or the GitHub `standards` field.
+
 A compact backlog entry can use this structure:
 
 ```markdown

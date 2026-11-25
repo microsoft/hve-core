@@ -90,6 +90,8 @@ Every entry mode scans these supporting context sources alongside its mode-speci
 
 During Phase 1, ask whether the user has backlog output preferences: dual-format ADO and GitHub work items (`both`), ADO-only (`ado`), or GitHub-only (`github`). Capture the answer in `state.json` under `userPreferences.targetSystem` using the allowed values `ado`, `github`, or `both`. When the user supplies a custom backlog template, store it under `.copilot-tracking/sssc-plans/references/` and still record the closest matching `targetSystem` value.
 
+For optional outputs, offer an SBOM or a Scorecard improvement projection. Record the choices as `sbom` and `scorecardProjection` under `userPreferences.includeOptionalArtifacts`. Signing is a separate decision at handoff.
+
 Before Phase 1 scoping is complete, ask whether the user has evaluation standards, workflow inventories, or output format requirements to store in `.copilot-tracking/sssc-plans/references/`.
 
 Present the scan results as a checklist before Phase 1 questions: ✅ for discovered artifacts and supporting context with file paths and brief descriptions, and ❌ for expected sources that were not found. When a document-seeded mode (`from-prd`, `from-brd`, or `from-security-plan`) finds no primary artifact, fall back to `capture` and explain the switch.
@@ -245,7 +247,7 @@ Phase advancement updates `currentPhase` and sets phase-specific completion flag
 
 ### Session Start Display
 
-On the first turn of any SSSC Planner session, display the canonical disclaimer block defined in the `disclaimer-language` skill (SSSC Planning section) verbatim. Record the display by setting `state.disclaimerShownAt` to an ISO-8601 timestamp. Do not advance to any phase work before the disclaimer is shown for the session.
+On the first turn of any SSSC Planner session, display the SSSC Planning CAUTION block from `security-disclaimers` verbatim. Record the display by setting `state.disclaimerShownAt` to an ISO-8601 timestamp. Do not advance to any phase work before the disclaimer is shown for the session.
 
 Append each disclaimer and exit reminder to `state.noticeLog` with the source file and relevant phase details.
 
@@ -257,7 +259,7 @@ When introducing standards mappings, assessments, gap analyses, or handoff mater
 
 ### Exit Point Reminder
 
-At each of the following exit points, re-surface a brief one-line professional-review reminder. Use the canonical wording in the `disclaimer-language` skill (SSSC Planning section) for the reminder text.
+At each of the following exit points, re-surface a brief one-line professional-review reminder. Use the canonical wording in `security-disclaimers` (SSSC Planning section) for the reminder text.
 
 1. **Phase 6 completion (handoff success path)** — Display the reminder immediately before presenting the final handoff summary.
 2. **Compact handoff** — Display the reminder when the orchestrator hands off to ADO or GitHub backlog workflows.
@@ -270,7 +272,7 @@ Each reminder must state that the generated assessment is AI-assisted and requir
 
 The planner inherits the Resume Sequence and Post-Summarization Recovery in the `planner-identity` skill. SSSC-specific notes on inherited steps:
 
-* Resume Sequence step 2 (disclaimer redisplay) applies; the SSSC Planning CAUTION block in the `disclaimer-language` skill is the text source, `state.disclaimerShownAt` is the gating field, and `state.noticeLog` records the redisplayed notice.
+* Resume Sequence step 2 (disclaimer redisplay) applies; the SSSC Planning CAUTION block in `security-disclaimers` is the text source, `state.disclaimerShownAt` is the gating field, and `state.noticeLog` records the redisplayed notice.
 * Resume Sequence step 4 checks for partially written `supply-chain-assessment.md`, `standards-mapping.md`, `gap-analysis.md`, and `sssc-backlog.md` in addition to the generic per-phase outputs.
 * Post-Summarization Recovery step 3 reconstructs context from `supply-chain-assessment.md`, `standards-mapping.md`, `gap-analysis.md`, and `sssc-backlog.md` rather than from prior chat history.
 
@@ -534,7 +536,7 @@ Generate actionable work items from the gap analysis in dual format (ADO + GitHu
 
 ### Dual-Format Backlog Templates
 
-Both ADO and GitHub formats follow the canonical templates, field blocks, augmentation keys, and temporary-ID conventions defined in the `backlog-templates` skill. Read the SSSC entries under "ADO Work Item Template", "GitHub Issue Template", and "Work Item ID Naming Convention" at emission time. The markdown body skeleton in the skill is reused verbatim; SSSC fills `{planner_specific_summary_lines}` with the Scorecard Check, Risk Level, and Adoption Type one-liners.
+Use `backlog-templates` for the ADO and GitHub skeletons and the SSSC work-item IDs. Fill the ADO description with the supply-chain control, Scorecard Check, Risk Level, Effort, Adoption Type, Prerequisite, Adoption Steps, and Source References (workflow, script, documentation). In the GitHub YAML header, record `scorecard_check`, `risk_level`, `adoption_type`, `effort`, and `standards`. Fill `{planner_specific_summary_lines}` with the Scorecard Check, Risk Level, and Adoption Type one-liners.
 
 Work item hierarchy for supply chain security:
 
@@ -620,7 +622,7 @@ Assess which Badge tier the repository would qualify for after completing all wo
 
 Write ADO-formatted work items to `.copilot-tracking/workitems/backlog/{project-slug}-sssc/work-items.md`.
 
-Apply the ADO work item template per the convention in the `backlog-templates` skill, including the SSSC ADO field block enumerated under "ADO Work Item Template" in that skill, with:
+Use the ADO format in [Dual-Format Backlog Templates](#dual-format-backlog-templates), with:
 
 * HTML-formatted description fields
 * `WI-SSSC-{NNN}` sequential IDs
@@ -634,7 +636,7 @@ Set `state.json` field `handoffGenerated.ado` to `true` after writing.
 
 Write GitHub-formatted issues to `.copilot-tracking/github-issues/discovery/{project-slug}-sssc/issues-plan.md`.
 
-Apply the GitHub issue template per the convention in the `backlog-templates` skill, including the SSSC YAML augmentation keys enumerated under "GitHub Issue Template" in that skill, with:
+Use the GitHub format in [Dual-Format Backlog Templates](#dual-format-backlog-templates), with:
 
 * YAML metadata blocks
 * `{{SSSC-TEMP-N}}` temporary IDs

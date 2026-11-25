@@ -33,7 +33,7 @@ Use `backlog-execute` instead when the intent is to apply changes to a tracker. 
 
 ### Step 1: Resolve the platform
 
-Run the Platform Resolution section of the `backlog-management` skill before any planning work. Carry its resolved platform and readiness verdict forward. When resolution is ambiguous, resolve it there rather than assuming a tracker here.
+Run Platform Resolution in `backlog-management` and use its Platform Bindings section to select the provider. Carry that platform and its readiness verdict into planning.
 
 Every mode below is read-only, so a platform inferred from preflight success may proceed without the confirmation a mutating workflow requires.
 
@@ -83,7 +83,6 @@ Stop and ask rather than improvising when the logs are missing, when a completed
 
 * Stop when the platform cannot be resolved, or when two platforms remain plausible after the resolution heuristics.
 * Stop when the resolved platform's preflight fails; name the missing prerequisite instead of substituting another tracker.
-* Stop when the `backlog-management` skill does not resolve; the conventions this command depends on are unavailable.
 * Stop on any core Human Review Trigger, including an Uncertain similarity result and a one-to-many Similar fan-out.
 * Stop when resuming and the logs are missing, a completed operation has no recorded item key, or a placeholder cannot be resolved.
 * Report the stop condition and what the user must decide. Never substitute an assumption for a missing answer.
@@ -98,13 +97,10 @@ Stop and ask rather than improvising when the logs are missing, when a completed
 
 ## How This Command Is Organized
 
-This body is deliberately thin. Every protocol lives in the `backlog-management` skill so that `backlog-plan`, `backlog-execute`, and the `Backlog Manager` agent share one definition rather than three copies. Activate `backlog-management` by name; when it does not resolve, warn the user that platform resolution, workflow protocols, and per-platform command surfaces are unavailable, and stop rather than improvising them here.
-
-That skill supplies:
+`backlog-management` supplies the shared planning protocols:
 
 * The core skill body: platform resolution, planning-file lifecycle, reference-ID scheme, similarity assessment, autonomy tiers, sanitization guards, state persistence, human review triggers.
 * The workflows reference: discovery and triage protocols, operation contract, dry-run and error handling, planning-file templates.
 * The task-planning reference: assigned-work retrieval and enrichment into an implementation handoff.
 * The sprint-planning reference: coverage, capacity, gap, and dependency analysis for a delivery window.
 * The story-quality reference: work-item quality at epic, feature, user story, and task level, and the authoring and refinement loop.
-* The per-platform ADO, GitHub, and Jira references: command surface, field vocabulary, reference prefix, action verbs, and deltas.

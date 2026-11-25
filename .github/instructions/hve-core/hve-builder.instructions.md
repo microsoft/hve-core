@@ -5,7 +5,7 @@ applyTo: '**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md'
 
 # HVE Builder Instructions
 
-Apply these durable conventions whenever prompt-engineering artifacts are created or changed. Use the `hve-builder` skill when the request needs its complete author, review, and host-validation lifecycle. Its on-demand references own detailed routing, model profiles, review criteria, and stale-pattern guidance.
+Apply these durable conventions whenever prompt-engineering artifacts are created or changed. Use the `hve-builder` skill when the request needs its complete author, review, and host-validation lifecycle. Its on-demand references own detailed routing, review criteria, and stale-pattern guidance.
 
 ## Outcome and Structure
 
@@ -49,7 +49,7 @@ The Copilot harness does not load prompt files, so build a repeatable entry poin
 * Use stable `name` values for skills and agents. Instruction files alone declare `applyTo`.
 * Keep skill frontmatter portable. Do not put agent or instruction fields such as `tools`, `model`, `skills`, or `applyTo` in a skill.
 * Agent frontmatter uses `name`, `description`, `tools`, `skills`, `model`, `reasoning-effort`, `user-invocable`, and `disable-model-invocation`. The Copilot harness does not support `handoffs`, `agents`, or `argument-hint` on agents, so describe the next agent to switch to, or the subagents to delegate to, in the body.
-* Omit `model` unless a stable Medium or Low profile is needed or the caller supplies one; a High responsibility inherits the user's selection. Agent and subagent `model` values are scalar. Select a model profile from responsibility rather than authoring effort, and resolve current model names from the Copilot documentation rather than copying them.
+* Leave model and reasoning effort to the host. Omit override fields unless the current user request or applicable persistent user instructions explicitly require that value for the target. An explicit agent `model` is a scalar. Task complexity and the parent's settings are not overrides.
 * Treat agent and subagent `tools` configuration as user-managed and opaque. Reproduce an exact caller-supplied configuration without assessing it.
 * Copilot recognizes the tool aliases `read`, `edit`, `search`, `execute`, `web`, `agent`, and `todo`, MCP names in `server/tool` or `server/*` form, `skill`, and `ask_user`, and ignores names it does not recognize. An agent cannot load a skill by name without `skill` in its list, subagents never receive `ask_user`, and an empty list grants every tool.
 * Preserve existing non-tool capability-bearing frontmatter in improve and refactor work unless the caller requests a change or verified evidence establishes a defect or capability gap.

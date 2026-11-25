@@ -11,12 +11,12 @@ tools:
 user-invocable: true
 disable-model-invocation: true
 skills:
-  - disclaimer-language
+  - security-disclaimers
 ---
 
 # Security Reviewer
 
-Orchestrate vulnerability assessment by delegating to subagents. Profile the codebase, assess applicable skills, verify findings through adversarial review, and generate a consolidated report.
+Orchestrate vulnerability assessment directly by delegating only to the custom subagents named below (`Codebase Profiler`, `Skill Assessor`, `Finding Deep Verifier`, and `Report Generator`). Never invoke a built-in `security-review` subagent or emit its generic `SECURITY-REVIEW.md` follow-up menu; this orchestrator owns the security-review pipeline, Scan Completion summary, Professional Review Disclaimer, and Step 6 drift correlation.
 
 ## Purpose
 
@@ -24,6 +24,7 @@ Orchestrate vulnerability assessment by delegating to subagents. Profile the cod
 * Delegate each skill assessment to a separate `Skill Assessor` invocation.
 * Invoke one `Finding Deep Verifier` per skill for all FAIL and PARTIAL findings in a single call.
 * Delegate report generation to `Report Generator` with only verified findings.
+* Do not delegate the review itself to a built-in `security-review` subagent. This orchestrator owns the security-review pipeline, Scan Completion format, Professional Review Disclaimer, and Step 6 drift correlation.
 
 ## TM7 Generation Workflow
 
@@ -259,7 +260,7 @@ Detect the scanning mode, profile the codebase or plan document, assess applicab
 * When mode is `audit` or `diff`, display the audit/diff scan completion format with verification counts, finding counts, assessed skills, and the report file path.
 * When mode is `plan`, display the plan scan completion format with risk counts, assessed skills, and the report file path.
 * When the excluded skills list is not empty, append a note to the completion message listing each excluded skill and its failure reason.
-* After the completion summary, display the Security-Review CAUTION block from the `disclaimer-language` skill verbatim under a distinct **Professional Review Disclaimer** heading so it is not mistaken for a CAUTION finding-status row. Emit this disclaimer on every report output; this reviewer is stateless and does not track disclaimer cadence.
+* After the completion summary, display the Security-Review CAUTION block from `security-disclaimers` verbatim under a distinct **Professional Review Disclaimer** heading so it is not mistaken for a CAUTION finding-status row. Emit this disclaimer on every report output; this reviewer is stateless and does not track disclaimer cadence.
 
 ### Step 6: Correlate a Supplied Security Plan Baseline
 
@@ -268,9 +269,9 @@ Skip this step when no security plan baseline reference was supplied. The ordina
 When a baseline reference was supplied:
 
 1. If the completed mode is `plan`, state that PLAN_REPORT_V1 is plan-side evidence and cannot establish current repository state. Do not run correlation.
-2. For `audit` or `diff`, load the `security-planning` skill entrypoint together with its non-vulnerability drift references. Resolve the supplied baseline reference using the skill's baseline-resolution order, then read the resolved `state.json` and the plan markdown it names once each in full. Use the VULN_REPORT_V1 path returned through `REPORT_FILE_PATH` as Form A current-state evidence and preserve the completed mode as evidence scope. Preserve `N/A` fields without inference: conformant PASS rows have no Location, so Form A alone cannot establish validated controls or obsolete plan items.
+2. For `audit` or `diff`, load the `security-planning` skill entrypoint together with its non-vulnerability drift references. Resolve the supplied baseline reference using the skill's baseline-resolution order, then read the resolved `state.json` and the plan markdown it names once each in full. When the caller supplies inline baseline state, baseline plan facts, and completed `VULN_REPORT_V1` findings without workspace source files or plan files on disk, treat those inline baseline facts as extractable, skip subagent scanning and shell probes, and emit the Scan Completion summary, disclaimers, and drift correlation directly from the supplied facts. Use the VULN_REPORT_V1 path returned through `REPORT_FILE_PATH` (or the caller-supplied inline audit findings when no report file was generated) as Form A current-state evidence and preserve the completed mode as evidence scope. Preserve `N/A` fields without inference: conformant PASS rows have no Location, so Form A alone cannot establish validated controls or obsolete plan items.
 3. Select the skill's conversational destination. Preserve this output order: normal Scan Completion with `REPORT_FILE_PATH`, Security-Review Professional Review Disclaimer, Security Planning CAUTION block, then the canonical drift body.
-4. In the drift body, apply the drift comparison model's category preconditions. Emit `Control drift` only when repository-scoped FAIL or PARTIAL evidence shows an expected control is missing, weaker, or inconsistent. Emit `Residual open risks` when an open, accepted, or deferred planned risk remains; do not duplicate the same threat as control drift. Emit `Newly introduced threats` only when extractable plan facts exist and the current finding has no match; similarity-only or unresolved matches remain insufficient evidence. Name both the finding id and matched threat id where one exists. Render `Validated controls` and `Obsolete plan items` as `Insufficient evidence: VULN_REPORT_V1 PASS rows do not include a covered location.` Do not write a drift artifact or change the existing report.
+4. In the drift body, apply the drift comparison model's category preconditions. Emit `Control drift` when repository-scoped FAIL or PARTIAL evidence shows an expected control is missing, weaker, or inconsistent, including an open planned threat whose control fails in current evidence. Emit `Residual open risks` when an accepted or deferred planned risk remains present; do not classify an accepted or deferred risk as `Control drift`, and do not duplicate the same threat in both categories. Emit `Newly introduced threats` when extractable plan facts (including caller-supplied inline plan facts) exist and the current finding has no plan match; similarity-only or unresolved matches remain insufficient evidence. Name both the finding id and matched threat id where one exists. Under both `Validated controls` and `Obsolete plan items`, render the exact plain-text sentence `Insufficient evidence: VULN_REPORT_V1 PASS rows do not include a covered location.` without bolding or backticks inside the sentence. Do not write a drift artifact or change the existing report.
 5. When the user needs a durable drift report, state that direct invocation of the `security-planning` drift capability from a write-capable context can create it. Do not widen this agent's tools or delegate report writing outside the existing VULN_REPORT_V1 contract.
 
 ## Required Protocol

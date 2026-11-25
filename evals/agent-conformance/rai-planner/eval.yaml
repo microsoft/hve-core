@@ -21,6 +21,7 @@ scoring:
 agent_environment:
   skills:
   - ../../../.github/skills/project-planning/rai-planner
+  - ../../../.github/skills/rai/rai-disclaimers
   - ../../../.github/skills/rai/rai-standards
   - ../../../.github/skills/shared/untrusted-content-boundary
   files:
@@ -30,8 +31,8 @@ agent_environment:
     dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
   - src: ../../../.github/skills/shared/planner-identity/SKILL.md
     dest: .github/skills/shared/planner-identity/SKILL.md
-  - src: ../../../.github/skills/shared/disclaimer-language/SKILL.md
-    dest: .github/skills/shared/disclaimer-language/SKILL.md
+  - src: ../../../.github/skills/rai/rai-disclaimers/SKILL.md
+    dest: .github/skills/rai/rai-disclaimers/SKILL.md
   - src: ../../../.github/instructions/rai-planning/rai-license-posture.instructions.md
     dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
   - src: ../../../.github/instructions/shared/coaching-patterns.instructions.md

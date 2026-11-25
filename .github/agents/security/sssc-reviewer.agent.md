@@ -11,7 +11,7 @@ tools:
 user-invocable: true
 disable-model-invocation: true
 skills:
-  - disclaimer-language
+  - security-disclaimers
   - untrusted-content-boundary
 ---
 
@@ -78,7 +78,7 @@ Use a report filename pattern of:
 
 Each report must include a stable report template with these sections in this order:
 
-1. Review header with the report title, generated date, mode, repository context, and the SSSC Planning CAUTION block from the `disclaimer-language` skill reproduced verbatim near the top under a distinct **Professional Review Disclaimer** heading.
+1. Review header with the report title, generated date, mode, repository context, and the SSSC Planning CAUTION block from `security-disclaimers` reproduced verbatim near the top under a distinct **Professional Review Disclaimer** heading.
 2. Scope with the reviewed repository, branch, subdirectory focus, or plan artifact.
 3. Artifact inventory with the repository assets, files, workflows, manifests, lockfiles, build outputs, release artifacts, and other items reviewed.
 4. Evidence sources with the repository evidence and external evidence consulted when applicable.

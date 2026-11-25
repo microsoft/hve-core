@@ -20,7 +20,7 @@ Use this lens when the team plans with a Scrum product backlog and delivers valu
 
 ## Boundaries
 
-* This lens shapes ordering and progressive refinement; it does not change the platform's validated type names or parent rules. Defer those to the platform reference ([ado.md](../ado.md), [github.md](../github.md), or [jira.md](../jira.md)).
+* This lens shapes ordering and progressive refinement. Use the selected [platform bindings](../../SKILL.md#platform-bindings) for validated types and parent rules.
 * Keep items independently valuable and orderable; avoid dependency chains that prevent independent delivery.
 
 ## Attribution

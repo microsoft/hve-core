@@ -121,15 +121,11 @@ During entry-mode context gathering, identify and surface potential tensions bet
 
 ## Output Preferences
 
-After initial context capture, ask the user about output preferences:
+After initial context capture, confirm any output preferences already supplied. Ask only about choices in the active planner's `userPreferences` contract:
 
-"How would you like the assessment outputs formatted?
+* Detail level: key points, a balanced summary, or a detailed evidence trail.
+* Target system: Azure DevOps, GitHub, or both.
+* Audience: technical, executive, or mixed.
+* Optional outputs: offer the artifacts named by that planner.
 
-* **Detail level**: minimal (key points only), standard (balanced), or detailed (full analysis with evidence chains)?
-* **Target system**: ADO, GitHub, or both for work item creation?
-* **Audience**: technical team, executive stakeholders, or mixed audience?
-* **Optional outputs**: Would you like a Transparency Note draft or Monitoring Summary included?"
-
-Record responses under the planner's `userPreferences` object, limited to the preference fields that planner's state schema defines. A planner whose state schema does not define a given preference field (for example, a planner that defines only `autonomyTier`) omits that preference rather than writing an unsupported field, and skips the questions that map to unsupported fields. Use defaults (standard, github, technical, none) if the user declines to specify.
-
-Planner-specific instructions define when in the workflow to ask this question and which state fields store the responses.
+Record answers under the supported state keys. If the user has no preference, leave the planner's initial values in place. Do not ask a question or write a field that the planner does not use.

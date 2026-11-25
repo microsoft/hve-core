@@ -687,7 +687,7 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
 Describe 'Offline lexical grader contracts' -Tag 'Unit' {
   BeforeAll {
     $script:LexicalEvalRoot = Join-Path $PSScriptRoot '../../../evals/agent-behavior'
-    $disclaimers = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/shared/disclaimer-language/SKILL.md')
+    $disclaimers = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/project-planning/security-disclaimers/SKILL.md')
     $script:SecurityCaution = [regex]::Match($disclaimers, '(?s)## Security Planning\s+(.*?)(?=\r?\n## )').Groups[1].Value.Trim()
     $script:StaticGraderPath = (Resolve-Path (Join-Path $PSScriptRoot '../../../node_modules/@microsoft/vally/dist/graders/static/output-matches-grader.js')).Path
     $script:StaticGraderProbe = @'
@@ -1226,7 +1226,7 @@ console.log(JSON.stringify(results));
     }
     @{
       Spec = 'stimuli/prd-builder.yml'; Scenario = 'prd-builder-research-blocked'; Grader = 'prd-research-blocked-gap'; Count = 3
-      Accept = @('Record an open question. The dependent work must stop.', 'Pause the evidence-dependent conclusion and keep an unvalidated assumption.', 'Keep an open question; affected requirements cannot proceed.')
+      Accept = @('Record an open question. The dependent work must stop.', 'Pause the evidence-dependent conclusion and keep an unvalidated assumption.', 'Keep an open question; affected requirements cannot proceed.', 'Keep an open question; only work that depends on the answer stops.')
       Reject = @('Record an open question and continue the dependent work.', 'The dependent work must stop.', 'Record an open question. Unrelated work continues.')
     }
     @{
@@ -2045,11 +2045,11 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
       'no-contradictory-findings', 'sssc-reviewer-class-recipe-no-source-edit')
     @($stimulus.graders | Where-Object { $_.Contains('weight') }) | Should -HaveCount 0
     $mounts = @($stimulus.agent_environment.files)
-    @($mounts.dest) | Should -Be @('.github/copilot-instructions.md', '.github/skills/shared/disclaimer-language/SKILL.md',
+    @($mounts.dest) | Should -Be @('.github/copilot-instructions.md', '.github/skills/project-planning/security-disclaimers/SKILL.md',
       'subject/package.json', 'subject/.github/workflows/release.yml', 'subject/Dockerfile')
     @($mounts.dest | Where-Object { $_ -like '.copilot-tracking/*' }) | Should -HaveCount 0
     foreach ($mount in $mounts) { Test-Path -LiteralPath (Join-Path $script:ObservationRoot $mount.src) -PathType Leaf | Should -BeTrue -Because $mount.src }
-    @($stimulus.agent_environment.skills) | Should -Be @('../../.github/skills/security/supply-chain-security', '../../.github/skills/security/security-reviewer-formats',
+    @($stimulus.agent_environment.skills) | Should -Be @('../../.github/skills/project-planning/security-disclaimers', '../../.github/skills/security/supply-chain-security', '../../.github/skills/security/security-reviewer-formats',
       '../../.github/skills/shared/untrusted-content-boundary')
     $workflow = Get-Content -Raw (Join-Path $script:ObservationRoot 'fixtures/sssc-smoke/release-workflow.fixture')
     $workflow | Should -Match 'uses: actions/checkout@v4'
@@ -2625,7 +2625,7 @@ Describe 'RAI Reviewer evaluation ownership' -Tag 'Unit' {
     $script:RaiReviewerPartial = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText($script:RaiReviewerPartialPath))
     $script:RaiReviewerFixturePath = Join-Path $PSScriptRoot '../../../evals/agent-behavior/fixtures/rai-reviewer-audit-copilot-instructions.md'
     $script:RaiReviewerFixture = [System.IO.File]::ReadAllText($script:RaiReviewerFixturePath)
-    $disclaimerPath = Join-Path $PSScriptRoot '../../../.github/skills/shared/disclaimer-language/SKILL.md'
+    $disclaimerPath = Join-Path $PSScriptRoot '../../../.github/skills/rai/rai-disclaimers/SKILL.md'
     $script:DisclaimerSource = [System.IO.File]::ReadAllText($disclaimerPath)
     $script:RaiReviewerSmoke = $script:RaiReviewerPartial['stimuli'] |
       Where-Object { $_['name'] -eq 'rai-reviewer-class-recipe' }
@@ -2699,7 +2699,7 @@ $script:RaiReviewerFixtureCaution
   It 'Embeds the canonical RAI Planning caution in the effective workspace fixture' {
     $raiSection = [regex]::Match(
       $script:DisclaimerSource,
-      '(?ms)^## RAI Planning\s+(?<Caution>> \[!CAUTION\]\s+> \*\*Disclaimer:\*\*.*?)(?=\r?\n\r?\n## )'
+      '(?ms)^## RAI Planning\s+(?<Caution>> \[!CAUTION\]\s+> \*\*Disclaimer:\*\*.*?)(?=\r?\n\r?\n## |\r?\n?\z)'
     )
 
     $raiSection.Success | Should -BeTrue

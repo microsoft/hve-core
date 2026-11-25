@@ -71,7 +71,7 @@ expectations:
     summary: New or recovered null state displays and persists the canonical disclaimer before phase work.
     signal: Output orders the CAUTION block before state effects and Phase 1 work.
     pass_criteria: |
-      The planner preloads the `disclaimer-language` skill, displays the
+      The planner preloads the `security-disclaimers` skill, displays the
       Security Planning disclaimer when `disclaimerShownAt` is null, persists
       the timestamp and one session-start notice, then begins phase work.
     failure_modes:
@@ -109,7 +109,7 @@ expectations:
     summary: Missing canonical disclaimer instructions block startup.
     signal: Output names the unavailable skill and halts before phase work.
     pass_criteria: |
-      If the `disclaimer-language` skill cannot be found or loaded, the
+      If the `security-disclaimers` skill cannot be found or loaded, the
       planner reports the missing dependency and performs no questions,
       analysis, state initialization, or phase work.
     failure_modes:

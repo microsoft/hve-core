@@ -53,11 +53,11 @@ The project is organized into these main areas:
 
 * Documentation (`docs/`) - Getting started guides, templates, RPI workflow documentation, and contribution guidelines.
 * Scripts (`scripts/`) - Automation for linting, security validation, extension packaging, and development tools.
-* Skills (`.github/skills/{package-id}/`) - Self-contained skill packages, by convention organized by package.
+* Skills (`SKILL.md`) - Self-contained skill directories grouped by package.
 * Extension (`extension/`) - VS Code extension source and packaging.
 * GitHub Configuration (`.github/`) - Workflows, instructions, agents, skills, composite actions, and issue templates, typically organized into `{package-id}` subdirectories.
-* Plugin manifest (`plugin.json`) - Deterministic membership and metadata for the sole `hve-core` plugin.
-* Plugin locator (`.github/plugin/marketplace.json`) - One relative marketplace entry that points to the repository root (`.`).
+* Root plugin manifest (`plugin.json`) - Complete inventory for `hve-core` (All) and the source of the VS Code extension's contributions.
+* Marketplace catalog (`.github/plugin/marketplace.json`) - Maps installable plugin names to their manifest directories.
 * Logs (`logs/`) - Output from validation and analysis scripts.
 
 ### Scripts Organization
@@ -74,7 +74,7 @@ Scripts are organized by function:
 
 ### Skills Organization
 
-By convention, skills are self-contained packages organized under `.github/skills/{package-id}/{skill-name}/`. Each skill folder contains a `SKILL.md` file with domain-specific instructions, and may include other markdown files that are referenced by `SKILL.md` along with `scripts/`, `references/`, `assets/`, or other subdirectories.
+Keep each skill's `SKILL.md`, scripts, references, and assets together in its owning package. Use the manifest's `skills` paths to find the distributable skill directories.
 
 ### Cross-Kind Artifact References
 
@@ -110,7 +110,7 @@ Templates for agent and skill outputs are stored in `docs/templates/`:
 * `docs/templates/adr-template-solutions.md` - Architecture decision record template.
 * `docs/templates/rca-template.md` - Root cause analysis template.
 
-The canonical Business Requirements Document template lives in `.github/skills/project-planning/requirements-author/templates/brd/brd-full.md` as part of the `requirements-author` skill.
+The `requirements-author` skill owns the canonical Business Requirements Document template at `templates/brd/brd-full.md`.
 
 ### Copilot Tracking
 
@@ -131,21 +131,22 @@ The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow ar
 * Documentation (`.copilot-tracking/documentation/`) - Documentation workflow session tracking.
 * Challenges (`.copilot-tracking/challenges/YYYY-MM-DD/`) - Challenge session Q&A logs, unresolved items, and scope records from `rpi-challenger` sessions.
 
-RPI and HVE Builder tracking records follow `.github/instructions/hve-core/copilot-tracking.instructions.md`; ADO, Jira, and GitHub backlog tracking follows its domain-specific instructions. Every workflow resolves the tracking folder location and searches its gitignored files as `.github/instructions/hve-core/copilot-tracking-location.instructions.md` defines.
+RPI and HVE Builder records follow `copilot-tracking.instructions.md`; ADO, Jira, and GitHub use their own backlog tracking instructions. `copilot-tracking-location.instructions.md` explains how each workflow locates and searches its gitignored tracking directory.
 
 ### Agents and Subagents
 
-By convention, custom agents are organized under `.github/agents/{package-id}/`. Each package typically places its agents in a dedicated subdirectory (e.g., `.github/agents/hve-core/`, `.github/agents/ado/`). Subagents are typically organized under `.github/agents/{package-id}/subagents/`.
+Group agents by package, with subagents in the package's `subagents/` directory beneath its agents.
 Parent agents name subagents by their `name` value, such as Codebase Profiler. The Copilot subagent tool dispatches by name, so nesting depth does not matter.
 
-The plugin manifest owns plugin and VSIX composition:
+### Plugin and Extension Packaging
 
-* Root `plugin.json` owns the complete `hve-core` component membership: package-scoped agents, instructions, and distributable skills discovered from tracked `.github` paths. The manifest declares no hooks. Hooks support was removed with the telemetry hook, so a committed `hooks` field is reported as drift rather than preserved. `.github/plugin/marketplace.json` contains one relative locator to the repository root and no component recipe.
-* After adding, changing, moving, or removing a distributable artifact, run `npm run plugin:sync` to update the manifest. Run `npm run plugin:validate` to check manifest drift, marketplace parity and containment, and component coverage.
-* The installable plugin root is the repository root. Artifact discovery remains limited to package-scoped `.github` paths; do not materialize a copied plugin tree or create a repository-root `plugins/` directory.
+Each installable plugin has a manifest and one matching catalog entry. The entry's repository-relative `source` points to the manifest directory. The manifest, not the catalog, lists components using paths inside that directory. When plugins share an artifact, their manifests reference the same tracked source.
+
+The root `plugin.json` includes all distributable components and supplies the supported contributions to the VS Code extension. Adding a marketplace choice does not create another VSIX. Hooks remain outside plugin membership.
+
+* After a distributable artifact changes, run `npm run plugin:sync`, then `npm run plugin:validate`. Check that entries match manifests by name and metadata, paths stay within their roots, and the manifests cover the eligible tracked components.
 * Run `npm run extension:prepare` or `npm run extension:prepare:prerelease` to refresh the single `extension/package.json` and `extension/README.md`. Stable and PreRelease contain the same component set.
 * After adding, changing, moving, or removing a documentable agent, instruction, or skill, run `npm run docs:generate` and commit the matching page under `docs/reference/`. The generator owns page frontmatter and the prefix through `<!-- END AUTO-GENERATED: overview -->`; edit only the preserved `When to use it`, applicable `How to use it`, and `Example usage` tail. Do not edit generated regions or catalog indexes by hand.
-* Run `npm run plugin:validate` to confirm the manifest, one-entry locator, and component coverage are correct.
 <!-- </project-structure> -->
 
 <!-- <script-operations> -->
@@ -153,15 +154,14 @@ The plugin manifest owns plugin and VSIX composition:
 
 * Scripts follow instructions provided by the codebase for convention and standards.
 * Scripts used by the codebase have an `npm run` script for ease of use.
-* A root `plugins/` directory is forbidden as validation or package output. Do not create, edit, or stage one.
-* The plugin uses the repository root directly. Synchronize root `plugin.json`; do not generate plugin output or ZIP packages.
+* Plugin synchronization writes manifest metadata. The marketplace distributes the checked-in files directly, without a generated `plugins/` tree or ZIP archive.
 * Artifacts at the root of `.github/agents/`, `.github/instructions/`, or `.github/skills/` (without a package subdirectory) are repo-specific and excluded from plugin membership and extension packaging. Validation enforces this rule.
 
 PowerShell scripts follow PSScriptAnalyzer rules from `scripts/linting/PSScriptAnalyzer.psd1` and include proper comment-based help. Validation runs via `npm run lint:ps` with results output to `logs/`.
 
 ### Commit Message Scopes
 
-Commit messages follow `.github/skills/hve-core/git-commit/references/commit-message.md`. The `/git-commit` skill and VS Code commit message generation in this repository use the same file.
+The `git-commit` skill's `references/commit-message.md` defines the format for both `/git-commit` and VS Code commit message generation.
 
 Commit message scopes map to repository directories:
 

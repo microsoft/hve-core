@@ -73,7 +73,7 @@ Criteria: Agents and subagents.
 
 ### Model fit
 
-Omit `model:` unless a stable Medium or Low profile is needed or the caller supplied a model. An omitted subagent inherits its parent; an omitted agent or prompt uses the session selection. A High responsibility does not pin a model unless supplied by the caller.
+Does the artifact leave model and effort selection to the host unless the user explicitly requires an override for the target?
 
 A declared value is scalar on agents and subagents, optionally an ordered list on prompts, names a model currently listed in the Copilot documentation, and is disclosed as intentional.
 

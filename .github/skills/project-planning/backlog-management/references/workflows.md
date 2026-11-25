@@ -5,20 +5,17 @@ description: 'Backlog workflow protocols for discovery, triage, execution, and s
 <!-- markdownlint-disable-file -->
 # Backlog Workflow Protocols
 
-Platform-agnostic workflow protocols and planning-file templates for backlog managers. Read this alongside the [core conventions](../SKILL.md) and the active platform reference. Wherever a step names a command (`search`, `get`, `create`, `update`, `transition`, `comment`, `fields`), resolve it through the platform reference — for Jira, [jira.md](jira.md) delegates the command surface to the `jira` skill.
+Read these shared protocols and templates with the [core conventions](../SKILL.md). Resolve commands such as `search`, `get`, `create`, and `transition` through the selected [platform bindings](../SKILL.md#platform-bindings).
 
 ## Platform Binding Resolution
 
-This file describes one lifecycle. Concrete file names, field names, action verbs, and ordering constraints are platform bindings and are resolved through the active platform reference before use. Never assume a name from a template literally.
+Resolve template values through the active provider rather than copying the names of another tracker:
 
-| Binding             | Resolve through                                       | ADO                                          | GitHub                                          | Jira                                                           |
-|---------------------|-------------------------------------------------------|----------------------------------------------|-------------------------------------------------|----------------------------------------------------------------|
-| Analysis file       | Platform reference, PRD-to-Work-Item Planning section | `artifact-analysis.md`                       | `issue-analysis.md`                             | `artifact-analysis.md` (PRD) / `issue-analysis.md` (discovery) |
-| Plan file           | Platform reference, PRD-to-Work-Item Planning section | `work-items.md`                              | `issues-plan.md`                                | `issues-plan.md`                                               |
-| Payload field names | Platform reference, Field Vocabulary section          | Namespaced `System.*` and `Microsoft.VSTS.*` | Flat GitHub issue fields                        | Flat Jira field names                                          |
-| Item vocabulary     | Platform reference, Platform Bindings table           | "work item"                                  | "issue"                                         | "issue"                                                        |
-| Action verbs        | Platform reference, Platform Bindings table           | Create, Update, Link, Comment, No Change     | Create, Update, Link, Close, Comment, No Change | Create, Update, Transition, Comment, No Change                 |
-| Reference-ID prefix | Platform reference, Platform Bindings table           | `WI` (for example `WI001`)                   | `IS` (for example `IS001`)                      | `JI` (for example `JI001`)                                     |
+| Binding                               | Source in the platform reference |
+|---------------------------------------|----------------------------------|
+| Analysis and plan files               | Platform Bindings                |
+| Payload fields                        | Field Vocabulary                 |
+| Item vocabulary, verbs, and ID prefix | Platform Bindings                |
 
 `planning-log.md`, `handoff.md`, `handoff-logs.md`, and `handoff-dryrun.md` are constant across platforms. The templates below use `<analysis-file>` and `<plan-file>` where a binding applies; substitute the platform's value when creating the file.
 
@@ -91,7 +88,7 @@ When a document section contains acceptance criteria, include them in the candid
 
 #### Search Protocol
 
-Deterministic, resumable discovery of existing items. Resolve the concrete query syntax through the active platform reference; the steps below are platform-agnostic. Azure DevOps adds its own page-size and highlight rules in [ado.md](ado.md).
+Resolve query syntax, page size, and result filtering through the selected platform's search bindings. The following discovery steps are shared.
 
 1. **Build keyword groups.** Derive an ordered list of keyword groups from the extracted requirements. Each group holds one to four specific terms, and multi-word phrases stay quoted. Prefer domain nouns and capability verbs over generic project vocabulary.
 2. **Compose the query.** Join terms within a group with `OR`; join groups with `AND`. Add the platform's scope qualifiers (repository, project, item state, item type) from the platform reference. Keep every query bounded — an unscoped query is not a valid discovery step.
@@ -176,7 +173,7 @@ Resulting platform orders:
 | GitHub       | Create, Update, Link, Comment, Close, No Change |
 | Jira         | Create, Update, Comment, Transition, No Change  |
 
-The GitHub comment-before-closure rule is a community-facing safety contract, not a convenience. Its authoritative statement lives in the Community Communication section of [github.md](github.md); this table applies it to execution ordering.
+For GitHub, use the Community Communication section of `github-backlog` to prepare the explanation before closure.
 
 ### Destination Binding
 

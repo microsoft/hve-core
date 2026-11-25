@@ -2,7 +2,7 @@
 title: Behavior Conformance Suite
 description: 'Tier 3 conformance evaluations for instructions and skill behavior'
 author: HVE Core Team
-ms.date: 2026-11-12
+ms.date: 2026-11-24
 ---
 
 This directory hosts the behavior conformance suite. It is the only suite under `evals/` that ships in advisory mode by default: failures are reported in the pull request summary but do not block the build until each spec graduates per the graduation policy below.
@@ -20,22 +20,23 @@ Each tier shares the same advisory contract and manifest-driven gating model as 
 
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
-| `instructions.eval.yaml`   | 3i   | Advisory | 73      | `behavior-conformance` | Active (Phase 11) |
-| `skill-behavior.eval.yaml` | 3s   | Advisory | 390     | `behavior-conformance` | Active (Phase 13) |
+| `instructions.eval.yaml`   | 3i   | Advisory | 79      | `behavior-conformance` | Active (Phase 11) |
+| `skill-behavior.eval.yaml` | 3s   | Advisory | 404     | `behavior-conformance` | Active (Phase 13) |
 
 Prompt conformance coverage moved to `skill-behavior.eval.yaml` and the agent-behavior partials when the repository's prompts became skills or agent entry modes. The `vally-tests` skill still routes `prompt`-kind stimuli to `prompts.eval.yaml`, which it creates on first use.
 
-The maintained `instructions.eval.yaml` inventory contains 73 stimuli: 54 instruction-tagged stimuli across 36 instruction subjects, plus 19 skill-tagged stimuli.
-Six `mural` and two `backlog-management` stimuli were always skill-tagged. The other 11 cover rules that moved from instructions into skills (`adr-author`, `vex`, `git-commit`, `git-merge`, `security-planning`, and `engagement-report-conventions`) and keep testing those rules.
+The maintained `instructions.eval.yaml` inventory contains 79 stimuli: 60 instruction-tagged stimuli across 42 instruction subjects, plus 19 skill-tagged stimuli.
+Six `mural`, one `backlog-management`, and one `ado-build-info` stimulus were always skill-tagged. The other 11 cover rules that moved from instructions into skills (`adr-author`, `vex`, `git-commit`, `git-merge`, `security-planning`, and `engagement-report-conventions`) and keep testing those rules.
 Stimuli that only checked how a moved instruction attached by `applyTo` were removed. Coverage spans:
 
-* Delivery workflows: the Azure DevOps pull request and build-info protocols in `backlog-management`, `git-merge`, and `pull-request`.
+* Delivery workflows: the Azure DevOps pull request and build-info protocols in `backlog-management` and `ado-build-info`, `git-merge`, and `pull-request`.
 * HVE-Core authoring: `copilot-tracking`, `hve-builder`, `markdown`, `pull-request`, and `writing-style`, plus the `git-commit` skill's commit message conventions.
 * RAI, Accessibility, and Security planning: `accessibility-identity`, `backlog-handoff`, `sssc-assessment`, and `standards-mapping`.
-* Additional: `docusaurus-edits`, `dt-coach-telemetry`, `experiment-designer`, and `skill-security-model`.
+* Domain telemetry: `code-review-telemetry`, `dt-coach-telemetry`, `implementation-telemetry`, `planning-telemetry`, `privacy-telemetry`, `rai-telemetry`, and `security-telemetry`.
+* Additional: `docusaurus-edits`, `experiment-designer`, and `skill-security-model`.
 * Language guidance: Rust test placement, naming, local HTTP mocks, and unit-test network isolation; Bicep sensitive-parameter and required-default conventions.
 
-The maintained `skill-behavior.eval.yaml` inventory contains 390 stimuli across 90 skill subjects.
+The maintained `skill-behavior.eval.yaml` inventory contains 404 stimuli across 99 skill subjects.
 It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge,
 unavailable-bridge, read-only-review, and review-pass ownership decisions plus direct
 `rpi-challenger`, `rpi-plan-critique`, pull-request preflight, and RCA evidence-routing,

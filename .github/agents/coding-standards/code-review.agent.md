@@ -12,7 +12,6 @@ tools:
 user-invocable: true
 disable-model-invocation: true
 skills:
-  - disclaimer-language
   - code-review
 ---
 

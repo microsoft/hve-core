@@ -65,7 +65,7 @@ expectations:
       - Caution block omitted.
       - Caution block paraphrased rather than reproduced verbatim.
     priority: medium
-    contract_ref: "agent §Startup Announcement; disclaimer-language §RAI Planning (verbatim disclaimer block)"
+    contract_ref: "agent §Startup Announcement; rai-disclaimers §RAI Planning (verbatim disclaimer block)"
 
   - expectation_id: nist-framework-default
     summary: Assessment defaults to NIST AI RMF 1.0 as the standards framework.

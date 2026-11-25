@@ -39,7 +39,7 @@ A single requirement often splits across both axes. For example, "do not write t
 
 Treat delegation as a first-class architecture decision, not an afterthought. During intake, before settling the shape, analyze what the skill or agent being authored could hand to a subagent.
 
-* Identify functionality a focused subagent could own: high-volume discovery, mechanical checks, fresh-context review, or profile-specific execution. Match the model to the responsibility; fresh-context review usually needs more judgment than mechanical validation.
+* Identify functionality a focused subagent could own: high-volume discovery, mechanical checks, or fresh-context review.
 * Weigh delegating against inlining. Delegate when context isolation, parallelism, or a distinct model responsibility repays the dispatch; keep tightly coupled, low-volume, or latency-sensitive work in the current context.
 * Design the loop explicitly: define dispatch inputs, owned evidence, return schema, stage gate, and which later step consumes the result. Parallelize only independent work.
 * Favor reuse. Check whether an existing subagent already covers the responsibility before creating a new one, and prefer extending or adjusting an existing subagent over duplicating it.
@@ -55,32 +55,13 @@ When the request adds project-specific capability to a workflow such as `rpi-res
 
 Example: a team wants `rpi-research` and `rpi-plan` to draw on an internal design-document corpus. A skill whose description marks it for use during research and planning documents where the corpus lives, how to run its indexing script, and how to cite results; both workflows activate it through their skill-selection rules. If the corpus is large enough that searching it would flood the research context, add a research helper subagent that searches the corpus for one bounded question and returns source pointers to `rpi-research`, which reads and records the evidence itself. [extending-hve-builder.md](extending-hve-builder.md) works this example through each workflow's contract.
 
-## Choose the model profile
+## Leave model selection to the host
 
-The `model:` field is optional and omitted by default. An omitted subagent model inherits the invoking parent's model; an omitted directly invoked agent uses the current session or model-picker selection. Omission keeps the choice with the user, who sees the models their plan and client offer.
+Omit model and reasoning-effort fields in agent definitions and dispatches unless the current request or applicable persistent user instructions explicitly require a value for that target. Omission lets the host resolve its preferences; it does not establish which model ran. An explicit [custom agent model](https://docs.github.com/en/copilot/reference/custom-agents-configuration) is a scalar. A per-call override is separate: use the field and value supported by the dispatch tool, not a copied model-picker label. Report an unsupported request instead of silently substituting another value.
 
-When a stable profile is needed, select High, Medium, or Low from the responsibility before touching `model:`:
+## Worked example: compact skill plus one bounded worker
 
-* High is the deepest reasoning profile. Omit `model:` for a High responsibility unless the caller supplies a model. The strongest available model changes often and varies by plan and client, so pinning one removes the user's ability to pick it.
-* Medium covers semantic discovery, architecture, authoring, research, and calibrated review. Declare `model:` only when the artifact must run at a predictable profile regardless of the session, for example a fresh-context reviewer that should not inherit a Low parent.
-* Low covers bounded, literal, mechanical execution. Declaring `model:` is common here, because pinning a fast, low-cost model is the point.
-
-HVE Core accepts only a single scalar string for agent and subagent `model:`. Copilot CLI versions before the fix for [github/copilot-cli#2133](https://github.com/github/copilot-cli/issues/2133) rejected an array and dropped the artifact, and the HVE Core model linter still reports an array as an error. Use the exact model-picker name with the `(copilot)` suffix.
-
-### Resolve current model names
-
-Do not copy model names from this reference or from sibling artifacts; models are added, renamed, and retired several times a year. Resolve them at authoring time from GitHub's own documentation, and record the source and date in the authoring evidence.
-
-1. Fetch the supported-models page in the GitHub Copilot docs (`docs.github.com`, under `copilot/reference/ai-models/supported-models`). It lists every current model, per-client availability, the retirement table with suggested replacements, and which models support configurable reasoning levels.
-2. Fetch the model-comparison page beside it (`copilot/reference/ai-models/model-comparison`). Its "Recommended models by task" table groups models by task area. Map task areas to profiles: deep reasoning, debugging, and long-horizon autonomous work are High; general-purpose coding and agent tasks and agentic software development are Medium; fast help with simple or repetitive tasks is Low.
-3. When the rendered pages are unavailable, search the `github/docs` repository for the same content under `content/copilot/reference/ai-models/`. The source uses Liquid variables for some names, so prefer the rendered page when both are reachable.
-4. Confirm the candidate is available in the target client (VS Code, Copilot CLI, or the coding agent) and does not appear in the retirement table with a past date.
-
-These locations and headings describe where the information lives today. If they move, search the Copilot documentation for the current model list and task comparison rather than treating the paths above as fixed.
-
-## Worked example: compact skill plus one low-reasoning worker
-
-A recurring "profile a CSV and summarize it" need is reusable capability, so it is a skill; the profiling itself is mechanical and high-volume, so it is delegated to one dedicated low-reasoning worker subagent.
+A recurring "profile a CSV and summarize it" need is reusable capability, so it is a skill; the profiling itself is mechanical and high-volume, so it is delegated to one dedicated worker subagent.
 
 Skill frontmatter, a compact playbook skill:
 
@@ -94,14 +75,13 @@ user-invocable: true
 
 Subagent dispatch line in the skill's Flow: dispatch `CSV Profiler Worker` with the CSV path and the output path, then read its returned summary.
 
-Worker subagent (`.agent.md` under `subagents/`), pinned to a fixed Low profile because it always runs there. Replace the placeholder below with a currently available model resolved by the procedure above; it is not a deployable model identifier.
+Worker subagent (`.agent.md` under `subagents/`):
 
 ```yaml
 ---
 name: CSV Profiler Worker
 description: "Profiles a CSV with a bundled script and returns a summary. Use when profiling CSV data."
 user-invocable: false
-model: <resolved-low-profile-model> (copilot)
 ---
 ```
 

@@ -1,9 +1,9 @@
 ---
 title: Security/Sssc Planner
 description: "SSSC Planner identity, six-phase orchestration, state schema, session recovery, and Phase 2-6 assessment protocols"
-sidebar_position: 2
+sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-11-18
 ms.topic: reference
 keywords:
   - instruction

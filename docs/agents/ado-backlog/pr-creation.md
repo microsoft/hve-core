@@ -2,7 +2,7 @@
 title: "Pull Request Creation Workflow"
 description: "Where Azure DevOps pull request creation moved after the backlog consolidation"
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-11-18
 ms.topic: tutorial
 keywords:
   - ado
@@ -12,15 +12,11 @@ estimated_reading_time: 3
 sidebar_position: 10
 ---
 
-Pull request creation still exists. It moved out of the retired ADO Backlog Manager pages and is no longer a Backlog Manager workflow.
+Use `/ado-pull-request` to prepare or create a pull request in Azure Repos. Use `/pull-request` for GitHub.
 
 ## Where This Went
 
-Create an Azure DevOps pull request with `/pull-request`. When the repository's push remote is hosted on Azure DevOps, or you ask for an Azure DevOps pull request, the `pull-request` skill routes to the Azure DevOps pull request protocol in the `backlog-management` skill. The protocol still discovers work items, identifies reviewers, and links the resulting pull request. It replaces the retired `/ado-create-pull-request` command.
-
-The protocol resolves its dependencies through named skill activation rather than direct instruction inclusion, and it fails closed when a required skill does not resolve, stopping before any Azure DevOps call.
-
-It also gained a mandatory preflight, an explicit destination confirmation, autonomy handling, content sanitization, and human-review controls, and the conditions under which a gate may be skipped are narrower than before. Expect the same result for the same intent, but more stops along the way when context is missing.
+`/ado-pull-request prepare` drafts the title and description from local Git evidence without contacting Azure DevOps. Use `create` when you want to open the PR. The workflow confirms the project and repository, discovers work items and reviewers, and asks for the necessary approvals before writing. Its result distinguishes actual links and reviewer assignments from proposals.
 
 ## What Changed
 

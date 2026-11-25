@@ -11,7 +11,7 @@ stimuli:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
       skills:
-        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
         - ../../.github/skills/project-planning/requirements-author
     tags:
@@ -63,7 +63,7 @@ stimuli:
           dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
       skills:
         - ../../.github/skills/project-planning/proposal-response
-        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -109,7 +109,7 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/requirements-author
         - ../../.github/skills/rpi/rpi-research
-        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -140,7 +140,7 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/requirements-author
         - ../../.github/skills/rpi/rpi-research
-        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -184,7 +184,7 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/requirements-author
         - ../../.github/skills/rpi/rpi-research
-        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -226,7 +226,7 @@ stimuli:
           dest: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
       skills:
         - ../../.github/skills/project-planning/requirements-author
-        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -330,7 +330,7 @@ stimuli:
           dest: docs/project-planning/atlas-brd.md
       skills:
         - ../../.github/skills/project-planning/requirements-author
-        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -371,7 +371,7 @@ stimuli:
           dest: evidence/requirements-evidence.md
       skills:
         - ../../.github/skills/project-planning/requirements-author
-        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -403,7 +403,7 @@ stimuli:
           dest: evidence/requirements-evidence.md
       skills:
         - ../../.github/skills/project-planning/requirements-author
-        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/project-planning/project-planning-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior

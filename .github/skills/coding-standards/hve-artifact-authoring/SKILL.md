@@ -65,7 +65,7 @@ Read `references/frontmatter-schemas.md` before selecting fields.
 * Write `description` as concise capability and routing metadata.
 * Use only fields supported for the artifact type.
 * Treat agent and subagent `tools` configuration as a user-managed opaque boundary.
-* Keep agent and subagent `model` values scalar.
+* Omit agent and subagent `model` and `reasoning-effort` so the host can resolve user preferences. If the user explicitly requires an agent model, use a scalar.
 * Preload the skills an agent needs when it starts with `skills:`. Do not add `handoffs`, `agents`,
   or `argument-hint` to an agent; the Copilot harness does not support them, and
   `npm run lint:frontmatter` rejects them.

@@ -13,8 +13,8 @@ stimuli:
       inline as your instructions describe and record the reduced rigor. No
       SBOM, provenance, signing, release, registry, or remote repository
       settings evidence is supplied. Do not run network, install, build,
-      publish, or scanner commands. The shared disclaimer skill is staged at
-      `.github/skills/shared/disclaimer-language/SKILL.md`.
+      publish, or scanner commands. The security disclaimers skill is staged at
+      `.github/skills/project-planning/security-disclaimers/SKILL.md`.
 
       Write the report under `.copilot-tracking/sssc-reviews/`, do not modify
       any other file, and report the report path.
@@ -22,8 +22,8 @@ stimuli:
       files:
         - src: ../../.github/agents/security/sssc-reviewer.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
-          dest: .github/skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/security-disclaimers/SKILL.md
+          dest: .github/skills/project-planning/security-disclaimers/SKILL.md
         - src: fixtures/sssc-smoke/package.fixture.json
           dest: subject/package.json
         - src: fixtures/sssc-smoke/release-workflow.fixture
@@ -31,6 +31,7 @@ stimuli:
         - src: fixtures/sssc-smoke/Dockerfile.fixture
           dest: subject/Dockerfile
       skills:
+        - ../../.github/skills/project-planning/security-disclaimers
         - ../../.github/skills/security/supply-chain-security
         - ../../.github/skills/security/security-reviewer-formats
         - ../../.github/skills/shared/untrusted-content-boundary
@@ -220,7 +221,7 @@ stimuli:
       skills:
         - ../../.github/skills/security/supply-chain-security
         - ../../.github/skills/security/security-reviewer-formats
-        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/project-planning/security-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -258,7 +259,7 @@ stimuli:
           dest: .github/skills/security/vex/references/vex-generation.md
       skills:
         - ../../.github/skills/security/vex
-        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/project-planning/security-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
@@ -289,7 +290,7 @@ stimuli:
           dest: .github/skills/security/vex/references/vex-generation.md
       skills:
         - ../../.github/skills/security/vex
-        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/project-planning/security-disclaimers
         - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior

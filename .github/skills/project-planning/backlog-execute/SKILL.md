@@ -40,13 +40,13 @@ Four things must hold before the first mutating call. Everything else can be dis
 
 ### Supported direct-invocation contexts
 
-| Context                                                          | Write surface                | Notes                                                                                                                                                                                   |
-|------------------------------------------------------------------|------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| A platform executor subagent dispatched by `Backlog Manager`     | That platform's write family | Preferred path; the orchestrator resolves and confirms, the executor runs this flow with its platform delta                                                                             |
-| An agent or host session carrying the platform's own write tools | Those tools directly         | Requires the ADO or GitHub write family, terminal access for the Jira CLI, or a GitHub executor contract that grants the `gh` CLI fallback in the `backlog-management` GitHub reference |
-| A read-only session                                              | None                         | Plan the operations, write the handoff, and stop before mutating                                                                                                                        |
+| Context                                                          | Write surface                | Notes                                                                                                                                                          |
+|------------------------------------------------------------------|------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| A platform executor subagent dispatched by `Backlog Manager`     | That platform's write family | Preferred path; the orchestrator resolves and confirms, the executor runs this flow with its platform delta                                                    |
+| An agent or host session carrying the platform's own write tools | Those tools directly         | Requires the ADO or GitHub write family, terminal access for the Jira CLI, or a GitHub executor contract that grants the `gh` CLI fallback in `github-backlog` |
+| A read-only session                                              | None                         | Plan the operations, write the handoff, and stop before mutating                                                                                               |
 
-When the active context exposes no compatible write surface, say so plainly and stop before the first mutating call: state which platform was resolved, that the current context has no write surface for it, and that the planned operations were written to the handoff file for execution through `Backlog Manager` or an equivalently equipped context. Do not substitute a terminal command or an alternate CLI to reach an operation the context withholds; the only exceptions are the Jira CLI and, for a context whose contract grants it, the bounded GitHub `gh` fallback that the `backlog-management` GitHub reference defines. Never fall back to a different platform because that one happens to be reachable.
+When the active context exposes no compatible write surface, say so plainly and stop before the first mutating call: state which platform was resolved, that the current context has no write surface for it, and that the planned operations were written to the handoff file for execution through `Backlog Manager` or an equivalently equipped context. Do not substitute a terminal command or an alternate CLI to reach an operation the context withholds; the only exceptions are the Jira CLI and, for a context whose contract grants it, the bounded GitHub `gh` fallback that `github-backlog` defines. Never fall back to a different platform because that one happens to be reachable.
 
 ### Direct-invocation scenarios
 
@@ -62,7 +62,7 @@ When the active context exposes no compatible write surface, say so plainly and 
 
 ### Step 1: Resolve the platform and confirm the destination
 
-Run the Platform Resolution section of the `backlog-management` skill. Because every mode here mutates, the Inferred-Platform Confirmation rule applies in full: when the platform was resolved only because it was the one that passed preflight, state the inferred platform and its target scope and obtain explicit user confirmation before the first mutating call.
+Run Platform Resolution in `backlog-management` and use its Platform Bindings section to select the provider. Because every mode here can mutate, confirm an inferred platform and its target scope before the first write.
 
 This confirmation is independent of the autonomy mode. Full autonomy removes per-operation gates; it does not authorize acting on an unconfirmed destination.
 
@@ -136,7 +136,7 @@ This enforces the repository rule that backlog managers verify all human review 
 
 Run all six Content Sanitization Guards from the core skill before every platform-bound mutation, as that skill defines them. Unresolved planning identifiers never reach a tracker API or CLI call.
 
-For community-visible output on GitHub, additionally apply the scenario templates named in the Community Communication section of the GitHub reference, using the comment-before-closure pattern so a contributor sees the explanation before the state change.
+For community-visible output on GitHub, apply Community Communication in `github-backlog`, including its scenario templates and comment-before-closure ordering.
 
 ## Success criteria
 
@@ -150,7 +150,7 @@ For community-visible output on GitHub, additionally apply the scenario template
 ## Stop rules
 
 * Stop when the platform is unresolved, the destination is unconfirmed, or an inferred platform has not been confirmed.
-* Stop when the core skill does not resolve; the autonomy tiers, guards, and operation contract are unavailable.
+* Stop before a write if its operation cannot be bound to the confirmed destination, sanitized, or authorized under the active tier.
 * Stop when a handoff or planner artifact carries an unchecked human-review checkbox. Report the path and the specific item.
 * Stop on a probable secret or credential, and on any placeholder that can be neither resolved nor safely described.
 * Stop when a completed create has no recorded key, or a placeholder cannot be resolved from the rebuilt mapping.
@@ -165,11 +165,8 @@ For community-visible output on GitHub, additionally apply the scenario template
 
 ## How This Command Is Organized
 
-This body is deliberately thin. Every protocol lives in the shared skill so that `backlog-plan`, `backlog-execute`, and the `Backlog Manager` agent share one definition rather than three copies.
+`backlog-management` supplies the shared execution protocols:
 
 * The core skill body: platform resolution, planning-file lifecycle, reference-ID scheme, similarity assessment, autonomy tiers, sanitization guards, state persistence, human review triggers.
 * The workflows reference: the execution protocol, operation contract, dry-run and error handling, and planning-file templates.
 * The story-quality reference: work-item quality at epic, feature, user story, and task level.
-* The per-platform ADO, GitHub, and Jira references: command surface, supported operations, interaction templates, relationship semantics, and action verbs.
-
-Activate `backlog-management` by name. When it does not resolve, warn the user that platform resolution, autonomy tiers, sanitization guards, and the operation contract are unavailable, and stop before any mutating call rather than improvising them here.

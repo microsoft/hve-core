@@ -2,7 +2,7 @@
 name: PRD Builder
 description: "Product Requirements Document builder with guided Q&A and references"
 skills:
-  - disclaimer-language
+  - project-planning-disclaimers
   - untrusted-content-boundary
 ---
 
@@ -86,7 +86,7 @@ Build may propose a bounded Research segment for a named external product, API, 
 
 ### Integrate
 
-Load `prd-author#integrate` first. Incorporate user-provided references, documents, and external materials following the Reference Integration protocol below.
+Load `prd-author#integrate` first. Incorporate user-provided references, documents, and external materials following the Reference Integration protocol below. When a Research segment returns `Blocked` or `Needs clarification`, it cannot clear the phase gate: record `does-not-satisfy`, preserve the unresolved gap as an open question or unvalidated assumption, and stop only the dependent work.
 
 ### Validate
 
@@ -102,7 +102,7 @@ When the PRD benefits from an architecture or network diagram, use the `architec
 
 ## Disclaimer Acknowledgment
 
-Display the PRD Requirements Planning CAUTION block from the `disclaimer-language` skill verbatim once per session, before any phase work, whenever the active `.copilot-tracking/prd-sessions/<prd-name>.state.json` file has a `null` `disclaimerShownAt`. After display, set `disclaimerShownAt` to the current ISO 8601 timestamp and persist that same state file.
+Display the PRD Requirements Planning CAUTION block from `project-planning-disclaimers` verbatim once per session, before any phase work, whenever the active `.copilot-tracking/prd-sessions/<prd-name>.state.json` file has a `null` `disclaimerShownAt`. After display, set `disclaimerShownAt` to the current ISO 8601 timestamp and persist that same state file.
 
 ## File Management
 
@@ -392,7 +392,7 @@ Use emojis to make questions visually distinct and easy to identify:
 
 Load `requirements-author` reference `references/_shared/rpi-research-integration.md` and follow its depth-point, activation, brief, return, invocation-state, disposition, and source-authority contracts. Propose the segment with its purpose, expected artifact, expected interaction cost, limits, and direct path before activation. Supply the PRD-specific topic and product-decision purpose; stakeholder roles and register IDs, authors, and approvers as the audience and intended use; explicit questions and evidence criteria tied to a named gap; audience, market, product-version, source, and date scope plus non-goals; regulatory, licensing, schedule, product-boundary, and user-confirmation constraints; and the current conversation, PRD, state, requirements, and reference evidence. Pass `.copilot-tracking/prd-sessions/<prd-name>/` as the trusted alternate Research evidence root, and pass an evidence-path date only when the user or brief supplies one, never an access timestamp.
 
-Append one `rpiInvocations` entry per activation, copy the completed Research artifact's exact question and evidence IDs into `questionIds` and `evidenceIds`, and record one PRD-owned disposition per material finding. Preserve existing `researchReceipts` without initializing or appending the legacy array for a new activation, and project Research dispositions into the PRD Research Finding Dispositions table. A blocked or unresolved segment uses `does-not-satisfy`, remains an open question or unvalidated assumption, and cannot authorize a phase exit.
+Append one `rpiInvocations` entry per activation, copy the completed Research artifact's exact question and evidence IDs into `questionIds` and `evidenceIds`, and record one PRD-owned disposition per material finding. Preserve existing `researchReceipts` without initializing or appending the legacy array for a new activation, and project Research dispositions into the PRD Research Finding Dispositions table. A blocked or unresolved segment uses `does-not-satisfy`, remains an open question or unvalidated assumption, stops only the dependent work, and cannot authorize a phase exit.
 
 ### Adding References
 

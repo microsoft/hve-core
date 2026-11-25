@@ -1,30 +1,20 @@
 ---
-description: "Reference protocol for splitting an RPI plan critique into parallel lens assessments, selecting each lens's reasoning effort, and merging the returns into one finding set."
+description: "Reference protocol for splitting an RPI plan critique into parallel lens assessments and merging the returns into one finding set."
 ---
 
 # Lens Assessment Reference
 
 ## Lenses
 
-| Lens           | Question                                                                                                                                                                                            | Reads                                                      | Default effort |
-|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|----------------|
-| Coverage       | Do the tasks cover every requirement, goal, and acceptance condition, with task `Requirements:` a reader can check?                                                                                 | Plan requirement lists and every task; requirement sources | `low`          |
-| Evidence       | Are the plan's claims, decisions, `Details:`, and `References:` supported by the supplied research and evidence?                                                                                    | Plan; research and evidence                                | `medium`       |
-| Executability  | Can each phase run as written, including dependencies and order, tools and environments, checks that can fail, and budgets?                                                                         | Plan; evidence about tools and environments                | `medium`       |
-| Risk           | Are material risks, side effects, and irreversible, shared-system, or externally visible actions handled, are user decisions identified, and what material concern does the plan leave unaddressed? | Plan; risk-relevant evidence                               | `medium`       |
-| Reconciliation | Is each earlier finding resolved, still open, or superseded, and did the corrections introduce regressions?                                                                                         | Plan; earlier critique                                     | `low`          |
+| Lens           | Question                                                                                                                                                                                            | Reads                                                      |
+|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|
+| Coverage       | Do the tasks cover every requirement, goal, and acceptance condition, with task `Requirements:` a reader can check?                                                                                 | Plan requirement lists and every task; requirement sources |
+| Evidence       | Are the plan's claims, decisions, `Details:`, and `References:` supported by the supplied research and evidence?                                                                                    | Plan; research and evidence                                |
+| Executability  | Can each phase run as written, including dependencies and order, tools and environments, checks that can fail, and budgets?                                                                         | Plan; evidence about tools and environments                |
+| Risk           | Are material risks, side effects, and irreversible, shared-system, or externally visible actions handled, are user decisions identified, and what material concern does the plan leave unaddressed? | Plan; risk-relevant evidence                               |
+| Reconciliation | Is each earlier finding resolved, still open, or superseded, and did the corrections introduce regressions?                                                                                         | Plan; earlier critique                                     |
 
-Run Coverage, Evidence, Executability, and Risk for an initial critique. For a follow-up critique, run Reconciliation and only the lenses whose subject the corrections changed, scoped to the changed text. When Evidence, Executability, or Risk would cover a long plan, split it by phase range rather than raising its effort, so each assignment finishes quickly. Keep Coverage whole, because it must see every task.
-
-## Reasoning effort
-
-Select each lens's reasoning effort when you dispatch it. Agent frontmatter does not set it: `RPI Plan Critic` declares a model and no effort so that the effort follows the lens's work.
-
-* When the user or caller sets an effort, use it, either one level for every lens or the named level for each named lens.
-* Otherwise use each lens's default effort in `standard` depth, and lower a lens to `low` when its scope is small. For `deep` depth, raise each lens one level, up to `high`. Use `xhigh` or `max` only when the user or caller asks for them.
-* Pass the level through the dispatch tool's reasoning-effort parameter, such as `reasoning_effort`. When the tool has no such parameter, dispatch without one and record the effort as host default.
-* If a dispatch fails because its model does not support the selected effort, retry it once with `reasoning_effort` set to `medium`.
-* Record each lens's effort and its source (selected, caller-set, or host default) in Lens Assessments.
+Run Coverage, Evidence, Executability, and Risk for an initial critique. For a follow-up critique, run Reconciliation and only the lenses whose subject the corrections changed, scoped to the changed text. When Evidence, Executability, or Risk would cover a long plan, split it by phase range, so each assignment finishes quickly. Keep Coverage whole, because it must see every task.
 
 ## Dispatch
 
@@ -41,7 +31,7 @@ Severity scale: <the four definitions from Severity scale>
 
 `RPI Plan Critic` defines its own reading limits and return format, so the assignment does not restate them. Leave out any list of suspected weaknesses and your own observations. The lens question and the severity scale are the whole brief, so each critic assesses the plan instead of confirming the parent's view.
 
-`RPI Plan Critic` runs on the model its frontmatter declares; pass a different model only when the user names one. When `RPI Plan Critic` is unavailable, give a general-purpose subagent the same assignment at the same effort. Tell it to read only the plan and evidence the assignment supplies, change no files, run no validation, and dispatch no other agents. Ask it to return `Complete`, `Partial`, `Blocked`, or `Needs clarification` and, for each candidate, the location, a short quote, what it was checked against, the concern, a suggested severity, the smallest useful change, and its confidence.
+Omit model and reasoning-effort overrides unless the current request or applicable persistent user instructions explicitly require that value for the helper. When `RPI Plan Critic` is unavailable, give a general-purpose subagent the same assignment. Tell it to read only the plan and evidence the assignment supplies, change no files, run no validation, and dispatch no other agents. Ask it to return `Complete`, `Partial`, `Blocked`, or `Needs clarification` and, for each candidate, the location, a short quote, what it was checked against, the concern, a suggested severity, the smallest useful change, and its confidence.
 
 ## Severity scale
 

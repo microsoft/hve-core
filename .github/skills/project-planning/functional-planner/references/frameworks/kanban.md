@@ -22,7 +22,7 @@ Use this lens when the team plans by flow and continuous delivery rather than a 
 
 ## Boundaries
 
-* This lens shapes right-sizing and sequencing; it does not change the platform's validated type names or parent rules. Defer those to the platform reference ([ado.md](../ado.md), [github.md](../github.md), or [jira.md](../jira.md)).
+* This lens shapes right-sizing and sequencing. Use the selected [platform bindings](../../SKILL.md#platform-bindings) for validated types and parent rules.
 * Keep the hierarchy shallow; do not manufacture intermediate levels the platform or PRD does not need.
 
 ## Attribution

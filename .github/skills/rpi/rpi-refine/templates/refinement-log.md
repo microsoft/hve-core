@@ -81,7 +81,7 @@ Append events in order. Never rewrite or delete an earlier row. The latest event
 * Touched surfaces assessed: {{code_docs_domain_tests_dependencies_config_summary}}
 * Review depth and provenance: {{surface_standard_or_deep}}; {{default_same_loop_significant_changes_or_explicit_user_request}}
 * Review execution: {{started_Complete_Partial_or_Blocked}}
-* Helper use: {{none_or_each_targeted_subagent_lookup_with_task_reasoning_effort_effort_source_and_verified_evidence}}
+* Helper use: {{none_or_each_targeted_subagent_lookup_with_task_and_verified_evidence}}
 * Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
 * Changes: .copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md
 * Other evidence considered: {{research_changed_files_or_validation_evidence}}

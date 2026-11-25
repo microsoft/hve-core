@@ -20,7 +20,7 @@ When the invoking agent or the user's request names the Research task or its slu
 
 ## Flow
 
-1. Establish the user-facing Scope and Questions plus the Research Record's Method and Boundaries: topic, purpose, audience or use, scope and non-goals, criteria, requested output and mode, initial questions, research posture and provenance, any user- or caller-set helper lane effort with its provenance, candidate areas, and explicit limits or deadline. Infer an initial topic only when the conversation provides enough context, and label assumptions for verification.
+1. Establish the user-facing Scope and Questions plus the Research Record's Method and Boundaries: topic, purpose, audience or use, scope and non-goals, criteria, requested output and mode, initial questions, research posture and provenance, any applicable user-requested helper override, candidate areas, and explicit limits or deadline. Infer an initial topic only when the conversation provides enough context, and label assumptions for verification.
 2. Determine applicable extensions at intake.
    * Apply matching instruction files by `applyTo` glob to the research inputs and evidence path.
    * Identify available skills whose descriptions say they are used during research and fit the topic or evidence need. Exclude this skill and other RPI lifecycle phase entrypoints. Activate useful matching skills as scoped research guidance.
@@ -47,7 +47,7 @@ When the invoking agent or the user's request names the Research task or its slu
       * Narrow to `focused` for a bounded internal task with named source targets and supplied failure evidence when adjacent discovery is unlikely to change the result. Widen to `expansive` when the caller or applicable codebase instructions select it, or when the brief is broad and the decision space is materially unknown.
    2. Record active caller direction controls, including additions, changes, narrowed scope, exclusions, discarded directions, selected posture and provenance, and explicit limits or deadline. When uncertainty would materially affect research, ask and persist the answer for `user-owned` or `user-retained`; for `agent-owned`, persist an evidence-supported decision or the smallest gap before continuing.
    3. Before substantive search, persist the canonical opening state in its owning sections, then send the opening update defined in Conversation guidance.
-   4. Research runs in this context. A subagent is optional and follows the user's direction, including using none; use one only when a dispatch tool is available and isolating a bounded gathering task would improve evidence quality or protect working context, and treat its return as suggestions to verify at the source before recording evidence. Optional Helpers in `references/research.md` defines lanes, each lane's reasoning effort, the request, and the return.
+   4. Research runs in this context. A subagent is optional and follows the user's direction, including using none; use one only when a dispatch tool is available and isolating a bounded gathering task would improve evidence quality or protect working context, and treat its return as suggestions to verify at the source before recording evidence. Optional Helpers in `references/research.md` defines lanes, the request, and the return.
 6. Complete all three waves in order for each executed cycle, following Three-Wave Research Cycles in `references/research.md`: Wider for breadth across ideas, sources, and potential evidence; Deeper for the prioritized detail; and Contrarian for credible counter-evidence and in-scope alternatives within caller exclusions. Do not stop the cycle after early evidence appears sufficient. Reflect after each material search or helper return as a separate action. Lift verified evidence into the primary artifact rather than duplicating raw output, and apply the material-update decision rules in `references/research.md`.
 7. Synthesize the completed cycle. Map findings to questions and stable `C#` and `W#` evidence IDs. Record accepted, rejected, and deferred material with evidence-based rationale. Record alternatives, current and unresolved decisions, risks, potential further research, Planning Readiness, and Research disposition.
    * Refresh Executive Summary, What You May Not Know, Findings, Recommendation and Alternatives, Decisions and Feedback, Risks and Open Questions, and Planning Readiness and Next Step after synthesis and any later material change.
@@ -74,7 +74,7 @@ When the invoking agent or the user's request names the Research task or its slu
 * Purpose, audience, requested outputs, and output mode
 * Scope, non-goals, criteria, constraints, and relevant workspace or external boundaries
 * Research posture: `balanced` by default; `focused` or `expansive` when the caller passes `posture=` or applicable codebase instructions select it, with provenance, plus any caller-provided or codebase-imposed limits or deadline
-* Helper lane reasoning effort: `auto` by default, which selects each lane's effort from how the lane finds its answer, or a level the user or caller sets for every lane or for lanes identified by kind or topic
+* Helper lane reasoning effort: `auto` means omit the override. Pass a supported level only when explicitly requested for that helper.
 * Subagent use: `auto` by default, which uses subagents when a dispatch tool is available and they would help, or the user's direction, such as `none` or only named uses
 * Decision-participation mode: `user-owned`, `agent-owned`, or `user-retained`, with parent mode and provenance when applicable
 * Trusted alternate evidence root and evidence-path date, when supplied
@@ -89,7 +89,7 @@ When the invoking agent or the user's request names the Research task or its slu
 * Findings answer each question or identify the smallest missing evidence. Every codebase finding uses a stable `C#` ID with a workspace-relative path and heading or symbol; every external finding uses a stable `W#` ID with a URL and retrieval date.
 * The artifact preserves alternatives and records a selected recommendation with evidence-based rejection rationale when the caller requests convergence. Other output modes preserve the decision state without forcing a selection.
 * Material decisions are resolved according to the recorded participation mode. User-owned and user-retained decisions use a focused, link-backed walkthrough; agent-owned decisions record an evidence-based selection or an honest blocker.
-* Any helper use is recorded with each lane's reasoning effort, that effort's source, and what was verified at the source. Waves that ran without a helper record their evidence without implying one ran.
+* Any helper use is recorded with each lane’s question and what was verified at the source. Waves that ran without a helper record their evidence without implying one ran.
 * The final response leads with the result of what the user asked for, backed by evidence, and names any unresolved blocker or explicit no-handoff reason.
 
 ## Constraints

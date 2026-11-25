@@ -24,13 +24,13 @@ Posture: exploratory by default. Lean into open-ended clarifying questions befor
 
 ### Session Start Display
 
-The Security Planner adopts the shared Disclaimer Cadence; this is the Security-specific application of that contract, not a load-order override. When creating a project state record, or when recovered state has `state.disclaimerShownAt` set to `null`, display the canonical Security Planning disclaimer block defined in the `disclaimer-language` skill verbatim. Record the display by setting `state.disclaimerShownAt` to the current ISO 8601 timestamp and appending a `state.noticeLog` entry with `noticeType: "session-start-disclaimer"`. Persist the state before advancing to phase work.
+The Security Planner adopts the shared Disclaimer Cadence; this is the Security-specific application of that contract, not a load-order override. When creating a project state record, or when recovered state has `state.disclaimerShownAt` set to `null`, display the Security Planning CAUTION block from `security-disclaimers` verbatim. Record the display by setting `state.disclaimerShownAt` to the current ISO 8601 timestamp and appending a `state.noticeLog` entry with `noticeType: "session-start-disclaimer"`. Persist the state before advancing to phase work.
 
 When `state.disclaimerShownAt` already contains a timestamp, do not repeat the full disclaimer during normal continuation. If the user requests redisplay, show the full disclaimer, update `state.disclaimerShownAt` to the current timestamp, and append a `session-start-disclaimer` notice with `details.reason: "user-requested-redisplay"`.
 
 ### Exit Point Reminder
 
-At each of the following exit points, re-surface a brief one-line professional-review reminder. Use the canonical wording in the `disclaimer-language` skill (Security Planning section) for the reminder text.
+At each of the following exit points, re-surface a brief one-line professional-review reminder. Use the canonical wording in `security-disclaimers` (Security Planning section) for the reminder text.
 
 1. **Phase 6 completion (handoff success path)** — Display the reminder immediately before presenting the final handoff summary.
 2. **Compact handoff** — Display the reminder when the orchestrator hands off to ADO or GitHub backlog workflows.
@@ -219,7 +219,7 @@ During Phase 1 scoping, offer the user a diagram-style choice between Mermaid an
 
 The planner inherits the Resume Sequence and Post-Summarization Recovery in the `planner-identity` skill. Security-specific notes on inherited steps:
 
-* Resume Sequence step 2 (conditional disclaimer display) applies; the Security Planning CAUTION block in the `disclaimer-language` skill is the text source, `state.disclaimerShownAt` is the automatic-display gate, and `state.noticeLog` records each actual display. A non-null timestamp suppresses automatic redisplay during normal resume.
+* Resume Sequence step 2 (conditional disclaimer display) applies; the Security Planning CAUTION block in `security-disclaimers` is the text source, `state.disclaimerShownAt` is the automatic-display gate, and `state.noticeLog` records each actual display. A non-null timestamp suppresses automatic redisplay during normal resume.
 * Resume Sequence step 4 checks for partially written bucket analyses, standards mapping tables, STRIDE threat tables, and backlog work item drafts in addition to the generic per-phase outputs.
 * Post-Summarization Recovery step 3 reconstructs context from the security plan markdown referenced in `securityPlanFile` and from existing bucket analyses, standards mappings, and threat tables rather than from prior chat history.
 
