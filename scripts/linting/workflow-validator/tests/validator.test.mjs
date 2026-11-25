@@ -67,6 +67,17 @@ describe('getParserFindings', () => {
     assert.deepEqual(await getParserFindings('ok.yml', content, 'workflow'), []);
   });
 
+  it('accepts valid workflow- and job-level cache-mode values and rejects invalid ones', async () => {
+    for (const mode of ['read', 'write', 'write-only', 'none']) {
+      const valid = `cache-mode: ${mode}\non: push\njobs:\n  a:\n    runs-on: ubuntu-24.04\n    cache-mode: ${mode}\n    steps:\n      - run: echo ok\n`;
+      assert.deepEqual(await getParserFindings('cache-ok.yml', valid, 'workflow'), []);
+    }
+    const badValue = 'on: push\njobs:\n  a:\n    runs-on: ubuntu-24.04\n    cache-mode: bogus\n    steps:\n      - run: echo ok\n';
+    const badStep = 'on: push\njobs:\n  a:\n    runs-on: ubuntu-24.04\n    steps:\n      - run: echo ok\n        cache-mode: read\n';
+    assert.equal((await getParserFindings('bad-val.yml', badValue, 'workflow')).length, 1);
+    assert.equal((await getParserFindings('bad-step.yml', badStep, 'workflow')).length, 1);
+  });
+
   it('reports an expression syntax error at its line', async () => {
     const content = 'on: push\njobs:\n  a:\n    runs-on: ubuntu-24.04\n    steps:\n      - run: echo ${{ github.x( }}\n';
     const findings = await getParserFindings('bad.yml', content, 'workflow');

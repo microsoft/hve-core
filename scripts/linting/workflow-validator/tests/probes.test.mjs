@@ -13,7 +13,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '..', '..', '..', '..');
 const probesDir = join(here, '..', 'probes');
 const checkoutMetadata = 'name: checkout\ninputs:\n  ref:\n    description: ref\n';
-const MAPPED = new Set(['parser', 'pinning', 'runner-policy', 'zizmor']);
+const MAPPED = new Set(['parser', 'schema-overlay', 'pinning', 'runner-policy', 'zizmor']);
 
 function watches() {
   const register = parse(readFileSync(join(repoRoot, 'security', 'upstream-watches.yml'), 'utf8'));

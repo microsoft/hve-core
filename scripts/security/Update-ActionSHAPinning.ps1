@@ -88,7 +88,7 @@ $ActionSHAMap = @{
     "github/codeql-action/autobuild@v4"    = "github/codeql-action/autobuild@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2" # v4.38.2
     "github/codeql-action/analyze@v4"      = "github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2" # v4.38.2
     "github/codeql-action/upload-sarif@v4" = "github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2" # v4.38.2
-    "ossf/scorecard-action@v2"             = "ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a" # v2.4.3
+    "ossf/scorecard-action@v2"             = "ossf/scorecard-action@23f22cd43608bae7a1f1fa2603d7314dee9538a5" # v2.6.0
 
     # Azure
     "azure/login@v2"                       = "azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5" # v2.3.0

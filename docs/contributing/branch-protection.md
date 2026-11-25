@@ -3,7 +3,7 @@ title: Branch Protection Configuration
 description: Branch protection configuration for the hve-core repository
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - branch protection
@@ -20,13 +20,13 @@ The `main` branch of hve-core is governed by a GitHub repository ruleset named `
 
 Classic branch protection is inert on this repository. The API still reports `main` as `protected`, but `protection.enabled` is `false` and its status-check enforcement level is `off`, so nothing under Settings then Branches governs `main`. If you are looking for these settings, they live under Settings then Rules then Rulesets.
 
-> This page covers contributor-facing configuration and required status checks. For the security policy and rationale behind these controls, see [Branch Protection](../security/branch-protection.md).
+> This page covers contributor-facing configuration and required status checks. For the security policy and rationale behind these controls, see [Branch Protection](../security/branch-protection).
 
 The ruleset requires:
 
 * One aggregate status check, `PR Validation Success`, to pass, both on the pull request and again in the merge queue against the latest `main`
 * Two approving reviews, one of which satisfies Code Owner review
-* Approval of the most recent reviewable push, which is the control that protects against commits pushed after an approval
+* Automatic dismissal of stale approvals when new commits are pushed, paired with approval of the most recent reviewable push
 * Every review conversation resolved before merging
 * Squash merges only, with force-pushes and branch deletion blocked
 
@@ -53,10 +53,13 @@ The ruleset does not set the strict up-to-date policy (`strict_required_status_c
 | `require_last_push_approval`                      | true     | The most recent reviewable push needs approval from someone else           |
 | `required_review_thread_resolution`               | true     | Every review conversation must be resolved                                 |
 | `require_extra_approval_for_unattributed_changes` | true     | Adds one approval when Copilot opens a pull request under its own identity |
-| `dismiss_stale_reviews_on_push`                   | false    | Not enforced; accepted risk, see the note below                            |
+| `dismiss_stale_reviews_on_push`                   | true     | Clears existing approvals automatically when new commits are pushed        |
 | `dismissal_restriction`                           | disabled | No actor list restricts who may dismiss a review                           |
 
-Stale-review dismissal is not enforced, so an approval is not automatically cleared when new commits are pushed. `require_last_push_approval` compensates: the final push must itself be approved by someone other than the person who pushed it. That gap was assessed and accepted in [issue #2461](https://github.com/microsoft/hve-core/issues/2461), and the reasoning is summarized in [Branch Protection](../security/branch-protection.md).
+Stale-review dismissal and last-push approval are both enforced on `main`. Pushing new commits clears existing approvals so reviewers
+evaluate the updated branch state, and `require_last_push_approval` ensures the person who pushed the final commit cannot supply its
+required approval. Enabling `dismiss_stale_reviews_on_push` retired the earlier accepted gap from [issue #2461](https://github.com/microsoft/hve-core/issues/2461);
+see [Branch Protection](../security/branch-protection) for the policy summary.
 
 The `require_extra_approval_for_unattributed_changes` parameter is the ruleset field behind the feature GitHub documents as
 [additional approval for unattributed Copilot pull requests](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets#additional-approval-for-unattributed-copilot-pull-requests).
@@ -86,17 +89,13 @@ The `.github/CODEOWNERS` file defines code ownership:
 
 ## OpenSSF Scorecard
 
-The OpenSSF Scorecard Branch-Protection check scores this repository **5/10**. It reports two warnings:
+The OpenSSF Scorecard Branch-Protection check scores this repository **10/10** under Scorecard `v5.7.0` (`.github/workflows/scorecard.yml` pinned to `ossf/scorecard-action` `v2.6.0`).
 
-* `'stale review dismissal' is disabled on branch 'main'`
-* `'up-to-date branches' is disabled on branch 'main'`
-
-The score dropped from 9 to 5 when the merge queue replaced the strict up-to-date policy on 2026-10-04.
-Scorecard's Branch-Protection check counts up-to-date branches only through the strict policy and does not yet credit a ruleset merge queue;
-support is proposed in [ossf/scorecard#5281](https://github.com/ossf/scorecard/pull/5281).
-Because Scorecard scores in tiers, the missing up-to-date credit also withholds points for controls that are in place, such as the required status check and Code Owner review.
-
-Scorecard also does not model `require_last_push_approval` as a substitute for stale-review dismissal, so that compensating control earns no credit. Both warnings are scoring gaps with equivalent or compensating controls in place rather than open exposures. The corresponding code scanning alert, [#1](https://github.com/microsoft/hve-core/security/code-scanning/1), remains open. See [issue #2461](https://github.com/microsoft/hve-core/issues/2461) for the stale-review assessment.
+Scorecard `v5.7.0` includes [ossf/scorecard#5281](https://github.com/ossf/scorecard/pull/5281), which credits a repository ruleset
+merge queue for up-to-date branch protection without enabling `strict_required_status_checks_policy`. Together with
+`dismiss_stale_reviews_on_push` (`true`) on `main-branch-protection`, two required approvals, Code Owner review, last-push approval,
+and blocked force-pushes and branch deletion, all Branch-Protection tier requirements are satisfied and earlier code scanning alert
+[#1](https://github.com/microsoft/hve-core/security/code-scanning/1) is resolved on `main`.
 
 ## Configuration Reference
 
@@ -128,12 +127,10 @@ gh api repos/microsoft/hve-core/branches/main --jq '{protected, protection}'
 
 ## Change Management
 
-| Item                         | Details                                                                                                                    |
-|------------------------------|----------------------------------------------------------------------------------------------------------------------------|
-| Stale-review dismissal       | Off by decision; an accepted risk compensated by `require_last_push_approval`, not a pending change                        |
-| Strict up-to-date policy     | Off by design; the merge queue validates against the latest `main`. Revisit if Scorecard credits merge queues              |
-| `require_last_push_approval` | Must not be relaxed while stale-review dismissal is off; it is the basis for accepting that gap                            |
-| Documentation                | Update this page and [Branch Protection](../security/branch-protection.md) when the ruleset or its Scorecard score changes |
+| Item                     | Details                                                                                                                         |
+|--------------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| Strict up-to-date policy | Off by design; the merge queue validates against the latest `main`, and Scorecard `v5.7.0`+ credits ruleset merge queues        |
+| Documentation            | Update this page and [Branch Protection](../security/branch-protection) when the ruleset or its Scorecard configuration changes |
 
 ---
 

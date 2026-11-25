@@ -1,0 +1,12 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: probe cache-mode
+cache-mode: read
+permissions: {}
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    cache-mode: read
+    steps:
+      - run: echo ok

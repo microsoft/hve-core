@@ -77,6 +77,13 @@
     "description": "Current syntax is accepted (concurrency.queue, job.workflow_sha, $/ self-repository uses)"
   },
   {
+    "id": "cache-mode",
+    "file": "cache-mode.yml",
+    "expect": "clean",
+    "coveredBy": "schema-overlay",
+    "description": "Workflow- and job-level cache-mode is accepted (https://github.com/actions/languageservices/issues/397)"
+  },
+  {
     "id": "unknown-context-property",
     "file": "unknown-context-property.yml",
     "expect": "error",

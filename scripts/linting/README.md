@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-11-07
+ms.date: 2026-11-24
 ms.topic: reference
 keywords:
   - powershell
@@ -94,8 +94,10 @@ Configuration file for PSScriptAnalyzer rules.
 
 Validates every workflow and composite action with GitHub's own parser
 (`@actions/workflow-parser`) and runs the pinned shellcheck over every bash and
-sh `run:` script. It needs no ignore rules, disables no checks, and accepts
-current syntax such as `concurrency.queue`, `job.workflow_sha`, and `$/`.
+sh `run:` script. It needs no ignore rules, disables no checks, accepts
+current syntax such as `concurrency.queue`, `job.workflow_sha`, and `$/`, and
+overlays documented `cache-mode` values until `@actions/workflow-parser` ships
+<https://github.com/actions/languageservices/issues/397>.
 
 ##### Features
 
@@ -142,10 +144,11 @@ current syntax such as `concurrency.queue`, `job.workflow_sha`, and `$/`.
 
 ##### Capability probes
 
-`probes/` holds one small workflow per known-bad pattern plus a `modern-syntax`
-sample that must stay clean. `probes/probes.json` records each probe's expected
-parser outcome and which check covers the gap today (`parser`, a
-`workflow-check/*` rule, `pinning`, `runner-policy`, or `zizmor`).
+`probes/` holds one small workflow per known-bad pattern plus `modern-syntax`
+and `cache-mode` samples that should parse cleanly. `probes/probes.json` records
+each probe's expected parser outcome and which check covers the gap today
+(`parser`, `schema-overlay`, a `workflow-check/*` rule, `pinning`,
+`runner-policy`, or `zizmor`).
 `run-probes.mjs` runs the probes against the parser alone and writes
 observations for `Get-UpstreamWatchStatus.ps1`:
 
