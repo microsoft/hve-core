@@ -10512,17 +10512,19 @@ stimuli:
       A: In a stack, the checked-out branch is the third of four open branches. None
       has a pull request, and the user asks to create one for the checked-out
       branch.
-      B: In a stack where every branch has a pull request, the user asks to update
-      them after new local commits.
-      C: In a stack, the user asks to sync the pull requests with their base.
+      B: In a stack where every branch has a pull request and one branch was
+      rewritten locally, `gh stack push` cannot accept a pinned lease for the
+      inspected remote commit. How should the update publish?
+      C: In a stack, the user asks to sync the pull requests with their base when
+      rebasing is needed and `gh stack sync` cannot accept a pinned lease.
       D: Stack detection runs `gh stack view --json`, which exits 2 with stderr
       "failed to load stack state".
-      E: In a stack, right before a push, `git cherry` prints a `+` line for a
-      branch that has diverged from its GitHub copy.
+      E: In a stack, right before a push, `git cherry` prints nothing, but
+      `git rev-list --merges <local>..<remote>` returns a remote-only merge commit.
       Choose one value for each label:
       `A:` `gh-stack-submit-auto` | `gh-stack-link`
-      `B:` `gh-stack-push` | `gh-stack-submit`
-      `C:` `gh-pr-update-branch` | `gh-stack-sync`
+      `B:` `pinned-git-push` | `gh-stack-push`
+      `C:` `gh-pr-update-branch` | `rebase-then-pinned-push`
       `D:` `stop-and-report` | `use-ordinary-flow`
       `E:` `push-with-lease` | `stop-and-confirm`
       Return exactly five labeled lines without bullets or explanation.
@@ -10537,7 +10539,7 @@ stimuli:
       skill: pull-request
       shape: knowledge
       advisory: "true"
-      prompt_sha256: 13a5f50c81f2a2cf27f49783975d21080a8f1e17a2f8e5f5730f8c8bc6f20b43
+      prompt_sha256: f9169ba61445deb3f0e817b611fd31694a4e2739a011fc095f5ca51814bed1c5
     graders:
       - type: output-matches
         name: skill-pull-request-stack-commands-a
@@ -10546,11 +10548,11 @@ stimuli:
       - type: output-matches
         name: skill-pull-request-stack-commands-b
         config:
-          pattern: '(?im)^[^\w\n]*B[^\w\n]*gh-stack-push[^\w\n]*$'
+          pattern: '(?im)^[^\w\n]*B[^\w\n]*pinned-git-push[^\w\n]*$'
       - type: output-matches
         name: skill-pull-request-stack-commands-c
         config:
-          pattern: '(?im)^[^\w\n]*C[^\w\n]*gh-stack-sync[^\w\n]*$'
+          pattern: '(?im)^[^\w\n]*C[^\w\n]*rebase-then-pinned-push[^\w\n]*$'
       - type: output-matches
         name: skill-pull-request-stack-commands-d
         config:
@@ -10570,12 +10572,19 @@ stimuli:
       running local checks?
       C: The push remote is on Azure DevOps, and the user asks for `action=update`.
       D: The push remote is on Azure DevOps, and the user asks for `action=create`.
+      E: Outside a stack, the user asks for `action=sync` with `--rebase`, and
+      `gh pr update-branch --rebase` succeeds on GitHub. How should local
+      reconciliation proceed?
+      F: Outside a stack, the user asks for `action=update` while
+      `branch_needs_push` is `true`.
       Choose one value for each label:
       `A:` `stop-blocked` | `run-update-branch`
       `B:` `skip-both` | `run-both`
       `C:` `update-through-azure-devops` | `report-unsupported`
       `D:` `follow-backlog-management` | `use-gh-pr-create`
-      Return exactly four labeled lines without bullets or explanation.
+      `E:` `merge-ff-only` | `manual-reconcile`
+      `F:` `push-before-edit` | `edit-without-push`
+      Return exactly six labeled lines without bullets or explanation.
     agent_environment:
       skills:
         - ../../.github/skills/hve-core/pull-request
@@ -10587,7 +10596,7 @@ stimuli:
       skill: pull-request
       shape: knowledge
       advisory: "true"
-      prompt_sha256: 1e1825d36fbd2230a17e5714b495cc998869104a964b2f3d891d6403f0c8422d
+      prompt_sha256: a82248f94cc15c1e89fd7ada765d4deda09540451e08ace816b898362ed7bf33
     graders:
       - type: output-matches
         name: skill-pull-request-sync-and-routing-a
@@ -10605,22 +10614,37 @@ stimuli:
         name: skill-pull-request-sync-and-routing-d
         config:
           pattern: '(?im)^[^\w\n]*D[^\w\n]*follow-backlog-management[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-sync-and-routing-e
+        config:
+          pattern: '(?im)^[^\w\n]*E[^\w\n]*manual-reconcile[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-sync-and-routing-f
+        config:
+          pattern: '(?im)^[^\w\n]*F[^\w\n]*push-before-edit[^\w\n]*$'
 
   - name: skill-pull-request-checks-and-repairs
     prompt: |
-      Use the `pull-request` skill to decide each independent case.
+      Use the `pull-request` skill and its stacked pull request reference to decide
+      each independent case.
       A: A workflow that matches the changed files calls a `ci:*` wrapper, and no
       equivalent local command exists.
       B: The user asks to fix a reported lint failure. Other files in the working
       tree hold earlier, unrelated edits.
       C: The template has a box saying hosted CI passed, and only local checks ran.
       D: A repair commit changed the diff after the description was written.
+      E: In a stack create, a sync runs after preparation and rebases two branches
+      in scope. What must happen before creating their pull requests?
+      F: Before an ordinary push, the `git-merge` skill cannot be resolved by its
+      stable skill name.
       Choose one value for each label:
       `A:` `skip-it-entirely` | `run-its-safe-child-checks`
       `B:` `commit-only-the-fix` | `commit-all-changes`
       `C:` `leave-unchecked` | `check-it`
       `D:` `keep-the-first-draft` | `update-title-body-and-results`
-      Return exactly four labeled lines without bullets or explanation.
+      `E:` `create-with-first-draft` | `recollect-refresh-and-recheck`
+      `F:` `stop-before-push` | `push-without-conventions`
+      Return exactly six labeled lines without bullets or explanation.
     agent_environment:
       skills:
         - ../../.github/skills/hve-core/pull-request
@@ -10632,7 +10656,7 @@ stimuli:
       skill: pull-request
       shape: knowledge
       advisory: "true"
-      prompt_sha256: 03f606b76a3a6c5f0e4f376995231cabd8025edb01d7192bcade5305f170251e
+      prompt_sha256: bf732d1d0cb47ce39c8d26ccc7a23cc1afc9dfb61750adfe1d1d245883aaa198
     graders:
       - type: output-matches
         name: skill-pull-request-checks-and-repairs-a
@@ -10650,3 +10674,11 @@ stimuli:
         name: skill-pull-request-checks-and-repairs-d
         config:
           pattern: '(?im)^[^\w\n]*D[^\w\n]*update-title-body-and-results[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-checks-and-repairs-e
+        config:
+          pattern: '(?im)^[^\w\n]*E[^\w\n]*recollect-refresh-and-recheck[^\w\n]*$'
+      - type: output-matches
+        name: skill-pull-request-checks-and-repairs-f
+        config:
+          pattern: '(?im)^[^\w\n]*F[^\w\n]*stop-before-push[^\w\n]*$'

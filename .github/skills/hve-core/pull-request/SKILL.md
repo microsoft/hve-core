@@ -8,7 +8,7 @@ compatibility: 'Requires git. GitHub create and update use the available GitHub 
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0.0"
-  last_updated: "2026-11-08"
+  last_updated: "2026-11-24"
 ---
 
 # Pull Request
@@ -104,22 +104,24 @@ Publishing means pushing commits, creating or editing a pull request, marking it
 * When the intent is unclear, write the description, then ask one question that lists what would be published: each branch to push, the title, the target branch, and the draft state. One yes covers all of it. Ask the same question when a clear request would publish more than it named.
 * The Stop Rules always apply.
 
-Ordinary pushes follow the Push Authorization, Account Changes, and Execution Evidence rules in the `git-merge` skill's [merge conventions](../git-merge/references/merge-conventions.md), where a push the publishing rule allows counts as requested or approved. Those rules forbid force pushes and cover ordinary pushes only; stack pushes follow the stack reference. If a push fails or can't run, report the actual result and stop before any write that depends on it.
+For ordinary pushes, resolve the `git-merge` skill by its stable skill name, read `references/merge-conventions.md` relative to the selected skill root, and follow its Push Authorization, Account Changes, and Execution Evidence rules, where a push the publishing rule allows counts as requested or approved. If `git-merge` or its `references/merge-conventions.md` can't be resolved, report that and stop before pushing. Those rules forbid force pushes and cover ordinary pushes only; stack pushes follow the stack reference. If a push fails or can't run, report the actual result and stop before any write that depends on it.
 
 Before creating or editing, look for an open pull request with the same head and base:
 
-* `create`: return the URL of one that exists. Otherwise push when the branch needs it and create the pull request through the available GitHub integration with the title, body, base, and draft state.
-* `update`: read the current title and body, keep boxes and sections a person filled in, update the rest, and report what changed. Without an open pull request, say so and offer `create`.
+* `create`: return the URL of one that exists. Otherwise, when `branch_needs_push` is `true`, run the needed ordinary push first and stop before creating if the push fails or can't run. Then create the pull request through the available GitHub integration with the title, body, base, and draft state.
+* `update`: without an open pull request, say so and offer `create`. Otherwise, when `branch_needs_push` is `true`, run the needed ordinary push first and stop before editing the title or body if the push fails or can't run. Then read the current title and body, keep boxes and sections a person filled in, update the rest, and report what changed.
 * `sync` outside a stack:
-  * With every commit pushed, run `gh pr update-branch <number>`, which merges the base on GitHub (`--rebase` only when the user asks). Then run `git fetch <remote> <branch>` and, with a clean working tree, `git merge --ff-only` against the tracking branch.
   * Local commits that aren't on GitHub yet must be pushed first. The sync request didn't name that push, so ask the one question, or stop.
   * Without an open pull request, report how far the branch is behind its base and stop.
+  * With every commit pushed, record the current local head SHA (`git rev-parse refs/heads/<branch>`), run `gh pr update-branch <number>` (pass `--rebase` only when the user asks), then run `git fetch <remote> <branch>` and reconcile by path:
+    * Merge path (default): when the working tree is clean and `git rev-parse refs/heads/<branch>` still matches the recorded head (no intervening local commits), run `git merge --ff-only` against the fetched tracking branch. If the working tree is dirty, intervening local commits were added, or fast-forward isn't possible, report that the remote pull request updated on GitHub, leave the local branch untouched, and give manual reconciliation steps (resolve local changes, then fast-forward or integrate with the `git-merge` skill).
+    * Rebase path (`--rebase`): a remote rebase rewrites commits so the recorded local head is typically no longer an ancestor of the fetched tip. Do not run `git merge --ff-only` and do not reset the local branch automatically. Report that the remote pull request was rebased on GitHub with the fetched commit SHA, check whether `git rev-parse refs/heads/<branch>` still matches the recorded head and whether the working tree is clean, and give precise manual reconciliation steps: if unchanged and clean, confirm `git rev-parse HEAD` still equals the recorded head before resetting (`git reset --hard <remote>/<branch>`); if intervening local commits exist or the working tree is dirty, protect them by committing or stashing uncommitted work and replaying only the intervening commits onto the fetched tip (`git rebase --onto <remote>/<branch> <recorded-head>`) or reconciling with the `git-merge` skill.
   * If `gh pr update-branch` fails or is turned off, report it and suggest a local update with the `git-merge` skill.
   * A stacked pull request never uses `gh pr update-branch`; the stack reference covers its sync.
 
 ## Stop Rules
 
-* `Blocked`: the branch, base, merge base, template choice, commit conventions, or what to publish can't be resolved; a fix can't be separated from earlier edits; a commit fails; or stack detection stopped. Outside stack mode, a branch `behind` or `diverged` from its GitHub copy also blocks publishing, apart from `action=sync` on a branch that is only behind. Suggest `git pull --ff-only` when it's only behind, or a local merge or rebase with the `git-merge` skill when it has diverged.
+* `Blocked`: the branch, base, merge base, template choice, commit conventions, required `git-merge` push conventions, or what to publish can't be resolved; a fix can't be separated from earlier edits; a commit fails; or stack detection stopped. Outside stack mode, a branch `behind` or `diverged` from its GitHub copy also blocks publishing, apart from `action=sync` on a branch that is only behind. Suggest `git pull --ff-only` when it's only behind, or a local merge or rebase with the `git-merge` skill when it has diverged.
 * `Revise`: a required local check failed or can't run, a generated file is stale, or the description has an unsupported claim or sensitive text you can't remove. A requested repair stays `Revise` until the affected checks pass and its commit succeeds.
 * `Prepared`: the description is written and checked, and nothing was published.
 * `Created`, `Updated`, or `Synced`: only after returning each pull request URL with its hosted check state, or the sync result.
