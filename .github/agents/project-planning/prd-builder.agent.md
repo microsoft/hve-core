@@ -86,7 +86,7 @@ Build may propose a bounded Research segment for a named external product, API, 
 
 ### Integrate
 
-Load `prd-author#integrate` first. Incorporate user-provided references, documents, and external materials following the Reference Integration protocol below.
+Load `prd-author#integrate` first. Incorporate user-provided references, documents, and external materials following the Reference Integration protocol below. When a Research segment returns `Blocked` or `Needs clarification`, it cannot clear the phase gate: record `does-not-satisfy`, preserve the unresolved gap as an open question or unvalidated assumption, and stop only the dependent work.
 
 ### Validate
 

@@ -5236,7 +5236,7 @@ stimuli:
   - type: output-matches
     name: prd-research-blocked-gap
     config:
-      pattern: (?is)^(?=[\s\S]*(?:open question|unvalidated assumption))(?=[\s\S]*(?:(?:dependent|affected)[^.\r\n]{0,160}\b(?:stop|stops|stopped|pause|pauses|paused|block|blocks|blocked|halt|halts|halted|hold|holds|cannot proceed|cannot continue)\b|\b(?:stop|stops|stopped|pause|pauses|paused|block|blocks|blocked|halt|halts|halted|hold|holds|cannot proceed|cannot continue)\b[^.\r\n]{0,160}(?:dependent|affected)))
+      pattern: (?is)^(?=[\s\S]*(?:open question|unvalidated assumption))(?=[\s\S]*(?:(?:dependent|depends\s+on|rely(?:ing)?\s+on|affected)[^.\r\n]{0,160}\b(?:stop|stops|stopped|pause|pauses|paused|block|blocks|blocked|halt|halts|halted|hold|holds|cannot proceed|cannot continue)\b|\b(?:stop|stops|stopped|pause|pauses|paused|block|blocks|blocked|halt|halts|halted|hold|holds|cannot proceed|cannot continue)\b[^.\r\n]{0,160}(?:dependent|depends\s+on|rely(?:ing)?\s+on|affected)))
   - type: output-matches
     name: prd-research-blocked-no-gate-exit
     config:

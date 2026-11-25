@@ -1226,7 +1226,7 @@ console.log(JSON.stringify(results));
     }
     @{
       Spec = 'stimuli/prd-builder.yml'; Scenario = 'prd-builder-research-blocked'; Grader = 'prd-research-blocked-gap'; Count = 3
-      Accept = @('Record an open question. The dependent work must stop.', 'Pause the evidence-dependent conclusion and keep an unvalidated assumption.', 'Keep an open question; affected requirements cannot proceed.')
+      Accept = @('Record an open question. The dependent work must stop.', 'Pause the evidence-dependent conclusion and keep an unvalidated assumption.', 'Keep an open question; affected requirements cannot proceed.', 'Keep an open question; only work that depends on the answer stops.')
       Reject = @('Record an open question and continue the dependent work.', 'The dependent work must stop.', 'Record an open question. Unrelated work continues.')
     }
     @{

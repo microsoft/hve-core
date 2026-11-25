@@ -66,7 +66,7 @@ For every material finding used or considered by the builder:
 3. Record affected document sections or stable requirement IDs and the disposition rationale.
 4. Preserve unresolved evidence as an open question or unvalidated assumption.
 
-`Blocked` or `Needs clarification` Research cannot satisfy a lifecycle gate or support an evidence-dependent conclusion. Record the smallest unresolved gap and stop only the dependent work. If `rpi-research` or a required lookup capability is unavailable, do not replace it with training-data claims.
+`Blocked` or `Needs clarification` Research cannot satisfy a lifecycle gate or support an evidence-dependent conclusion. Record the smallest unresolved gap as an open question or unvalidated assumption and stop only the dependent work. If `rpi-research` or a required lookup capability is unavailable, do not replace it with training-data claims.
 
 Research cannot approve a requirement, validate user need, grant signoff, override a signed-off BRD, issue a feasibility verdict, or choose a product decision reserved for the user or owning workflow.
 
@@ -137,7 +137,7 @@ Field rules:
 * `outcome` is a concise result, not a copied artifact body.
 * `notEstablished` carries the segment's limits with the invocation.
 * `findingDispositions` retains the existing Research disposition shape so document projection remains stable. Use an empty array for non-Research capabilities.
-* `unresolvedItems` contains concise gap identifiers or questions, not duplicated evidence bodies.
+* `unresolvedItems` contains concise open questions, unvalidated assumptions, or gap identifiers, not duplicated evidence bodies.
 
 ## Legacy Research Receipt Compatibility
 
