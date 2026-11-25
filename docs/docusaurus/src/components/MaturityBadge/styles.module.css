@@ -2,6 +2,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+  margin-left: auto;
   padding: 0.125rem 0.5rem;
   border-radius: 2px;
   font-size: 0.75rem;
@@ -46,7 +47,7 @@
   text-transform: none;
   white-space: normal;
   width: max-content;
-  max-width: min(15rem, calc(100vw - 2.5rem));
+  max-width: min(15rem, 220px, calc(100vw - 2.5rem));
   z-index: 10;
   pointer-events: auto;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
