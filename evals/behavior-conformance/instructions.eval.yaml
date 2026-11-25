@@ -1813,3 +1813,143 @@ stimuli:
         name: typescript-doc-comments-exempt-declarations
         config:
           pattern: '(?m)(?=[\s\S]*^[^\w\n]*E\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*F\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*G\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*H\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*I\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)'
+
+  - name: instruction-code-review-telemetry-conformance
+    prompt: |
+      Read the staged `.github/instructions/git/code-review-telemetry.instructions.md`.
+      Which file glob does it apply to, and what telemetry condition does it require
+      flagging in code-review reports?
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/git/code-review-telemetry.instructions.md
+          dest: .github/instructions/git/code-review-telemetry.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: code-review-telemetry
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-code-review-telemetry-applyto
+        config:
+          pattern: '(?i)\.copilot-tracking/reviews/code-reviews'
+      - type: output-matches
+        name: instruction-code-review-telemetry-rule
+        config:
+          pattern: '(?is)(?=.*production\s+code)(?=.*semantic[-\s]convention)'
+
+  - name: instruction-privacy-telemetry-conformance
+    prompt: |
+      Read the staged `.github/instructions/privacy/privacy-telemetry.instructions.md`.
+      Which directories does it apply to, what auditable events must privacy plans
+      record, what must privacy reviews flag, and which skill supplies PII conventions?
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/privacy/privacy-telemetry.instructions.md
+          dest: .github/instructions/privacy/privacy-telemetry.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: privacy-telemetry
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-privacy-telemetry-applyto
+        config:
+          pattern: '(?is)(?=.*\.copilot-tracking/privacy-plans)(?=.*\.copilot-tracking/privacy-reviews)'
+      - type: output-matches
+        name: instruction-privacy-telemetry-signals
+        config:
+          pattern: '(?is)(?=.*consent)(?=.*(?:retention|erasure))(?=.*telemetry-foundations)'
+
+  - name: instruction-planning-telemetry-conformance
+    prompt: |
+      Read the staged `.github/instructions/project-planning/planning-telemetry.instructions.md`.
+      Under which section must an ADR record its telemetry strategy and cite
+      `telemetry-foundations`, and under which two sections must a PRD capture
+      telemetry acceptance criteria?
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/project-planning/planning-telemetry.instructions.md
+          dest: .github/instructions/project-planning/planning-telemetry.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: planning-telemetry
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-planning-telemetry-adr
+        config:
+          pattern: '(?is)(?=.*Consequences)(?=.*telemetry-foundations)'
+      - type: output-matches
+        name: instruction-planning-telemetry-prd
+        config:
+          pattern: '(?is)(?=.*Success\s+Metrics)(?=.*Operational\s+Readiness)'
+
+  - name: instruction-rai-telemetry-conformance
+    prompt: |
+      Read the staged `.github/instructions/rai/rai-telemetry.instructions.md`.
+      Which directory glob does it apply to, which three model-output metrics must
+      an impact assessment record, and which skill supplies instrument, unit, and
+      PII conventions?
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/rai/rai-telemetry.instructions.md
+          dest: .github/instructions/rai/rai-telemetry.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: rai-telemetry
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-rai-telemetry-applyto
+        config:
+          pattern: '(?i)\.copilot-tracking/rai-plans'
+      - type: output-matches
+        name: instruction-rai-telemetry-metrics
+        config:
+          pattern: '(?is)(?=.*latency)(?=.*refusal\s+rate)(?=.*content[-\s]filter)(?=.*telemetry-foundations)'
+
+  - name: instruction-implementation-telemetry-conformance
+    prompt: |
+      Read the staged `.github/instructions/rpi/implementation-telemetry.instructions.md`.
+      Which directory glob does it apply to, and what check must occur before
+      marking an implementation step complete?
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/rpi/implementation-telemetry.instructions.md
+          dest: .github/instructions/rpi/implementation-telemetry.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: implementation-telemetry
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-implementation-telemetry-applyto
+        config:
+          pattern: '(?i)\.copilot-tracking/changes'
+      - type: output-matches
+        name: instruction-implementation-telemetry-rule
+        config:
+          pattern: '(?is)(?=.*emitter)(?=.*attributes?)(?=.*telemetry-foundations)'
+
+  - name: instruction-security-telemetry-conformance
+    prompt: |
+      Read the staged `.github/instructions/security/security-telemetry.instructions.md`.
+      What does it require for security plans, supply-chain plans, and supply-chain
+      reviews, including the resource attribute prefixes and vocabulary skill?
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/security/security-telemetry.instructions.md
+          dest: .github/instructions/security/security-telemetry.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: security-telemetry
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-security-telemetry-security-plans
+        config:
+          pattern: '(?is)(?=.*STRIDE)(?=.*severity)(?=.*telemetry-foundations)'
+      - type: output-matches
+        name: instruction-security-telemetry-supply-chain
+        config:
+          pattern: '(?is)(?=.*vcs\.\*)(?=.*ci\.\*)'

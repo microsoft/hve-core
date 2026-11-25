@@ -10596,3 +10596,193 @@ stimuli:
         name: skill-code-review-bleed-detection-functional-default
         config:
           pattern: '(?i)((?<!non[-\s])\bfunctional\b|opt[-\s]in|explicitly\s+request(?:ed|s)?|unloaded)'
+
+  - name: skill-ado-backlog-knowledge
+    prompt: |
+      Read the `ado-backlog` skill. Which skills does it route read-only planning,
+      PRD hierarchies, and authorized writes to, and which sibling skills handle
+      Azure Repos pull requests and Azure Pipelines builds?
+    agent_environment:
+      skills:
+        - ../../.github/skills/azure-devops/ado-backlog
+      files:
+        - src: ../../.github/skills/azure-devops/ado-backlog
+          dest: .github/skills/azure-devops/ado-backlog
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: ado-backlog
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-ado-backlog-knowledge-routing
+        config:
+          pattern: '(?is)(?=.*backlog-plan)(?=.*functional-planner)(?=.*backlog-execute)'
+      - type: output-matches
+        name: skill-ado-backlog-knowledge-peers
+        config:
+          pattern: '(?is)(?=.*ado-pull-request)(?=.*ado-build-info)'
+
+  - name: skill-ado-pull-request-knowledge
+    prompt: |
+      Read the `ado-pull-request` skill. Contrast its `prepare` and `create` modes,
+      state what preflight requirement applies before creation, and explain whether
+      updating or completing an existing Azure Repos pull request is in scope.
+    agent_environment:
+      skills:
+        - ../../.github/skills/azure-devops/ado-pull-request
+      files:
+        - src: ../../.github/skills/azure-devops/ado-pull-request
+          dest: .github/skills/azure-devops/ado-pull-request
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: ado-pull-request
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-ado-pull-request-knowledge-modes
+        config:
+          pattern: '(?is)(?=.*\bprepare\b)(?=.*\bcreate\b)(?=.*preflight)'
+      - type: output-matches
+        name: skill-ado-pull-request-knowledge-boundary
+        config:
+          pattern: '(?is)(?=.*(?:local\s+Git|no\s+Azure\s+DevOps|local\s+proposal))(?=.*(?:outside|out\s+of\s+scope|not\s+in\s+scope))'
+
+  - name: skill-github-backlog-knowledge
+    prompt: |
+      Read the `github-backlog` skill. Which skills handle read-only planning, PRD
+      hierarchies, and authorized writes, which subagent handles approved backlog
+      refinement writeback, and which skill handles GitHub pull requests beyond
+      backlog fields?
+    agent_environment:
+      skills:
+        - ../../.github/skills/git/github-backlog
+      files:
+        - src: ../../.github/skills/git/github-backlog
+          dest: .github/skills/git/github-backlog
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: github-backlog
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-github-backlog-knowledge-routing
+        config:
+          pattern: '(?is)(?=.*backlog-plan)(?=.*functional-planner)(?=.*backlog-execute)'
+      - type: output-matches
+        name: skill-github-backlog-knowledge-pr-boundary
+        config:
+          pattern: '(?is)(?=.*pull-request)(?=.*GitHub\s+Backlog\s+Executor)'
+
+  - name: skill-privacy-disclaimers-knowledge
+    prompt: |
+      Read the `privacy-disclaimers` skill. Name the two H2 disclaimer sections it
+      provides, explain which role uses each section, and state what the CAUTION
+      notices say about qualified human reviewers.
+    agent_environment:
+      skills:
+        - ../../.github/skills/privacy/privacy-disclaimers
+      files:
+        - src: ../../.github/skills/privacy/privacy-disclaimers
+          dest: .github/skills/privacy/privacy-disclaimers
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: privacy-disclaimers
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-privacy-disclaimers-knowledge-sections
+        config:
+          pattern: '(?is)(?=.*Privacy\s+Planning)(?=.*Privacy\s+Review)'
+      - type: output-matches
+        name: skill-privacy-disclaimers-knowledge-caution
+        config:
+          pattern: '(?is)(?=.*assistive)(?=.*qualified\s+(?:human|privacy)\s+reviewers?)'
+
+  - name: skill-project-planning-disclaimers-knowledge
+    prompt: |
+      Read the `project-planning-disclaimers` skill. List all four H2 disclaimer
+      sections it owns and summarize what the CAUTION notices say about human
+      review and sign-off.
+    agent_environment:
+      skills:
+        - ../../.github/skills/project-planning/project-planning-disclaimers
+      files:
+        - src: ../../.github/skills/project-planning/project-planning-disclaimers
+          dest: .github/skills/project-planning/project-planning-disclaimers
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: project-planning-disclaimers
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-project-planning-disclaimers-sections
+        config:
+          pattern: '(?is)(?=.*Outcome[-\s]Hypothesis)(?=.*ADR\s+Planning)(?=.*PRD\s+Requirements\s+Planning)(?=.*BRD\s+Requirements\s+Planning)'
+      - type: output-matches
+        name: skill-project-planning-disclaimers-caution
+        config:
+          pattern: '(?is)(?=.*assistive)(?=.*qualified\s+human\s+reviewers)'
+
+  - name: skill-security-disclaimers-knowledge
+    prompt: |
+      Read the `security-disclaimers` skill. List all three H2 disclaimer sections
+      it provides and summarize what the CAUTION notices state about independent
+      review and approval.
+    agent_environment:
+      skills:
+        - ../../.github/skills/project-planning/security-disclaimers
+      files:
+        - src: ../../.github/skills/project-planning/security-disclaimers
+          dest: .github/skills/project-planning/security-disclaimers
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: security-disclaimers
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-security-disclaimers-knowledge-sections
+        config:
+          pattern: '(?is)(?=.*Security\s+Planning)(?=.*SSSC\s+Planning)(?=.*Security[-\s]Review)'
+      - type: output-matches
+        name: skill-security-disclaimers-knowledge-caution
+        config:
+          pattern: '(?is)(?=.*assistive)(?=.*qualified\s+(?:human|security)\s+reviewers?)'
+
+  - name: skill-rai-disclaimers-knowledge
+    prompt: |
+      Read the `rai-disclaimers` skill. Name the H2 disclaimer section it defines,
+      which agents use it verbatim, and what the CAUTION notice states about
+      Responsible AI review boards and human reviewers.
+    agent_environment:
+      skills:
+        - ../../.github/skills/rai/rai-disclaimers
+      files:
+        - src: ../../.github/skills/rai/rai-disclaimers
+          dest: .github/skills/rai/rai-disclaimers
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: rai-disclaimers
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-rai-disclaimers-knowledge-section
+        config:
+          pattern: '(?is)(?=.*RAI\s+Planning)(?=.*Responsible\s+AI\s+review\s+boards)'
+      - type: output-matches
+        name: skill-rai-disclaimers-knowledge-caution
+        config:
+          pattern: '(?is)(?=.*assistive)(?=.*qualified\s+human\s+reviewers)'
