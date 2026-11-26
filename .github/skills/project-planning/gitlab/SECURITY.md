@@ -2,7 +2,7 @@
 title: GitLab Skill Security Model
 description: STRIDE threat model for the GitLab skill covering API egress, credentials, git project resolution, caller input, the OAuth callback listener, and profile storage
 author: microsoft/hve-core
-ms.date: 2026-08-18
+ms.date: 2026-11-26
 ms.topic: reference
 estimated_reading_time: 11
 keywords:
@@ -69,7 +69,7 @@ and server-side authorization that local logout does not revoke.
 1. `scripts/gitlab.py` — CLI entry point, API transport, command dispatch, and audit logging.
 2. `scripts/_gitlab_oauth.py` — public-client PKCE, device authorization, token parsing, and refresh exchange.
 3. `scripts/_gitlab_credentials.py` — profile validation, POSIX mode-0600 persistence, Windows fail-close, and cross-process locking.
-4. Hardened opener (`_OPENER` / `_NoRedirect`) — enforces TLS, refuses 30x redirects, and caps response bodies.
+4. Hardened transport (`_OPENER` / `_NoRedirect`, `require_base_environment`, `_read_capped`) — the opener refuses 30x redirects, HTTPS is enforced when `GITLAB_URL` is validated, and response bodies are capped on read.
 5. `git remote get-url origin` subprocess — read-only project resolution when `GITLAB_PROJECT` is unset.
 
 ### Data Flow
@@ -92,7 +92,7 @@ flowchart TD
         API["GitLab REST API + CI job traces"]
     end
     CLI -->|"reads per invocation"| ENVCRED
-    CLI -->|"resolve project on cache miss"| GIT
+    CLI -->|"resolve project when GITLAB_PROJECT is unset"| GIT
     CLI -->|"open authorize URL + PKCE challenge"| CONSENT
     CONSENT -->|"code + state over HTTP loopback"| LOOP
     LOOP -->|"validated code + state"| CLI
@@ -137,26 +137,26 @@ flowchart TD
 
 ## Assets
 
-| Id | Asset                                    | Lifetime         | Notes                                                                                                       |
-|----|------------------------------------------|------------------|-------------------------------------------------------------------------------------------------------------|
-| A1 | GitLab OAuth access token                | Short-lived      | Stored in a bound profile and sent as `Authorization: Bearer`.                                              |
-| A2 | Rotating OAuth refresh token             | Provider-managed | Exchanged only against the trusted issuer/client binding and stored in the owner-only profile store.        |
-| A3 | Explicit legacy PAT                      | Operator-managed | Read from `GITLAB_TOKEN` only when `GITLAB_AUTH_MODE=legacy-token`.                                         |
-| A4 | OAuth code, device code, state, verifier | One flow         | Temporary capabilities; the PKCE verifier and state remain process-local.                                   |
-| A5 | Profile store and lock state             | Persistent       | Schema, issuer/client binding, usability, expiry, scopes, and cross-process coordination state.             |
-| A6 | `GITLAB_URL` and public client ID        | Operator-managed | Trusted issuer/client identity used to bind profiles and egress.                                            |
-| A7 | Git remote URL                           | Command lifetime | May embed credentials; sanitized before diagnostics.                                                        |
-| A8 | API payloads, CI traces, diagnostics     | Command lifetime | Untrusted server content and optional operational audit data; never contains intentional credential output. |
+| Id | Asset                                    | Lifetime         | Notes                                                                                                                                  |
+|----|------------------------------------------|------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| A1 | GitLab OAuth access token                | Short-lived      | Stored in a bound profile and sent as `Authorization: Bearer`.                                                                         |
+| A2 | Rotating OAuth refresh token             | Provider-managed | Exchanged only against the trusted issuer/client binding and stored in the owner-only profile store.                                   |
+| A3 | Explicit legacy PAT                      | Operator-managed | Read from `GITLAB_TOKEN` only when `GITLAB_AUTH_MODE=legacy-token`.                                                                    |
+| A4 | OAuth code, device code, state, verifier | One flow         | Temporary capabilities; the PKCE verifier remains process-local, and state travels in the authorization URL and is compared on return. |
+| A5 | Profile store and lock state             | Persistent       | Schema, issuer/client binding, usability, expiry, scopes, and cross-process coordination state.                                        |
+| A6 | `GITLAB_URL` and public client ID        | Operator-managed | Trusted issuer/client identity used to bind profiles and egress.                                                                       |
+| A7 | Git remote URL                           | Command lifetime | May embed credentials; sanitized before diagnostics.                                                                                   |
+| A8 | API payloads, CI traces, diagnostics     | Command lifetime | Untrusted server content and optional operational audit data; never contains intentional credential output.                            |
 
 ## Adversaries
 
-| Id    | Adversary                                             | In-scope mitigations                                                                                                                                                                     |
-|-------|-------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ADV-a | Same-uid malware on the operator workstation          | **Not defended.** A process running as the operator can read the environment and git config directly. Workstation hygiene is the controlling defense.                                    |
-| ADV-b | Network attacker on the CLI ↔ GitLab channel          | TLS with stdlib certificate validation; HTTP redirects refused (`_NoRedirect`); HTTPS required for non-loopback hosts; capped, content-type-checked response parser.                     |
-| ADV-c | Hostile or malformed GitLab server / response         | No-redirect opener; response size cap (`MAX_BODY_BYTES`); JSON content-type fail-closed; error and non-JSON bodies redacted and size-previewed before display.                           |
-| ADV-d | Hostile local git remote                              | Subprocess uses an arg list (no shell) with an explicit timeout; embedded credentials stripped for logging (`_sanitize_remote_url`); resolved path validated (`_validate_project_path`). |
-| ADV-e | Hostile caller process controlling argv / stdin / env | Inputs validated/encoded; `GITLAB_URL` canonicalized to origin-only; `state`/`ref`/numeric IDs validated; stdin/JSON size-capped before parse.                                           |
+| Id    | Adversary                                             | In-scope mitigations                                                                                                                                                                              |
+|-------|-------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ADV-a | Same-uid malware on the operator workstation          | **Not defended.** A process running as the operator can read the environment and git config directly. Workstation hygiene is the controlling defense.                                             |
+| ADV-b | Network attacker on the CLI ↔ GitLab channel          | TLS with stdlib certificate validation; HTTP redirects refused (`_NoRedirect`); HTTPS required for non-loopback hosts; capped response reads, with a content-type check on OAuth token responses. |
+| ADV-c | Hostile or malformed GitLab server / response         | No-redirect opener; response size cap (`MAX_BODY_BYTES`); OAuth token responses fail closed on a non-JSON content type; error and non-JSON bodies redacted and size-previewed before display.     |
+| ADV-d | Hostile local git remote                              | Subprocess uses an arg list (no shell) with an explicit timeout; embedded credentials stripped for logging (`_sanitize_remote_url`); resolved path validated (`_validate_project_path`).          |
+| ADV-e | Hostile caller process controlling argv / stdin / env | Inputs validated/encoded; `GITLAB_URL` canonicalized to origin-only; `state`/`ref`/numeric IDs validated; JSON read from stdin size-capped before parse.                                          |
 
 ## Bucket B1: CLI → GitLab API
 
@@ -182,7 +182,7 @@ All REST calls target the configured `GITLAB_URL` over `urllib.request` through 
 
 * OAuth uses `Authorization: Bearer`; explicit legacy mode uses `PRIVATE-TOKEN`. Both are sent only over TLS and are never logged.
 * The token-bearing opener blocks 30x, preventing a hostile redirect from forwarding the token to a non-GitLab origin (`_NoRedirect`).
-* The transport requires a JSON content type when JSON is expected and reads through `_read_capped`; a missing or non-JSON content type fails closed.
+* OAuth token responses fail closed on a missing or non-JSON content type and on a body over `MAX_TOKEN_BODY_BYTES` (`_parse_json_response`). REST responses are read through `_read_capped` and truncated at `MAX_BODY_BYTES`. `_request_bytes` implements a JSON content-type check behind `require_json`, but `request()` and `cmd_job_log` call it with `require_json=False`, so a non-JSON REST body is printed as a redacted, size-limited preview instead of being rejected.
 * HTTP error bodies are parsed first, then redacted for presentation; a dict error without `message`/`error` produces a single structured redacted summary (`_request_bytes`). Non-JSON bodies that the CLI prints for usability are passed through `_redact` and capped via `_preview_text`.
 * `_redact` scrubs the `Bearer`/`Basic` scheme-plus-value pair first, then `PRIVATE-TOKEN`/`X-API-Key`/`Authorization`/`Proxy-Authorization`/`Cookie`/`Set-Cookie`/`token`/`password`/`secret` and query-string secrets. It additionally applies `_REDACT_PATTERNS`, which mask every `_REDACT_KEYS` entry in JSON shape (`"key": "value"`), bare form shape (`key=value`, with no leading `?` or `&` required), and Azure Blob SAS query strings. `code_challenge` is deliberately excluded because a PKCE challenge is public by design and masking it would corrupt an authorization URL.
 * Transport failures raise `GitLabAPIError`, whose `__str__` renders only the status, method, query-stripped resource, redacted summary, and a character-validated request ID. The raw response body, the query-bearing request URL, and the header dictionary are never part of the rendered string (`_scrub_url`, `_response_request_id`).
@@ -199,7 +199,7 @@ All REST calls target the configured `GITLAB_URL` over `urllib.request` through 
 
 ### TLS posture
 
-Every GitLab call uses the stdlib opener with no custom `SSLContext`, CA-bundle flag, or pinning. Operators inherit Python's default HTTPS behavior: validation uses the system trust store; internal CAs require `SSL_CERT_FILE`/`SSL_CERT_DIR`; there is no pinning or mTLS (G-TLS-1). HTTPS is required for non-loopback hosts; plaintext `http://` is refused for non-loopback hosts even when `GITLAB_ALLOW_INSECURE=1` is set, and is permitted only for loopback hosts when `GITLAB_ALLOW_INSECURE=1` is explicitly set — an opt-in gate mirroring the jira skill. `cmd_job_log` continues to emit redacted, untrusted CI trace content with truncation.
+Every GitLab call uses the stdlib opener with no custom `SSLContext`, CA-bundle flag, or pinning. Operators inherit Python's default HTTPS behavior: validation uses the system trust store; internal CAs require `SSL_CERT_FILE`/`SSL_CERT_DIR`; there is no pinning or mTLS (G-TLS-1). HTTPS is required for non-loopback hosts; plaintext `http://` is refused for non-loopback hosts even when `GITLAB_ALLOW_INSECURE=1` is set, and is permitted only for loopback hosts when `GITLAB_ALLOW_INSECURE=1` is explicitly set — an opt-in gate mirroring the jira skill. The loopback test (`_is_loopback`, and the stored-issuer check in `_gitlab_credentials.py`) accepts `localhost`, `::1`, and any host that begins with `127.`; that last part is a string prefix, so a DNS name such as `127.example.com` also passes it. `cmd_job_log` continues to emit redacted, untrusted CI trace content with truncation.
 
 ### Risk Rating
 
@@ -226,7 +226,7 @@ refresh tokens. Legacy mode reads a PAT from `GITLAB_TOKEN`.
 ### Repudiation
 
 * Missing, malformed, mixed, or mismatched credentials fail fast with a usage
-    exit code via `die`.
+    exit code by raising `GitLabError` with `EXIT_USAGE`.
 
 ### Information Disclosure
 
@@ -234,7 +234,7 @@ refresh tokens. Legacy mode reads a PAT from `GITLAB_TOKEN`.
 
 ### Denial of Service
 
-* Profile reads and writes are serialized with an advisory lock whose cross-process acquisition is bounded by a finite timeout.
+* Profile writes, and the reread that precedes token use or refresh, are serialized with an advisory lock whose cross-process acquisition is bounded by a finite timeout. The initial profile binding check in `require_environment` and `auth status` read the atomically replaced store without taking the lock.
 
 ### Elevation of Privilege
 
@@ -267,7 +267,7 @@ When `GITLAB_PROJECT` is unset, the skill resolves the project from the local gi
 
 ### Information Disclosure
 
-* `_sanitize_remote_url` strips embedded credentials from the remote URL before it appears in any error message, so a remote like `https://user:pass@host/group/project.git` never leaks its secret to stderr.
+* `_sanitize_remote_url` strips `user[:password]@` from `http://` and `https://` remote URLs before they appear in any error message, so a remote like `https://user:pass@host/group/project.git` never leaks its secret to stderr. Its pattern is anchored to those two schemes, so userinfo in another URL form (for example `ssh://user:pass@host/group/project.git`) is not removed.
 
 ### Denial of Service
 
@@ -297,11 +297,11 @@ The caller controls argv, environment, stdin, stdout, and stderr; the CLI treats
 ### Tampering
 
 * Arguments are parsed locally; handlers validate identifiers, `state`, `ref`, and numeric IDs, and encode interpolated segments before issuing requests.
-* JSON payloads are parsed through `load_json_payload` with a size cap enforced before `json.loads`.
+* JSON payloads read from stdin are capped at `MAX_BODY_BYTES` by the command handlers before `load_json_payload` calls `json.loads`. A payload passed as an argument is bounded only by the operating system's argument limit.
 
 ### Repudiation
 
-* Validation, authentication, and runtime failures map to distinct exit codes for attribution by a calling step.
+* Usage and configuration failures, including missing or mismatched credentials, exit `2`. Runtime and API failures, including a `401` or `403` from GitLab and a failed token refresh, exit `1`. An interrupt exits `130` and a broken pipe `141`.
 
 ### Information Disclosure
 
@@ -415,18 +415,18 @@ On POSIX, OAuth profiles are stored beneath a dedicated owner-only directory wit
 
 The following are known limitations recorded so operators can make informed deployment decisions. Severity ratings are the project's own assessment and are not equivalent to a CVSS score.
 
-| Id      | Gap                                                                                                                                                                                  | Severity        | Status                                                                                                        |
-|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|---------------------------------------------------------------------------------------------------------------|
-| G-REP-1 | The write-ahead attempt is fail-closed, but the outcome is best-effort and the operator-supplied file is not signed or append-only.                                                  | Repudiation-Med | By design; integrate with host telemetry for tamper-evident logging.                                          |
-| G-INF-1 | The CLI prints redacted non-JSON response bodies to stdout/stderr for usability; redaction is a broad regex backstop that may over- or under-cover novel secret formats.             | InfoDisc-Low    | Accepted; monitor and extend `_redact` as new secret formats appear.                                          |
-| G-INF-2 | `_REDACT_KEYS` enumerates known credential field names; a novel or vendor-specific field name is masked only if it also matches the header, `Bearer`/`Basic`, or query-string rules. | InfoDisc-Low    | Accepted; extend `_REDACT_KEYS` as new credential shapes appear. `tests/test_gitlab_helpers.py` pins the set. |
-| G-INF-3 | Same-uid processes can read the OAuth store despite owner-only filesystem permissions.                                                                                               | InfoDisc-Med    | Accepted workstation boundary; evaluate an OS keyring separately where policy requires it.                    |
-| G-DOS-1 | A crash or malformed successful response between provider refresh rotation and durable local commit can invalidate the retained refresh token and require re-login.                  | DoS-Med         | Fail closed by marking uncertain profiles unusable; re-run login.                                             |
-| G-EOP-1 | Local logout cannot revoke OAuth authorization, and the skill cannot revoke a leaked OAuth access token, refresh token, or legacy PAT.                                               | EoP-Med         | Upstream control; rotate or revoke at the GitLab instance on suspicion of compromise.                         |
-| G-SUP-1 | Python dependencies are declared in `pyproject.toml` but transitive hashes are not pinned and no SBOM is published; transport/subprocess/redaction fuzz coverage is partial.         | SupplyChain-Med | Tracked at the repository level.                                                                              |
-| G-TLS-1 | No certificate pinning for the GitLab origin; TLS validation depends entirely on the system trust store.                                                                             | InfoDisc-Low    | Operator-acceptable for a managed GitLab endpoint; documented for customers whose policy mandates pinning.    |
+| Id      | Gap                                                                                                                                                                                                                                                                           | Severity        | Status                                                                                                        |
+|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|---------------------------------------------------------------------------------------------------------------|
+| G-REP-1 | The write-ahead attempt is fail-closed, but the outcome is best-effort and the operator-supplied file is not signed or append-only.                                                                                                                                           | Repudiation-Med | By design; integrate with host telemetry for tamper-evident logging.                                          |
+| G-INF-1 | The CLI prints redacted non-JSON response bodies to stdout/stderr for usability; redaction is a broad regex backstop that may over- or under-cover novel secret formats.                                                                                                      | InfoDisc-Low    | Accepted; monitor and extend `_redact` as new secret formats appear.                                          |
+| G-INF-2 | `_REDACT_KEYS` enumerates known credential field names; a novel or vendor-specific field name is masked only if it also matches the header, `Bearer`/`Basic`, or query-string rules.                                                                                          | InfoDisc-Low    | Accepted; extend `_REDACT_KEYS` as new credential shapes appear. `tests/test_gitlab_helpers.py` pins the set. |
+| G-INF-3 | Same-uid processes can read the OAuth store despite owner-only filesystem permissions.                                                                                                                                                                                        | InfoDisc-Med    | Accepted workstation boundary; evaluate an OS keyring separately where policy requires it.                    |
+| G-DOS-1 | A crash or malformed successful response between provider refresh rotation and durable local commit can invalidate the retained refresh token and require re-login.                                                                                                           | DoS-Med         | Fail closed by marking uncertain profiles unusable; re-run login.                                             |
+| G-EOP-1 | Local logout cannot revoke OAuth authorization, and the skill cannot revoke a leaked OAuth access token, refresh token, or legacy PAT.                                                                                                                                        | EoP-Med         | Upstream control; rotate or revoke at the GitLab instance on suspicion of compromise.                         |
+| G-SUP-1 | The CLI has no runtime dependencies, and the development and fuzz tool dependencies are hash-locked in `uv.lock`, but no SBOM is published. Fuzzing covers 11 input-validation and profile-parsing helpers; transport, git-remote parsing, and redaction have no fuzz target. | SupplyChain-Med | Tracked at the repository level.                                                                              |
+| G-TLS-1 | No certificate pinning for the GitLab origin; TLS validation depends entirely on the system trust store.                                                                                                                                                                      | InfoDisc-Low    | Operator-acceptable for a managed GitLab endpoint; documented for customers whose policy mandates pinning.    |
 
-For an active issue tracker entry covering these gaps, see [microsoft/hve-core#2225](https://github.com/microsoft/hve-core/issues/2225).
+These gaps were first tracked in [microsoft/hve-core#2225](https://github.com/microsoft/hve-core/issues/2225), which is now closed.
 
 ## References
 
