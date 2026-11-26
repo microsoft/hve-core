@@ -3,7 +3,7 @@ title: BRD & PRD Builders
 description: Twin agents for creating business and product requirements documents through guided Q&A
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-18
+ms.date: 2026-11-26
 ms.topic: tutorial
 keywords:
   - brd builder
@@ -71,7 +71,7 @@ Both agents use templates to structure their output, ensuring consistent section
 ### Quality Controls
 
 * Emoji refinement checklist for tracking section completion
-* Conflict resolution hierarchy: user input > template guidance > agent defaults
+* Conflict resolution hierarchy: user statements > recent documents > older references
 * Cross-referencing between gathered requirements and codebase analysis
 
 ## Key Differences
@@ -173,7 +173,7 @@ Requirements focus:
 - Performance: sub-3-second load for dashboards with up to 1M rows
 ```
 
-Both agents begin with the Assess phase, checking for existing sessions and evaluating available context before proceeding to questions.
+The PRD Builder begins with its Assess phase and the BRD Builder with Discover. Each checks for existing sessions and evaluates available context before proceeding to questions.
 
 ### Option 3: Resume Session
 
@@ -183,7 +183,7 @@ Continue an interrupted session by referencing the project and providing new con
 Resume my BRD for the customer portal migration. Since our
 last session I've confirmed the budget allocation ($150K for FY26) and
 identified the technical lead for each of the 4 workstreams.
-Continue from where we left off in the Integrate phase.
+Continue from where we left off in the Define phase.
 ```
 
 The agent detects session files at `.copilot-tracking/brd-sessions/` or `.copilot-tracking/prd-sessions/` and picks up from the last completed phase.
@@ -321,7 +321,7 @@ Output the PRD with measurable requirements in every section.
 
 ## Tips
 
-* ✅ Provide a clear project name or scope at invocation to accelerate the Assess phase
+* ✅ Provide a clear project name or scope at invocation to accelerate the opening phase (Assess for a PRD, Discover for a BRD)
 * ✅ Answer iterative questions thoroughly; the agent builds sections as information accumulates
 * ✅ Use output modes (`summary`, `section [name]`, `full`, `diff`) to review progress during long sessions
 * ✅ Let the agent cross-reference requirements against codebase artifacts for consistency
@@ -330,7 +330,7 @@ Output the PRD with measurable requirements in every section.
 * ❌ Do not skip the Discover phase by providing all requirements up front (the agent needs context)
 * ❌ Do not edit session files in `.copilot-tracking/` manually during an active session
 * ❌ Do not combine BRD and PRD creation in the same session (use separate conversations)
-* ❌ Do not ignore conflict resolution prompts (user input overrides template defaults)
+* ❌ Do not ignore conflict resolution prompts (your statements take precedence over referenced documents)
 * ❌ Do not treat structural readiness as approval, authorization, or permission for external use
 
 ## Common Pitfalls
@@ -352,7 +352,7 @@ Output the PRD with measurable requirements in every section.
 2. See [Project Planning Agents](README.md) for the full agent catalog
 
 > [!TIP]
-> Both agents work best when you provide a clear project name at invocation. The agents can derive a working title from context, but explicit scope accelerates the Assess phase.
+> Both agents work best when you provide a clear project name at invocation. The agents can derive a working title from context, but explicit scope accelerates the opening phase (Assess for a PRD, Discover for a BRD).
 
 ---
 
