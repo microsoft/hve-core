@@ -3,7 +3,7 @@ title: Contributing Hooks
 description: How to implement, register, and validate hook artifacts in hve-core
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-11-26
 ms.topic: how-to
 keywords:
   - hooks
