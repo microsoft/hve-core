@@ -57,7 +57,7 @@ resource "azurerm_application_insights" "this" {
 # resource for this type, so it is created through AzAPI.
 #
 # Provisioned empty on purpose. Import the dashboard JSON through the portal to
-# populate it; see README.md step 4.
+# populate it; see README.md step 5.
 resource "azapi_resource" "dashboard" {
   type      = "Microsoft.Dashboard/dashboards@2025-08-01"
   name      = "${local.resource_prefix}-copilot-dashboard"
