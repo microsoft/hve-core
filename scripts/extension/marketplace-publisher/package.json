@@ -5,10 +5,10 @@
   "private": true,
   "license": "MIT",
   "dependencies": {
-    "@vscode/vsce": "4.1.0"
+    "@vscode/vsce": "4.1.1"
   },
   "overrides": {
-    "@vscode/vsce@4.0.0": {
+    "@vscode/vsce": {
       "minimatch": "11.0.3"
     },
     "@azure/identity": {

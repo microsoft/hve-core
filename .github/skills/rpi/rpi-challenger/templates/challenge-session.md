@@ -48,9 +48,9 @@ Record note:
 
 ## Unresolved Items
 
-| Item                       | Why unresolved            | Smallest missing evidence or decision | Suggested next owner                                                 |
-|----------------------------|---------------------------|---------------------------------------|----------------------------------------------------------------------|
-| {{assumption or decision}} | {{remaining uncertainty}} | {{specific evidence or decision}}     | {{user, rpi-research, rpi-plan, rpi-implement, rpi-review, or none}} |
+| Item                       | Why unresolved            | Smallest missing evidence or decision | Suggested next owner                                                             |
+|----------------------------|---------------------------|---------------------------------------|----------------------------------------------------------------------------------|
+| {{assumption or decision}} | {{remaining uncertainty}} | {{specific evidence or decision}}     | {{user, rpi-research, rpi-plan, rpi-implement, rpi-review, rpi-refine, or none}} |
 
 ## Session Outcome
 

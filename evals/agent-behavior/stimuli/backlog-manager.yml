@@ -55,7 +55,9 @@ stimuli:
         Assess the artifact's declared tools against its stated read-only tracker
         orchestration and dispatch-every-mutation role. Ground claims in the
         supplied declarations, do not invent tools, and do not claim that a tool
-        grant enforces a boundary the host does not enforce.
+        grant enforces a boundary the host does not enforce. Recognize that the
+        terminal grant is narrowed in prose to local context and read-only gh
+        GitHub reads, with every tracker mutation dispatched.
     graders:
       - type: prompt
         name: backlog-manager-tool-restriction-fit-tool-restricti-94768515
@@ -64,7 +66,9 @@ stimuli:
             The response assesses whether an agent's declared tool set fits its
             stated purpose. Score high when the response reasons from the
             artifact's own declared tools and description, recognizes that the
-            declared tracker surface is read-only, and connects that to the
+            declared tracker surface is read-only, recognizes that the terminal
+            grant is limited in prose to local context and read-only gh GitHub
+            reads rather than by the host, and connects that to the
             description's dispatch-every-mutation role. Score low when the
             response invents tools, ignores the declared description, or asserts
             that a tool grant enforces a boundary the host does not enforce.

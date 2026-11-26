@@ -22,6 +22,9 @@ const PHASE_TITLES = { research: 'Research', plan: 'Plan', implement: 'Changes',
 const pad = (n) => String(n).padStart(3, '0');
 const fingerprint = (value) => createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value)).digest('hex').slice(0, 24);
 const NONE_RE = /^(?:none|none yet|not applicable|n\/a)\.?$/i;
+const UUID_IN_TEXT = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i;
+/** Decisions that record how a phase's work was done. They describe the work's current documents only. */
+const DISPOSITION_NAMES = Object.freeze(['Research disposition', 'Plan disposition']);
 
 /** Canvas phase key for a state's phase name, or null. */
 export const phaseKey = (value) => PHASE_NAMES[labelKey(value)] ?? null;
@@ -284,10 +287,45 @@ function sessionTree(tree, state, statePath, title) {
 }
 
 /**
+ * A state for a document its work did not produce, such as an earlier document of the session.
+ * The work's dispositions describe its current documents, so this state keeps none.
+ *
+ * @param {ReturnType<typeof import('./parse.mjs').parseState>} state
+ */
+export function withoutDispositions(state) {
+    const names = new Set(DISPOSITION_NAMES.map(labelKey));
+    return { ...state, decisions: state.decisions.filter((item) => !names.has(labelKey(item.decision))) };
+}
+
+/**
+ * The Source section of a phase the user or another session provided: where its work came
+ * from, then the decision's evidence as recorded. The evidence is state text, so the canvas
+ * renders it with the other text of a section, never as HTML.
+ *
+ * @param {string} subject How the sentence starts, such as `Research`.
+ * @param {{ evidence: string } | null} decision The phase's disposition decision.
+ * @param {boolean} [withPlan] Research that came with a provided plan, whose evidence starts with `Came with the provided plan`.
+ */
+function providedSource(subject, decision, withPlan = false) {
+    const evidence = (decision?.evidence ?? '').trim();
+    const session = UUID_IN_TEXT.exec(evidence)?.[0];
+    const sessionFrom = session ? `session ${session.slice(0, 8)}` : null;
+    let sentence;
+    if (withPlan && /^came with the provided plan/i.test(evidence)) {
+        const from = sessionFrom ? `from ${sessionFrom}` : /\buser\b/i.test(evidence) ? 'the user supplied' : '';
+        sentence = `${subject} came with the plan${from ? ` ${from}` : ''}.`;
+    } else {
+        const from = sessionFrom ?? (/\buser\b/i.test(evidence) ? 'the user' : 'the user or another session');
+        sentence = `${subject} came from ${from}.`;
+    }
+    return [sentence, inlineMarkdown(evidence)].filter(Boolean).join('\n\n');
+}
+
+/**
  * @typedef {object} AssembleInput
  * @property {string} id Session document ID.
  * @property {ReturnType<typeof import('./parse.mjs').parseState>} state
- * @property {{ research?: any, plan?: any, critique?: any, changes?: any, review?: any }} artifacts Parsed artifacts whose kind matches their state key.
+ * @property {{ research?: any, plan?: any, critique?: any, changes?: any, review?: any, refinement?: any }} artifacts Parsed artifacts whose kind matches their state key.
  * @property {{ key: string, path: string, kind: string | null }[]} [mismatched] State paths whose artifact is another kind, such as reused research.
  * @property {string} statePath Workspace-relative state path.
  * @property {Record<string, { path: string, mtimeMs: number } | undefined>} [files] File facts by state key, plus `state`.
@@ -306,13 +344,13 @@ function sessionTree(tree, state, statePath, title) {
  */
 export function assembleSession(input) {
     const { state, artifacts = {}, mismatched = [], files = {}, tree = null, git = null, root = null, now } = input;
-    const { research, plan, critique, changes, review } = artifacts;
+    const { research, plan, critique, changes, review, refinement } = artifacts;
     // Findings are numbered in order across the session's research documents.
     const findingOffset = Number.isInteger(input.findingOffset) && input.findingOffset > 0 ? input.findingOffset : 0;
-    const taskTitle = plan?.title || changes?.title || review?.title || research?.title || state.taskId;
+    const taskTitle = plan?.title || changes?.title || review?.title || refinement?.title || research?.title || state.taskId;
     const warnings = [...state.warnings];
-    for (const parsed of [research, plan, critique, changes, review]) {
-        if (parsed) warnings.push(...parsed.warnings.map((text) => `${PHASE_TITLES[parsed.kind === 'critique' ? 'plan' : parsed.kind === 'changes' ? 'implement' : parsed.kind] ?? parsed.kind}: ${text}`));
+    for (const parsed of [research, plan, critique, changes, review, refinement]) {
+        if (parsed) warnings.push(...parsed.warnings.map((text) => `${PHASE_TITLES[parsed.kind === 'critique' ? 'plan' : parsed.kind === 'changes' ? 'implement' : parsed.kind === 'refinement' ? 'review' : parsed.kind] ?? parsed.kind}: ${text}`));
     }
     const at = (key) => (files[key]?.mtimeMs ? new Date(files[key].mtimeMs).toISOString() : null);
     const sections = {};
@@ -366,7 +404,9 @@ export function assembleSession(input) {
         addSection(`finding-f${findingOffset + index + 1}`, 'research', finding.title, finding.body, 'research');
         return { id: `F${findingOffset + index + 1}`, title: finding.title, state: state ?? 'unresolved', confidence: confidenceOf(finding.confidence), questions: finding.questions, evidence: finding.evidence };
     });
-    const researchReused = !research && (/reused|satisfied/i.test(stateDecision(state, 'Research disposition')?.status ?? '') || mismatched.some((item) => item.key === 'research'));
+    const researchProvided = lower(stateDecision(state, 'Research disposition')?.status) === 'provided';
+    const planProvided = lower(stateDecision(state, 'Plan disposition')?.status) === 'provided';
+    const researchReused = !research && !researchProvided && (/reused|satisfied/i.test(stateDecision(state, 'Research disposition')?.status ?? '') || mismatched.some((item) => item.key === 'research'));
     if (research) {
         addSection('research-summary', 'research', 'Summary', research.summary, 'research');
         addSection('research-unknowns', 'research', 'What you may not know', research.unknowns, 'research');
@@ -375,10 +415,13 @@ export function assembleSession(input) {
         const reused = mismatched.find((item) => item.key === 'research')?.path ?? state.artifacts.research;
         const note = stateDecision(state, 'Research disposition')?.evidence;
         addSection('research-summary', 'research', 'Summary', [`This task reused existing evidence instead of running new research${reused ? `: \`${reused}\`` : ''}.`, note ? `\n${note}` : ''].join(''), 'research');
+    } else if (researchProvided) {
+        addSection('research-summary', 'research', 'Summary', 'This task has no research document of its own; its research came with the provided plan. The Source section says where it came from.', 'research');
     }
+    if (researchProvided) addSection('research-source', 'research', 'Source', providedSource('Research', stateDecision(state, 'Research disposition'), true), 'state');
 
     // Plan
-    const active = phaseKey(state.activePhase) ?? (review ? 'review' : changes ? 'implement' : plan ? 'plan' : 'research');
+    const active = phaseKey(state.activePhase) ?? (review || refinement ? 'review' : changes ? 'implement' : plan ? 'plan' : 'research');
     const running = lower(state.sessionStatus) === 'running';
     const allTasks = (plan?.phases ?? []).flatMap((phase) => phase.tasks);
     const currentTask = active === 'implement' && running ? allTasks.find((task) => !task.checked)?.id ?? null : null;
@@ -429,6 +472,7 @@ export function assembleSession(input) {
         addSection('plan-summary', 'plan', 'Summary', plan.summary, 'plan');
         addSection('plan-unknowns', 'plan', 'What you may not know', plan.unknowns, 'plan');
     }
+    if (planProvided) addSection('plan-source', 'plan', 'Source', providedSource('The plan', stateDecision(state, 'Plan disposition')), 'state');
 
     // Implementation
     const changeList = (changes?.entries ?? []).map((entry, index) => ({
@@ -460,21 +504,57 @@ export function assembleSession(input) {
     }));
     if (changes) addSection('changes-summary', 'implement', 'Summary', changes.summary, 'changes');
 
-    // Review
-    const history = (review?.history ?? []).map((event) => ({ id: event.id, subject: event.subject, status: event.status, owner: event.owner, rationale: inlineMarkdown(event.rationale), at: null }));
-    const decisionFor = (findingId) => {
-        for (const event of [...(review?.history ?? [])].reverse()) {
-            if (idsIn(event.subject, /^RV-\d{3}$/).includes(findingId)) {
-                const decision = findingDecisionOf(event.status);
-                if (decision) return decision;
-            }
-        }
-        return 'proposed';
+    // Review (acceptance review and subtractive refinement review)
+    const history = [...(review?.history ?? []), ...(refinement?.history ?? [])].map((event) => ({
+        id: event.id,
+        subject: event.subject,
+        status: event.status,
+        owner: event.owner,
+        rationale: inlineMarkdown(event.rationale),
+        at: null,
+    }));
+    const decisionFor = (findingId, events, pattern) => {
+        const hit = (events ?? []).findLast((event) => idsIn(event.subject, pattern).includes(findingId) && findingDecisionOf(event.status));
+        return hit ? findingDecisionOf(hit.status) : 'proposed';
     };
-    if (review) {
-        addSection('review-summary', 'review', 'Assessment', [review.summary, review.unknowns ? `**What you may not know**\n\n${review.unknowns}` : ''].filter(Boolean).join('\n\n'), 'review');
-    }
-    const followupNote = review?.disposition || state.nextAction?.action || '';
+    const toReviewFinding = (finding, kind, expectedField, observedField, events, pattern) => ({
+        id: finding.id,
+        kind,
+        ...(finding.dimension ? { dimension: finding.dimension } : {}),
+        severity: severityOf(finding.severity),
+        title: finding.title,
+        summary: '',
+        expected: inlineMarkdown(finding[expectedField]),
+        observed: finding[observedField],
+        impact: inlineMarkdown(finding.impact),
+        resolution: inlineMarkdown(finding.resolution),
+        route: routeOf(finding.destination),
+        decision: decisionFor(finding.id, events, pattern),
+        related: finding.related,
+    });
+    const combinedReviewExecution = () => {
+        const values = [review?.execution, refinement?.execution].filter(Boolean);
+        if (!values.length) return null;
+        if (values.some((val) => /^started$/i.test(val))) return 'started';
+        if (values.some((val) => /^blocked/i.test(val))) return 'Blocked';
+        if (values.some((val) => /^partial/i.test(val))) return 'Partial';
+        return values[0];
+    };
+    const combinedReviewValidation = () => {
+        const seen = new Set();
+        const merged = [];
+        for (const row of [...validationRows(review?.validation ?? [], 'Review'), ...validationRows(refinement?.validation ?? [], 'Refinement review')]) {
+            const key = `${row.check}\n${row.scope}\n${row.status}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            merged.push(row);
+        }
+        return merged;
+    };
+    const summaryBody = (pass) => [pass.summary, pass.unknowns ? `**What you may not know**\n\n${pass.unknowns}` : ''].filter(Boolean).join('\n\n');
+    if (review) addSection('review-summary', 'review', refinement ? 'Acceptance assessment' : 'Assessment', summaryBody(review), 'review');
+    if (refinement) addSection(review ? 'refinement-summary' : 'review-summary', 'review', review ? 'Refinement assessment' : 'Assessment', summaryBody(refinement), 'refinement');
+    const followupNote = [review?.disposition, refinement?.disposition].filter(Boolean).join('\n\n') || state.nextAction?.action || '';
     addSection('followup-summary', 'followup', 'Follow-up', followupNote, 'state');
 
     // Decisions
@@ -518,7 +598,7 @@ export function assembleSession(input) {
     // Phases
     const activeIndex = PHASES.indexOf(active);
     const completed = lower(state.status) === 'completed';
-    const reviewSkipped = !review && /skip/i.test(stateDecision(state, 'Review step')?.status ?? '');
+    const reviewSkipped = !review && !refinement && /skip/i.test(stateDecision(state, 'Review step')?.status ?? '');
     const changesComplete = /^complete/i.test(changes?.status?.status ?? '');
     // A phase other than the agent's shows the status its document records, so a phase the agent
     // left keeps its content when the agent moves back. Without a recorded status, a phase before
@@ -535,27 +615,35 @@ export function assembleSession(input) {
                 return changesComplete ? 'done' : /^blocked/i.test(status) ? 'blocked' : 'active';
             }
             case 'review': {
-                if (!review) return null;
-                const execution = review.execution ?? '';
+                if (!review && !refinement) return null;
+                const execution = combinedReviewExecution() ?? '';
                 if (!execution) return index < activeIndex ? 'done' : 'active';
                 return /^started$/i.test(execution) ? 'active' : /^blocked/i.test(execution) ? 'blocked' : 'done';
             }
-            case 'followup': return review || completed || (reviewSkipped && changesComplete) ? 'done' : null;
+            case 'followup': return review || refinement || completed || (reviewSkipped && changesComplete) ? 'done' : null;
             default: return null;
         }
     };
+    const providedPhase = (phase) => (phase === 'research' && researchProvided) || (phase === 'plan' && planProvided);
+    // The agent's phase shows In progress while the session runs in it, and Provided once the session stops there.
     const phaseStatus = (phase, index) => {
         if (index === activeIndex) {
             if (lower(state.status) === 'blocked') return 'blocked';
+            if (providedPhase(phase) && !running) return 'provided';
             if (completed && (phase !== 'followup' || !running)) return 'done';
             return 'active';
         }
+        if (providedPhase(phase)) return 'provided';
         if (phase === 'research' && researchReused) return 'skipped';
         if (phase === 'review' && reviewSkipped) return 'skipped';
         return documentStatus(phase, index) ?? (index < activeIndex ? 'done' : 'upcoming');
     };
-    const artifactPath = { research: state.artifacts.research, plan: state.artifacts.plan, implement: state.artifacts.changes, review: state.artifacts.review, followup: input.statePath };
-    const updated = { research: at('research'), plan: at('plan'), implement: at('changes'), review: at('review'), followup: at('state') };
+    const reviewUpdated = () => {
+        const times = [files.review?.mtimeMs, files.refinement?.mtimeMs].filter(Number.isFinite);
+        return times.length ? new Date(Math.max(...times)).toISOString() : null;
+    };
+    const artifactPath = { research: state.artifacts.research, plan: state.artifacts.plan, implement: state.artifacts.changes, review: state.artifacts.review ?? state.artifacts.refinement, followup: input.statePath };
+    const updated = { research: at('research'), plan: at('plan'), implement: at('changes'), review: reviewUpdated(), followup: at('state') };
     const phases = Object.fromEntries(PHASES.map((phase, index) => [phase, { title: PHASE_TITLES[phase], artifact: artifactPath[phase] ?? null, status: phaseStatus(phase, index), updatedAt: updated[phase] }]));
 
     const session = {
@@ -639,26 +727,21 @@ export function assembleSession(input) {
             validation: validationRows(changes?.validation ?? [], 'Changes'),
             blockers,
         },
-        review: review
+        review: review || refinement
             ? {
-                execution: review.execution || null,
-                outcome: review.outcome || null,
-                depth: null,
-                findings: review.findings.map((finding) => ({
-                    id: finding.id,
-                    severity: severityOf(finding.severity),
-                    title: finding.title,
-                    summary: '',
-                    expected: inlineMarkdown(finding.expected),
-                    observed: finding.observed,
-                    impact: inlineMarkdown(finding.impact),
-                    resolution: inlineMarkdown(finding.resolution),
-                    route: routeOf(finding.destination),
-                    decision: decisionFor(finding.id),
-                    related: finding.related,
-                })),
+                execution: combinedReviewExecution(),
+                outcome: review?.outcome || refinement?.outcome || null,
+                depth: review?.depth || refinement?.depth || null,
+                passes: {
+                    acceptance: review ? { execution: review.execution || null, outcome: review.outcome || null, depth: review.depth || null, findings: review.findings.length, artifact: state.artifacts.review ?? null } : null,
+                    refinement: refinement ? { execution: refinement.execution || null, outcome: refinement.outcome || null, depth: refinement.depth || null, findings: refinement.findings.length, artifact: state.artifacts.refinement ?? null } : null,
+                },
+                findings: [
+                    ...(review?.findings ?? []).map((finding) => toReviewFinding(finding, 'acceptance', 'expected', 'observed', review.history, /^RV-\d{3}$/)),
+                    ...(refinement?.findings ?? []).map((finding) => toReviewFinding(finding, 'refinement', 'current', 'rework', refinement.history, /^RF-\d{3}$/)),
+                ],
                 history,
-                validation: validationRows(review.validation, 'Review'),
+                validation: combinedReviewValidation(),
             }
             : { execution: null, outcome: null, depth: null, findings: [], history: [], validation: [] },
         followUps: {
@@ -677,7 +760,7 @@ export function assembleSession(input) {
             research: research?.other ?? [],
             plan: [...(plan?.other ?? []), ...(critique?.other ?? []).map((record) => ({ ...record, heading: `Critique: ${record.heading}` }))],
             implement: changes?.other ?? [],
-            review: review?.other ?? [],
+            review: [...(review?.other ?? []), ...(refinement?.other ?? []).map((record) => ({ ...record, heading: review ? `Refinement: ${record.heading}` : record.heading }))],
             followup: [],
         },
         decisions,

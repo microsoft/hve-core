@@ -25,6 +25,60 @@ GitHub backlog operations run through the MCP GitHub tools. Call `mcp_github_get
 
 To set a milestone, labels, or assignees on a pull request, call `mcp_github_issue_write` with `method: update` and pass the PR number as `issue_number`; `mcp_github_update_pull_request` cannot set those fields. Prefer scoped `mcp_github_search_issues` queries over broad listing to keep output bounded.
 
+### gh CLI Fallback
+
+Some hosts withhold GitHub MCP tools. The GitHub Copilot app, for example, removes issue and pull request read tools from its built-in GitHub MCP server when the `gh` CLI is installed. When that happens, a context whose agent contract grants a terminal reaches GitHub through a bounded set of `gh` commands instead.
+
+Selection rule:
+
+* Use the MCP tool when the active context exposes it. A tool is absent only when it is not in the context's available tool set after tool discovery has run.
+* Use the `gh` command for an operation only when its MCP tool is absent, a terminal is available, and `gh auth status` reports an authenticated account.
+* Never switch surfaces because an MCP call failed. A `401`, `403`, `404`, or rate-limit response keeps its Error Cases handling below.
+* Record the surface used for each operation (`mcp` or `gh`) in the run's planning or execution log.
+
+Read fallbacks:
+
+| MCP tool                                                                 | `gh` fallback                                                                                   |
+|--------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| `mcp_github_get_me`                                                      | `gh api --method GET user`                                                                      |
+| `mcp_github_list_issues`                                                 | `gh issue list --repo <owner>/<repo> --state <state> --json <fields> --limit <n>`               |
+| `mcp_github_search_issues`                                               | `gh search issues <query> --repo <owner>/<repo> --json <fields> --limit <n>`                    |
+| `mcp_github_issue_read` (`get`)                                          | `gh issue view <number> --repo <owner>/<repo> --json <fields>`                                  |
+| `mcp_github_issue_read` (`get_comments`, `get_labels`, `get_sub_issues`) | `gh issue view <number> --repo <owner>/<repo> --json comments`, `labels`, or `subIssues,parent` |
+| `mcp_github_list_issue_types`                                            | `gh api --method GET orgs/<org>/issue-types`                                                    |
+| `mcp_github_get_label`                                                   | `gh api --method GET repos/<owner>/<repo>/labels/<name>`                                        |
+| `mcp_github_search_pull_requests`                                        | `gh search prs <query> --repo <owner>/<repo> --json <fields> --limit <n>`                       |
+| `mcp_github_list_pull_requests`                                          | `gh pr list --repo <owner>/<repo> --state <state> --json <fields> --limit <n>`                  |
+| `mcp_github_pull_request_read`                                           | `gh pr view <number> --repo <owner>/<repo> --json <fields>`                                     |
+| `mcp_github_get_commit`                                                  | `gh api --method GET repos/<owner>/<repo>/commits/<sha>`                                        |
+| `mcp_github_list_commits`                                                | `gh api --method GET repos/<owner>/<repo>/commits`                                              |
+| `mcp_github_list_releases`                                               | `gh release list --repo <owner>/<repo> --json <fields> --limit <n>`                             |
+
+Write fallbacks, for an executor whose contract grants them:
+
+| Operation                              | `gh` fallback                                                                                                                                                                                                                        |
+|----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Create issue                           | `gh issue create --repo <owner>/<repo> --title <title> --body-file <file>`, plus `--label`, `--milestone`, `--assignee`, `--type`, `--parent` as planned                                                                             |
+| Update issue                           | `gh issue edit <number> --repo <owner>/<repo>` with `--title`, `--body-file`, `--milestone`, `--remove-milestone`, `--type`, `--add-assignee`, `--remove-assignee`                                                                   |
+| Add labels                             | `gh issue edit <number> --repo <owner>/<repo> --add-label <name> --remove-label <name>`                                                                                                                                              |
+| Add sub-issue link                     | `gh issue edit <parent> --repo <owner>/<repo> --add-sub-issue <child>`                                                                                                                                                               |
+| Add comment                            | `gh issue comment <number> --repo <owner>/<repo> --body-file <file>`                                                                                                                                                                 |
+| Close issue                            | `gh issue close <number> --repo <owner>/<repo> --reason <reason>`, mapping `state_reason` `completed`, `not_planned`, and `duplicate` to `completed`, `"not planned"`, and `duplicate`; add `--duplicate-of <number>` for duplicates |
+| Set PR milestone, labels, or assignees | `gh pr edit <number> --repo <owner>/<repo>` with `--milestone`, `--remove-milestone`, `--add-label`, `--remove-label`, `--add-assignee`, `--remove-assignee`                                                                         |
+| Update PR title or body                | `gh pr edit <number> --repo <owner>/<repo>` with `--title` or `--body-file`                                                                                                                                                          |
+| Assign Copilot                         | `gh issue edit <number> --repo <owner>/<repo> --add-assignee @copilot`, only when the operation supplies no `base_ref` or `custom_instructions`                                                                                      |
+
+Command rules:
+
+* Name the destination on every command: `--repo <owner>/<repo>` for `gh issue`, `gh pr`, `gh search`, and `gh release`, or a literal `repos/<owner>/<repo>/...`, `orgs/<org>/...`, or `user` path for `gh api`. Never rely on the current directory's repository or on `{owner}`, `{repo}`, or `{branch}` placeholders.
+* Use `gh api` only with `--method GET`, and never with `-f`, `-F`, `--raw-field`, `--field`, `--input`, or the `graphql` endpoint. `gh api` switches to `POST` as soon as a field is supplied.
+* Pass composed text only through `--body-file` pointing to a file in the workflow's tracking directory. Do not pass body or comment text inline, and do not read a body from standard input.
+* Use only the flags listed above for each write subcommand. Reject `--base`, reviewer, project, attach, editor, web, and template flags. Assign `@copilot` only for an Assign Copilot operation.
+* `gh` label flags add and remove rather than replace. Compute the full target set with the replacement rule below, then pass the labels to add and the labels to remove.
+* For a freshness check, read `gh issue view <number> --repo <owner>/<repo> --json updatedAt` and compare its `updatedAt` string exactly with `Expected Updated At`.
+* Report an operation, field, or flag with no row here, or one the installed `gh` version rejects, as unsupported. Changing a PR's base, draft, or state has no fallback. Never approximate an operation with a different command.
+* Never run `gh auth token`, `gh auth login`, `gh auth status --show-token`, or any command that prints or sets a credential.
+
 ## Supported Operations
 
 Every planned GitHub operation resolves to exactly one row. An action that has no row is not a supported GitHub operation and is not planned.

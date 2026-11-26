@@ -229,7 +229,7 @@ describe('send dialog', () => {
         const confirm = keyed(sheet, 'send-confirm');
         assert.equal(confirm.getAttribute('disabled'), null);
         assert.match(serialize(confirm), /<span>Send now<\/span>/);
-        assert.equal(confirm.getAttribute('aria-describedby'), 'send-modes');
+        assert.equal(confirm.getAttribute('aria-describedby'), 'send-modes send-route');
         const queue = keyed(sheet, 'send-queue');
         assert.match(serialize(queue), /<span>Queue<\/span>/);
         assert.equal(queue.getAttribute('aria-describedby'), 'send-modes');
@@ -398,5 +398,59 @@ describe('send dialog', () => {
         assert.match(out, /Canvas K7QF has nothing waiting to send\./);
         assert.match(out, /Add something first, then review and send it all here:/);
         assert.match(out, /Comment on a row, or suggest an edit to its text\./);
+    });
+});
+
+describe('send dialog wording by route', () => {
+    const TARGET = { kind: 'inbox', sessionId: '5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b', sessionName: 'Offline trail maps' };
+    const RELAY = { ...TARGET, kind: 'relay' };
+    const messages = (count) => Array.from({ length: count }, (_, index) => ({ taskId: `task-${index + 1}`, prompt: `Message ${index + 1}`, displayPrompt: `Shown ${index + 1}` }));
+
+    /** The dialog's markup for a preview that names the given route and messages. */
+    function dialogFor(preview) {
+        const session = createFeedback(sample(), { kind: 'comment', text: 'Please compare quotas.', target: { id: 'F1' } }, NOW).session;
+        const ui = initialUi('research');
+        ui.send = { note: '', preview: { prompt: 'PROMPT', displayPrompt: 'DISPLAY', ids: [], digest: 'd', ...preview }, previewNote: '', sending: false, error: null };
+        return html(components.reviewSheet(makeContext(session, 'research', ui)));
+    }
+
+    it('says Send now gives the items to the canvas of another session, as one chat message from that canvas', () => {
+        const out = textOf(dialogFor({ route: TARGET }));
+        assert.match(out, /Send now gives the items to the canvas in Offline trail maps, which hands them to its agent as one chat message starting with “RPI canvas K7QF in session”\./);
+        assert.match(out, /With Send now, it goes to the agent in Offline trail maps as a comment with your items\./);
+        assert.match(out, /Exact message Send now delivers/);
+    });
+
+    it('says Send now gives this chat\'s agent one chat message that asks it to forward the items', () => {
+        const out = textOf(dialogFor({ route: RELAY }));
+        assert.match(out, /Send now gives this chat's agent one chat message starting with “RPI canvas K7QF has”, which asks it to forward them to Offline trail maps\./);
+        assert.match(out, /With Send now, it goes to this chat's agent as a comment with your items, which forwards them to Offline trail maps\./);
+    });
+
+    it('keeps the own-chat sentence and note hint when the route is the canvas\'s own', () => {
+        const out = textOf(dialogFor({ route: { kind: 'own', sessionId: null, sessionName: null } }));
+        assert.match(out, /Send now gives (it|them) to the agent at its next step, even mid-task, as one chat message that starts with “RPI canvas K7QF”\./);
+        assert.match(out, /With Send now, it shows in the chat above the line that names this canvas\./);
+    });
+
+    it('says one message for each task when a hand-off sends several, and the exact text says messages', () => {
+        const out = textOf(dialogFor({ route: TARGET, messages: messages(2) }));
+        assert.match(out, /Send now gives the items to the canvas in Offline trail maps, which hands them to its agent as one chat message for each task, each starting with “RPI canvas K7QF in session”\./);
+        assert.match(out, /Exact messages Send now delivers/);
+        const relay = textOf(dialogFor({ route: RELAY, messages: messages(2) }));
+        assert.match(relay, /Send now gives this chat's agent one chat message for each task, each starting with “RPI canvas K7QF has”, which asks it to forward them to Offline trail maps\./);
+    });
+
+    it('keeps the one-message wording and label for a hand-off of one task', () => {
+        const out = textOf(dialogFor({ route: TARGET, messages: messages(1) }));
+        assert.doesNotMatch(out, /for each task|Exact messages/);
+        assert.match(out, /Exact message Send now delivers/);
+    });
+
+    it('rebuilds the dialog when the route or the number of messages changes, and not for the words alone', () => {
+        const { sendShape } = components;
+        assert.notEqual(sendShape({ route: TARGET, messages: messages(1) }), sendShape({ route: RELAY, messages: messages(1) }));
+        assert.notEqual(sendShape({ route: TARGET, messages: messages(1) }), sendShape({ route: TARGET, messages: messages(2) }));
+        assert.equal(sendShape({ route: TARGET, messages: messages(1), prompt: 'first' }), sendShape({ route: TARGET, messages: messages(1), prompt: 'second' }));
     });
 });

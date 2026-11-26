@@ -136,7 +136,7 @@ RPI and HVE Builder tracking records follow `.github/instructions/hve-core/copil
 ### Agents and Subagents
 
 By convention, custom agents are organized under `.github/agents/{package-id}/`. Each package typically places its agents in a dedicated subdirectory (e.g., `.github/agents/hve-core/`, `.github/agents/ado/`). Subagents are typically organized under `.github/agents/{package-id}/subagents/`.
-Parent agents name subagents by their `name` value, such as Code Review Functional. The Copilot subagent tool dispatches by name, so nesting depth does not matter.
+Parent agents name subagents by their `name` value, such as Codebase Profiler. The Copilot subagent tool dispatches by name, so nesting depth does not matter.
 
 The plugin manifest owns plugin and VSIX composition:
 

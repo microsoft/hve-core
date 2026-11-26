@@ -238,6 +238,14 @@ jobs:
           # uncertainty, not a copyleft obligation.
           # pkg:npm/hve-core-marketplace-publisher is the private nested
           # root package (never published to npm) and is locally MIT.
+          # pkg:npm/docusaurus@0.0.0 is the private docs/docusaurus site
+          # manifest (never published to npm) and is locally MIT; when
+          # comparing against a stacked branch without a prior snapshot, the
+          # dependency graph matches the public npm placeholder docusaurus@0.0.0
+          # (BSD-3-Clause AND LicenseRef-github-NOASSERTION).
+          # pkg:npm/hve-core-workflow-validator and pkg:npm/hve-updates-deck
+          # are private nested root packages (never published to npm) and are
+          # locally MIT.
           # pkg:npm/rpi-with-hve is the private root package of the
           # slides/rpi-with-hve deck (never published to npm) and is locally
           # MIT; the dependency graph cannot resolve a license for it.
@@ -321,7 +329,10 @@ jobs:
             pkg:npm/%40axe-core/playwright,
             pkg:npm/through2,
             pkg:npm/hve-core,
+            pkg:npm/docusaurus@0.0.0,
             pkg:npm/hve-core-marketplace-publisher,
+            pkg:npm/hve-core-workflow-validator,
+            pkg:npm/hve-updates-deck,
             pkg:npm/rpi-with-hve,
             pkg:npm/rai-planner,
             pkg:npm/%40vscode/vsce-sign,

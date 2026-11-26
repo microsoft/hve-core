@@ -1554,7 +1554,7 @@ Describe 'Interactive grooming route and fresh-state execution' -Tag 'Unit' {
 
     It 'suppresses stale mutations and requires renewed approval' {
         $script:Executor | Should -Match 'Immediately before an Update or Comment carrying `Expected Updated At`'
-        $script:Executor | Should -Match 'Compare the returned `updated_at` string exactly'
+        $script:Executor | Should -Match 'Compare the returned `updated_at` string, or `updatedAt` on the `gh` path, exactly with `Expected Updated At`'
         $script:Executor | Should -Match 'do not call a mutation tool'
         $script:Executor | Should -Match 'Skipped: stale approval'
         $script:Executor | Should -Match 'Expected Updated At` and `Observed Updated At`'

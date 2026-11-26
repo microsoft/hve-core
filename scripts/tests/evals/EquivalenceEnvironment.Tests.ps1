@@ -596,7 +596,7 @@ Describe 'Seed workspace fixture' -Tag 'Unit' {
 Describe 'Trial environment delivery' -Tag 'Unit' {
     # vally materializes each trial in <workspace>/<variant>/<stimulus>/, so files
     # written to the workspace root are never seen by the agent. Delivery has to go
-    # through environment.files, which means the paths the specs read from must
+    # through agent_environment.files, which means the paths the specs read from must
     # match the paths the driver writes to. Neither file constrains the other on
     # its own: when that coupling broke, the customization surface silently stopped
     # reaching the agent and the suite reported equivalence between two variants
@@ -609,7 +609,7 @@ Describe 'Trial environment delivery' -Tag 'Unit' {
         function Get-EnvironmentFileMap {
             <#
             .SYNOPSIS
-                Returns a spec's environment.files entries as resolved src/dest pairs.
+                Returns a spec's agent_environment.files entries as resolved src/dest pairs.
             #>
             param([string]$SpecPath)
 
@@ -618,7 +618,7 @@ Describe 'Trial environment delivery' -Tag 'Unit' {
             $pendingSrc = $null
             $inEnvironment = $false
             foreach ($line in (Get-Content -LiteralPath $SpecPath)) {
-                if ($line -match '^environment:') { $inEnvironment = $true; continue }
+                if ($line -match '^agent_environment:') { $inEnvironment = $true; continue }
                 if ($inEnvironment -and $line -match '^\S') { break }
                 if (-not $inEnvironment) { continue }
                 if ($line -match '^\s*-\s*src:\s*(\S+)\s*$') { $pendingSrc = $Matches[1]; continue }
@@ -680,7 +680,7 @@ Describe 'Repository agents' -Tag 'Unit' {
 
     It 'Resolves the RPI skills named in backticks as the rpi-agent surface' {
         $surface = @(Get-AgentSurfaceSkill -RepoRoot $script:RepoRoot -AgentRelativePath '.github/agents/hve-core/rpi-agent.agent.md')
-        foreach ($skill in @('rpi-research', 'rpi-plan', 'rpi-implement', 'rpi-review')) {
+        foreach ($skill in @('rpi-research', 'rpi-plan', 'rpi-implement', 'rpi-review', 'rpi-refine')) {
             $surface | Should -Contain ".github/skills/rpi/$skill"
         }
     }
@@ -693,7 +693,7 @@ Describe 'Repository agents' -Tag 'Unit' {
         foreach ($subagent in @('rpi-researcher', 'rpi-plan-critic', 'rpi-reviewer')) {
             Join-Path $workspace ".github/agents/hve-core/subagents/$subagent.agent.md" | Should -Exist
         }
-        foreach ($skill in @('rpi', 'rpi-plan-critique')) {
+        foreach ($skill in @('rpi', 'rpi-plan-critique', 'rpi-refine')) {
             Join-Path $skillDir "$skill/SKILL.md" | Should -Exist
         }
     }

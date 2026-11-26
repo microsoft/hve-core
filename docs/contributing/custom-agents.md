@@ -3,7 +3,7 @@ title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-17
 ms.topic: how-to
 keywords:
   - contributing
@@ -356,23 +356,22 @@ Subagents take isolated work from a parent agent. Place them under `.github/agen
 * Subagents never receive `ask_user`, so the parent handles any questions for the user.
 * Leave `agent` out of a subagent's `tools` when it must not dispatch further.
 
-A dispatch prompt defines the exact inputs and read boundary, the owned write or evidence boundary, the expected return shape, the stage gate, and the step that consumes the result. The Code Review agent dispatches its orientation worker this way:
+A dispatch prompt defines the exact inputs and read boundary, the owned write or evidence boundary, the expected return shape, the stage gate, and the step that consumes the result. Workflows that need isolated parallel work without dedicated custom subagent files (such as the `code-review` skill) dispatch `general-purpose` tasks directly, while multi-agent security workflows dispatch specialized subagents by name:
 
 ```markdown
-Dispatch `Code Review Orientation` with a complete prompt containing the path to
-`diff-state.json`, the explicit `orientation` task, and the expected output path.
+Dispatch `Skill Assessor` with the confirmed codebase profile, the single assigned
+security skill name, and the read-only assessment boundary.
 ```
 
-Its perspective subagents can activate skills but cannot dispatch further:
+A dedicated subagent can activate skills when needed while omitting `agent` so it cannot dispatch further:
 
 ```yaml
 ---
-name: Code Review Functional
-description: 'Thin skill-backed perspective subagent that reviews a precomputed diff for functional correctness and writes structured findings'
+name: Codebase Profiler
+description: "Scans the repository to build a technology profile and select applicable security skills"
 tools:
   - search
   - read
-  - edit
   - skill
 user-invocable: false
 ---

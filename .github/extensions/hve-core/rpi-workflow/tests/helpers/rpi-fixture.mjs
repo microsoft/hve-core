@@ -19,6 +19,8 @@ export const CHILD_TASK = 'trail-maps-fixes';
 export const STALE_TASK = 'old-task';
 
 export const SESSION_KEY = `${DAY}/${ROOT_TASK}`;
+/** The workspace root the assembled fixture documents were read from. */
+export const FIXTURE_ROOT = '/work/trails';
 export const STALE_SESSION_KEY = `2026-01-10/${STALE_TASK}`;
 
 export const PATHS = {
@@ -30,6 +32,7 @@ export const PATHS = {
     critique: `${T}/reviews/plans/${DAY}/${ROOT_TASK}-plan-critique.md`,
     changes: `${T}/changes/${DAY}/${ROOT_TASK}-changes.md`,
     review: `${T}/reviews/logs/${DAY}/${ROOT_TASK}-review.md`,
+    refinement: `${T}/reviews/logs/${DAY}/${ROOT_TASK}-refinement.md`,
     childPlan: `${T}/plans/${DAY}/${CHILD_TASK}-plan.md`,
     childChanges: `${T}/changes/${DAY}/${CHILD_TASK}-changes.md`,
 };
@@ -73,7 +76,7 @@ export const CHILD_STATE = {
     artifact_paths: { research: PATHS.review, plan: PATHS.childPlan, critique: null, changes: PATHS.childChanges, review: null },
     confirmed_decisions: [
         { decision: 'Research disposition', status: 'reused', evidence: 'The review record' },
-        { decision: 'Review step', status: 'skip', evidence: 'Child-loop default' },
+        { decision: 'Review step', status: 'skip', evidence: 'Repeat-loop rule' },
         { decision: 'Plan readiness', status: 'ready', evidence: 'Plan' },
     ],
     blockers: [],
@@ -582,6 +585,66 @@ export const REVIEW = `<!-- markdownlint-disable-file -->
 | Second region | Not requested yet | user | optional |
 `;
 
+export const REFINEMENT = `<!-- markdownlint-disable-file -->
+# Refinement Review: Offline trail maps
+
+## Executive Summary
+
+* Assessment: One duplicate retry timer and one extra doc can be removed.
+* Why this matters: Cuts duplicate state in tile downloads.
+* Review execution: Complete
+* Assessed outcome: Refinements identified
+* Review depth: standard
+* Validation coverage: Unit tests passed.
+* Confidence and limitations: High.
+
+## What You May Not Know
+
+* An upgrade to IndexedDB batch writes is available once iOS baseline rises.
+
+## Findings and Proposed Routes
+
+<!-- rpi:refinement id=RF-001 -->
+### RF-001 [Medium]: Tile store duplicates existing retry helper
+
+* Related scope: P01-T01; CH-001
+* Dimension: Dependencies and SDKs
+* Current state and evidence: src/storage/tiles.ts builds a custom backoff timer.
+* What to remove or rework: Delete custom timer state and call \`retryWithBackoff\`.
+* Impact: Removes 48 lines of timer state.
+* Resolution condition: \`tiles.ts\` delegates retries to \`retryWithBackoff\`.
+* Proposed destination: rpi-plan
+* Smallest useful next action: Add a follow-up phase in \`rpi-plan\`.
+
+## Parent Decision Record
+
+### Current Disposition
+
+* Based on events: FD-001 to FD-002
+* Review execution: Complete
+* Final outcome: Refinements identified
+
+### Decision History
+
+| Event | Subject | Decision source | Status or value | Proposed destination | Final destination | Owner | More information needed | Smallest next action | Rationale |
+|-------|---------|-----------------|-----------------|----------------------|-------------------|-------|-------------------------|----------------------|-----------|
+| FD-001 | Review execution | agent | Complete | none | none | refinement parent | none | Record outcome | All lenses assessed |
+| FD-002 | RF-001 | agent | accepted | rpi-plan | rpi-plan | rpi-plan | none | Plan P03 | Removes duplicate timer logic |
+
+## Validation Evidence
+
+| Command | Scope | Status | Summary |
+|---------|-------|--------|---------|
+| npm test | All | Passed | 31 tests |
+
+## Refinement Record
+
+### Scope and Evidence
+
+* Task ID: ${ROOT_TASK}
+* Review depth and provenance: standard; default
+`;
+
 export const CHILD_PLAN = `<!-- markdownlint-disable-file -->
 # RPI Plan: Offline trail maps review fixes
 
@@ -718,6 +781,17 @@ export async function writeFixtureWorkspace(root) {
 /** Clock the assembled fixture documents use. */
 export const FIXTURE_NOW = '2026-01-15T12:00:00.000Z';
 
+/** The Copilot session that provided research or a plan in the fixtures. */
+export const SOURCE_SESSION = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+const COPIED_SHA256 = '9f2c4e1ab07d53e6c8f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f7a';
+
+/** `provided` evidence for an artifact copied from another session, in the rpi skill's form. */
+export const copiedEvidence = (artifactPath, session = SOURCE_SESSION) => `Copied from session ${session}, ${artifactPath}, sha256 ${COPIED_SHA256}`;
+/** `provided` evidence for material the user supplied, in the rpi skill's form. */
+export const suppliedEvidence = (description, date = '2026-01-15') => `Supplied by the user on ${date}: ${description}`;
+/** `provided` evidence for research that came with a provided plan, in the rpi skill's form. */
+export const cameWithPlanEvidence = (planEvidence) => `Came with the provided plan: ${planEvidence}`;
+
 /** An earlier piece of work in the fixture session, early-look, and a changes record no plan names. */
 export const EARLY = Object.freeze({
     research: `${T}/research/2026-01-14/early-look-research.md`,
@@ -781,7 +855,7 @@ export const rootSession = () => assembleSession({
         ],
     },
     git: { repository: 'contoso/trails', branch: 'feat/offline' },
-    root: '/work/trails',
+    root: FIXTURE_ROOT,
     now: FIXTURE_NOW,
 });
 

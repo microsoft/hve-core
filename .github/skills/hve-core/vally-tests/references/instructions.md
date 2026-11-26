@@ -30,9 +30,9 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 ### Check 1: Required Frontmatter Fields
 
 * Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
-* Testable behavior: instructions frontmatter MUST include a non-empty `description:` field under 120 characters AND an `applyTo:` field whose value is a glob expression.
+* Testable behavior: instructions frontmatter MUST include a non-empty `description:` field written as concise trigger metadata AND an `applyTo:` field whose value is a glob expression.
 * Suggested stimulus: ask the assistant which files a named instructions file auto-applies to and to summarize its purpose.
-* Grader recommendation: `regex` with pattern `(?m)^description:\s*['"]?.{1,120}['"]?` combined with `(?m)^applyTo:\s*['"]?[^'"\n]*\*`.
+* Grader recommendation: `regex` with pattern `(?m)^description:\s*\S` combined with `(?m)^applyTo:\s*['"]?[^'"\n]*\*`.
 * Evidence: `.github/instructions/hve-core/markdown.instructions.md` L1-L3 and `.github/instructions/hve-core/writing-style.instructions.md` L1-L3 both demonstrate the required pair.
 
 ### Check 2: ApplyTo Glob Validity
