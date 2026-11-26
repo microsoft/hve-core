@@ -10,6 +10,7 @@ import {
     findingGroups, findingsFor, findingVectors, hidingNarrowing, hunkAnnotations, needsYou, NOT_EXPLAINED, perspectiveProgress, reasonCoverage,
     reasonFiles, resolveFocus, REVIEWERS, reviewFlow, safeWebUrl, stageFor, stages, targetPresent, targetSummary, VECTOR, vectorCounts,
 } from '../ui/views.mjs';
+import { segmented } from '../ui/dom.mjs';
 
 function fixture() {
     return {
@@ -390,5 +391,94 @@ describe('review flow and vectors', () => {
         assert.equal(targetPresent(view, { kind: 'file', id: 'file-one', snapshotId: 'snapshot-old' }), false);
         assert.equal(targetPresent(view, { kind: 'perspective', id: 'rai', snapshotId: 'snapshot-one' }), true);
         assert.equal(feedbackState({ status: 'dismissed' }).label, 'Dismissed');
+    });
+});
+
+describe('canvas card containment and segmented controls', () => {
+    function cssDeclarations(css, selector) {
+        const stripped = css.replace(/\/\*[\s\S]*?\*\//g, '');
+        const declarations = [];
+        for (const match of stripped.matchAll(/([^{}@]+)\{([^{}]+)\}/g)) {
+            const selectors = match[1].split(',').map((part) => part.trim().replace(/\s+/g, ' '));
+            if (selectors.includes(selector)) declarations.push(match[2]);
+        }
+        return declarations.join('\n');
+    }
+
+    it('constrains every single-column grid card and button against horizontal overflow', async () => {
+        const css = await fs.readFile(new URL('../ui/styles.css', import.meta.url), 'utf8');
+        for (const selector of [
+            '.reviewer-card', '.reviewer-grid > li', '.area-nf', '.board-card', '.finding',
+            '.note-card', '.comment', '.feedback-item', '.outcome-card', '.flow-body', '.flow-group',
+        ]) {
+            const decls = cssDeclarations(css, selector);
+            assert.match(decls, /grid-template-columns:\s*minmax\(0,\s*1fr\)/, `${selector} must pin its single grid track to minmax(0, 1fr)`);
+        }
+        const gridDecls = cssDeclarations(css, '.reviewer-grid');
+        const minTrack = /minmax\(min\(100%,\s*(\d+)px\),\s*1fr\)/.exec(gridDecls);
+        assert.ok(minTrack && Number(minTrack[1]) >= 220, '.reviewer-grid tracks should be at least 220px wide');
+        const cardBtn = cssDeclarations(css, '.reviewer-card .btn');
+        assert.match(cardBtn, /max-width:\s*100%/);
+        assert.match(cardBtn, /min-width:\s*0/);
+        assert.match(cssDeclarations(css, '.reviewer-card .btn-text'), /text-overflow:\s*ellipsis/);
+        assert.match(cssDeclarations(css, '.nf-pending'), /flex-wrap:\s*wrap/);
+    });
+
+    it('styles compact segmented controls, aligned legends, and forced-colors selection', async () => {
+        const css = await fs.readFile(new URL('../ui/styles.css', import.meta.url), 'utf8');
+        assert.match(cssDeclarations(css, '.segmented.compact label'), /min-height:\s*var\(--cr-control-compact\)/);
+        const legend = cssDeclarations(css, '.segmented > legend:not(.visually-hidden)');
+        assert.match(legend, /align-items:\s*center/);
+        assert.match(legend, /min-height:\s*var\(--cr-control\)/);
+        assert.match(cssDeclarations(css, '.segmented.compact > legend:not(.visually-hidden)'), /min-height:\s*var\(--cr-control-compact\)/);
+        assert.match(cssDeclarations(css, '.segmented-options'), /flex-wrap:\s*wrap/);
+        assert.match(cssDeclarations(css, '.segmented label:has(input:checked)'), /border-color:\s*Highlight/);
+    });
+
+    it('builds labeled segmented controls with grouped options, tooltips, and change dispatch', (t) => {
+        const prevDocument = globalThis.document;
+        const prevNode = globalThis.Node;
+        class FakeNode {
+            constructor(tag) {
+                this.tagName = tag;
+                this.className = '';
+                this.dataset = {};
+                this.attributes = {};
+                this.children = [];
+                this.listeners = new Map();
+            }
+            setAttribute(name, value) { this.attributes[name] = value; }
+            addEventListener(type, fn) { this.listeners.set(type, fn); }
+            append(...nodes) { this.children.push(...nodes); }
+        }
+        globalThis.Node = FakeNode;
+        globalThis.document = {
+            createElement: (tag) => new FakeNode(tag),
+            createTextNode: (text) => Object.assign(new FakeNode('#text'), { textContent: text }),
+        };
+        t.after(() => {
+            globalThis.document = prevDocument;
+            globalThis.Node = prevNode;
+        });
+
+        let selected = null;
+        const control = segmented({
+            legend: 'Request scope', name: 'nfScope', compact: true, withTitle: true, keyPrefix: 'nf-scope',
+            value: 'area',
+            options: [['area', 'Area: Webhook retry processor'], ['all', 'All areas']],
+            onChange: (value) => { selected = value; },
+        });
+        assert.equal(control.tagName, 'fieldset');
+        assert.equal(control.className, 'segmented compact');
+        assert.equal(control.children[0].tagName, 'legend');
+        assert.equal(control.children[0].children[0].textContent, 'Request scope');
+        const optionsGroup = control.children[1];
+        assert.equal(optionsGroup.className, 'segmented-options');
+        assert.equal(optionsGroup.children.length, 2);
+        assert.equal(optionsGroup.children[0].attributes.title, 'Area: Webhook retry processor');
+        const secondInput = optionsGroup.children[1].children[0];
+        assert.equal(secondInput.dataset.key, 'nf-scope-all');
+        secondInput.listeners.get('change')();
+        assert.equal(selected, 'all');
     });
 });

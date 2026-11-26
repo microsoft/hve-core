@@ -124,3 +124,19 @@ export function time(iso) {
 export function shortSha(value) {
     return typeof value === 'string' && /^[0-9a-f]{40,64}$/i.test(value) ? value.slice(0, 7) : value;
 }
+
+/**
+ * Labeled segmented radio group: wraps its options in `.segmented-options` so the option buttons
+ * stay together when a narrow container wraps them below the legend.
+ */
+export function segmented({ legend, name, options, value, compact = false, keyPrefix, onChange, withTitle = false }) {
+    return h('fieldset', { class: `segmented${compact ? ' compact' : ''}` },
+        h('legend', {}, legend),
+        h('span', { class: 'segmented-options' }, options.map(([optionValue, label]) => h('label', withTitle ? { title: label } : {},
+            h('input', {
+                type: 'radio', name, value: optionValue ?? 'all', checked: value === optionValue,
+                dataset: { key: `${keyPrefix}-${optionValue ?? 'all'}` },
+                on: { change: () => onChange(optionValue) },
+            }),
+            h('span', {}, label)))));
+}

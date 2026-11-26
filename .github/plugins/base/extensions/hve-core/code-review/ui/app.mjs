@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, count, h, icon, idChip, meta, prose, shortSha, time, vectorPill } from './dom.mjs';
+import { badge, count, h, icon, idChip, meta, prose, segmented, shortSha, time, vectorPill } from './dom.mjs';
 import {
     anchorLabel, areaNonFunctional, arrivals, AVAILABILITY, boardLanes, bySeverity, commentVector, DISPOSITION, EXECUTION, FEEDBACK_KIND, feedbackState,
     feedbackVector, fileAnnotations, fileLabel, fileStats, fileStatus, findingGroups, findingsFor, findingVectors, hidingNarrowing, hunkAnnotations,
@@ -688,12 +688,12 @@ function reviewerGroups(reviewers) {
         .sort((left, right) => REQUEST_RANK[left.availability] - REQUEST_RANK[right.availability]);
     const unscheduledFunctional = reviewers.filter((entry) => entry.group === 'functional' && !entry.scheduled);
     const scopeControl = selectedArea && view.areas.length > 1
-        ? h('div', { class: 'flow-scope' },
-            h('fieldset', { class: 'segmented compact' }, h('legend', {}, 'Request scope'),
-                [['area', `Area: ${selectedArea.title}`], ['all', 'All areas']].map(([value, label]) => h('label', {}, h('input', {
-                    type: 'radio', name: 'nfScope', value, checked: (useAreaScope ? 'area' : 'all') === value, dataset: { key: `nf-scope-${value}` },
-                    on: { change: () => { ui.addScope = value; render(); } },
-                }), h('span', {}, label)))))
+        ? h('div', { class: 'flow-scope' }, segmented({
+            legend: 'Request scope', name: 'nfScope', compact: true, withTitle: true, keyPrefix: 'nf-scope',
+            value: useAreaScope ? 'area' : 'all',
+            options: [['area', `Area: ${selectedArea.title}`], ['all', 'All areas']],
+            onChange: (value) => { ui.addScope = value; render(); },
+        }))
         : null;
     const group = (title, entries, card, extra = '', head = null) => entries.length
         ? h('div', { class: `flow-group${extra}` }, h('h5', { class: 'flow-group-title' }, title, count(entries.length)),
@@ -731,11 +731,12 @@ function availableCard(entry, scopedArea = null) {
     const targetWords = scopedArea ? scopedArea.title : 'all areas';
     let action = null;
     if (!request) {
+        const addLabel = `Add ${entry.label} (${entry.vector}) review to ${targetWords}`;
         action = h('button', {
             type: 'button', class: 'btn btn-compact', dataset: { key: `add-${entry.perspective}${scopedArea ? `-${scopedArea.id}` : ''}` },
-            'aria-label': `Add ${entry.label} (${entry.vector}) review to ${targetWords}`,
+            title: addLabel, 'aria-label': addLabel,
             on: { click: () => run(() => addReviewer(entry, areaIds)) },
-        }, icon('plus'), scopedArea ? `Add to ${scopedArea.title}` : 'Add');
+        }, icon('plus'), h('span', { class: 'btn-text' }, 'Add'));
     } else if (request.status !== 'sent') {
         action = h('button', {
             type: 'button', class: 'btn btn-compact', dataset: { key: `request-dismiss-${entry.perspective}` },
@@ -867,11 +868,11 @@ function changeMapRow() {
     const { model, layout } = currentMap();
     if (!model) return null;
     if (!MAP_VIEWS.includes(ui.mapView)) ui.mapView = 'changes';
-    const views = h('fieldset', { class: 'segmented' }, h('legend', {}, 'View'),
-        MAP_VIEWS.map((value) => h('label', {}, h('input', {
-            type: 'radio', name: 'mapView', value, checked: ui.mapView === value, dataset: { key: `map-view-${value}` },
-            on: { change: () => { ui.mapView = value; ui.mapPinned = null; render(); } },
-        }), h('span', {}, MAP_VIEW_WORDS[value]))));
+    const views = segmented({
+        legend: 'View', name: 'mapView', keyPrefix: 'map-view', value: ui.mapView,
+        options: MAP_VIEWS.map((value) => [value, MAP_VIEW_WORDS[value]]),
+        onChange: (value) => { ui.mapView = value; ui.mapPinned = null; render(); },
+    });
     return row('row-map', 'Change map', 'nodes', [model.source === 'areas' ? badge({ label: 'Drawn from areas', icon: 'info', tone: 'muted' }) : null],
         h('div', { class: 'map-controls' }, views),
         model.source === 'areas' ? h('p', { class: 'map-note' }, 'The agent has not drawn a change map, so each part here is a review area, joined by the impact links the areas record.') : null,
@@ -1173,16 +1174,18 @@ function findingsRow() {
     const progress = perspectiveProgress(view);
     const area = view.areas.find((entry) => entry.id === ui.focus?.areaId) ?? null;
     if (!area) ui.findingArea = false;
-    const scope = area ? h('fieldset', { class: 'segmented compact' }, h('legend', {}, 'Show'),
-        [['all', 'All areas'], ['area', area.title]].map(([value, label]) => h('label', {}, h('input', {
-            type: 'radio', name: 'findingScope', value, checked: (ui.findingArea ? 'area' : 'all') === value, dataset: { key: `finding-scope-${value}` },
-            on: { change: () => { ui.findingArea = value === 'area'; render(); } },
-        }), h('span', {}, label)))) : null;
-    const vectorFilter = availableVectors.length > 1 ? h('fieldset', { class: 'segmented compact' }, h('legend', {}, 'Vector'),
-        [[null, 'All vectors'], ...availableVectors.map(([vec, total]) => [vec, `${vec} (${total})`])].map(([value, label]) => h('label', {}, h('input', {
-            type: 'radio', name: 'findingVector', value: value ?? 'all', checked: ui.findingVector === value, dataset: { key: `finding-vector-${value ?? 'all'}` },
-            on: { change: () => { ui.findingVector = value; render(); } },
-        }), h('span', {}, label)))) : null;
+    const scope = area ? segmented({
+        legend: 'Show', name: 'findingScope', compact: true, withTitle: true, keyPrefix: 'finding-scope',
+        value: ui.findingArea ? 'area' : 'all',
+        options: [['all', 'All areas'], ['area', area.title]],
+        onChange: (value) => { ui.findingArea = value === 'area'; render(); },
+    }) : null;
+    const vectorFilter = availableVectors.length > 1 ? segmented({
+        legend: 'Vector', name: 'findingVector', compact: true, keyPrefix: 'finding-vector',
+        value: ui.findingVector,
+        options: [[null, 'All vectors'], ...availableVectors.map(([vec, total]) => [vec, `${vec} (${total})`])],
+        onChange: (value) => { ui.findingVector = value; render(); },
+    }) : null;
     const lens = ui.reason ? (ui.reason === NOT_EXPLAINED ? badge({ label: 'Not explained yet', icon: 'question', tone: 'muted' }) : idChip(ui.reason, { kind: 'reason', title: `Findings on changes reason ${ui.reason} explains` })) : null;
     const show = held.count ? h('button', {
         type: 'button', class: 'btn btn-compact arrivals', dataset: { key: 'show-arrivals' },
@@ -1271,12 +1274,12 @@ function discussionRow() {
     })());
     const vectorSummary = byVector.length ? h('ul', { class: 'finding-summary', 'aria-label': 'Comments by vector' },
         byVector.map(([vec, total]) => h('li', {}, vectorPill(vec), h('span', { class: 'count-text' }, String(total))))) : null;
-    const vectorFilter = byVector.length > 1 ? h('div', { class: 'finding-tools' },
-        h('fieldset', { class: 'segmented compact' }, h('legend', {}, 'Vector'),
-            [[null, 'All vectors'], ...byVector.map(([vec, total]) => [vec, `${vec} (${total})`])].map(([value, label]) => h('label', {}, h('input', {
-                type: 'radio', name: 'commentVector', value: value ?? 'all', checked: ui.commentVector === value, dataset: { key: `comment-vector-${value ?? 'all'}` },
-                on: { change: () => { ui.commentVector = value; render(); } },
-            }), h('span', {}, label))))) : null;
+    const vectorFilter = byVector.length > 1 ? h('div', { class: 'finding-tools' }, segmented({
+        legend: 'Vector', name: 'commentVector', compact: true, keyPrefix: 'comment-vector',
+        value: ui.commentVector,
+        options: [[null, 'All vectors'], ...byVector.map(([vec, total]) => [vec, `${vec} (${total})`])],
+        onChange: (value) => { ui.commentVector = value; render(); },
+    })) : null;
     return foldedRow('row-discussion', 'Pull request discussion', 'message', ui.discussionOpen, () => { ui.discussionOpen = !ui.discussionOpen; render(); },
         [badge(statusMeta[discussion.status] ?? statusMeta.unavailable), count(discussion.items.length)],
         discussion.limitations.length ? h('div', { class: 'notice tone-attention' }, h('p', { class: 'notice-title' }, icon('info'), 'Import limits'), h('ul', {}, discussion.limitations.map((text) => h('li', {}, text)))) : null,
