@@ -3,7 +3,7 @@ prd_id: "PRD-2026-Q2-PRIVACY-PLANNER"
 title: "Privacy Planner PRD"
 description: "Product requirements for adding a first-class Privacy Planner, privacy-standards skill, and Privacy Reviewer to the hve-core planner family."
 author: "GitHub Copilot"
-ms.date: 2026-08-20
+ms.date: 2026-11-25
 ms.topic: concept
 sidebar_position: 2
 keywords: [prd, privacy, planner, privacy standards, data protection]
@@ -55,7 +55,7 @@ Version 0.1 approved | Status Approved for downstream handoff | Owner HVE-Core m
 
 The hve-core planner family includes accessibility, security, RAI, and SSSC planning capabilities, but it does not yet include a first-class privacy planner. Teams that handle personal data currently route privacy concerns through security and RAI assessment flows. That workaround leaves privacy-specific obligations unnamed, weakens traceability to privacy law and standards, and makes downstream backlog handoff harder to interpret.
 
-Privacy Planner closes that family gap. It adds a six-phase Privacy Planner agent built on the shared `planner-identity-base`, a `privacy-standards` skill that owns domain knowledge, and a thin Privacy Reviewer that follows the existing reviewer pattern. The product emits `cross_planner_refs` when privacy overlaps with sibling planners, while leaving reconciliation and deduplication to backlog managers.
+Privacy Planner closes that family gap. It adds a six-phase Privacy Planner agent built on the shared `planner-identity`, a `privacy-standards` skill that owns domain knowledge, and a thin Privacy Reviewer that follows the existing reviewer pattern. The product emits `cross_planner_refs` when privacy overlaps with sibling planners, while leaving reconciliation and deduplication to backlog managers.
 
 ### Core Opportunity
 
@@ -83,7 +83,7 @@ HVE-Core needs a first-class Privacy Planner that makes personal-data risk asses
 
 In scope:
 
-* Privacy Planner agent behavior and six-phase orchestration over `planner-identity-base`.
+* Privacy Planner agent behavior and six-phase orchestration over `planner-identity`.
 * `privacy-standards` skill content for NIST Privacy Framework / NISTIR 8062, GDPR, CCPA, and OWASP Top 10 Privacy Risks.
 * Data-flow reasoning for collection, processing, retention, sharing, and deletion.
 * DPIA threshold classification and hard gate from Phase 2 to Phase 5 when triggered.
@@ -164,7 +164,7 @@ journey
 
 | FR ID  | Requirement                                   | Actor                                       | Trigger                                                      | Expected Outcome                                                                                                                                                   | Goals          | Acceptance Criteria |
 |--------|-----------------------------------------------|---------------------------------------------|--------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------|---------------------|
-| FR-001 | Privacy Planner scaffolding                   | Data-handling practitioner                  | Practitioner starts a privacy planning session               | A Privacy Planner agent runs six-phase orchestration over `planner-identity-base` with state management and session recovery isomorphic to sibling planners.       | PG-001         | AC-001              |
+| FR-001 | Privacy Planner scaffolding                   | Data-handling practitioner                  | Practitioner starts a privacy planning session               | A Privacy Planner agent runs six-phase orchestration over `planner-identity` with state management and session recovery isomorphic to sibling planners.            | PG-001         | AC-001              |
 | FR-002 | Data-flow reasoning super-power               | Privacy Planner through `privacy-standards` | A processing activity is described during assessment         | The skill identifies personal data and maps collection, processing, retention, sharing, and deletion, attaching lawful basis and processing purpose to each stage. | PG-001, PG-002 | AC-002              |
 | FR-003 | Classification gate and DPIA threshold        | Privacy Planner                             | Phase 2 classifies processing activity by privacy risk       | When processing meets the DPIA threshold predicate, a hard gate blocks progression until Phase 5 impact assessment is completed.                                   | PG-001         | AC-003              |
 | FR-004 | Standards traceability                        | Privacy Planner / Privacy Reviewer          | A finding is emitted                                         | The finding cites its source control verbatim across the four-standard backbone.                                                                                   | PG-002         | AC-004              |
@@ -192,7 +192,7 @@ NFR-004: Session structure, question cadence, and disclaimer presentation match 
 
 ### Reliability
 
-NFR-005: Session state persists and recovers per `planner-identity-base`, so an interrupted privacy assessment resumes without losing phase progress, classification decisions, or DPIA gate status.
+NFR-005: Session state persists and recovers per `planner-identity`, so an interrupted privacy assessment resumes without losing phase progress, classification decisions, or DPIA gate status.
 
 ### Security and Privacy
 
@@ -244,7 +244,7 @@ flowchart LR
 flowchart TB
   accTitle: Privacy Planner Product Architecture
   accDescr: The planner combines shared identity guidance, privacy standards, session state, cross-planner references, and backlog handoff while the reviewer applies the same standards to its report.
-    A[Privacy Planner agent] --> B[planner-identity-base]
+    A[Privacy Planner agent] --> B[planner-identity]
     A --> C[privacy-standards skill]
     C --> D[NIST PF / NISTIR 8062]
     C --> E[GDPR]
@@ -259,7 +259,7 @@ flowchart TB
 
 ## 11. Acceptance Criteria
 
-AC-001 (FR-001): Given a practitioner starts a privacy planning session, when the Privacy Planner initializes, then it runs the six-phase orchestration over `planner-identity-base` with state persistence and session recovery, passing the same structural validation that sibling planners pass.
+AC-001 (FR-001): Given a practitioner starts a privacy planning session, when the Privacy Planner initializes, then it runs the six-phase orchestration over `planner-identity` with state persistence and session recovery, passing the same structural validation that sibling planners pass.
 
 AC-002 (FR-002): Given a processing activity is described, when the `privacy-standards` skill reasons over it, then it identifies personal data, maps collection, processing, retention, sharing, and deletion, and attaches a lawful basis and processing purpose to each stage.
 
