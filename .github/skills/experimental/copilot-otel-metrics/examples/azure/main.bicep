@@ -97,7 +97,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
 // Managed Grafana dashboards, deployable as an Azure resource.
 //
 // Provisioned empty on purpose. Import the dashboard JSON through the portal to
-// populate it; see README.md step 4.
+// populate it; see README.md step 5.
 resource dashboard 'Microsoft.Dashboard/dashboards@2025-08-01' = {
   name: dashboardName
   location: location

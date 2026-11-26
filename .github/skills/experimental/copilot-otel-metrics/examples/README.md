@@ -2,7 +2,7 @@
 title: Copilot OTel Metrics Examples
 description: Reference stack definition, dashboard, and helper scripts for capturing GitHub Copilot OpenTelemetry output locally
 author: Microsoft
-ms.date: 2026-08-18
+ms.date: 2026-11-26
 ms.topic: reference
 keywords:
   - opentelemetry
@@ -92,7 +92,7 @@ Run these yourself, from this directory. Nothing here runs automatically, and th
 `compose.yaml` and `otel-collector-local.yaml` carry deliberate choices worth preserving if you adapt them.
 
 * **Copilot exports to the Collector, not to LGTM.** LGTM's OTLP ports are not published to the host at all. That is what makes the filter unavoidable: if LGTM listened on the host too, any local process could write straight past it, and loopback binding would not help, because every process on the machine is already on loopback.
-* **The attribute policy is an allow-list.** `allow_all_keys: false` drops any key the config has not named, so an attribute added by a future extension release is dropped rather than stored. A delete-list would pass it through. Every allowed key is there because a shipped dashboard panel reads it.
+* **The attribute policy is an allow-list.** `allow_all_keys: false` drops any key the config has not named, so an attribute added by a future extension release is dropped rather than stored. A delete-list would pass it through. Every allowed key is there because something shipped needs it: a dashboard panel, `baseline.py` (which reads `session.id`), failure triage (`error.type`), or the resource identity that keeps spans attributable.
 * **Grafana requires a credential you supply.** The image otherwise enables anonymous Admin access and hides the login form. The compose file turns that off and requires `COPILOT_OTEL_GRAFANA_USER` and `COPILOT_OTEL_GRAFANA_PASSWORD`. The `${VAR:?message}` form fails the `up` when a variable is unset; it does not make Grafana adopt the value. Grafana reads those variables only when it creates its database, so adoption depends on the volume layout below.
 * **Grafana's database is on its own volume.** `copilot-otel-grafana-db` is mounted over `/data/grafana/data` and is deliberately not `external`, so Compose creates it per project. Without that, a stack started against a reused `copilot-otel-data` volume would find an existing `grafana.db` and keep whatever password it already carries — possibly the image default of `admin`/`admin` — while the required variables were supplied and ignored. Grafana users and dashboards live on this volume, so they are not carried over from a pre-existing shared volume. Telemetry history is unaffected; it stays on `copilot-otel-data`.
 * **Both images are pinned by digest, with the tag in a comment.** A tag is mutable, so a tag-pinned stack can change under a configuration you already reviewed.
@@ -127,11 +127,11 @@ To move to a newer image, resolve the multi-architecture manifest digest for the
 
 ## Notes on the helpers
 
-`verify.py` exits non-zero when the stack is unhealthy or when no Copilot signals are stored. Health and the delta flag are treated as required; signal presence depends on the editor having exported something.
+`verify.py` exits non-zero when the stack is unhealthy, when the image-default `admin`/`admin` Grafana credential still authenticates, or when no Copilot signals are stored. Health, the delta flag, and a dead default credential are treated as required; signal presence depends on the editor having exported something.
 
-`baseline.py` writes its snapshot to `~/.cache/copilot-otel/pre-enable-baseline.json`. Set `COPILOT_OTEL_BASELINE` to choose a different path. Capture before enabling export, diff afterwards.
+`baseline.py` writes its snapshot to `~/.cache/copilot-otel/pre-enable-baseline.json`. Set `COPILOT_OTEL_BASELINE` to choose a different path inside `~/.cache/copilot-otel/`; a path outside that directory is refused. Capture before enabling export, diff afterwards.
 
-`validate_dashboard.py` imports with `overwrite: true`, so it replaces any dashboard sharing the uid. It refuses a Grafana that is not on loopback unless you set `COPILOT_OTEL_ALLOW_REMOTE=1`. Pass a dashboard path to check a generated dashboard instead of the bundled one; the path is resolved against the directory you run in, so a dashboard produced anywhere on this machine can be checked. Override the target with `COPILOT_OTEL_GRAFANA`, `COPILOT_OTEL_GRAFANA_USER`, and `COPILOT_OTEL_GRAFANA_PASSWORD`.
+`validate_dashboard.py` imports with `overwrite: true`, so it replaces any dashboard sharing the uid. It refuses a Grafana that is not on loopback unless you set `COPILOT_OTEL_ALLOW_REMOTE=1`. Pass a dashboard path to check a generated dashboard instead of the bundled one; the path is resolved against the directory you run in, so a dashboard produced anywhere on this machine can be checked. Override the endpoints with `COPILOT_OTEL_GRAFANA`, `COPILOT_OTEL_PROMETHEUS`, and `COPILOT_OTEL_TEMPO`. `COPILOT_OTEL_GRAFANA_USER` and `COPILOT_OTEL_GRAFANA_PASSWORD` are required; there is no default credential.
 
 `inspect_metrics.py` is the answer to "is this metric name still correct". Run it before trusting any metric name copied from documentation, including the tables in the skill itself.
 

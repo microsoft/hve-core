@@ -2,7 +2,7 @@
 title: Azure Capture Templates
 description: Collector configuration, Bicep, Terraform, and Azure CLI templates for collecting GitHub Copilot fleet telemetry into Azure
 author: Microsoft
-ms.date: 2026-08-18
+ms.date: 2026-11-26
 ms.topic: reference
 keywords:
   - opentelemetry
@@ -38,11 +38,12 @@ Read `references/azure-capture.md` in the skill root first. Three things there c
 
 ## Values you must supply
 
-None of these have safe defaults, so all of them are required inputs:
+Decide each of these deliberately. The templates take the subscription and tenant from the signed-in context. Naming and environment are required inputs on every route, and region is required outside Bicep, which defaults it to the resource group's location. Retention (90 days), the daily cap (5 GB), and the reader principal (empty, which skips the role assignment) have template defaults that you should override on purpose:
 
 * Subscription and tenant.
 * Region. The dashboard must sit in the same region as the workspace.
 * Resource naming, which usually follows an existing organizational convention.
+* The environment this deployment serves. Resource names carry it.
 * The principal that will hold `Monitoring Reader` on the workspace.
 * Retention and the daily ingestion cap, which are cost decisions.
 
@@ -141,7 +142,7 @@ chmod 600 /etc/copilot-otel/relay.env
 On Windows, restrict it to the same single account:
 
 ```powershell
-icacls C:\ProgramData\copilot-otel\relay.env /inheritance:r /grant:r "$env:USERNAME:(R)"
+icacls C:\ProgramData\copilot-otel\relay.env /inheritance:r /grant:r "${env:USERNAME}:(R)"
 ```
 
 `COPILOT_OTEL_FLEET_CA_BUNDLE` must be an absolute path to the CA bundle that signs the fleet receiver's certificate. The relay mounts it read-only and verifies against it: a receiver presenting an untrusted certificate, or one whose subject alternative names do not include the endpoint hostname, is refused rather than trusted. There is no plaintext fallback and no verification opt-out.

@@ -94,7 +94,7 @@ main() {
 
   echo "Creating Azure Monitor dashboard ${dashboard_name}"
   # Provisioned empty. Import the dashboard JSON through the portal to populate
-  # it; see README.md step 4.
+  # it; see README.md step 5.
   az resource create \
     --resource-group "$RESOURCE_GROUP" \
     --name "$dashboard_name" \
