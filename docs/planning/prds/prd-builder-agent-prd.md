@@ -3,7 +3,7 @@ prd_id: "PRD-2026-Q2-PRD-BUILDER"
 title: "PRD Builder Agent Product Requirements"
 description: "Product Requirements Document for the PRD Builder agent, defining product goals, functional requirements, and acceptance criteria for the guided Product Requirements Document authoring workflow in the project-planning package."
 author: "HVE Core Maintainers"
-ms.date: "2026-08-20"
+ms.date: "2026-11-26"
 ms.topic: "reference"
 keywords:
   - prd builder
@@ -199,7 +199,7 @@ NFR-008: The PRD Builder operates across HVE-Core distribution contexts (reposit
 ## Constraints
 
 * `CON-001`: The PRD Builder MUST preserve its existing seven-phase workflow and naming; phase structure changes are out of scope for this PRD. Imposing source: product continuity / DD-003. Affected boundary: scope. Non-negotiability: avoids breaking existing user workflows and documentation. Category: organizational. Impact: design.
-* `CON-002`: Changes MUST keep the `.github/plugin/marketplace.json` recipe, `plugins/`, and `extension/` outputs consistent via the repository's regeneration scripts (`plugin:generate`, `extension:prepare`) validated by `plugin:validate`. Imposing source: repository distribution pipeline. Affected boundary: operations. Non-negotiability: generated outputs must not be hand-edited. Category: technical. Impact: delivery.
+* `CON-002`: Changes MUST keep the `.github/plugin/marketplace.json` recipe, the root `plugin.json`, and `extension/` outputs consistent via the repository's regeneration scripts (`plugin:sync`, `extension:prepare`) validated by `plugin:validate`. Imposing source: repository distribution pipeline. Affected boundary: operations. Non-negotiability: generated outputs must not be hand-edited. Category: technical. Impact: delivery.
 * `CON-003`: Shared skill content MUST follow the CC BY 4.0 cite-only standards posture. Imposing source: repository licensing. Affected boundary: compliance. Non-negotiability: licensing obligation. Category: contractual. Impact: acceptance.
 * `CON-004`: Specification and migration work MUST land by the 2026-06-30 milestone to align with the `feat/brd-skills` initiative. Imposing source: initiative schedule / DD-003 continuity window. Affected boundary: schedule. Non-negotiability: calendar-driven target. Category: organizational. Impact: delivery.
 
